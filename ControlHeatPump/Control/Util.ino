@@ -1126,7 +1126,7 @@ xSwitched:
 void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 {
 #ifdef PWM_ACCURATE_POWER
-	delta = WR.LoadPower[idx] * 220 / HP.dSDM.get_voltage();
+	if(delta != 0 && delta != -32768) delta = WR.LoadPower[idx] * 220 / HP.dSDM.get_voltage();
 #endif
 	#define MP WR.LoadPower[idx]
 	int n = WR_LoadRun[idx] + delta;
