@@ -1,0 +1,47 @@
+<html>
+<head> 
+	<title>Реле. Народный контроллер ТН</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type='text/javascript' src='scripts.js'></script>
+	<script type="text/javascript">
+		window.onload = function() {
+		loadParam("get_tblRelay,get_tblPwrC");
+	};
+	</script>
+</head>
+<body class="actuators relay">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+	<h1>Реле <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'></h1>
+	<div class="row1">
+		<table>
+		<thead>
+		<tr>
+			<th width="20%">Имя</th>
+			<th width="30%">Описание</th>
+			<th>Состояние</th>
+			<th>Pin</th>
+		</tr>
+		</thead>
+		<tbody id="get_tblrelay">
+		</tbody>
+	</table>		
+	</div>		
+	<div class="row1">
+		<h2>Корректировка электрической мощности</h2>
+		<table>
+		<thead>
+		<tr>
+			<th width="20%">Имя</th>
+			<th>Добавить, Вт</th>
+		</tr>
+		</thead>
+		<tbody id="get_tblpwrc">
+		</tbody>
+	</table>		
+	</div>		
+</div>
+</body>
+</html>

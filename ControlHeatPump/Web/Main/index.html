@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src='scripts.js'></script>
+<script>
+window.onload = function() {
+	updateParam("get_Boiler(ON),get_modeHP,get_error,get_errcode,get_Temp(TOUT),get_Temp(TIN),get_Temp(TEVAING),get_Temp(TEVAOUTG),get_Temp(TCONING),get_Temp(TCONOUTG),get_TrgT(1),get_Boiler(TRG),get_Temp(TBOILER),get_Relay(RPUMPI),get_Relay(RPUMPO),get_SCHDLR(AN),get_Boiler(URG),get_oHP(BPOW)");
+};
+</script>	
+</head>
+<body class="index">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+<div class="row1">
+	<dl>
+		<dt><nobr>Тепловой насос</nobr></dt><dd><span id="get_work">-</span></dd>
+		<dt>Расписание</dt><dd><span id="get_schdlr-an">-</span></dd>
+		<dt><nobr>Режим работы</nobr></dt><dd>&nbsp;<select id="get_modehp" onchange="setParam('get_modeHP','get_modehp');" style="font-size:1em"></select></dd>
+		<dt>Показатели</dt><dd><span id="get_errcode">-</span></dd> <dd style="width:100%;"><span id="get_error">-</span></dd>
+		<dt><nobr>От генератора</nobr></dt><dd>&nbsp;<input type="checkbox" id="get_ohp-bpow" onchange="setParam('get_oHP(BPOW)');"></dt>
+	</dl>
+</div>
+<div class="row2">
+	<dl>
+		<dt><nobr>На улице</nobr></dt><dd><span id="get_temp-tout">-</span>&deg;</dd>
+		<dt><nobr>В доме</nobr></dt><dd><span id="get_temp-tin">-</span>&deg;</dd>
+		<dt>Цель:</dt><dd><nobr><input id="get_trgt-1" type="number" min="5" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_TrgT(1)');"></nobr></dd>
+	</dl>
+	<dl>
+		<dt><nobr>Из геоконтура</nobr></dt><dd><span id="get_temp-tevaing">-</span>&deg;</dd>
+		<dt><nobr>В геоконтур</nobr></dt><dd><span id="get_temp-tevaoutg">-</span>&deg;</dd>
+		<dt><nobr>Насос ГК</nobr></dt><dd><span id="get_relay-rpumpi-ONOFF">-</span></dd>
+	</dl>
+	<dl>
+		<dt>Подача</dt><dd><span id="get_temp-tconoutg">-</span>&deg;</dd>
+		<dt>Обратка</dt><dd><span id="get_temp-tconing">-</span>&deg;</dd>
+		<dt><nobr>Насос СО</nobr></dt><dd><span id="get_relay-rpumpo-ONOFF">-</span></dd>
+	</dl>
+	<dl>
+		<dt><nobr>Бойлер <input type="checkbox" id="get_boiler-on" onchange="setParam('get_Boiler(ON)');"></nobr></dt><dd><nobr> <span style="font-size:small">Срочно</span> <input type="checkbox" id="get_boiler-urg" onchange="setParam('get_Boiler(URG)');"></nobr></dd>
+		<dt>Температура</dt><dd><span id="get_temp-tboiler">-</span>&deg;</dd>
+		<dt>Целевая</dt><dd><nobr><input id="get_boiler-trg" type="number" min="5" max="90" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(TRG)');"></nobr></dd>
+	</dl>									
+</div>
+</div>
+</body>
+</html>

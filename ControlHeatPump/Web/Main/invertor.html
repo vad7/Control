@@ -1,0 +1,65 @@
+<html>
+<head> 
+<title>Инвертор. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type="text/javascript" src="scripts.js"></script>
+<script type="text/javascript">
+window.onload = function() {
+	loadParam("get_pFC(NAME),get_pFC(NOTE)");
+	updateParam("get_pFC(BLOCK),get_pFC(ON_OFF),get_pFC(FC),get_pFC(cFC),get_pFC(cCURRENT),get_pFC(MB_ERR),get_pFC(INFO)");
+}
+function loadParam_after(paramid) {
+	if(paramid.indexOf("pFC(NAME)")!=-1) {
+		document.getElementById("fcdoc").href = document.getElementById("get_pfc-name").value + ".pdf";
+	}
+}
+</script>
+</head>
+<body class="actuators">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+<h1>Инвертор <span id="get_pfc-name"></span> <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'></h1>
+<div class="row1">
+	<h2>Основные <input type="submit" value="Сброс ошибок" onclick='loadParam("RESET_ErrorFC")' style="float:right"> <input type="submit" value="Восстановление соединения"  onclick='setParam("set_pFC(BLOCK=0)")' style="float:right;margin-right:10px;"> <input style="float:right;margin-right:10px;" type="submit" value="Доп. настройки" onclick='location.assign("invertor-set.html")'> <a id="fcdoc" style="float:right;margin-right:10px;" class="download" href="" download><button>?</button></a></h2>
+	<table>
+	<thead>
+	<tr>
+		<th>Состояние</th>
+		<th>Целевая скорость</th>
+		<th>Частота</th>
+		<th>Ток (A)</th>
+		<th>Ошибок Modbus</th>
+		<th>Блокировка инвертора</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td id="get_pfc-on_off-ONOFF"></td>
+		<td nowrap><input id="get_pfc-fc" type="number" step="1"><input type="submit" value=">" onclick="setParam('get_pFC(FC)');"></td>
+		<td id="get_pfc-cfc"></td>
+		<td id="get_pfc-ccurrent"></td>
+		<td id="get_pfc-mb_err"></td>
+		<td id="get_pfc-block"></td>
+	</tr>		
+	</tbody>
+	</table>
+</div>		
+<div class="row1">
+<h2>Состояние: <span id="get_pfc-note"></span> </h2>
+		<table style="width: 700">
+		<thead>
+		<tr>
+			<th>Код функции</th>
+			<th>Описание</th>
+			<th>Значение</th>
+		</tr>
+		</thead>
+		<tbody id="get_pfc-info">
+		</tbody>
+		</table>						
+</div>
+</div>
+</body>
+</html>
