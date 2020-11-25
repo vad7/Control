@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="io.sloeber.core.toolChain.release.2110148719">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.toolChain.release.2110148719" moduleId="org.eclipse.cdt.core.settings" name="Release">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildProperties="" description="" id="io.sloeber.core.toolChain.release.2110148719" name="Release" parent="org.eclipse.cdt.build.core.emptycfg">
+					<folderInfo id="io.sloeber.core.toolChain.release.2110148719.1648168794" name="/" resourcePath="">
+						<toolChain id="io.sloeber.core.toolChain.release.1655185632" name="Arduino Toolchain( Sloeber edition)" superClass="io.sloeber.core.toolChain.release">
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.1781718641" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>
+							<builder buildPath="${workspace_loc:/Test}/Release" id="io.sloeber.sketch.builder.960979888" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
+							<tool id="io.sloeber.tool.sketch.compiler.cpp.1467010521" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
+								<option id="io.sloeber.compiler.cpp.sketch.option.incpath.320540836" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library/src}&quot;"/>
+								</option>
+								<inputType id="io.sloeber.compiler.cpp.sketch.input.1784895330" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
+							</tool>
+							<tool id="io.sloeber.tool.compiler.c.1396723508" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c">
+								<option id="io.sloeber.compiler.c.sketch.option.incpath.1677077871" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library/src}&quot;"/>
+								</option>
+								<inputType id="io.sloeber.compiler.c.sketch.input.189864042" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
+							</tool>
+							<tool id="io.sloeber.tool.sketch.compiler.s.117543301" name="Arduino Assembler" superClass="io.sloeber.tool.sketch.compiler.s">
+								<option id="io.sloeber.compiler.asm.sketch.option.incpath.1842002853" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/extEEPROM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/DS3232/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/WireSam/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/FreeRTOS_ARM/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Test/libraries/Arduino-Due-RTC-Library/src}&quot;"/>
+								</option>
+								<inputType id="io.sloeber.compiler.S.sketch.input.177051812" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
+							</tool>
+							<tool id="io.sloeber.tool.ar.1055329397" name="Arduino archiver" superClass="io.sloeber.tool.ar"/>
+							<tool id="io.sloeber.tool.combine.816561517" name="Arduino combiner" superClass="io.sloeber.tool.combine"/>
+							<tool id="io.sloeber.tool.objcopy.eep.1250572628" name="Arduino tool objcopy command" superClass="io.sloeber.tool.objcopy.eep"/>
+							<tool id="io.sloeber.tool.size.603359196" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="libraries/FreeRTOS_ARM/org_files|libraries/Wire/src.2|libraries/Wire/src.0|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|libraries/**/._*|libraries/?*/utility/*/*" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="Test.null.1001158970" name="Test"/>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope"/>
+</cproject>

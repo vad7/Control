@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="Modbus tools for test, simulation and programming">
+   <meta name="keywords" content="modbus, modbus test, modbus simulation, modbus rtu, modbus simulator">
+   <link rel="stylesheet" href="layout.css">
+   <link rel="stylesheet" href="content.css">
+   <title>Modbus Poll Quick start</title>
+</head>
+
+
+<body>
+
+<div id="wrapper">
+
+<div id="header" class="container_12">
+<div class="floatleft">
+	<h1><font color="#00005f">modbus</font> tools</h1>
+	<p class="description">For test, simulation and programming.</p>
+</div>
+
+</div>
+<!--- end header --->
+
+
+<div class="container_12">
+  <div class="colleft">
+
+    <div class="col1">
+
+<h1 align="center">Modbus Poll quick start guide</h1>
+<h1>Overview</h1>
+
+<p>Modbus Poll uses a multiple windows user interface. That means you can open several windows showing different data areas or data from different slave ID's at the same time. You can write any text in the Alias cells.</p>
+<p>In any dialog box you can press the F1 key for more help on that specific topic.</p>
+<img src="images/mbpoll.png">
+<p>This picture shows two open windows one reading 10 holding registers from ID 1, address 0 and one reading 10 holding registers from ID 2.</p>
+
+<table>
+    <tr>
+        <td><img src="images/entervalue.png"></td>
+        <td valign=top>
+            If your slave device allows you to change a Holding register then you
+            double click the cell or just start typing a new value in the cell.
+            Then an edit dialog box is shown.
+		</td>
+    </tr>
+</table>
+
+<h1>Change the read/write definition</h1>
+<p>To change the read/write definition of a window you can press F8 or select "read/write definition" from the Setup menu.</p>
+<img src="Images/readwritemenu.png">
+<p></p>
+<table>
+    <tr>
+        <td><img src="Images/definition.png"></td>
+        <td valign=top>
+            Here you define which data to show in the window. This setup shows how to
+            read 10 Holding Registers from address 0. Address 40001 in some
+            protocol descriptions. Note that Modbus Poll uses Modbus addresses
+            which always counts from 0.
+		</td>
+    </tr>
+</table>
+
+<table border="1">
+  <caption>
+    Device and MODBUS address ranges</caption>
+  <tbody>
+    <tr>
+      <th>Device address</th>
+      <th>MODBUS address</th>
+      <th>Description</th>
+      <th>Function</th>
+      <th>R/W</th>
+    </tr>
+    <tr>
+      <td align="right"><b>1</b>...<b>10000</b><sup>*</sup></td>
+      <td align="left">address - 1</td>
+      <td align="left">Coils (outputs)</td>
+      <td align="center">01</td>
+      <td align="center">Read/Write</td>
+    </tr>
+    <tr class="even">
+      <td align="right"><b>10001</b>...<b>20000</b><sup>*</sup></td>
+      <td align="left">address - 10001</td>
+      <td align="left">Discrete Inputs</td>
+      <td align="center">02</td>
+      <td align="center">Read</td>
+    </tr>
+    <tr>
+      <td align="right"><b>40001</b>...<b>50000</b><sup>*</sup></td>
+      <td align="left">address - 40001</td>
+      <td align="left">Holding Registers</td>
+      <td align="center">03</td>
+      <td align="center">Read/Write</td>
+    </tr>
+    <tr class="even">
+      <td align="right"><b>30001...40000*</b></td>
+      <td align="left">address - 30001</td>
+      <td align="left">Input Registers</td>
+      <td align="center">04</td>
+      <td align="center">Read</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h1>How to make a connection</h1>
+<p>There is no data to display if you have not made a connection. To do so press F3 or select connect from the connection menu. For more detailed help press F1.</p>
+
+<table>
+    <tr>
+        <td><img src="Images/connection.png" width="400"></td>
+        <td valign=top>
+		<p>This connection use Modbus TCP/IP.</p>
+		<p>5 different connection types are available however only 2 of them are standard Modbus connections:</p>
+	<ul>
+		<li>Serial port</li>
+		<li>Modbus TCP/IP</li>
+	</ul>
+		<p>For serial connection you may need an USB to RS485, or an RS232 to RS485 converter.</p>
+		
+		</td>
+    </tr>
+</table>
+
+	
+
+	</div>
+	<!--- end col1 --->
+   
+   
+	<div class="col2">
+	</div>
+	<!--- end col2 --->
+
+  </div>
+  <!--- end colleft --->
+
+<div class="clear"></div>
+</div>
+<!--- end container_12 --->
+
+
+<div id="footer">
+
+
+<p>Copyright &copy; 2017 Witte Software - All rights reserved.</p>
+</div>
+<!--- end footer --->
+
+
+</div>
+<!--- end wrapper --->
+</body>
+<html>

@@ -1,0 +1,96 @@
+body
+{
+  background-color: #05355f;
+  background-position: center top;
+  font-family: Verdana, Arial;
+  font-size: 14px;
+//  margin: 0px;
+}
+
+#wrapper {
+  background-color: #FFF;
+  width: 1004px;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-left-style: solid;
+  border-right-color: #0b3050;
+  border-bottom-color: #0b3050;
+  border-left-color: #0b3050;
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 40px;
+  margin-top: 0px;
+}
+
+#header {
+  height: 100px;
+/*  background-image: url(/sites/all/themes/AlonNew/images/bkg_header.jpg);
+  background-repeat: no-repeat;*/
+  background-position: right top;
+  overflow: hidden;
+}
+.container_12{
+  margin-left: auto;
+  margin-right: auto;
+  width: 960px;
+}
+
+.colleft{
+  position: relative;
+  width: 100%;
+  right: undefined%;
+/*  background-color: #aaaaaa*/
+}
+.col{
+  overflow: hidden;
+  float: left;
+  width: 90%;
+}
+
+.col1{
+  overflow: hidden;
+  float: left;
+  width: 70%;
+}
+
+.col2{
+  position: relative;
+  overflow: hidden;
+  float: left;
+  width: 30%;
+}
+
+.clear {
+  clear: both;
+  display: block;
+  overflow: hidden;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+}
+
+#footer {
+  background-color: #cecece;
+  position: relative;
+  margin-top: 50px;
+  overflow: hidden;
+  z-index: auto;
+//  width: 50%;
+}
+
+#footer p {
+//  line-height: 16px;
+//  padding: 30px;
+  font-size: 12px;
+//  margin-bottom: 0px;
+text-align: center;
+}
+
+
+.floatleft {
+float: left;
+
+}

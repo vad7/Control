@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html class="" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# og: http://ogp.me/ns#">
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Instruction Set - Nextion</title>
+
+<!-- This site is optimized with the Yoast SEO plugin v5.9.1 - https://yoast.com/wordpress/plugins/seo/ -->
+<link rel="canonical" href="https://nextion.itead.cc/resources/documents/instruction-set/" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Instruction Set - Nextion" />
+<meta property="og:description" content="The Nextion Instruction Set These are the set of commands that Nextion can use. They are categorized into only a few categories General Rules and Practices &#8230; &lt;goto&gt; Assignment Statements &#8230; &lt;goto&gt; Operational Commands &#8230; &lt;goto&gt; GUI Designing Commands &#8230; &lt;goto&gt; Color Code Constants &#8230; &lt;goto&gt; System Variables &#8230; &lt;goto&gt; Format of Nextion Return Data &hellip;" />
+<meta property="og:url" content="https://nextion.itead.cc/resources/documents/instruction-set/" />
+<meta property="og:site_name" content="Nextion" />
+<meta property="article:publisher" content="https://www.facebook.com/iteadstudio/" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="The Nextion Instruction Set These are the set of commands that Nextion can use. They are categorized into only a few categories General Rules and Practices &#8230; &lt;goto&gt; Assignment Statements &#8230; &lt;goto&gt; Operational Commands &#8230; &lt;goto&gt; GUI Designing Commands &#8230; &lt;goto&gt; Color Code Constants &#8230; &lt;goto&gt; System Variables &#8230; &lt;goto&gt; Format of Nextion Return Data [&hellip;]" />
+<meta name="twitter:title" content="Instruction Set - Nextion" />
+<meta name="twitter:site" content="@Iteadstudio" />
+<meta name="twitter:creator" content="@Iteadstudio" />
+<script type='application/ld+json'>{"@context":"http:\/\/schema.org","@type":"WebSite","@id":"#website","url":"https:\/\/nextion.itead.cc\/","name":"Nextion","potentialAction":{"@type":"SearchAction","target":"https:\/\/nextion.itead.cc\/?s={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<script type='application/ld+json'>{"@context":"http:\/\/schema.org","@type":"Organization","url":"https:\/\/nextion.itead.cc\/resources\/documents\/instruction-set\/","sameAs":["https:\/\/www.facebook.com\/iteadstudio\/","https:\/\/www.youtube.com\/channel\/UCIiO6ag7O3vSFFGONQGySvg","https:\/\/twitter.com\/Iteadstudio"],"@id":"#organization","name":"itead","logo":""}</script>
+<!-- / Yoast SEO plugin. -->
+
+<link rel='dns-prefetch' href='//s.w.org' />
+<link rel="alternate" type="application/rss+xml" title="Nextion &raquo; Feed" href="https://nextion.itead.cc/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Nextion &raquo; Comments Feed" href="https://nextion.itead.cc/comments/feed/" />
+					<link rel="shortcut icon" href="https://nextion.itead.cc/wp-content/uploads/2017/08/logo.png" type="image/x-icon" />
+		
+					<!-- For iPhone -->
+			<link rel="apple-touch-icon" href="https://nextion.itead.cc/wp-content/uploads/2017/08/logo.png">
+		
+		
+		
+				
+		<meta property="og:title" content="Instruction Set"/>
+		<meta property="og:type" content="article"/>
+		<meta property="og:url" content="https://nextion.itead.cc/resources/documents/instruction-set/"/>
+		<meta property="og:site_name" content="Nextion"/>
+		<meta property="og:description" content="The Nextion Instruction Set
+These are the set of commands that Nextion can use.
+They are categorized into only a few categories
+
+ 	 General Rules and Practices ... &lt;goto&gt;
+ 	 Assignment Statements ... &lt;goto&gt;
+ 	Operational Commands ... &lt;goto&gt;
+ 	 GUI Designing Commands ..."/>
+
+									<meta property="og:image" content="https://nextion.itead.cc/wp-content/uploads/2017/08/下载.png"/>
+							<!-- This site uses the Google Analytics by MonsterInsights plugin v6.2.6 - Using Analytics tracking - https://www.monsterinsights.com/ -->
+<script type="text/javascript" data-cfasync="false">
+		var disableStr = 'ga-disable-UA-12350753-13';
+
+	/* Function to detect opted out users */
+	function __gaTrackerIsOptedOut() {
+		return document.cookie.indexOf(disableStr + '=true') > -1;
+	}
+
+	/* Disable tracking if the opt-out cookie exists. */
+	if ( __gaTrackerIsOptedOut() ) {
+		window[disableStr] = true;
+	}
+
+	/* Opt-out function */
+	function __gaTrackerOptout() {
+	  document.cookie = disableStr + '=true; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/';
+	  window[disableStr] = true;
+	}
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','__gaTracker');
+
+	__gaTracker('create', 'UA-12350753-13', 'auto');
+	__gaTracker('set', 'forceSSL', true);
+	__gaTracker('require', 'displayfeatures');
+	__gaTracker('require', 'linkid', 'linkid.js');
+	__gaTracker('send','pageview');
+</script>
+<!-- / Google Analytics by MonsterInsights -->
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/nextion.itead.cc\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.9.8"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&&(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55358,56760,9792,65039],[55358,56760,8203,9792,65039]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&&k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i<j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&&c.supports[j[i]],"flag"!==j[i]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&&g.twemoji&&(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel='stylesheet' id='layerslider-css'  href='https://nextion.itead.cc/wp-content/plugins/LayerSlider/static/layerslider/css/layerslider.css?ver=6.5.5' type='text/css' media='all' />
+<link rel='stylesheet' id='bbp-default-css'  href='https://nextion.itead.cc/wp-content/plugins/bbpress/templates/default/css/bbpress.css?ver=2.5.14-6684' type='text/css' media='screen' />
+<link rel='stylesheet' id='contact-form-7-css'  href='https://nextion.itead.cc/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=4.9.1' type='text/css' media='all' />
+<link rel='stylesheet' id='hm_bbpui-css'  href='https://nextion.itead.cc/wp-content/plugins/image-upload-for-bbpress/css/bbp-image-upload.css?ver=4.9.8' type='text/css' media='all' />
+<link rel='stylesheet' id='rs-plugin-settings-css'  href='https://nextion.itead.cc/wp-content/plugins/revslider/public/assets/css/settings.css?ver=5.4.5.1' type='text/css' media='all' />
+<style id='rs-plugin-settings-inline-css' type='text/css'>
+#rs-demo-id {}
+</style>
+<link rel='stylesheet' id='wpstatistics-css-css'  href='https://nextion.itead.cc/wp-content/plugins/wp-statistics/assets/css/frontend.css?ver=12.3.6.4' type='text/css' media='all' />
+<link rel='stylesheet' id='avada-stylesheet-css'  href='https://nextion.itead.cc/wp-content/themes/Avada/assets/css/style.min.css?ver=5.4.2' type='text/css' media='all' />
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='avada-IE-fontawesome-css'  href='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/fonts/fontawesome/font-awesome.css?ver=5.4.2' type='text/css' media='all' />
+<![endif]-->
+<!--[if IE]>
+<link rel='stylesheet' id='avada-IE-css'  href='https://nextion.itead.cc/wp-content/themes/Avada/assets/css/ie.css?ver=5.4.2' type='text/css' media='all' />
+<![endif]-->
+<link rel='stylesheet' id='fusion-dynamic-css-css'  href='https://nextion.itead.cc/wp-content/uploads/fusion-styles/fusion-58.css?timestamp=1536936435&#038;ver=4.9.8' type='text/css' media='all' />
+<script type='text/javascript'>
+/* <![CDATA[ */
+var LS_Meta = {"v":"6.5.5"};
+/* ]]> */
+</script>
+<script type='text/javascript' data-cfasync="false" src='https://nextion.itead.cc/wp-content/plugins/LayerSlider/static/layerslider/js/greensock.js?ver=1.19.0'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-includes/js/jquery/jquery.js?ver=1.12.4'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1'></script>
+<script type='text/javascript' data-cfasync="false" src='https://nextion.itead.cc/wp-content/plugins/LayerSlider/static/layerslider/js/layerslider.kreaturamedia.jquery.js?ver=6.5.5'></script>
+<script type='text/javascript' data-cfasync="false" src='https://nextion.itead.cc/wp-content/plugins/LayerSlider/static/layerslider/js/layerslider.transitions.js?ver=6.5.5'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var monsterinsights_frontend = {"js_events_tracking":"true","is_debug_mode":"false","download_extensions":"doc,exe,js,pdf,ppt,tgz,zip,xls","inbound_paths":"","home_url":"https:\/\/nextion.itead.cc","track_download_as":"event","internal_label":"int","hash_tracking":"false"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/google-analytics-for-wordpress/assets/js/frontend.min.js?ver=6.2.6'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/image-upload-for-bbpress/js/bbp-image-upload.js?ver=4.9.8'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/revslider/public/assets/js/jquery.themepunch.tools.min.js?ver=5.4.5.1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/revslider/public/assets/js/jquery.themepunch.revolution.min.js?ver=5.4.5.1'></script>
+<meta name="generator" content="Powered by LayerSlider 6.5.5 - Multi-Purpose, Responsive, Parallax, Mobile-Friendly Slider Plugin for WordPress." />
+<!-- LayerSlider updates and docs at: https://layerslider.kreaturamedia.com -->
+<link rel='https://api.w.org/' href='https://nextion.itead.cc/wp-json/' />
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://nextion.itead.cc/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://nextion.itead.cc/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 4.9.8" />
+<link rel='shortlink' href='https://nextion.itead.cc/?p=58' />
+<link rel="alternate" type="application/json+oembed" href="https://nextion.itead.cc/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fnextion.itead.cc%2Fresources%2Fdocuments%2Finstruction-set%2F" />
+<link rel="alternate" type="text/xml+oembed" href="https://nextion.itead.cc/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fnextion.itead.cc%2Fresources%2Fdocuments%2Finstruction-set%2F&#038;format=xml" />
+<meta name="generator" content="Powered by Slider Revolution 5.4.5.1 - responsive, Mobile-Friendly Slider Plugin for WordPress with comfortable drag and drop interface." />
+		<script type="text/javascript">function setREVStartSize(e){
+				try{ var i=jQuery(window).width(),t=9999,r=0,n=0,l=0,f=0,s=0,h=0;					
+					if(e.responsiveLevels&&(jQuery.each(e.responsiveLevels,function(e,f){f>i&&(t=r=f,l=e),i>f&&f>r&&(r=f,n=e)}),t>r&&(l=n)),f=e.gridheight[l]||e.gridheight[0]||e.gridheight,s=e.gridwidth[l]||e.gridwidth[0]||e.gridwidth,h=i/s,h=h>1?1:h,f=Math.round(h*f),"fullscreen"==e.sliderLayout){var u=(e.c.width(),jQuery(window).height());if(void 0!=e.fullScreenOffsetContainer){var c=e.fullScreenOffsetContainer.split(",");if (c) jQuery.each(c,function(e,i){u=jQuery(i).length>0?u-jQuery(i).outerHeight(!0):u}),e.fullScreenOffset.split("%").length>1&&void 0!=e.fullScreenOffset&&e.fullScreenOffset.length>0?u-=jQuery(window).height()*parseInt(e.fullScreenOffset,0)/100:void 0!=e.fullScreenOffset&&e.fullScreenOffset.length>0&&(u-=parseInt(e.fullScreenOffset,0))}f=u}else void 0!=e.minHeight&&f<e.minHeight&&(f=e.minHeight);e.c.closest(".rev_slider_wrapper").css({height:f})					
+				}catch(d){console.log("Failure at Presize of Slider:"+d)}
+			};</script>
+		<style type="text/css" id="wp-custom-css">
+			.woocommerce-container .product-title{
+font-size:15px
+}
+.bbp-reply-entry p{
+font-size:15px;
+color: #3a3a3a;
+}
+.product-title a{
+font-size:18px;
+	display:block;
+}		</style>
+	
+		
+	<script type="text/javascript">
+		var doc = document.documentElement;
+		doc.setAttribute('data-useragent', navigator.userAgent);
+	</script>
+
+	</head>
+
+<body class="page-template-default page page-id-58 page-child parent-pageid-13355 fusion-image-hovers fusion-body ltr fusion-sticky-header no-tablet-sticky-header no-mobile-sticky-header no-mobile-slidingbar layout-wide-mode fusion-top-header menu-text-align-center mobile-menu-design-classic fusion-show-pagination-text fusion-header-layout-v1 avada-responsive avada-footer-fx-none">
+				<div id="wrapper" class="">
+		<div id="home" style="position:relative;top:-1px;"></div>
+		
+			<header class="fusion-header-wrapper">
+				<div class="fusion-header-v1 fusion-logo-left fusion-sticky-menu- fusion-sticky-logo- fusion-mobile-logo-  fusion-mobile-menu-design-classic">
+					<div class="fusion-header-sticky-height"></div>
+<div class="fusion-header">
+	<div class="fusion-row">
+				<div class="fusion-logo" data-margin-top="31px" data-margin-bottom="31px" data-margin-left="0px" data-margin-right="0px">
+				<a class="fusion-logo-link"  href="https://nextion.itead.cc/" >
+
+						<!-- standard logo -->
+			<img src="https://nextion.itead.cc/wp-content/uploads/2017/08/下载.png" srcset="https://nextion.itead.cc/wp-content/uploads/2017/08/下载.png 1x" width="98" height="61" alt="Nextion Logo" retina_logo_url="" class="fusion-standard-logo" />
+
+			
+					</a>
+		</div>		<nav class="fusion-main-menu" aria-label="Main Menu"><ul role="menubar" id="menu-nextion-main" class="fusion-menu"><li role="menuitem"  id="menu-item-14247"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-14247"  ><a  href="https://nextion.itead.cc/" class="fusion-arrow-highlight"><span class="menu-text">Home<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span></span></a></li><li role="menuitem"  id="menu-item-15464"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-15464 fusion-dropdown-menu"  ><a  href="https://nextion.itead.cc/nextion-shop/" class="fusion-arrow-highlight"><span class="menu-text">Shop<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span><span class="fusion-dropdown-svg"><svg height="12px" width="27px">
+						<path d="M0 12 L13.5 0 L27 12 Z" fill="rgba(37,169,189,0.85)"/>
+						</svg></span></span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14531"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14531 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/nextion-shop/" class="fusion-arrow-highlight"><span>Nextion Models</span></a></li><li role="menuitem"  id="menu-item-15472"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-15472 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/accessories/" class="fusion-arrow-highlight"><span>Accessories</span></a></li><li role="menuitem"  id="menu-item-15465"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-15465 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/enhancements/" class="fusion-arrow-highlight"><span>Enhancements</span></a></li></ul></li><li role="menuitem"  id="menu-item-14399"  class="menu-item menu-item-type-custom menu-item-object-custom current-menu-ancestor menu-item-has-children menu-item-14399 fusion-dropdown-menu"  ><a  class="fusion-arrow-highlight"><span class="menu-text">Resources<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span><span class="fusion-dropdown-svg"><svg height="12px" width="27px">
+						<path d="M0 12 L13.5 0 L27 12 Z" fill="rgba(37,169,189,0.85)"/>
+						</svg></span></span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14230"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-14230 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/resources/download/" class="fusion-arrow-highlight"><span>Download</span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14223"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14223"  ><a  href="https://nextion.itead.cc/resources/download/nextion-editor/" class="fusion-arrow-highlight"><span>Nextion Editor</span></a></li><li role="menuitem"  id="menu-item-14222"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14222"  ><a  href="https://nextion.itead.cc/resources/download/libraries/" class="fusion-arrow-highlight"><span>Nextion Libraries</span></a></li><li role="menuitem"  id="menu-item-14221"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14221"  ><a  href="https://nextion.itead.cc/resources/download/tooles-pages/" class="fusion-arrow-highlight"><span>Tools &#038; Pages</span></a></li></ul></li><li role="menuitem"  id="menu-item-14225"  class="menu-item menu-item-type-post_type menu-item-object-page current-page-ancestor current-menu-ancestor current-menu-parent current-page-parent current_page_parent current_page_ancestor menu-item-has-children menu-item-14225 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/resources/documents/" class="fusion-arrow-highlight"><span>Documents</span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14231"  class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-58 current_page_item menu-item-14231"  ><a  href="https://nextion.itead.cc/resources/documents/instruction-set/" class="fusion-arrow-highlight"><span>Instruction Set</span></a></li><li role="menuitem"  id="menu-item-15942"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-15942"  ><a  href="https://nextion.itead.cc/editor_guide/" class="fusion-arrow-highlight"><span>Editor Guide</span></a></li><li role="menuitem"  id="menu-item-14522"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14522"  ><a  href="https://nextion.itead.cc/resources/datasheets/" class="fusion-arrow-highlight"><span>Datasheets</span></a></li><li role="menuitem"  id="menu-item-15571"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-15571"  ><a  href="https://nextion.itead.cc/faqs/" class="fusion-arrow-highlight"><span>Nextion FAQs</span></a></li><li role="menuitem"  id="menu-item-14217"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14217"  ><a  href="https://nextion.itead.cc/policies/" class="fusion-arrow-highlight"><span>Policies</span></a></li></ul></li><li role="menuitem"  id="menu-item-14224"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14224 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/resources/gallery/" class="fusion-arrow-highlight"><span>Gallery</span></a></li><li role="menuitem"  id="menu-item-14232"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14232 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/blog/" class="fusion-arrow-highlight"><span>Blog</span></a></li></ul></li><li role="menuitem"  id="menu-item-14605"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-14605 fusion-dropdown-menu"  ><a  class="fusion-arrow-highlight"><span class="menu-text">Support<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span><span class="fusion-dropdown-svg"><svg height="12px" width="27px">
+						<path d="M0 12 L13.5 0 L27 12 Z" fill="rgba(37,169,189,0.85)"/>
+						</svg></span></span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14235"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14235 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/support/checkcoverage-2/" class="fusion-arrow-highlight"><span>Check Coverage</span></a></li><li role="menuitem"  id="menu-item-14237"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14237 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/support/l1-support-system-2/" class="fusion-arrow-highlight"><span>Standard Support</span></a></li><li role="menuitem"  id="menu-item-14236"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14236 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/support/l2-support-system-2/" class="fusion-arrow-highlight"><span>Enhanced Support</span></a></li></ul></li><li role="menuitem"  id="menu-item-14233"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-14233 fusion-dropdown-menu"  ><a  href="https://nextion.itead.cc/forums/" class="fusion-arrow-highlight"><span class="menu-text">Our Community<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span><span class="fusion-dropdown-svg"><svg height="12px" width="27px">
+						<path d="M0 12 L13.5 0 L27 12 Z" fill="rgba(37,169,189,0.85)"/>
+						</svg></span></span></a><ul role="menu" class="sub-menu"><li role="menuitem"  id="menu-item-14708"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14708 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/join/" class="fusion-arrow-highlight"><span>Register</span></a></li><li role="menuitem"  id="menu-item-14709"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14709 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/wp-login.php" class="fusion-arrow-highlight"><span>Login</span></a></li><li role="menuitem"  id="menu-item-14706"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14706 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/forums/forum/forum/" class="fusion-arrow-highlight"><span>Forums</span></a></li><li role="menuitem"  id="menu-item-14707"  class="menu-item menu-item-type-custom menu-item-object-custom menu-item-14707 fusion-dropdown-submenu"  ><a  href="https://nextion.itead.cc/forums/" class="fusion-arrow-highlight"><span>Recent Topics</span></a></li></ul></li><li role="menuitem"  id="menu-item-14238"  class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14238"  ><a  href="https://nextion.itead.cc/contact-us/" class="fusion-arrow-highlight"><span class="menu-text">Contact us<span class="fusion-arrow-svg"><svg height="12px" width="27px">
+					<path d="M0 0 L13.5 12 L27 0 Z" fill="#25a9bd" />
+					</svg></span></span></a></li><li class="fusion-custom-menu-item fusion-main-menu-search"><a class="fusion-main-menu-icon" href="#" aria-hidden="true" aria-label="Search" data-title="Search" title="Search"></a><div class="fusion-custom-menu-item-contents"><form role="search" class="searchform" method="get" action="https://nextion.itead.cc/">
+	<div class="search-table">
+		<div class="search-field">
+			<input type="text" value="" name="s" class="s" placeholder="Search ..." required aria-required="true" aria-label="Search ..."/>
+		</div>
+		<div class="search-button">
+			<input type="submit" class="searchsubmit" value="&#xf002;" />
+		</div>
+	</div>
+</form>
+</div></li></ul></nav>
+
+<nav class="fusion-mobile-nav-holder fusion-mobile-menu-text-align-left"></nav>
+
+			</div>
+</div>
+				</div>
+				<div class="fusion-clearfix"></div>
+			</header>
+					
+		<div id="sliders-container">
+					</div>
+						
+					<div class="fusion-page-title-bar fusion-page-title-bar-breadcrumbs fusion-page-title-bar-center">
+	<div class="fusion-page-title-row">
+		<div class="fusion-page-title-wrapper">
+			<div class="fusion-page-title-captions">
+
+				
+															<div class="fusion-page-title-secondary">
+							<div class="fusion-breadcrumbs"><span class="fusion-breadcrumb-prefix">You are here:</span><span itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" href="https://nextion.itead.cc"><span itemprop="title">Home</span></a></span><span class="fusion-breadcrumb-sep">-</span><span itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" href="https://nextion.itead.cc/resources/"><span itemprop="title">Resources</span></a></span><span class="fusion-breadcrumb-sep">-</span><span itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a itemprop="url" href="https://nextion.itead.cc/resources/documents/"><span itemprop="title">Documents</span></a></span><span class="fusion-breadcrumb-sep">-</span><span class="breadcrumb-leaf">Instruction Set</span></div>						</div>
+									
+			</div>
+
+			
+		</div>
+	</div>
+</div>
+		
+		
+						<main id="main" role="main" class="clearfix " style="">
+			<div class="fusion-row" style="">
+<section id="content" style="width: 100%;">
+					<div id="post-58" class="post-58 page type-page status-publish hentry">
+			
+			<span class="entry-title rich-snippet-hidden">
+			Instruction Set		</span>
+	
+			<span class="vcard rich-snippet-hidden">
+			<span class="fn">
+				<a href="https://nextion.itead.cc/author/iteadpatrick/" title="Posts by Patrick" rel="author">Patrick</a>			</span>
+		</span>
+	
+			<span class="updated rich-snippet-hidden">
+			2018-08-16T10:44:03+00:00		</span>
+	
+																			
+			<div class="post-content">
+				<p><a name="top"></a></p>
+<h3><span style="color: #ff6600;">The Nextion Instruction Set</span></h3>
+<p>These are the set of commands that Nextion can use.<br />
+They are categorized into only a few categories</p>
+<ol>
+<li><span style="color: #ff6600;"> General Rules and Practices &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;"> Assignment Statements &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s2">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;">Operational Commands &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;"> GUI Designing Commands &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s4">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;"> Color Code Constants &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s5">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;"> System Variables &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s6">goto</a>&gt;</span></li>
+<li><span style="color: #ff6600;"> Format of Nextion Return Data &#8230; &lt;<a href="https://nextion.itead.cc/resource/documents/instruction-set/#s7">goto</a>&gt;</span></li>
+</ol>
+<p><a name="s1"></a></p>
+<h4><span style="color: #ff6600;"><strong>1 </strong></span>&#8211; General Rules and Practices</h4>
+<table style="height: 411px;" border="0" width="95%">
+<tbody>
+<tr bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" width="92%">General Rule or Practice</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_1"></a>1</td>
+<td><span style="color: #ff2424;"><strong>All instructions over serial: <em>are terminated with three bytes of </em>0xFF 0xFF 0xFF</strong></span><br />
+ie: decimal: 255  or  hex: 0xFF or  ansichar: ÿ  or binary: 11111111<br />
+ie  byte ndt[3] = {255,255,255}; write(ndt,3);  or print(&#8220;\xFF\xFF\xFF&#8221;);  or  print(&#8220;ÿÿÿ&#8221;)</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_2"></a>2</td>
+<td>All instructions and parameters are in ASCII</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_3"></a>3</td>
+<td>All instructions are in lowercase letters</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_4"></a>4</td>
+<td>Blocks of code and enclosed within braces { } can not be sent over serial<br />
+this means if, for, and while commands can not be used over serial</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_5"></a>5</td>
+<td>A space char 0x20 is used to separate command from parameters.</td>
+</tr>
+<tr>
+<td align="center"><a name="s1_6"></a>6</td>
+<td>There are no spaces in parameters unless specifically stated</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_7"></a>7</td>
+<td>Nextion uses integer math and does not have real or floating support.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_8"></a>8</td>
+<td>Assignment are non-complex evaluating fully when reaching value after operator.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_9"></a>9</td>
+<td>Comparison evaluation is non-complex.  Use nesting when and as required.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_10"></a>10</td>
+<td>Instructions over serial are processed on receiving termination (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_1">1.1</a>)</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_11"></a>11</td>
+<td>Character escaping is limited to 0x0D by using two text chars \r</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_12"></a>12</td>
+<td>Nextion does not support order of operations.  sys0=3+(8*4) is invalid.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_13"></a>13</td>
+<td>16-bit 565 Colors are in decimal from 0 to 65535 (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s5_note">5.Note</a>)</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_14"></a>14</td>
+<td>Text values must be encapsulated with double quotes: ie &#8220;Hello&#8221;</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_15"></a>15</td>
+<td>Items within specific to Enhanced Models are noted with <strong><span style="color: #ff6600;">*K*</span></strong></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_16"></a>16</td>
+<td>Transparent Data Mode (used by addt and wept commands)</p>
+<ol>
+<li>MCU sending to Nextion
+<ol>
+<li>MCU sends command. ie: wept 30,20ÿÿÿ or addt 1,0,320ÿÿÿ</li>
+<li>Nextion requires ~5ms to prepare for transparent mode data transfer</li>
+<li>Nextion sends &#8220;Ready&#8221; 0xFE 0xFF 0xFF 0xFF Return Data (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s7_30">7.30</a>)</li>
+<li>MCU can now send specified quantity (20) of raw bytes to Nextion</li>
+<li>Nextion receives raw bytes from MCU until specified quantity (20) is received</li>
+<li>Nextion sends &#8220;Finished&#8221; 0xFD 0xFF 0xFF 0xFF Return Data (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s7_29">7.29</a>)</li>
+<li>MCU and Nextion can proceed to next command</li>
+</ol>
+</li>
+</ol>
+<p>Note: Nextion will remain waiting at step 5 until every byte of specified quantity is received.<br />
+&#8211; During this time Nextion can not execute any other commands, and may indeed hang if the MCU fails to deliver the number of bytes as specified by the command parameter.<br />
+&#8211; data quantity limited by serial buffer (all commands+terminations + data &lt; 1024)</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_17"></a>17</td>
+<td>Only component attributes in green and non readonly system variables can be assigned new values at runtime.  All others are readonly at runtime with the exception of .objname</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_18"></a>18</td>
+<td>Numeric values can now be entered with byte-aligned hex. ie: n0.val=0x01FF</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_19"></a>19</td>
+<td><strong>Advanced</strong>. Address mode is an advanced technique prepending the serial instruction with two bytes for the address. Two byte address is to be sent in little endian order, ie: 2556 is sent 0xFC 0x09. By default, the Nextion address is 0 and does not require two byte prefixing. When the two byte addressing is used, Nextion will only respond to the command if its address matches the two byte prefix, or the transmitted address is 65535 broadcast. See the addr system variable.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_20"></a>20</td>
+<td><strong>Advanced</strong>. Protocol Reparse mode is an advanced technique that allows users to define their own incoming protocol and incoming serial data handling. When in active Protocol Reparse mode, incoming serial data will not be processed natively by the Nextion firmware but will wait in the serial buffer for processing. To exit active Protocol Reparse mode, recmod must be set back to passive (ie: in Nextion logic as recmod=0), which can not be achieved via serial. Send DRAKJHSUYDGBNCJHGJKSHBDNÿÿÿ via serial to exit active mode serially. Most HMI applications will not require Protocol Reparse mode and should be skipped if not fully understood.</td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s1_21"></a>21</td>
+<td>Commenting user code inside Events uses the double-slash (two characters of forward slash / ) technique. See <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s2_27">2.27</a> for proper usage.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s2"></a></p>
+<h4><span style="color: #ff6600;"><strong>2 </strong></span>&#8211; Assignment Statements</h4>
+<table style="height: 411px;" border="0" width="95%">
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" width="12%">Data Type</td>
+<td align="center" width="8%">Operator</td>
+<td width="72%">Description/Example  (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_8">1.8</a> and <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_17">1.17</a>)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_1"></a>1</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">=</td>
+<td>Assignment.  Right side will be evaluated with result placed in left side.  Component .txt-maxl needs to be large enough to hold result.</td>
+</tr>
+<tr valign="top">
+<td>t0.txt=&#8221;Hello&#8221;</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_2"></a>2</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">+=</td>
+<td>Text Addition.  Will concatenate left side with right side with result placed left side.  ie t0.txt+=&#8221;Hello&#8221; is equivalent to t0.txt=t0.txt+&#8221;Hello&#8221;.<br />
+t0.txt=&#8221;-&#8220;+t0.txt becomes t0.txt=t0.txt+&#8221;-&#8220;.<br />
+Use temp variable to prepend.  va0.txt=t0.txt  t0.txt=&#8221;-&#8220;+va0.txt</td>
+</tr>
+<tr valign="top">
+<td>t0.txt+=&#8221; World&#8221; // append &#8221; World&#8221; to t0.txt<br />
+//When contents of t0.txt is &#8220;Hello&#8221; becomes &#8220;Hello World&#8221;</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_3"></a>3</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">-=</td>
+<td>Text Subtraction.  Will remove right side (a specified numeric amount of characters to remove) from end of left side and result placed in left side.</td>
+</tr>
+<tr valign="top">
+<td>t0.txt-=4 or t0.txt=t0.txt-4 // remove last 4 chars from t0.txt</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_4"></a>4</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">\</td>
+<td>Escape Character.<br />
+Supported is \r  hex 0x0D. (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_11">1.11</a>)</td>
+</tr>
+<tr valign="top">
+<td>t0.txt=&#8221;\r&#8221;</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_5"></a>5</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">==</td>
+<td>Boolean Equality.  Evaluate left side to right side.<br />
+If both left and right sides are the same creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>if(t0.txt==va0.txt)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_6"></a>6</td>
+<td rowspan="2" align="center">Text</td>
+<td rowspan="2" align="center">!=</td>
+<td>Boolean Inequality.  Evaluate left side to right side.<br />
+If both left and right sides are different creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>if(t0.txt!=va0.txt)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_7"></a>7</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">=</td>
+<td>Assignment.  Right side of equation will be evaluated and result placed in left side. If more than one operator on right side, full evaluation and assignment will occur at each operator.</td>
+</tr>
+<tr valign="top">
+<td>n0.val=bauds // places bauds value in n0.val component</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_8"></a>8</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">+=</td>
+<td>Numeric Addition. Adds value of left side and right side with result placed in left side.  n0.val+=4 is equivalent to n0.val=n0.val+4</td>
+</tr>
+<tr valign="top">
+<td>n0.val+=va0.val</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_9"></a>9</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">-=</td>
+<td>Numeric Subtraction. Subtracts right side from left side with result placed in left side.  n0.val-=4 is equivalent to n0.val=n0.val-4</td>
+</tr>
+<tr valign="top">
+<td>n0.val-=60 // decreases value of n0.val by 60</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_10"></a>10</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">*=</td>
+<td>Numeric Multiplication.  Multiplies left side with right side with product result placed in left side.  n0.val*=2 is equivalent of n0.val=n0.val*2</td>
+</tr>
+<tr valign="top">
+<td>n0.val*=2</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_11"></a>11</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">/=</td>
+<td>Numeric Division. Equates division of numerator (left side) and divisor (right side) and places integer quotient in left side.  60000/20001=2</td>
+</tr>
+<tr valign="top">
+<td>n0.val/=60</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_12"></a>12</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">%=</td>
+<td>Numeric Modulo.  Equates division of numerator (left side) and divisor (right side) and places integer remainder in left side.  60000/20001=19998</td>
+</tr>
+<tr valign="top">
+<td>n0.val%=60</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_13"></a>13</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&lt;&lt;</td>
+<td>Logical Bit Shift Left. Moves all bits specified number to the left.<br />
+Using the 16-bit example that follows, (32-bit uses similar rules)<br />
+All bits shifted above 15 are <span style="color: #333399;"><strong>lost</strong></span> and <strong><span style="color: #ff9900;">undefined</span> </strong>bits become 0</td>
+</tr>
+<tr valign="top">
+<td>n0.val=n0.val&lt;&lt;4<br />
+<strong><span style="color: #333399;">0 0 0 0</span>.<span style="color: #008000;">0 0 1 1.1 1 0 0.0 0 0 1</span></strong><br />
+<span style="color: #008000;"><strong>0 0 1 1.1 1 0 0.0 0 0 1.       </strong></span><br />
+<strong><span style="color: #008000;">0 0 1 1.1 1 0 0.0 0 0 1</span>.<span style="color: #ff9900;">0 0 0 0</span></strong></td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_14"></a>14</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&gt;&gt;</td>
+<td>Logical Bit Shift Right. Moves all bits specified number to the right.<br />
+Using the 16-bit example that follows, (32-bit uses similar rules)<br />
+All bits shifted below 0 are <span style="color: #333399;"><strong>lost</strong> </span>and <strong><span style="color: #ff6600;">undefined</span> </strong>bits become 0</td>
+</tr>
+<tr valign="top">
+<td>n0.val=n0.val&gt;&gt;4<br />
+<strong><span style="color: #339966;">0 0 0 0.0 0 1 1.1 1 0 0</span>.<span style="color: #333399;">0 0 0 1</span></strong><br />
+<strong>            <span style="color: #339966;"> 0 0 0 0.0 0 1 1.1 1 0 0</span></strong><br />
+<strong><span style="color: #ff6600;">0 0 0 0</span>.<span style="color: #339966;">0 0 0 0.0 0 1 1.1 1 0 0</span></strong></td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_15"></a>15</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&amp;</td>
+<td>Logical Bitwise AND. Compares all bits left side to all bits right side(mask)<br />
+Using the 16-bit example that follows, (32-bit uses similar rules)<br />
+Result is a bit of 1 where both left and right bits were 1</td>
+</tr>
+<tr valign="top">
+<td>n0.val=n0.val&amp;35381<br />
+<span style="color: #a5a5a5;"><strong><span style="color: #808080;">0 <span style="color: #ff0000;">1</span> 0 <span style="color: #ff0000;">1</span>.<span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span> <span style="color: #ff0000;">1</span>.0 0 <span style="color: #03b300;">1</span> 0.0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span></span>  </strong> <span style="color: #333333;"> n0.val of 23333</span><br />
+</span><strong><span style="color: #808080;"><span style="color: #ff0000;">1</span> 0 0 0.<span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span> 0.0 0 <span style="color: #03b300;">1</span> <span style="color: #ff0000;">1</span>.0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span></span>   </strong>mask of 35381<br />
+<strong><span style="color: #808080;">0 0 0 0.</span><span style="color: #03b300;">1</span> <span style="color: #808080;">0</span> <span style="color: #03b300;">1</span> <span style="color: #808080;">0.0 0</span> <span style="color: #03b300;">1</span><span style="color: #808080;"> 0.0</span> <span style="color: #03b300;">1</span> <span style="color: #808080;">0</span> <span style="color: #03b300;">1</span>   </strong>result is 2597</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_16"></a>16</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">|</td>
+<td>Logical Bitwise OR. Compares all bits left side to all bits right side<br />
+Using the 16-bit example that follows, (32-bit uses similar rules)<br />
+Result is a bit of 1 where either left or right bits were 1</td>
+</tr>
+<tr valign="top">
+<td>n0.val=n0.val|35381<br />
+<strong><span style="color: #808080;">0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span>.<span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1 1</span>.0 0 <span style="color: #03b300;">1</span> 0.0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span></span>  </strong>  n0.val of 65519<br />
+<b><span style="color: #808080;"><span style="color: #03b300;">1</span> 0 0 0.<span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span> 0.0 0 <span style="color: #03b300;">1 1</span>.0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span></span>   </b>constant 35381<br />
+<strong><span style="color: #808080;"><span style="color: #03b300;">1 1</span> 0 <span style="color: #03b300;">1</span>.<span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1 1</span>.0 0 <span style="color: #03b300;">1 1</span>.0 <span style="color: #03b300;">1</span> 0 <span style="color: #03b300;">1</span></span>   </strong>result is 56117</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_17"></a>17</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">==</td>
+<td>Boolean Equality.  Evaluate left side to right side.<br />
+If both left and right sides are the same creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>if(n0.val==va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_18"></a>18</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">!=</td>
+<td>Boolean Inequality.  Evaluate left side to right side.<br />
+If both left and right sides are different creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>if(n0.val!=va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_19"></a>19</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&lt;</td>
+<td>Boolean Less than. Evaluate left side to right side.<br />
+If left side is less than right side creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>while(n0.val&lt;va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_20"></a>20</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&lt;=</td>
+<td>Boolean Less than or Equal.  Evaluate left side to right side.<br />
+If left side is less than or equal to right side creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>while(n0.val&lt;=va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_21"></a>21</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&gt;</td>
+<td>Boolean Greater than.  Evaluate left side to right side.<br />
+If left side is greater than right side creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>while(n0.val&gt;va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_22"></a>22</td>
+<td rowspan="2" align="center">Numeric</td>
+<td rowspan="2" align="center">&gt;=</td>
+<td>Boolean Greater than or Equal.  Evaluate left side to right side.<br />
+If left side is greater than or equal to right side creates a true condition</td>
+</tr>
+<tr valign="top">
+<td>while(n0.val&gt;=va0.val)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_23"></a>23</td>
+<td rowspan="2" align="center">Code</td>
+<td rowspan="2" align="center">{   }</td>
+<td>Code Block begins with open brace { on line by itself<br />
+Code Block ends with closing brace } beginning a new line</td>
+</tr>
+<tr valign="top">
+<td>see if (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_if">3.25</a>) while (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_while">3.26</a>) and for (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_for">3.27</a>)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_24"></a>24</td>
+<td rowspan="2" align="center">Code</td>
+<td rowspan="2" align="center">(   )</td>
+<td>Condition enclosure begins with open parenthesis (<br />
+and ends with closing parenthesis ) at end of line</td>
+</tr>
+<tr valign="top">
+<td>see if (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_if">3.25</a>) while (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_while">3.26</a>) and for (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_for">3.27</a>)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_25"></a>25</td>
+<td rowspan="2" align="center">Code</td>
+<td rowspan="2" align="center">.</td>
+<td>Period Separator.  Separates Page, Component and Attributes<br />
+Also used with page index and component array. (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s2_26">2.26</a>)</td>
+</tr>
+<tr valign="top">
+<td>page1.va0.val or p0.pic</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_26"></a>26</td>
+<td rowspan="2" align="center">Code</td>
+<td rowspan="2" align="center">[   ]</td>
+<td>Array[index].  There are 3 arrays. Keyboard source showcases 2 arrays.<br />
+The b[.id] component array which takes component .id as index<br />
+The p[index] page array which takes page index as index<br />
+These (p[].b[]) need to be used with caution and mindful purpose. Reference to a component without specified Attribute can create for long and potentially frustrating debug sessions.  The third array is the Serial Buffer Data u[index] array. This is valid when in active Protocol Reparse mode. Protocol Reparse is an advanced technique that should be skipped if not fully understood.</td>
+</tr>
+<tr valign="top">
+<td>p[pageindex].b[component.id].attribute // global scope<br />
+b[component.id].attribute // local scope on current page</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s2_27"></a>27</td>
+<td rowspan="2" align="center">Comment</td>
+<td rowspan="2" align="center">//</td>
+<td>Double-Slash Commenting to add user comments to code.<br />
+Everything to the right of, and including, the double-slash is a comment that will not be executed by the Nextion interpreter. Comments should: 1) occur on a line by themselves with the double-slash at the beginning of the line (no leading spaces), 2) immediately following code on a line without a space separating code and the double slash. Commenting of code blocks should occur: 1) before the condition/iteration 2) inside the opening and closing braces 3) after the code block. <em>Notes:</em> It is important to note that comments can not interrupt code blocks without causing an &#8220;Error: Index was outside the bounds of the array&#8221;. Comments are counted towards the overall &#8220;code + attributes&#8221; hard limit of 65534.</td>
+</tr>
+<tr valign="top">
+<td>
+<pre>// these are valid comments
+sys0=0// reset sys0 to zero</pre>
+<p>The following showcases valid/invalid use</p>
+<pre>//valid comment before condition/iteration
+for(sys0=0;sys0&lt;=sys1;sys0++)
+// invalid comment between condition/iteration and block
+{
+  doevents//valid comment after code on same line
+  // valid comment inside block
+}
+// valid comment outside block
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s3"></a></p>
+<h4><span style="color: #ff6600;"><strong>3 </strong></span>&#8211; Operational Commands</h4>
+<table style="height: 411px;" border="0" width="95%">
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" width="12%">Name</td>
+<td width="8%">Param Count</td>
+<td width="72%">Description and Usage/Parameters/Examples</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_page"></a>1</td>
+<td rowspan="3" align="center">page</td>
+<td rowspan="3" align="center">1</td>
+<td>Change page to page specified.  Unloads old page to load specified page.<br />
+Nextion loads page 0 by default on power on.<br />
+usage: page &lt;pid&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;pid&gt; is either the page index number, or pagename</td>
+</tr>
+<tr valign="top">
+<td>page 0  // Change page to indexed page 0<br />
+page main // Change page to the page named main</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_ref"></a>2</td>
+<td rowspan="3" align="center">ref</td>
+<td rowspan="3" align="center">1</td>
+<td>Refresh component (auto-refresh when attribute changes since v0.38)<br />
+&#8211; if component is obstructed (stacking), ref brings component to top.<br />
+usage: ref &lt;cid&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;cid&gt; is component&#8217;s .id or .objname attribute of component to refresh<br />
+&#8211; when &lt;cid&gt; is 0 (page component) refreshes all on the current page.</td>
+</tr>
+<tr valign="top">
+<td>ref t0 // Refreshes the component with .objname of t0<br />
+ref 3  // Refreshes the component with .id of 3<br />
+ref 0  // Refreshes all components on the current page (same as ref 255)</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_click"></a>3</td>
+<td rowspan="3" align="center">click</td>
+<td rowspan="3" align="center">2</td>
+<td>Trigger the specified components Touch Press/Release Event<br />
+As event code is always local, object can not be page prefixed<br />
+usage: click &lt;cid&gt;,&lt;event&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;cid&gt; is component&#8217;s .id or .objname attribute of component to refresh<br />
+&lt;event&gt; is 1 to trigger Press Event, 0 to trigger Release Events</td>
+</tr>
+<tr valign="top">
+<td>click b0,1 // Trigger Touch Press Event of component with .objname b0<br />
+click 4,0 // Trigger Touch Release Event of component with .id 4</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_ref_stop"></a>4</td>
+<td rowspan="2" align="center">ref_stop</td>
+<td rowspan="2" align="center">0</td>
+<td>Stops default waveform refreshing (will not refresh when data point added)<br />
+&#8211; waveform refreshing will resume with ref_star (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_ref_star">3.5</a>)<br />
+usage: ref_stop</td>
+</tr>
+<tr valign="top">
+<td>ref_stop // stop refreshing the waveform on each data point added</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_ref_star"></a>5</td>
+<td rowspan="2" align="center">ref_star</td>
+<td rowspan="2" align="center">0</td>
+<td>Resume default waveform refreshing (refresh on data point add)<br />
+&#8211; used to resume waveform refreshing stopped by ref_stop (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_ref_stop">3.4</a>)<br />
+usage: ref_start</td>
+</tr>
+<tr valign="top">
+<td>ref_star // resume default refreshing, refresh on each data point added</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_get"></a>6</td>
+<td rowspan="3" align="center">get</td>
+<td rowspan="3" align="center">1</td>
+<td>Send attribute/constant over serial (0x70/0x71 Return Data)<br />
+usage: get &lt;attribute&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;attribute&gt; is either numeric value, .txt contents, or constant</td>
+</tr>
+<tr valign="top">
+<td>get t0.txt // sends text contents of t0.txt in 0x70 Return Data format<br />
+get &#8220;123&#8221; // sends text constant &#8220;123&#8221; in 0x70 Return Data format<br />
+get n0.val // sends numeric value of n0.val in 0x71 Return Data format<br />
+get 123 // sends numeric constant 123 in 0x71 Return Data format</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_sendme"></a>7</td>
+<td rowspan="2" align="center">sendme</td>
+<td rowspan="2" align="center">0</td>
+<td>Sends number of currently loaded page over serial (0x66 Return Data)<br />
+&#8211; number of currently loaded page is stored in system variable dp<br />
+&#8211; used in a page&#8217;s initialize event will auto-send as page loads<br />
+usage: sendme</td>
+</tr>
+<tr valign="top">
+<td>sendme // sends the value of dp in 0x66 Return Data Format</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_cov"></a>8</td>
+<td rowspan="3" align="center">cov</td>
+<td rowspan="3" align="center">3</td>
+<td>Convert variable from numeric type to text, or text to numeric type<br />
+&#8211; text must be text ASCII representation of an integer value.<br />
+&#8211; source and destination types must not be of the same type<br />
+&#8211; when length is fixed and value is less, leading zeros will be added<br />
+ie: src numeric value of 123 with length 4, result is dest text &#8220;0123&#8221;<br />
+&#8211; dest txt_maxl and length needs be large enough to accommodate conversion.<br />
+ie: src numeric value of 123 with length 0, result is dest text &#8220;123&#8221;<br />
+&#8211; when value is larger than length, .txt <b>results in a truncation</b><br />
+&#8211; it is recommended to handle source length in user code before cov<br />
+<b>Note:</b> v0.53 changed behaviour from previous pre v0.53 behaviours.<br />
+cov is deemed undefined if source is larger than length or the dest txt_maxl is<br />
+smaller than the requested length. Some undefines are exploitable.<br />
+usage: cov &lt;src&gt;,&lt;dest&gt;,&lt;length&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;src&gt; is text attribute (or numeric attribute when &lt;dest&gt; is text)<br />
+&lt;dest&gt; is numeric attribute (or text attribute when &lt;src&gt; is numeric)<br />
+&lt;length&gt; will determine if leading zeros added to conversion to text</td>
+</tr>
+<tr valign="top">
+<td>cov h0.val,t0.txt,0 // convert value of h0 into t0.txt without leading zeros<br />
+cov t0.txt,h0.val,0 // convert integer into t0.txt from h0.val &lt;length&gt; ignored.<br />
+cov h0.val,t0.txt,4 // convert value of h0 into t0.txt with exactly 4 digits<br />
+Invalid: cov h0.val,va0.val,0  or cov t0.txt,va0.txt,0 // src &amp; dest same type.</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_covx"></a>8a</td>
+<td rowspan="3" align="center">covx</td>
+<td rowspan="3" align="center">4</td>
+<td>Convert variable from numeric type to text, or text to numeric type<br />
+&#8211; text must be text ASCII representation of an integer value.<br />
+&#8211; source and destination types must not be of the same type<br />
+&#8211; when source is numeric, hex format and length not 0 and &lt;4.<br />
+ie: (len 2) positive significant (byte 0 to 3), 123 = 0000007B = 007B<br />
+ie: (len 2) negative significant (byte 3 to 0), -123 = FFFFFF85 = FF85<br />
+&#8211; value is more than allowed space <b>results in a truncation</b><br />
+&#8211; it is recommended to ensure handling source length in user code before covx<br />
+&#8211; in v0.53, covx is deemed undefined if source is larger than length or<br />
+&nbsp;&nbsp;&nbsp; dest txt_maxl is smaller than requested length.<br />
+&nbsp;&nbsp;&nbsp; (some of these undefines, can be exploited)<br />
+ie: src numeric value of 123 with length 0, result is dest text &#8220;123&#8221;<br />
+&#8211; when length is fixed and value is less, leading zeros will be added<br />
+ie: src numeric value of 123 with length 4, result is dest text &#8220;0123&#8221;<br />
+&#8211; when value is larger than length, .txt truncated to least significant digits<br />
+ie: src numeric value of 23425 with length 4 result is dest text &#8220;3425&#8221;<br />
+usage: covx &lt;src&gt;,&lt;dest&gt;,&lt;length&gt;,&lt;format&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;src&gt; is text attribute (or numeric attribute when &lt;dest&gt; is text)<br />
+&lt;dest&gt; is numeric attribute (or text attribute when &lt;src&gt; is numeric)<br />
+&lt;length&gt; will determine if leading zeros added to conversion to text<br />
+&lt;format&gt; 0: integer, 1: Comma separated 1,000s, 2: Hex</td>
+</tr>
+<tr valign="top">
+<td>covx h0.val,t0.txt,0,0 // convert value of h0 into t0.txt without leading zeros<br />
+covx t0.txt,h0.val,0,0 // convert t0.txt into integer in h0.val &lt;length&gt; ignored.<br />
+covx h0.val,t0.txt,4,0 // convert value of h0 into t0.txt with exactly 4 digits<br />
+covx h0.val,t0.txt,4,1 // convert value of h0 into t0.txt with commas<br />
+covx h0.val,t0.txt,4,2 // convert value of h0 into t0.txt in 2 bytes of hex digits<br />
+Invalid: cov h0.val,va0.val,0  or cov t0.txt,va0.txt,0 // src &amp; dest same type.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_touch_j"></a>9</td>
+<td rowspan="2" align="center">touch_j</td>
+<td rowspan="2" align="center">0</td>
+<td>Recalibrate the Nextion device&#8217;s touch sensor<br />
+&#8211; presents 4 points on screen for user to touch, saves, and then reboots.<br />
+&#8211; typically not required as device is calibrated at factory<br />
+&#8211; sensor can be effected by changes of conditions in environment<br />
+usage: touch_j</td>
+</tr>
+<tr valign="top">
+<td>touch_j // trigger the recalibration of touch sensor</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_substr"></a>10</td>
+<td rowspan="3" align="center">substr</td>
+<td rowspan="3" align="center">4</td>
+<td>Extract character or characters from contents of a Text attribute<br />
+usage: substr &lt;src&gt;,&lt;dest&gt;,&lt;start&gt;,&lt;count&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;src&gt; is text attribute where text will be extracted from<br />
+&lt;dest&gt; is text attribute to where extracted text will be placed<br />
+&lt;start&gt; is start position for extraction (0 is first char, 1 second)<br />
+&lt;count&gt; is the number of characters to extract</td>
+</tr>
+<tr valign="top">
+<td>substr va0.txt,t0.txt,0,5 // extract first 5 chars from va0.txt, put into t0.txt</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_vis"></a>11</td>
+<td rowspan="3" align="center">vis</td>
+<td rowspan="3" align="center">2</td>
+<td>Hide or Show component on current page<br />
+&#8211; show will refresh component and bring it to the forefront layer<br />
+&#8211; hide will remove component visually, touch events will be disabled<br />
+&#8211; use layering with mindful purpose, can cause ripping and flickering.<br />
+&#8211; use with caution and mindful purpose, may lead to difficult debug session<br />
+usage: vis &lt;comp&gt;&lt;state&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;comp&gt; is either .objname or .id of component on current page,<br />
+&#8211; valid .id is 0 &#8211; page, 1 to 250 if component exists, and 255 for all<br />
+&lt;state&gt; is either 0 to hide, or 1 to show.</td>
+</tr>
+<tr valign="top">
+<td>vis b0,0 // hide component with .objname b0<br />
+vis b0,1 // show component with .objname b0, refresh on front layer<br />
+vis 1,0 // hide component with .id 1<br />
+vis 1,1 // show component with .id 1, refresh on front layer<br />
+vis 255,0 // hides all components on the current page</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_tsw"></a>12</td>
+<td rowspan="3" align="center">tsw</td>
+<td rowspan="3" align="center">2</td>
+<td>Enable or disable touch events for component on current page<br />
+&#8211; by default, all components are enabled unless disabled by tsw<br />
+&#8211; use with caution and mindful purpose, may lead to difficult debug session<br />
+usage: tsw &lt;comp&gt;&lt;state&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;comp&gt; is either .objname or .id of component on current page,<br />
+&#8211; valid .id is 0 &#8211; page, 1 to 250 if component exists, and 255 for all<br />
+&lt;state&gt; is either 0 to disable, or 1 to enable.</td>
+</tr>
+<tr valign="top">
+<td>tsw b0,0 // disable Touch Press/Release events for component b0<br />
+tsw b0,1 // enable Touch Press/Release events for component b0<br />
+tsw 1,0 // disable Touch Press/Release events for component with id 1<br />
+tsw 1,1 // enable Touch Press/Release events for component with id 1<br />
+tsw 255,0 // disable all Touch Press/Release events on current page</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_com_stop"></a>13</td>
+<td rowspan="2" align="center">com_stop</td>
+<td rowspan="2" align="center">0</td>
+<td>Stop execution of instructions received from Serial<br />
+&#8211; Serial will continue to receive and store in buffer.<br />
+&#8211; execution of instructions from Serial will resume with com_star (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_com_star">3.14</a>)<br />
+&#8211; using com_stop and com_star may cause a buffer overflow condition.<br />
+&#8211; Refer to device datasheet for buffer size and command queue size<br />
+usage: com_stop</td>
+</tr>
+<tr valign="top">
+<td>com_stop // stops execution of instructions from Serial</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_com_star"></a>14</td>
+<td rowspan="2" align="center">com_star</td>
+<td rowspan="2" align="center">0</td>
+<td>Resume execution of instructions received from Serial<br />
+&#8211; used to resume an execution stop caused by com_stop (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_com_stop">3.13</a>)<br />
+&#8211; when com_star received, all instructions in buffer will be executed<br />
+&#8211; using com_stop and com_star may cause a buffer overflow condition.<br />
+&#8211; Refer to device datasheet for buffer size and command queue size<br />
+usage: com_star</td>
+</tr>
+<tr valign="top">
+<td>com_star // resume execution of instruction from Serial</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_randset"></a>15</td>
+<td rowspan="3" align="center">randset</td>
+<td rowspan="3" align="center">2</td>
+<td>Set the Random Generator Range for use with rand (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s6_rand">6.14</a>)<br />
+&#8211; range will persist until changed or Nextion rebooted<br />
+&#8211; set range to desired range before using rand<br />
+&#8211; power on default range is -2147483648 to 2147483647, runtime range is user definable.<br />
+usage: randset &lt;min&gt;,&lt;max&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;min&gt; is value is -2147483648 to 2147483647<br />
+&lt;max&gt; is value greater than min and less than 2147483647</td>
+</tr>
+<tr valign="top">
+<td>randset 1,100 //set current random generator range from 1 to 100<br />
+randset 0,65535 //set current random generator range from 0 to 65535</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_code_c"></a>16</td>
+<td rowspan="2" align="center">code_c</td>
+<td rowspan="2" align="center">0</td>
+<td>Clear the commands/data queued in command buffer without execution<br />
+usage: code_c</td>
+</tr>
+<tr valign="top">
+<td>code_c // Clears the command buffer without execution</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_print"></a>17</td>
+<td rowspan="3" align="center">print</td>
+<td rowspan="3" align="center">1</td>
+<td>Send raw formatted data over Serial to MCU<br />
+&#8211; print/printh does not use Nextion Return Data, user must handle MCU side<br />
+&#8211; qty of data may be limited by serial buffer (all data &lt; 1024)<br />
+&#8211; numeric value sent in 4 byte 32-bit little endian order<br />
+value = byte1+byte2*256+byte3*65536+byte4*16777216<br />
+&#8211; text content sent is sent 1 ASCII byte per character, without null byte.<br />
+usage: print &lt;attr&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;attr&gt; is either component attribute, variable or Constant</td>
+</tr>
+<tr valign="top">
+<td>print t0.txt // return 1 byte per char of t0.txt without null byte ending.<br />
+print j0.val // return  4 bytes for j0.val in little endian order<br />
+print &#8220;123&#8221; // return 3 bytes for text &#8220;123&#8221;  0x31 0x32 0x33<br />
+print 123 // return 4 bytes for value 123  0x7B 0x00 0x00 0x00</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_prints"></a>17a</td>
+<td rowspan="3" align="center">prints</td>
+<td rowspan="3" align="center">2</td>
+<td>Send raw formatted data over Serial to MCU<br />
+&#8211; prints does not use Nextion Return Data, user must handle MCU side<br />
+&#8211; qty of data may be limited by serial buffer (all data &lt; 1024)<br />
+&#8211; numeric value sent in 4 byte 32-bit little endian order<br />
+value = byte1+byte2*256+byte3*65536+byte4*16777216<br />
+&#8211; text content sent is sent 1 ASCII byte per character, without null byte.<br />
+usage: prints &lt;attr&gt;,&lt;length&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;attr&gt; is either component attribute, variable or Constant<br />
+&lt;length&gt; is either 0 (all) or number to limit the bytes to send.</td>
+</tr>
+<tr valign="top">
+<td>prints t0.txt,0 // return 1 byte per char of t0.txt without null byte ending.<br />
+prints t0.txt,4 // returns first 4 bytes, 1 byte per char of t0.txt without null byte ending.<br />
+prints j0.val,0 // return  4 bytes for j0.val in little endian order<br />
+prints j0.val,1 // returns 1 byte of j0.val in little endian order<br />
+prints &#8220;123&#8221;,2 // return 2 bytes for text &#8220;12&#8221;  0x31 0x32<br />
+prints 123,2 // returns 2 bytes for value 123  0x7B 0x00</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_printh"></a>18</td>
+<td rowspan="3" align="center">printh</td>
+<td rowspan="3" align="center">1 to<br />
+many</td>
+<td>Send raw byte or multiple raw bytes over Serial to MCU<br />
+&#8211; printh is one of the few commands that parameter uses space char 0x20<br />
+&#8211; when more than one byte is being sent a space separates each byte<br />
+&#8211; byte is represented by 2 of (ASCII char of hexadecimal value per nibble)<br />
+&#8211; qty may be limited by serial buffer (all data &lt; 1024)<br />
+&#8211; print/printh does not use Nextion Return Data, user must handle MCU side<br />
+usage: printh &lt;hexhex&gt;[&lt;space&gt;&lt;hexhex][&#8230;&lt;space&gt;&lt;hexhex]</td>
+</tr>
+<tr valign="top">
+<td>&lt;hexhex&gt; is hexadecimal value of each nibble.  0x34 as 34<br />
+&lt;space&gt; is a space char 0x20, used to separate each &lt;hexhex&gt; pair</td>
+</tr>
+<tr valign="top">
+<td>printh 0d // send single byte: value 13 hex: 0x0d<br />
+printh 0d 0a // send two bytes:   value 13,10  hex: 0x0d0x0a</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_add"></a>19</td>
+<td rowspan="3" align="center">add</td>
+<td rowspan="3" align="center">3</td>
+<td>Add single value to Waveform Channel<br />
+&#8211; waveform channel data range is min 0, max 255<br />
+&#8211; 1 pixel column is used per data value added<br />
+&#8211; y placement is if value &lt; s0.h then s0.y+s0.h-value, otherwise s0.y<br />
+usage: add &lt;waveform&gt;,&lt;channel&gt;,&lt;value&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;waveform&gt; is the .id of the waveform component<br />
+&lt;channel&gt; is the channel the data will be added to<br />
+&lt;value&gt; is ASCII text of data value, or numeric value<br />
+&#8211; valid: va0.val or sys0 or j0.val or 10</td>
+</tr>
+<tr valign="top">
+<td>add 1,0,30 // add value 30 to Channel 0 of Waveform with .id 1<br />
+add 2,1,h0.val // add h0.val to Channel 1 of Waveform with .id 2</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_addt"></a>20</td>
+<td rowspan="3" align="center">addt</td>
+<td rowspan="3" align="center">3</td>
+<td>Add specified number of bytes to Waveform Channel over Serial from MCU<br />
+&#8211; waveform channel data range is min 0, max 255<br />
+&#8211; 1 pixel column is used per data value added.<br />
+&#8211; addt uses Transparent Data Mode (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_16">1.16</a>)<br />
+&#8211; waveform will not refresh until Transparent Data Mode completes.<br />
+&#8211; qty limited by serial buffer (all commands+terminations + data &lt; 1024)<br />
+&#8211; also refer to add command (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_add">3.19</a>)<br />
+usage: add &lt;waveform&gt;,&lt;channel&gt;,&lt;qty&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;waveform&gt; is the .id of the waveform component<br />
+&lt;channel&gt; is the channel the data will be added to<br />
+&lt;qty&gt; is the number of byte values to add to &lt;channel&gt;</td>
+</tr>
+<tr valign="top">
+<td>addt 2,0,20 // adds 20 bytes to Channel 0 Waveform with .id 2 from serial<br />
+// byte of data is not ASCII text of byte value, but raw byte of data.</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_cle"></a>21</td>
+<td rowspan="3" align="center">cle</td>
+<td rowspan="3" align="center">3</td>
+<td>Clear waveform channel data<br />
+usage: cle &lt;waveform&gt;,&lt;channel&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;waveform&gt; is the .id of the waveform component<br />
+&lt;channel&gt; is the channel to clear<br />
+&lt;channel&gt; must be a valid channel:  &lt; waveform.ch or 255<br />
+0 if .ch 1, 1 if .ch 2, 2 if .ch 3, 3 if .ch=4 and 255 (all channels)</td>
+</tr>
+<tr valign="top">
+<td>cle 1,0 // clear channel 0 data from waveform with .id 1<br />
+cle 2,255 // clear all channels from waveform with .id 2</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_rest"></a>22</td>
+<td rowspan="2" align="center">rest</td>
+<td rowspan="2" align="center">0</td>
+<td>Resets the Nextion Device<br />
+usage: rest</td>
+</tr>
+<tr valign="top">
+<td>rest // immediate reset of Nextion device &#8211; reboot.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s3_doevents"></a>23</td>
+<td rowspan="2" align="center">doevents</td>
+<td rowspan="2" align="center">0</td>
+<td>Force immediate screen refresh and receive serial bytes to buffer<br />
+&#8211; useful inside exclusive code block for visual refresh (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_while">3.26 </a>and <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_for">3.27</a>)<br />
+usage: doevents</td>
+</tr>
+<tr valign="top">
+<td>doevents // allows refresh and serial to receive during code block</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_strlen"></a>24</td>
+<td rowspan="3" align="center">strlen</td>
+<td rowspan="3" align="center">2</td>
+<td>Computes the length of string in &lt;txt&gt; and puts value in &lt;len&gt;<br />
+usage: strlen &lt;txt&gt;,&lt;len&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;txt&gt; must be a string attribute ie: t0.txt, va0.txt<br />
+&lt;len&gt; must be numeric  ie: n0.val, sys0, va0.val</td>
+</tr>
+<tr valign="top">
+<td>strlen t0.txt,n0.val // assigns n0.val with length of t0.txt content</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_btlen"></a>24a</td>
+<td rowspan="3" align="center">btlen</td>
+<td rowspan="3" align="center">2</td>
+<td>Computes number of bytes string in &lt;txt&gt; uses and puts value in &lt;len&gt;<br />
+usage: btlen &lt;txt&gt;,&lt;len&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;txt&gt; must be a string attribute ie: t0.txt, va0.txt<br />
+&lt;len&gt; must be numeric  ie: n0.val, sys0, va0.val</td>
+</tr>
+<tr valign="top">
+<td>btlen t0.txt,n0.val // assigns n0.val with number of bytes t0.txt occupies</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_if"></a>25</td>
+<td rowspan="3" align="center">if</td>
+<td rowspan="3" align="center">Block</td>
+<td>Conditionally execute code block if boolean condition is met<br />
+&#8211; execute commands within block { } if (condition) is met.<br />
+&#8211; nested conditions () is not allowed.  invalid: ((h0.val+3)&gt;0)<br />
+&#8211; block opening brace { must be on line by itself<br />
+&#8211; no space between block close brace } and else. valid: }else invalid: } else<br />
+&#8211; Text comparison supports ==, !=<br />
+&#8211; Numerical comparison supports &gt;, &lt;, ==, !=, &gt;=, &lt;=<br />
+&#8211; nested &#8220;if&#8221; and &#8220;else if&#8221; supported.<br />
+usage: if condition block [else if condition block] [else block]</td>
+</tr>
+<tr valign="top">
+<td>&#8211; (condition) is a simple non-complex boolean comparison evaluation<br />
+valid:  (j0.val&gt;75)  invalid: (j0.val+1&gt;75) invalid: (j0.val&lt;now.val+60)</td>
+</tr>
+<tr valign="top">
+<td>
+<pre>if(t0.txt=="123456")
+{
+  page 1
+}
+
+if(n0.val==123)
+{
+  b0.txt="stop"
+}else
+{
+  b0.txt="start"
+}
+
+if(rtc==1)
+{
+  t0.txt="Jan"
+}else if(rtc1==2)
+{
+  t0.txt="Feb"
+}else if(rtc1==3)
+{
+  t0.txt="Mar"
+}else
+{
+  t0.txt="etc"
+}
+</pre>
+</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_while"></a>26</td>
+<td rowspan="3" align="center">while</td>
+<td rowspan="3" align="center">Block</td>
+<td>Continually executes code block until boolean condition is no longer met<br />
+&#8211; tests boolean condition and execute commands within block { } if condition was met and continues to re-execute block until condition is not met.<br />
+&#8211; nested conditions () is not allowed.  invalid: ((h0.val+3)&gt;0)<br />
+&#8211; block opening brace { must be on line by itself<br />
+&#8211; Text comparison supports ==, !=<br />
+&#8211; Numerical comparison supports &gt;, &lt;, ==, !=, &gt;=, &lt;=<br />
+&#8211; block runs exclusively until completion unless doevents used (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_doevents">3.23</a>)<br />
+usage: while condition block</td>
+</tr>
+<tr valign="top">
+<td>&#8211; (condition) is a simple non-complex boolean comparison evaluation<br />
+valid:  (j0.val&gt;75)  invalid: (j0.val+1&gt;75)</td>
+</tr>
+<tr valign="top">
+<td>
+<pre>// increment n0.val as lon as n0.val &lt; 100.  result: b0.val=100
+// will not visually see n0.val increment, refresh when while-loop completes
+while(n0.val&lt;100)
+{
+  n0.val++
+}
+
+//increment n0.val as long as n0.val &lt; 100. result: n0.val=100
+// will visually see n0.val increment, refresh each evaluation of while-loop
+while(n0.val&lt;100)
+{
+  n0.val++
+  doevents
+}
+</pre>
+</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_for"></a>27</td>
+<td rowspan="3" align="center">for</td>
+<td rowspan="3" align="center">Block</td>
+<td>Iterate execution of code block as long as boolean condition is met<br />
+&#8211; executes init_assignment, then tests boolean condition and executes<br />
+commands within block { } if boolean condition is met, when iteration of<br />
+block execution completes step_assignment is executed.  Continues to<br />
+iterate block and step_assignment until boolean condition is not met.<br />
+&#8211; nested conditions () is not allowed.  invalid: ((h0.val+3)&gt;0)<br />
+&#8211; block opening brace { must be on line by itself<br />
+&#8211; Text comparison supports ==, !=<br />
+&#8211; Numerical comparison supports &gt;, &lt;, ==, !=, &gt;=, &lt;=<br />
+&#8211; block runs exclusively until completion unless doevents used (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s3_doevents">3.23</a>)<br />
+usage: for(init_assignment;condition;step_assignment) block</td>
+</tr>
+<tr valign="top">
+<td>&#8211; init_assignment and step_assignment are simple non-complex statement<br />
+valid: n0.val=4, sys2++, n0.val=sys2*4+3 invalid:  n0.val=3+(sys2*4)-1<br />
+&#8211; (condition) is a simple non-complex boolean comparison evaluation<br />
+valid:  (j0.val&gt;75)  invalid: (j0.val+1&gt;75)</td>
+</tr>
+<tr valign="top">
+<td>
+<pre>// iterate n0.val by 1's as long as n0.val&lt;100. result: n0.val=100
+// will not visually see n0val increment until for-loop completes
+for(n0.val=0;n0.val&lt;100;n0.val++)
+{
+}
+
+//<code>//iterate n0.val by 2's as long as n0.val&lt;100. result: n0.val=100
+// will visually see n0.val increment when doevents processed
+for(n0.val=0;n0.val&lt;100;n0.val+=2)
+{
+  doevents
+}</code></pre>
+</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="3" align="center"><a name="s3_wepo"></a>28<br />
+<strong><span style="color: #ff6600;">*K*</span></strong></td>
+<td rowspan="3" align="center">wepo</td>
+<td rowspan="3" align="center">2</td>
+<td>Store value/string to EEPROM<br />
+&#8211; EEPROM valid address range is from 0 to 1023 (1K EEPROM)<br />
+&#8211; numeric value length: is 4 bytes, -2147483648 to 2147483647<br />
+&#8211; numeric data type signed long integer, stored in little endian order.<br />
+val[addr+3]*16777216+val[addr+2]*65536+val[addr+1]*256+val[addr]<br />
+&#8211; string content length: .txt content is .txt-maxl +1, or constant length +1<br />
+usage: wepo &lt;attr&gt;,&lt;addr&gt;</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>&lt;attr&gt; is variable or constant<br />
+&lt;addr&gt; is storage starting address in EEPROM</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>wepo t0.txt,10 // writes t0.txt contents in addresses 10 to 10+t0.txt-maxl<br />
+wepo &#8220;abcd&#8221;,10 // write constant &#8220;abcd&#8221; in addresses 10 to 14<br />
+wepo 11,10 // write constant 11 in addresses 10 to 13<br />
+wepo n0.val,10 // write value n0.val in addresses 10 to 13</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="3" align="center"><a name="s3_repo"></a>29<br />
+<strong><span style="color: #ff6600;">*K*</span></strong></td>
+<td rowspan="3" align="center">repo</td>
+<td rowspan="3" align="center">2</td>
+<td>Read value from EEPROM<br />
+&#8211; EEPROM valid address range is from 0 to 1023 (1K EEPROM)<br />
+&#8211; numeric value length: is 4 bytes, -2147483648 to 2147483647<br />
+&#8211; numeric data type signed long integer, stored in little endian order.<br />
+val[addr+3]*16777216+val[addr+2]*65536+val[addr+1]*256+val[addr]<br />
+&#8211; string content length: .txt content is lesser of .txt-maxl or until null reached.<br />
+usage: repo &lt;attr&gt;,&lt;addr&gt;</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>&lt;attr&gt; is variable or constant<br />
+&lt;addr&gt; is storage starting address in EEPROM</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>repo t0.txt,10 // reads qty .txt-maxl chars (or until null) from 10 into t0.txt<br />
+repo n0.val,10 // reads 4 bytes from address 10 to 13 into n0.val</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="3" align="center"><a name="s3_wept"></a>30<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="3" align="center">wept</td>
+<td rowspan="3" align="center">2</td>
+<td>Store specified number of bytes to EEPROM over Serial from MCU<br />
+&#8211; EEPROM valid address range is from 0 to 1023 (1K EEPROM)<br />
+&#8211; wept uses Transparent Data Mode (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_16">1.16</a>)<br />
+&#8211; qty limited by serial buffer (all commands+terminations + data &lt; 1024)<br />
+usage: wept &lt;addr&gt;,&lt;qty&gt;</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>&lt;addr&gt; is storage starting address in EEPROM<br />
+&lt;qty&gt; is the number of bytes to store</td>
+</tr>
+<tr valign="top">
+<td bgcolor="#ffebde">wept 30,20 // writes 20 bytes into EEPROM addresses 30 to 49 from serial<br />
+// byte of data is not ASCII text of byte value, but raw byte of data.</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="3" align="center"><a name="s3_rept"></a>31<br />
+<strong><span style="color: #ff6600;">*K*</span></strong></td>
+<td rowspan="3" align="center">rept</td>
+<td rowspan="3" align="center">2</td>
+<td>Read specified number of bytes from EEPROM over Serial to MCU<br />
+&#8211; EEPROM valid address range is from 0 to 1023 (1K EEPROM)<br />
+usage: rept &lt;addr&gt;,&lt;qty&gt;</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>&lt;addr&gt; is storage starting address in EEPROM<br />
+&lt;qty&gt; is the number of bytes to read</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>rept 30,20 // sends 20 bytes from EEPROM addresses 30 to 49 to serial<br />
+// byte of data is not ASCII text of byte value, but raw byte of data.</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="3" align="center"><a name="s3_cfgpio"></a>32<br />
+<strong><span style="color: #ff6600;">*K*</span></strong></td>
+<td rowspan="3" align="center">cfgpio</td>
+<td rowspan="3" align="center">3</td>
+<td>Configure Nextion GPIO<br />
+usage: cfgpio &lt;io&gt;&lt;mode&gt;&lt;comp&gt;</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>&lt;io&gt; is the number of the extended I/O pin.<br />
+&#8211; Valid values in PWM output mode: 4 to 7,  all other modes 0 to 7.<br />
+&lt;mode&gt; is the working mode of pin selected by &lt;io&gt;.<br />
+&#8211; Valid values:  0-pull up input, 1-input binding, 2-push pull output,<br />
+3-PWM output, 4-open drain output.<br />
+&lt;comp&gt; component .objname or .id when &lt;mode&gt; is 1 (otherwise use 0)<br />
+&#8211; in binding mode, cfgpio needs to be declared after every refresh of page to reconnect to Touch event, best to put cfgpio in page pre-initialization event</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>cfgpio 0,0,0 // configures io0 as a pull-up input.  Read as n0.val=pio0.<br />
+cfgpio 1,2,0 // configures io1 as a push-pull output, write as pio1=1<br />
+cfgpio 2,1, b0 // configures io2 as binding input with current page b0.<br />
+// binding triggers b0 Press on falling edge and b0 Release on rising edge<br />
+For PWM mode, set duty cycle before cfgpio: ie: pwm4=20 for 20% duty.<br />
+cfgpio 4,3,0 // configures io4 as PWM output.  pwmf=933 to change Hz.<br />
+// changing pwmf changes frequency of all configured PWM io4 to io7</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s3_strlen"></a>33</td>
+<td rowspan="3" align="center">ucopy</td>
+<td rowspan="3" align="center">4</td>
+<td><strong>Advanced</strong>. Read Only. Valid in active Protocol Reparse mode.<br />
+Copies data from the serial buffer.<br />
+When Nextion is in active Protocol Reparse mode, ucopy copies data from the serial buffer.   Most HMI applications will not require Protocol Reparse and should be skipped if not fully understood.<br />
+usage: ucopy &lt;attr&gt;,&lt;srcstart&gt;,&lt;len&gt;,&lt;deststart&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;attr&gt; must be a writeable attribute ie: t0.txt, va0.val<br />
+&lt;srcstart&gt; must be numeric value  ie: 0<br />
+&lt;len&gt; must be a numeric value ie: 4<br />
+&lt;deststart&gt; must be numeric value ie: 0</td>
+</tr>
+<tr valign="top">
+<td>ucopy n0.val,0,2,0 // copy buffer bytes 0,1 to lower 2 bytes of n0.val<br />
+ucopy n0.val,0,2,2 // copy buffer bytes 0,1 to upper 2 bytes of n0.val<br />
+ucopy n0.val,0,4,0 // copy buffer bytes 0,1,2,4 to n0.val<br />
+ucopy t0.txt,0,10,0 // copy buffer bytes 0 to 9 into t0.txt</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s4"></a></p>
+<h4><span style="color: #ff6600;"><strong>4 </strong></span>&#8211; GUI Designing Commands</h4>
+<table style="height: 411px;" border="0" width="95%">
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" width="12%">Name</td>
+<td width="8%">Param<br />
+Count</td>
+<td width="72%">Description and Usage/Parameters/Examples</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_cls"></a>1</td>
+<td rowspan="3" align="center">cls</td>
+<td rowspan="3" align="center">1</td>
+<td>Clear the screen and fill the entire screen with specified color<br />
+usage: cls &lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;color&gt; is either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>cls BLUE // Clear the screen and fill with color BLUE<br />
+cls 1024 // Clear the screen and fill with color 1024</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_pic"></a>2</td>
+<td rowspan="3" align="center">pic</td>
+<td rowspan="3" align="center">3</td>
+<td>Display a Resource Picture at specified coordinate<br />
+usage: pic &lt;x&gt;,&lt;y&gt;,&lt;picid&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of upper left corner where picture should be drawn<br />
+&lt;y&gt; is the y coordinate of upper left corner where picture should be drawn<br />
+&lt;picid&gt; is the number of the Resource Picture in the HMI design</td>
+</tr>
+<tr valign="top">
+<td>pic 10,20,0  // Display Resource Picture #0 with upper left corner at (10,20)<br />
+pic 40,50,1  // Display Resource Picture #1 with upper left corner at (40,50)</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_picq"></a>3</td>
+<td rowspan="3" align="center">picq</td>
+<td rowspan="3" align="center">5</td>
+<td>Crop Picture area from Resource Picture using defined area<br />
+&#8211; replaces defined area with content from the same area of Resource Picture<br />
+&#8211; Resource Picture should be full screen-size or area might be undefined<br />
+usage: picq &lt;x&gt;,&lt;y&gt;,&lt;w&gt;,&lt;h&gt;,&lt;picid&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of upper left corner of defined crop area<br />
+&lt;y&gt; is the y coordinate of upper left corner of defined crop area<br />
+&lt;w&gt; is the width of the defined crop area<br />
+&lt;h&gt; is the height of the defined crop area<br />
+&lt;picid&gt; is the number of the Resource Picture in the HMI design</td>
+</tr>
+<tr valign="top">
+<td>picq 20,50,30,20,0<br />
+// crops area 30&#215;20, from (20,50) to (49,69), from Resource Picture 0</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_xpic"></a>4</td>
+<td rowspan="3" align="center">xpic</td>
+<td rowspan="3" align="center">7</td>
+<td>Advanced Crop Picture<br />
+crop area from source Resource Picture render at destination coordinate<br />
+usage: xpic &lt;destx&gt;,&lt;desty&gt;,&lt;w&gt;,&lt;h&gt;,&lt;srcx&gt;,&lt;srcy&gt;,&lt;picid&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;destx&gt; is the x coordinate of destination upper left corner<br />
+&lt;desty&gt; is the y coordinate of destination upper left corner<br />
+&lt;w&gt; is the width of the defined crop area<br />
+&lt;h&gt; is the height of the defined crop area<br />
+&lt;srcx&gt; is the x coordinate of upper left corner of defined crop area<br />
+&lt;srcy&gt; is the y coordinate of upper left corner of defined crop area<br />
+&lt;picid&gt; is the number of the Resource Picture in the HMI design</td>
+</tr>
+<tr valign="top">
+<td>xpic 20,50,30,20,15,15,0 // crops area 30&#215;20, from (15,15) to (44,34),<br />
+// from Resource Picture 0 and renders it with upper left corner at (20,50)</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_xstr"></a>5</td>
+<td rowspan="3" align="center">xstr</td>
+<td rowspan="3" align="center">11</td>
+<td>Prints text on the Nextion device using defined area for text rendering<br />
+usage: xstr &lt;x&gt;,&lt;y&gt;,&lt;w&gt;,&lt;h&gt;,&lt;font&gt;,&lt;pco&gt;,&lt;bco&gt;,&lt;xcen&gt;,&lt;ycen&gt;,&lt;sta&gt;,&lt;text&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of upper left corner of defined text area<br />
+&lt;y&gt; is the y coordinate of upper left corner of defined text area<br />
+&lt;w&gt; is the width of the defined text area<br />
+&lt;h&gt; is the height of the defined text area<br />
+&lt;font&gt; is the number of the Resource Font<br />
+&lt;pco&gt; is the foreground color of text (Color Constant or 565 color value)<br />
+&lt;bco&gt; is a) background color of text, or b) picid if &lt;sta&gt; is set to 0 or 2<br />
+&lt;xcen&gt; is the Horizontal Alignment (0 &#8211; left, 1 &#8211; centered, 2 &#8211; right)<br />
+&lt;ycen&gt; is the Vertical Alignment  (0 &#8211; top/upper, 1 &#8211; center, 3 &#8211; bottom/lower)<br />
+&lt;sta&gt; is background Fill (0 &#8211; crop image, 1 &#8211; solid color, 2 &#8211; image, 3 &#8211; none)<br />
+&lt;text&gt; is the string content (constant or .txt attribute), ie &#8220;China&#8221;, or va0.txt</td>
+</tr>
+<tr valign="top">
+<td>xstr 10,10,100,30,1,WHITE,GREEN,1,1,1,va0.txt<br />
+// use are 100&#215;30 from (10,10) to (109,39) to print contents of va0.txt using<br />
+// Font Resource 1 rendering Green letters on White background with both<br />
+// horizontal and vertical centering and sta set as solid-color.</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_fill"></a>6</td>
+<td rowspan="3" align="center">fill</td>
+<td rowspan="3" align="center">5</td>
+<td>Fill a defined area with specified color<br />
+usage: fill &lt;x&gt;,&lt;y&gt;,&lt;w&gt;,&lt;h&gt;,&lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of upper left corner of defined fill area<br />
+&lt;y&gt; is the y coordinate of upper left corner of defined fill area<br />
+&lt;w&gt; is the width of the defined fill area<br />
+&lt;h&gt; is the height of the defined fill area<br />
+&lt;color&gt; is fill color, either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>fill 20,20,150,50,1024<br />
+// fills area 150&#215;50 from (20,20) to (169,69) with 565 Color 1024.</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_line"></a>7</td>
+<td rowspan="3" align="center">line</td>
+<td rowspan="3" align="center">5</td>
+<td>Draw a line from point to point with specified color<br />
+usage: line &lt;x1&gt;,&lt;y1&gt;,&lt;x2&gt;,&lt;y2&gt;,&lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x1&gt; is the x coordinate of the starting point of the line to be drawn<br />
+&lt;y1&gt; is the y coordinate of the starting point of the line to be drawn<br />
+&lt;x2&gt; is the x coordinate of the ending point of the line to be drawn<br />
+&lt;y2&gt; is the y coordinate of the ending point of the line to be drawn<br />
+&lt;color&gt; is line color, either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>line 20,30,170,200,BLUE // draws line in BLUE from (20,30) to (170,200)</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_draw"></a>8</td>
+<td rowspan="3" align="center">draw</td>
+<td rowspan="3" align="center">5</td>
+<td>Draw a hollow rectangle around specified area with specified color<br />
+usage: draw &lt;x1&gt;,&lt;y1&gt;,&lt;x2&gt;,&lt;y2&gt;,&lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x1&gt; is the x coordinate of the upper left corner of rectangle area<br />
+&lt;y1&gt; is the y coordinate of the upper left corner of rectangle area<br />
+&lt;x2&gt; is the x coordinate of the lower right corner of rectangle area<br />
+&lt;y2&gt; is the y coordinate of the lower right corner of rectangle area<br />
+&lt;color&gt; is line color, either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>draw 10,10,70,70,GREEN // draw a Green rectangle around (10,10) to (79,79)<br />
+// effectively four lines from (x1,y1) to (x2,y1) to (x2,y2) to (x1,y2) to (x1,y1)</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_cir"></a>9</td>
+<td rowspan="3" align="center">cir</td>
+<td rowspan="3" align="center">4</td>
+<td>Draw a hollow circle with specified radius and specified color<br />
+usage: cir &lt;x&gt;,&lt;y&gt;,&lt;radius&gt;,&lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of the center point for the circle<br />
+&lt;y&gt; is the y coordinate of the center point for the circle<br />
+&lt;radius&gt; is the radius in pixels<br />
+&lt;color&gt; is line color, either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>cir 100,100,30,RED // renders a hollow Red circle with circle center at (100,100),<br />
+// a 30 pixel radius, a 61 pixel diameter, within boundary (70,70) to (130,130).</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s4_cirs"></a>10</td>
+<td rowspan="3" align="center">cirs</td>
+<td rowspan="3" align="center">4</td>
+<td>Draw a filled circle with specified radius and specified color<br />
+usage: cirs &lt;x&gt;,&lt;y&gt;,&lt;radius&gt;,&lt;color&gt;</td>
+</tr>
+<tr valign="top">
+<td>&lt;x&gt; is the x coordinate of the center point for the circle<br />
+&lt;y&gt; is the y coordinate of the center point for the circle<br />
+&lt;radius&gt; is the radius in pixels<br />
+&lt;color&gt; is fill color, either decimal 565 Color Value or Color Constant</td>
+</tr>
+<tr valign="top">
+<td>cir 100,100,30,RED // renders a filled Red circle with center at (100,100),<br />
+// a 30 pixel radius, a 61 pixel diameter, within boundary (70,70) to (130,130).</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s5"></a></p>
+<h4><span style="color: #ff6600;"><strong>5 </strong></span>&#8211; Color Code Constants</h4>
+<table style="height: 378px;" border="0" width="95%">
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td width="20%">Constant</td>
+<td align="right" width="20%">565 Color Value</td>
+<td align="center" width="30%"> Indicator Color</td>
+<td width="22%"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_BLACK"></a>1</td>
+<td> BLACK</td>
+<td align="right">0</td>
+<td align="center"> Black</td>
+<td bgcolor="#000000"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_BLUE"></a>2</td>
+<td> BLUE</td>
+<td align="right">31</td>
+<td align="center"> Blue</td>
+<td bgcolor="#0000ff"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_BROWN"></a>3</td>
+<td> BROWN</td>
+<td align="right">48192</td>
+<td align="center"> Brown</td>
+<td bgcolor="#b88800"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_GREEN"></a>4</td>
+<td> GREEN</td>
+<td align="right">2016</td>
+<td align="center"> Green</td>
+<td bgcolor="#00ff00"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_YELLOW"></a>5</td>
+<td> YELLOW</td>
+<td align="right">65504</td>
+<td align="center"> Yellow</td>
+<td bgcolor="#f8fc00"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_RED"></a>6</td>
+<td> RED</td>
+<td align="right">63488</td>
+<td align="center"> Red</td>
+<td bgcolor="#ff0000"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_GRAY"></a>7</td>
+<td> GRAY</td>
+<td align="right">33840</td>
+<td align="center"> Gray</td>
+<td bgcolor="#808480"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_WHITE"></a>8</td>
+<td> WHITE</td>
+<td align="right">65535</td>
+<td align="center"> White</td>
+<td bgcolor="#ffffff"></td>
+</tr>
+<tr valign="top">
+<td align="center"><a name="s5_note"></a>Note:</td>
+<td colspan="4">16-bit 565 Colors are in decimal values from 0 to 65535<br />
+24-bit RGB  <strong><span style="color: #ff0000;">11011</span><span style="color: #800000;">000</span>   <span style="color: #00ff00;">110110</span><span style="color: #008000;">00</span>   <span style="color: #3366ff;">11011</span><span style="color: #0000ff;">000</span></strong><br />
+16-bit 565   <strong><span style="color: #ff0000;">11011</span>          <span style="color: #00ff00;">110110</span>        <span style="color: #3366ff;">11011</span></strong></td>
+</tr>
+</tbody>
+</table>
+<p><a name="s6"></a></p>
+<h4><span style="color: #ff6600;"><strong>6 </strong></span>&#8211; System Variables</h4>
+<table style="height: 411px;" border="0" width="95%">
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" width="8%">Name</td>
+<td width="12%">Meaning</td>
+<td width="72%">Example/Description</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_dp"></a>1</td>
+<td rowspan="2" align="center">dp</td>
+<td rowspan="2">Current<br />
+Page ID</td>
+<td>dp=1, n0.val=dp</td>
+</tr>
+<tr valign="top">
+<td>read: Contains the current page displayed as per the HMI design<br />
+write: change page to value specified (same effect as page command)<br />
+min 0, max # of highest existing page in the user&#8217;s HMI design.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_dims"></a><a name="s6_dim"></a>2</td>
+<td rowspan="2" align="center">dim<br />
+dims</td>
+<td rowspan="2">Nextion<br />
+Backlight</td>
+<td>dim=32, dims=100</td>
+</tr>
+<tr valign="top">
+<td>Sets the backlight level in percent<br />
+min 0, max 100, <strong>default</strong> 100 or user defined<br />
+Note: dim=32 will set the current backlight level to 32%.<br />
+using dims=32 will set the current backlight level to 32% and save this to be new power on default backlight level, persisting until changed.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_bauds"></a><a name="s6_baud"></a>3</td>
+<td rowspan="2" align="center">baud<br />
+bauds</td>
+<td rowspan="2">Nextion<br />
+Baud Rate</td>
+<td>baud=9600, bauds=9600</td>
+</tr>
+<tr valign="top">
+<td>Sets the Nextion Baud rate in bits-per-second<br />
+min 2400, max 115200, <strong>default</strong> 9600 or user defined<br />
+Valid values are: 2400, 4800, 9600, 19200, 38400, 57600, and 115200.<br />
+Note: baud=38400 will set the current baud rate to 38400<br />
+using bauds=38400 will set the current baud rate to 38400 and save this to be new power on default baud rate, persisting until changed.<br />
+Note: on rare occasions bauds has become lost.  It is recommended to specify bauds=9600 in the first page&#8217;s Preinitialization Event of HMI.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_4"></a>4</td>
+<td rowspan="2" align="center">spax<br />
+spay</td>
+<td rowspan="2">Font<br />
+Spacing</td>
+<td>spax=2, spay=2</td>
+</tr>
+<tr valign="top">
+<td>Globally sets the default rendering space:<br />
+horizontally between font characters with spax additional pixels and<br />
+vertically between rows (if multi-lined) with spay additional pixels.<br />
+min 0, max 65535, <strong>default</strong> 0<br />
+Note: Components now have their own individual .spax/.spay attributes that are now used to determine spacing for the individual component.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_thc"></a>5</td>
+<td rowspan="2" align="center">thc</td>
+<td rowspan="2">Touch<br />
+Draw Brush<br />
+Color</td>
+<td>thc=RED, thc=1024</td>
+</tr>
+<tr valign="top">
+<td>Sets the Touch Drawing brush color<br />
+min 0, max 65535, <strong>default</strong> 0<br />
+Valid choices are either color constants or the decimal 565 color value.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_thdra"></a>6</td>
+<td rowspan="2" align="center">thdra</td>
+<td rowspan="2">Touch<br />
+Drawing</td>
+<td>thdra=1 (on), thdra=0 (off)</td>
+</tr>
+<tr valign="top">
+<td>Turns the internal drawing function on or off.<br />
+min 0, max 1, <strong>default</strong> 0<br />
+When the drawing function is on, Nextion will follow touch dragging with the current brush color (as determined by the thc variable).</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_ussp"></a>7</td>
+<td rowspan="2" align="center">ussp</td>
+<td rowspan="2">Sleep on<br />
+No Serial</td>
+<td>ussp=30</td>
+</tr>
+<tr valign="top">
+<td>Sets internal No-serial-then-sleep timer to specified value in seconds<br />
+min 3, max 65535, <strong>default</strong> 0  (max: 18 hours 12 minutes 15 seconds)<br />
+Nextion will auto-enter sleep mode if and when this timer expires.<br />
+Note: ussp=0 is an invalid value, meaning once ussp is set, it will persist and can not be unset unless through reboot or reset.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_thsp"></a>8</td>
+<td rowspan="2" align="center">thsp</td>
+<td rowspan="2">Sleep on<br />
+No Touch</td>
+<td>thsp=30</td>
+</tr>
+<tr valign="top">
+<td>Sets internal No-touch-then-sleep timer to specified value in seconds<br />
+min 3, max 65535, <strong>default</strong> 0  (max: 18 hours 12 minutes 15 seconds)<br />
+Nextion will auto-enter sleep mode if and when this timer expires.<br />
+Note: thsp=0 is an invalid value, meaning once thsp is set, it will persist and can not be unset unless through reboot or reset.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_thup"></a>9</td>
+<td rowspan="2" align="center">thup</td>
+<td rowspan="2">Auto Wake<br />
+on Touch</td>
+<td>thup=0 (do not wake), thup=1 (wake on touch)</td>
+</tr>
+<tr valign="top">
+<td>Sets if Nextion should auto-wake from sleep when touch press occurs.<br />
+min 0, max 1, <strong>default</strong> 0<br />
+When value is 1 and Nextion is in sleep mode, the first touch will only trigger the auto wake mode and not trigger a Touch Event.<br />
+thup has no influence on sendxy, sendxy will operate independently.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_sendxy"></a>10</td>
+<td rowspan="2" align="center">sendxy</td>
+<td rowspan="2">RealTime<br />
+Touch<br />
+Coordinates</td>
+<td>sendxy=1 (start sending)  sendxy=0 (stop sending)</td>
+</tr>
+<tr valign="top">
+<td>Sets if Nextion should send 0x67 and 0x68 Return Data<br />
+min 0, max 1, <strong>default</strong> 0<br />
+&#8211; Less accurate closer to edges, and more accurate closer to center.<br />
+Note: expecting exact pixel (0,0) or (799,479) is simply not achievable.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_delay"></a>11</td>
+<td rowspan="2" align="center">delay</td>
+<td rowspan="2">Delay</td>
+<td>delay=100</td>
+</tr>
+<tr valign="top">
+<td>Creates a halt in Nextion code execution for specified time in ms<br />
+min 0, max 65535<br />
+As delay is interpreted, a total halt is avoided. Incoming serial data is received and stored in buffer but not be processed until delay ends. If delay of more than 65.535 seconds is required, use of multiple delay statements required.<br />
+delay=-1 is  max.  65.535 seconds.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_sleep"></a>12</td>
+<td rowspan="2" align="center">sleep</td>
+<td rowspan="2">Sleep</td>
+<td>sleep=1 (Enter sleep mode) or sleep=0 (Exit sleep mode)</td>
+</tr>
+<tr valign="top">
+<td>Sets Nextion mode between sleep and awake.<br />
+min 0, max 1, <strong>default</strong> 0<br />
+When exiting sleep mode, the Nextion device will auto refresh the page<br />
+(as determined by the value in the wup variable) and reset the backlight brightness (as determined by the value in the dim variable).</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_bkcmd"></a>13</td>
+<td rowspan="2" align="center">bkcmd</td>
+<td rowspan="2">Pass / Fail<br />
+Return Data</td>
+<td>bkcmd=3</td>
+</tr>
+<tr valign="top">
+<td>Sets the level of Return Data on commands processed over Serial.<br />
+min 0, max 3, <strong>default</strong> 2<br />
+&#8211; Level 0 is Off &#8211; no pass/fail will be returned<br />
+&#8211; Level 1 is OnSuccess,  only when last serial command successful.<br />
+&#8211; Level 2 is OnFailure, only when last serial command failed<br />
+&#8211; Level 3 is Always, returns 0x00 to 0x23 result of serial command.<br />
+Result is only sent after serial command/task has been completed, as such this provides an invaluable status for debugging and branching. Table 2 of Section 7 Nextion Return Data is not subject to bkcmd</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_rand"></a>14</td>
+<td rowspan="2" align="center">rand</td>
+<td rowspan="2">Random<br />
+Value</td>
+<td>n0.val=rand</td>
+</tr>
+<tr valign="top">
+<td>Readonly. Value returned by rand is random every time it is referred to.<br />
+<strong>default</strong> range is 0 to 4294967295<br />
+range of rand is user customizable using the randset command<br />
+range as set with randset will persist until reboot or reset</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_sys2"></a><a name="s6_sys1"></a>15</td>
+<td rowspan="2" align="center">sys0<br />
+sys1<br />
+sys2</td>
+<td rowspan="2">Numeric<br />
+System<br />
+Variables</td>
+<td>sys0=10 sys1=40 sys2=60 n0.val=sys2</td>
+</tr>
+<tr valign="top">
+<td>System Variables are global in nature with no need to define or create.<br />
+They can be read or written from any page.  32-bit unsigned integers.<br />
+min value of 0, max value of 4294967295<br />
+Suggested uses of sys variables include<br />
+&#8211; as temporary variables in complex calculations<br />
+&#8211; as parameters to pass to click function or pass between pages.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_wup"></a>16</td>
+<td rowspan="2" align="center">wup</td>
+<td rowspan="2">Wake Up<br />
+Page</td>
+<td>wup=2, n0.val=wup</td>
+</tr>
+<tr valign="top">
+<td>Sets which page Nextion loads when exiting sleep mode<br />
+min is 0, max is # of last page in HMI, <strong>default </strong>255<br />
+When wup=255 Nextion refreshes current page<br />
+wup can be set even when Nextion is in sleep mode</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_usup"></a>17</td>
+<td rowspan="2" align="center">usup</td>
+<td rowspan="2">Wake On<br />
+Serial Data</td>
+<td>usup=0, usup=1</td>
+</tr>
+<tr valign="top">
+<td>Sets if serial data wakes Nextion from sleep mode automatically.<br />
+min is 0, max is 1, <strong>default </strong>0<br />
+When usup=0, send sleep=0ÿÿÿ to wake Nextion<br />
+When usup=1, any serial received wakes Nextion</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="2" align="center"><a name="s6_rtc6"></a><a name="s6_rtc5"></a>18<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="2" align="center">rtc0<br />
+rtc1<br />
+rtc2<br />
+rtc3<br />
+rtc4<br />
+rtc5<br />
+rtc6</td>
+<td rowspan="2">RTC</td>
+<td>rtc0=2017, rtc1=8, rtc2=28,<br />
+rtc3=16, rtc4=50, rtc5=36, n0.val=rtc6</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>Nextion RTC:<br />
+rtc0 is year 2000 to 2099, rtc1 is month 1 to 12, rtc2 is day 1 to 31,<br />
+rtc3 is hour 0 to 23, rtc4 is minute 0 to 59, rtc5 is second 0 to 59.<br />
+rtc6 is dayofweek 0 to 6 (Sunday=0, Saturday=6)<br />
+rtc6 is readonly and calculated by RTC when date is valid.</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="2" align="center"><a name="s6_pio"></a>19<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="2" align="center">pio0<br />
+pio1<br />
+pio2<br />
+pio3<br />
+pio4<br />
+pio5<br />
+pio6<br />
+pio7</td>
+<td rowspan="2">GPIO</td>
+<td>pio3=1, pio3=0, n0.val=pio3</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>Default mode when power on: pull up input mode<br />
+Internal pull up resistor: 50K<br />
+GPIO is digital.  Value of 0 or 1 only.<br />
+&#8211; refer to cfgpio command for setting GPIO mode<br />
+read if in input mode, write if in output mode</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="2" align="center"><a name="s6_pwm"></a>19<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="2" align="center">pwm4<br />
+pwm5<br />
+pwm6<br />
+pwm7</td>
+<td rowspan="2">PWM Duty<br />
+Cycle</td>
+<td> pwm4=25</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>Value in percentage.  min 0, max 100, <strong><span style="color: #000000;">default</span> </strong>50.<br />
+&#8211; refer to cfgpio command for setting GPIO mode</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="2" align="center"><a name="s6_pwmf"></a>21<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="2" align="center">pwmf</td>
+<td rowspan="2">PWM<br />
+Frequency</td>
+<td> pwmf=933</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>Value is in Hz.  min value 1 Hz, max value 65535 Hz. <strong><span style="color: #000000;">default</span> </strong>1000 Hz<br />
+All PWM output is unified to only one Frequency, no independent individual settings are allowed.<br />
+&#8211; refer to cfgpio command for setting GPIO mode</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_addr"></a>22</td>
+<td rowspan="2" align="center">addr</td>
+<td rowspan="2">Address</td>
+<td>addr=257</td>
+</tr>
+<tr valign="top">
+<td><strong>Advanced</strong>. Enables/disables Nextion&#8217;s two byte Address Mode<br />
+0, or min value 256, max value 2815. <strong><span style="color: #000000;">default</span> </strong>0<br />
+Setting addr will persist to be the new power-on default.<br />
+&#8211; refer to section <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_16">1.19</a></td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_tch"></a><a name="s6_tch0"></a><a name="s6_tch1"></a><a name="s6_tch2"></a><a name="s6_tch3"></a>23</td>
+<td rowspan="2" align="center">tch0<br />
+tch1<br />
+tch2<br />
+tch3</td>
+<td rowspan="2">Touch<br />
+Coordinates</td>
+<td>x.val=tch0, y.val=tch1</td>
+</tr>
+<tr valign="top">
+<td>Readonly. When Pressed tch0 is x coordinate, tch1 is y coordinate.<br />
+When released (not currently pressed), tch0 and tch1 will be 0.<br />
+tch2 holds the last x coordinate, tch3 holds the last y coordinate.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_recmod"></a>24</td>
+<td rowspan="2" align="center">recmod</td>
+<td rowspan="2">Protocol Reparse</td>
+<td>recmod=0, recmod=1</td>
+</tr>
+<tr valign="top">
+<td><strong>Advanced</strong>. Set passive or active Protocol Reparse mode.<br />
+min is 0, max is 1, <strong>default </strong>0<br />
+When recmod=0, Nextion is in passive mode and processes serial data according to the Nextion Instruction Set, this is the default power on processing. When recmod=1, Nextion enters into active mode where the serial data waits to be processed by event code. Most HMI applications will not require Protocol Reparse and should be skipped if not fully understood.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_usize"></a>25</td>
+<td rowspan="2" align="center">usize</td>
+<td rowspan="2">Bytes in Serial Buffer</td>
+<td>n0.val=usize</td>
+</tr>
+<tr valign="top">
+<td><strong>Advanced</strong>. Read Only. Valid in active Protocol Reparse mode.<br />
+min is 0, max is 1024<br />
+When Nextion is in active Protocol Reparse mode, usize reports the number of available bytes in the serial buffer. Most HMI applications will not require Protocol Reparse and should be skipped if not fully understood.</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s6_uindex"></a>26</td>
+<td rowspan="2" align="center">u[index]</td>
+<td rowspan="2">Serial Buffer Data</td>
+<td>n0.val=u[0]</td>
+</tr>
+<tr valign="top">
+<td><strong>Advanced</strong>. Read Only. Valid in active Protocol Reparse mode.<br />
+min is 0, max is 255<br />
+When Nextion is in active Protocol Reparse mode, the u[index] array returns the byte at position index from the serial buffer. Most HMI applications will not require Protocol Reparse and should be skipped if not fully understood.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s7"></a><a name="s7a"></a></p>
+<h4><span style="color: #ff6600;"><strong>7 </strong></span>&#8211; Format of Nextion Return Data</h4>
+<table style="height: 410px;" border="0" width="95%">
+<caption><strong><span style="color: #3366ff;">Return Codes dependent on bkcmd value being greater than 0</span></strong></caption>
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" nowrap="nowrap" width="6%">Byte</td>
+<td align="center" width="6%">bkcmd</td>
+<td align="center" width="6%">len</td>
+<td width="12%">Meaning</td>
+<td width="62%">Format/Description</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_1"></a>1</td>
+<td rowspan="2" align="center">0x00</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Instruction</td>
+<td>0x00 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when instruction sent by user has failed</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_2"></a>2</td>
+<td rowspan="2" align="center">0x01</td>
+<td rowspan="2" align="center">1,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Instruction Successful</td>
+<td>0x01 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when instruction sent by user was successful</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_3"></a>3</td>
+<td rowspan="2" align="center">0x02</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Component ID</td>
+<td>0x02 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Component ID or name was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_4"></a>4</td>
+<td rowspan="2" align="center">0x03</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Page ID</td>
+<td>0x03 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Page ID or name was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_5"></a>5</td>
+<td rowspan="2" align="center">0x04</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Picture ID</td>
+<td>0x04 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Picture ID was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_6"></a>6</td>
+<td rowspan="2" align="center">0x05</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Font ID</td>
+<td>0x05 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Font ID was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_7"></a>7</td>
+<td rowspan="2" align="center">0x11</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Baud rate Setting</td>
+<td>0x11 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Baud rate was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_8"></a>8</td>
+<td rowspan="2" align="center">0x12</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Waveform ID or Channel #</td>
+<td>0x12 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Waveform ID or Channel # was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_9"></a>9</td>
+<td rowspan="2" align="center">0x1A</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Variable name or attribute</td>
+<td>0x1A 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when invalid Variable name or invalid attribute was used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_10"></a>10</td>
+<td rowspan="2" align="center">0x1B</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Variable Operation</td>
+<td>0x1B 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Operation of Variable is invalid. ie: Text assignment t0.txt=abc or t0.txt=23, Numeric assignment j0.val=&#8221;50&#8243; or j0.val=abc</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_11"></a>11</td>
+<td rowspan="2" align="center">0x1C</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Assignment failed to assign</td>
+<td>0x1C 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when attribute assignment failed to assign</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td rowspan="2" align="center"><a name="s7_12"></a>12<br />
+<span style="color: #ff6600;"><strong>*K*</strong></span></td>
+<td rowspan="2" align="center">0x1D</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">EEPROM Operation failed</td>
+<td>0x1D 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top" bgcolor="#ffebde">
+<td>Returned when an EEPROM Operation has failed</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_13"></a>13</td>
+<td rowspan="2" align="center">0x1E</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Invalid Quantity of Parameters</td>
+<td>0x1E 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when the number of instruction parameters is invalid</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_14"></a>14</td>
+<td rowspan="2" align="center">0x1F</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">IO Operation failed</td>
+<td>0x1F 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when an IO operation has failed</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_15"></a>15</td>
+<td rowspan="2" align="center">0x20</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Escape Character Invalid</td>
+<td>0x20 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when an unsupported escape character is used</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_16"></a>16</td>
+<td rowspan="2" align="center">0x23</td>
+<td rowspan="2" align="center">2,3</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Variable name too long</td>
+<td>0x23 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when variable name is too long. Max length is 29 characters: 14 for page + &#8220;.&#8221; + 14 for component.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="s7b"></a></p>
+<table style="height: 410px;" border="0" width="95%">
+<caption><span style="color: #3366ff;"><strong>Return Codes not affected by bkcmd value, valid in all cases</strong></span></caption>
+<tbody>
+<tr valign="top" bgcolor="#e0e0e0">
+<td align="center" width="8%">No.</td>
+<td align="center" nowrap="nowrap" width="9%">Byte</td>
+<td align="center" width="9%">length</td>
+<td width="12%">Meaning</td>
+<td width="62%">Format/Description</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_17"></a>17</td>
+<td rowspan="2" align="center">0x00</td>
+<td rowspan="2" align="center">6</td>
+<td rowspan="2">Nextion Startup</td>
+<td>0x00 0x00 0x00 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Nextion has started or reset</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_18"></a>18</td>
+<td rowspan="2" align="center">0x24</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Serial Buffer Overflow</td>
+<td>0x24 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when a Serial Buffer overflow occurs</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s7_19"></a>19</td>
+<td rowspan="3" align="center">0x65</td>
+<td rowspan="3" align="center">7</td>
+<td rowspan="3">Touch Event</td>
+<td>0x65<span style="color: #ff00ff;"> 0x00 <span style="color: #339966;">0x01</span></span> <span style="color: #ff6600;">0x01</span> 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Touch occurs and component&#8217;s<br />
+corresponding Send Component ID is checked<br />
+in the users HMI design.<br />
+<span style="color: #ff00ff;">0x00</span> is page number, <span style="color: #339966;">0x01</span> is component ID,<br />
+<span style="color: #ff6600;">0x01</span> is event (<span style="color: #ff6600;">0x01</span> Press and <span style="color: #ff6600;">0x00</span> Release)</td>
+</tr>
+<tr valign="top">
+<td><strong><span style="color: #008080;">data</span></strong>: Page 0, Component 1, Pressed</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s7_20"></a>20</td>
+<td rowspan="3" align="center">0x66</td>
+<td rowspan="3" align="center">5</td>
+<td rowspan="3">Current Page Number</td>
+<td>0x66 <span style="color: #ff00ff;">0x01</span> 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when the sendme command is used.<br />
+<span style="color: #ff00ff;">0x01</span> is current page number</td>
+</tr>
+<tr valign="top">
+<td><span style="color: #008080;"><strong>data</strong></span>: page 1</td>
+</tr>
+<tr valign="top">
+<td rowspan="4" align="center"><a name="s7_21"></a>21</td>
+<td rowspan="4" align="center">0x67</td>
+<td rowspan="4" align="center">9</td>
+<td rowspan="4">Touch Coordinate (awake)</td>
+<td>0x67 <span style="color: #ff00ff;">0x00 0x7A</span> <span style="color: #339966;">0x00 0x1E</span> <span style="color: #ff6600;">0x01</span> 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when sendxy=1 and not in sleep mode<br />
+<span style="color: #ff00ff;">0x00 0x7A</span> is x coordinate in big endian order,<br />
+<span style="color: #339966;">0x00 0x1E</span> is y coordinate in big endian order,<br />
+<span style="color: #ff6600;">0x01</span> is event (<span style="color: #ff6600;">0x01</span> Press and <span style="color: #ff6600;">0x00</span> Release)</td>
+</tr>
+<tr valign="top">
+<td>(<span style="color: #ff00ff;">0x00</span>*256+<span style="color: #ff00ff;">0x71</span>,<span style="color: #339966;">0x00</span>*256+<span style="color: #339966;">0x1E</span>)</td>
+</tr>
+<tr valign="top">
+<td><strong><span style="color: #008080;">data</span></strong>: (<span style="color: #ff00ff;">122</span>,<span style="color: #339966;">30</span>) Pressed</td>
+</tr>
+<tr valign="top">
+<td rowspan="4" align="center"><a name="s7_22"></a>22</td>
+<td rowspan="4" align="center">0x68</td>
+<td rowspan="4" align="center">9</td>
+<td rowspan="4">Touch Coordinate (sleep)</td>
+<td>0x68 <span style="color: #ff00ff;">0x00 0x7A</span> <span style="color: #339966;">0x00 0x1E</span> <span style="color: #ff6600;">0x01 </span>0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when sendxy=1 and in sleep mode<br />
+<span style="color: #ff00ff;">0x00 0x7A</span> is x coordinate in big endian order,<br />
+<span style="color: #339966;">0x00 0x1E</span> is y coordinate in big endian order,<br />
+<span style="color: #ff6600;">0x01</span> is event (<span style="color: #ff6600;">0x01</span> Press and <span style="color: #ff6600;">0x00</span> Release)</td>
+</tr>
+<tr valign="top">
+<td>(<span style="color: #ff00ff;">0x00</span>*256+<span style="color: #ff00ff;">0x71</span>,<span style="color: #339966;">0x00</span>*256+<span style="color: #339966;">0x1E</span>)</td>
+</tr>
+<tr valign="top">
+<td><span style="color: #008080;"><strong>data</strong></span>: (<span style="color: #ff00ff;">122</span>,<span style="color: #339966;">30</span>) Pressed</td>
+</tr>
+<tr valign="top">
+<td rowspan="3" align="center"><a name="s7_23"></a>23</td>
+<td rowspan="3" align="center">0x70</td>
+<td rowspan="3" align="center">Varied</td>
+<td rowspan="3">String Data Enclosed</td>
+<td>0x70 <span style="color: #3366ff;">0x61 0x62 0x31 0x32 0x33 </span>0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when using get command for a string.<br />
+Each byte is converted to char.</td>
+</tr>
+<tr valign="top">
+<td><strong><span style="color: #008080;">data</span></strong>: <span style="color: #3366ff;">ab123</span></td>
+</tr>
+<tr valign="top">
+<td rowspan="4" align="center"><a name="s7_24"></a>24</td>
+<td rowspan="4" align="center">0x71</td>
+<td rowspan="4" align="center">8</td>
+<td rowspan="4">Numeric Data Enclosed</td>
+<td>0x71 <span style="color: #3366ff;">0x01 0x02 0x03 0x04</span> 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when get command to return a number<br />
+4 byte 32-bit value in little endian order.</td>
+</tr>
+<tr valign="top">
+<td><span style="color: #3366ff;">(0x01</span>+<span style="color: #3366ff;">0x02</span>*256+<span style="color: #3366ff;">0x03</span>*65536+<span style="color: #3366ff;">0x04</span>*16777216)</td>
+</tr>
+<tr valign="top">
+<td><strong><span style="color: #008080;">data</span></strong>: <span style="color: #3366ff;">67305985</span></td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_25"></a>25</td>
+<td rowspan="2" align="center">0x86</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Auto Entered Sleep Mode</td>
+<td>0x86 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Nextion enters sleep automatically<br />
+Using sleep=1 will not return an 0x86</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_26"></a>26</td>
+<td rowspan="2" align="center">0x87</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Auto Wake from Sleep</td>
+<td>0x87 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Nextion leaves sleep automatically<br />
+Using sleep=0 will not return an 0x87</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_27"></a>27</td>
+<td rowspan="2" align="center">0x88</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Nextion Ready</td>
+<td>0x88 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when Nextion has powered up<br />
+and is now initialized successfully</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_28"></a>28</td>
+<td rowspan="2" align="center">0x89</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Start microSD Upgrade</td>
+<td>0x89 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when power on detects inserted microSD<br />
+and begins Upgrade by microSD process</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_29"></a>29</td>
+<td rowspan="2" align="center">0xFD</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Transparent Data Finished</td>
+<td>0xFD 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when all requested bytes of Transparent<br />
+Data mode have been received, and is now leaving transparent data mode (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_16">1.16</a>)</td>
+</tr>
+<tr valign="top">
+<td rowspan="2" align="center"><a name="s7_30"></a>30</td>
+<td rowspan="2" align="center">0xFE</td>
+<td rowspan="2" align="center">4</td>
+<td rowspan="2">Transparent Data Ready</td>
+<td>0xFE 0xFF 0xFF 0xFF</td>
+</tr>
+<tr valign="top">
+<td>Returned when requesting Transparent Data<br />
+mode, and device is now ready to begin receiving<br />
+the specified quantity of data (see <a href="https://nextion.itead.cc/resource/documents/instruction-set/#s1_16">1.16</a>)</td>
+</tr>
+</tbody>
+</table>
+							</div>
+																													</div>
+		</section>
+					
+				</div>  <!-- fusion-row -->
+			</main>  <!-- #main -->
+			
+			
+			
+										
+				<div class="fusion-footer">
+						
+	<footer role="contentinfo" class="fusion-footer-widget-area fusion-widget-area">
+		<div class="fusion-row">
+			<div class="fusion-columns fusion-columns-3 fusion-widget-area">
+				
+																									<div class="fusion-column col-lg-4 col-md-4 col-sm-4">
+							<style type="text/css" scoped="scoped">@media (max-width: 800px){#media_image-2{text-align:center !important;}}</style><section id="media_image-2" class="fusion-widget-mobile-align-center fusion-widget-align-center fusion-footer-widget-column widget widget_media_image" style="text-align: center;"><a href="https://nextion.itead.cc/"><img width="150" height="93" src="https://nextion.itead.cc/wp-content/uploads/2018/07/LOGO_Nextion副本.png" class="image wp-image-19451  attachment-full size-full" alt="" style="max-width: 100%; height: auto;" /></a><div style="clear:both;"></div></section><style type="text/css" scoped="scoped">@media (max-width: 800px){#text-4{text-align:center !important;}}</style><section id="text-4" class="fusion-widget-mobile-align-center fusion-widget-align-center fusion-footer-widget-column widget widget_text" style="text-align: center;">			<div class="textwidget"><p><a href="https://nextion.itead.cc/contact-us/#!/Login">Contact Us</a></p>
+<p><a href="https://nextion.itead.cc/policies/">Policies</a></p>
+<p><a href="https://nextion.itead.cc/faqs/">FAQs</a></p>
+<p>&nbsp;</p>
+</div>
+		<div style="clear:both;"></div></section>																					</div>
+																										<div class="fusion-column col-lg-4 col-md-4 col-sm-4">
+							<style type="text/css" scoped="scoped">@media (max-width: 800px){#text-3{text-align:center !important;}}</style><section id="text-3" class="fusion-widget-mobile-align-center fusion-widget-align-center fusion-footer-widget-column widget widget_text" style="background-color: #ffffff;text-align: center;"><h4 class="widget-title">Resources</h4>			<div class="textwidget"><p><a href="https://nextion.itead.cc/resources/download/nextion-editor/">NEXTION Editor</a></p>
+<p><a href="https://nextion.itead.cc/editor_guide/">Editor Guide</a></p>
+<p><a href="https://nextion.itead.cc/resources/documents/instruction-set/">Instruction Set</a></p>
+<p><a href="https://nextion.itead.cc/resources/download/libraries/">Libraries</a></p>
+<p><a href="https://nextion.itead.cc/resources/datasheets/">Datasheets</a></p>
+<p>&nbsp;</p>
+</div>
+		<div style="clear:both;"></div></section>																					</div>
+																										<div class="fusion-column fusion-column-last col-lg-4 col-md-4 col-sm-4">
+							<style type="text/css" scoped="scoped">@media (max-width: 800px){#text-2{text-align:center !important;}}</style><section id="text-2" class="fusion-widget-mobile-align-center fusion-widget-align-left fusion-footer-widget-column widget widget_text" style="text-align: left;"><h4 class="widget-title">Contact Info</h4>			<div class="textwidget"><p><strong>Address:  </strong>5F, Building A, Yuxing Multiple-use Building, Huaya Industrial Park, Jihua Road, Longhua Dist., Shenzhen, GD, China</p>
+<p><strong>Postal Code:  </strong>518000 China</p>
+<p><strong>Telephone:</strong>  +86-755-27955416</p>
+<p>&nbsp;</p>
+</div>
+		<div style="clear:both;"></div></section>																					</div>
+																																				
+				<div class="fusion-clearfix"></div>
+			</div> <!-- fusion-columns -->
+		</div> <!-- fusion-row -->
+	</footer> <!-- fusion-footer-widget-area -->
+
+	
+	<footer id="footer" class="fusion-footer-copyright-area">
+		<div class="fusion-row">
+			<div class="fusion-copyright-content">
+
+				<div class="fusion-copyright-notice">
+		<div>
+		© Copyright 2011 - 2018 ITEAD STUDIO All Right Reserved	</div>
+</div>
+<div class="fusion-social-links-footer">
+	<div class="fusion-social-networks boxed-icons"><div class="fusion-social-networks-wrapper"><a  class="fusion-social-network-icon fusion-tooltip fusion-facebook fusion-icon-facebook" style="color:#ffffff;background-color:#3b5998;border-color:#3b5998;border-radius:50%;" href="https://www.facebook.com/iteadstudio/" target="_blank" data-placement="top" data-title="Facebook" data-toggle="tooltip" title="Facebook"><span class="screen-reader-text">Facebook</span></a><a  class="fusion-social-network-icon fusion-tooltip fusion-twitter fusion-icon-twitter" style="color:#ffffff;background-color:#55acee;border-color:#55acee;border-radius:50%;" href="https://twitter.com/Iteadstudio" target="_blank" rel="noopener noreferrer" data-placement="top" data-title="Twitter" data-toggle="tooltip" title="Twitter"><span class="screen-reader-text">Twitter</span></a><a  class="fusion-social-network-icon fusion-tooltip fusion-googleplus fusion-icon-googleplus" style="color:#ffffff;background-color:#dc4e41;border-color:#dc4e41;border-radius:50%;" href="https://plus.google.com/+Iteadstudio" target="_blank" rel="noopener noreferrer" data-placement="top" data-title="Google+" data-toggle="tooltip" title="Google+"><span class="screen-reader-text">Google+</span></a><a  class="fusion-social-network-icon fusion-tooltip fusion-youtube fusion-icon-youtube" style="color:#ffffff;background-color:#cd201f;border-color:#cd201f;border-radius:50%;" href="https://www.youtube.com/channel/UCIiO6ag7O3vSFFGONQGySvg" target="_blank" rel="noopener noreferrer" data-placement="top" data-title="YouTube" data-toggle="tooltip" title="YouTube"><span class="screen-reader-text">YouTube</span></a></div></div></div>
+
+			</div> <!-- fusion-fusion-copyright-content -->
+		</div> <!-- fusion-row -->
+	</footer> <!-- #footer -->
+				</div> <!-- fusion-footer -->
+			
+								</div> <!-- wrapper -->
+
+								<a class="fusion-one-page-text-link fusion-page-load-link"></a>
+
+						<script type="text/javascript">
+				jQuery( document ).ready( function() {
+					var ajaxurl = 'https://nextion.itead.cc/wp-admin/admin-ajax.php';
+					if ( 0 < jQuery( '.fusion-login-nonce' ).length ) {
+						jQuery.get( ajaxurl, { 'action': 'fusion_login_nonce' }, function( response ) {
+							jQuery( '.fusion-login-nonce' ).html( response );
+						});
+					}
+				});
+				</script>
+				<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/bbpress/templates/default/js/editor.js?ver=2.5.14-6684'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var wpcf7 = {"apiSettings":{"root":"https:\/\/nextion.itead.cc\/wp-json\/contact-form-7\/v1","namespace":"contact-form-7\/v1"},"recaptcha":{"messages":{"empty":"Please verify that you are not a robot."}},"cached":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/contact-form-7/includes/js/scripts.js?ver=4.9.1'></script>
+<!--[if IE 9]>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-ie9.js?ver=1'></script>
+<![endif]-->
+<script type='text/javascript' src='https://nextion.itead.cc/wp-includes/js/comment-reply.min.js?ver=4.9.8'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/isotope.js?ver=3.0.4'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.infinitescroll.js?ver=2.1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-core/js/min/avada-faqs.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.fitvids.js?ver=1.1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionVideoGeneralVars = {"status_vimeo":"1","status_yt":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/fusion-video-general.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionLightboxVideoVars = {"lightbox_video_width":"1280","lightbox_video_height":"720"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.ilightbox.js?ver=2.2.3'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.mousewheel.js?ver=3.0.6'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionLightboxVars = {"status_lightbox":"1","lightbox_gallery":"1","lightbox_skin":"metro-white","lightbox_title":"1","lightbox_arrows":"1","lightbox_slideshow_speed":"5000","lightbox_autoplay":"","lightbox_opacity":"0.9","lightbox_desc":"1","lightbox_social":"1","lightbox_deeplinking":"1","lightbox_path":"vertical","lightbox_post_images":"1","lightbox_animation_speed":"Normal"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-lightbox.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/imagesLoaded.js?ver=3.1.8'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/packery.js?ver=2.0.0'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaPortfolioVars = {"lightbox_behavior":"all","infinite_finished_msg":"<em>All items displayed.<\/em>","infinite_blog_text":"<em>Loading the next set of posts...<\/em>","content_break_point":"800"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-core/js/min/avada-portfolio.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/modernizr.js?ver=3.3.1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.transition.js?ver=3.3.6'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.tab.js?ver=3.1.1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionTabVars = {"content_break_point":"800"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-tabs.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/cssua.js?ver=2.1.28'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.waypoints.js?ver=2.0.3'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-waypoints.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionAnimationsVars = {"disable_mobile_animate_css":"0"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-animations.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/library/jquery.countTo.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.easyPieChart.js?ver=2.1.7'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.appear.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-counters-circle.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.fade.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.requestAnimationFrame.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/fusion-parallax.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionVideoBgVars = {"status_vimeo":"1","status_yt":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/fusion-video-bg.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionContainerVars = {"content_break_point":"800","container_hundred_percent_height_mobile":"0","is_sticky_header_transparent":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-container.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.collapse.js?ver=3.1.1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionEqualHeightVars = {"content_break_point":"800"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-equal-heights.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-toggles.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-gallery.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-flip-boxes.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-progress.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-title.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.cycle.js?ver=3.0.3'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionTestimonialVars = {"testimonials_speed":"4000"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-testimonials.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionBgImageVars = {"content_break_point":"800"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-column-bg-image.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-column.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionCountersBox = {"counter_box_speed":"1000"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-counters-box.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-events.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionMapsVars = {"admin_ajax":"https:\/\/nextion.itead.cc\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.fusion_maps.js?ver=2.2.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-google-map.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/library/jquery.countdown.js?ver=1.0'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-countdown.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-content-boxes.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.modal.js?ver=3.1.1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-modal.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/Froogaloop.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionVideoVars = {"status_vimeo":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-builder/assets/js/min/general/fusion-video.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.hoverintent.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-vertical-menu-widget.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.tooltip.js?ver=3.3.5'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/bootstrap.popover.js?ver=3.3.5'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.carouFredSel.js?ver=6.2.1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.easing.js?ver=1.3'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.flexslider.js?ver=2.2.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.hoverflow.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.placeholder.js?ver=2.0.7'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/library/jquery.touchSwipe.js?ver=1.6.6'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-alert.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionCarouselVars = {"related_posts_speed":"2750","carousel_speed":"2750"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-carousel.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionFlexSliderVars = {"status_vimeo":"1","page_smoothHeight":"false","slideshow_autoplay":"1","slideshow_speed":"7000","pagination_video_slide":"","status_yt":"1","flex_smoothHeight":"false"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-flexslider.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-popover.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-tooltip.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-sharing-box.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionBlogVars = {"infinite_blog_text":"<em>Loading the next set of posts...<\/em>","infinite_finished_msg":"<em>All items displayed.<\/em>","slideshow_autoplay":"1","slideshow_speed":"7000","pagination_video_slide":"","status_yt":"1","lightbox_behavior":"all","blog_pagination_type":"Pagination","flex_smoothHeight":"false"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-blog.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-button.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-general-global.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionIe1011Vars = {"form_bg_color":"#ffffff"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-ie1011.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaHeaderVars = {"header_position":"top","header_layout":"v1","header_sticky":"1","header_sticky_type2_layout":"menu_only","side_header_break_point":"959","header_sticky_mobile":"0","header_sticky_tablet":"0","mobile_menu_design":"classic","sticky_header_shrinkage":"0","nav_height":"84","nav_highlight_border":"0","logo_margin_top":"31px","logo_margin_bottom":"31px","layout_mode":"wide","header_padding_top":"0px","header_padding_bottom":"0px","offset_scroll":"full"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-header.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaMenuVars = {"header_position":"Top","logo_alignment":"Left","header_sticky":"1","side_header_break_point":"959","mobile_menu_design":"classic","dropdown_goto":"Go to...","mobile_nav_cart":"Shopping Cart","submenu_slideout":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-menu.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionScrollToAnchorVars = {"content_break_point":"800","container_hundred_percent_height_mobile":"0"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-scroll-to-anchor.js?ver=1'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var fusionTypographyVars = {"site_width":"1240px","typography_responsive":"1","typography_sensitivity":"0.60","typography_factor":"1.50"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/includes/lib/assets/min/js/general/fusion-responsive-typography.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/library/bootstrap.scrollspy.js?ver=3.3.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaCommentVars = {"title_style_type":"single","title_margin_top":"0%","title_margin_bottom":"30px"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-comments.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-general-footer.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-quantity.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-scrollspy.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-select.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaSidebarsVars = {"header_position":"top","header_layout":"v1","header_sticky":"1","header_sticky_type2_layout":"menu_only","side_header_break_point":"959","header_sticky_tablet":"0","sticky_header_shrinkage":"0","nav_height":"84","content_break_point":"800"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-sidebars.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/library/jquery.sticky-kit.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-tabs-widget.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var toTopscreenReaderText = {"label":"Go to Top"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/library/jquery.toTop.js?ver=1.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaToTopVars = {"status_totop_mobile":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-to-top.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-drop-down.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaRevVars = {"avada_rev_styles":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-rev-styles.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-contact-form-7.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/library/jquery.elasticslider.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaElasticSliderVars = {"tfes_autoplay":"1","tfes_animation":"sides","tfes_interval":"3000","tfes_speed":"800","tfes_width":"150"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-elastic-slider.js?ver=5.4.2'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/themes/Avada/assets/min/js/general/avada-bbpress.js?ver=5.4.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var avadaFusionSliderVars = {"side_header_break_point":"959","slider_position":"below","header_transparency":"0","header_position":"Top","content_break_point":"800","status_vimeo":"1"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-content/plugins/fusion-core/js/min/avada-fusion-slider.js?ver=1'></script>
+<script type='text/javascript' src='https://nextion.itead.cc/wp-includes/js/wp-embed.min.js?ver=4.9.8'></script>
+	</body>
+<script>'undefined'=== typeof _trfq || (window._trfq = []);'undefined'=== typeof _trfd && (window._trfd=[]),_trfd.push({'tccl.baseHost':'secureserver.net'}),_trfd.push({'ap':'cpbh'},{'server':'a2plvcpnl19056'}) // Monitoring performance to make your website faster. If you want to opt-out, please contact web hosting support.</script><script src='https://img1.wsimg.com/tcc/tcc_l.combined.1.0.6.min.js'></script></html>
+
+<!-- Performance optimized by W3 Total Cache. Learn more: https://www.w3-edge.com/products/
+
+ Served from: nextion.itead.cc @ 2018-09-24 15:26:49 by W3 Total Cache -->

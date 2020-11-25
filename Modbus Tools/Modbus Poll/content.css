@@ -1,0 +1,127 @@
+body {
+	color: #333;
+}
+
+
+#product_title_faq{
+	font-style: normal;
+	font-weight: normal;
+	font-family: Arial, Helvetica, Verdana, sans-serif;
+	margin-left: 0px;
+	margin-bottom: 10px;
+	margin-right: 0px;
+	margin-top: 10px;
+	padding: 0px;
+	font-size: 27px;
+	color: #0000FF;
+}
+
+#product_title {
+	text-align: center;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+#product_title_desc{
+	text-align: center;
+}
+
+
+#product_title  h1{
+	font-style: normal;
+	font-weight: normal;
+	font-family: Arial, Helvetica, Verdana, sans-serif;
+	margin-left: 0px;
+	margin-bottom: 10px;
+	margin-right: 0px;
+	margin-top: 10px;
+	padding: 0px;
+	font-size: 37px;
+	color: #0000af;
+}
+
+#side_color{
+	background: #333;
+	clear: both;
+	width: 100%;
+	}
+
+#container{
+	width: 1000px;
+	margin: 0 auto;
+	clear: both;
+	}
+	
+header{
+	background: #333;
+	border-bottom: 4px solid #aaa;
+	}
+	
+#header h1	{
+    font-family: arial;
+	color: #ff0000;
+	margin: 0 auto;
+	padding: 10px 0px 0;
+	font-size: 45px;
+	}
+	
+#header p{
+	color: #00005f;
+	margin: 0 auto;
+	font-weight: bold;
+//	padding: 0 18px 15px;
+	}
+
+#menuheader {
+	background: #333;
+	//clear: both;
+	width: 100%;
+}
+
+
+#content{
+   font-family: arial;
+	background: #fff;
+	font-size: 16px;
+	}
+
+footer{
+	padding: 1px 0px 1px 0px;
+	background: #333;
+	clear: both;
+	width: 100%;
+	}
+footer p{
+	color: #ccc;
+	font-size: 11px;
+	font-weight: bold;
+	padding: 0px 18px;
+	}
+
+#product{
+	background: #2F2727;
+	color: #ccc;
+	font-weight: bold;
+	text-align: center;
+   }	
+
+.myButton {
+	background-color:#05355f;
+	border-radius:3px;
+	border:1px solid #0b0e07;
+//	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:arial;
+	font-size:15px;
+	padding:4px 15px;
+	text-decoration:none;
+//	text-shadow:0px 1px 0px #263666;
+}
+.myButton:hover {
+	background-color:#0000ff;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
