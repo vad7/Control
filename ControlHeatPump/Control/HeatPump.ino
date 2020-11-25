@@ -3884,32 +3884,26 @@ void HeatPump::calculatePower()
 #ifdef CORRECT_POWER220_EXCL_RBOILER
   #ifdef WR_Load_pins_Boiler_INDEX
    #ifdef WR_Boiler_Substitution_INDEX
-	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX]
+	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX];
    #else
-	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX]
+	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
    #endif
-   #ifndef PWM_ACCURATE_POWER
-				* dSDM.get_voltage() / 220
-   #endif
-				;
   #else
-	if(dRelay[RBOILER].get_Relay()) corr_power220 = CORRECT_POWER220_EXCL_RBOILER * dSDM.get_voltage() / 220;
+	if(dRelay[RBOILER].get_Relay()) corr_power220 = CORRECT_POWER220_EXCL_RBOILER;
   #endif
+	corr_power220 = corr_power220 * dSDM.get_voltage() / 220;
 	_power220 -= corr_power220;
 	corr_power220 = 0;
 #else
 	#ifdef WATTROUTER
 		#ifdef WR_Load_pins_Boiler_INDEX
 		 #ifdef WR_Boiler_Substitution_INDEX
-	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX]
+	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX];
 		 #else
-	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX]
+	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
 		 #endif
 		#endif
-		#ifndef PWM_ACCURATE_POWER
-					* dSDM.get_voltage() / 220
-		#endif
-					;
+	corr_power220 = corr_power220 * dSDM.get_voltage() / 220;
 	if(!dRelay[RBOILER].get_Relay()) { // Если греем ваттроутером, то вычесть
 		_power220 -= corr_power220;
 		corr_power220 = 0;
