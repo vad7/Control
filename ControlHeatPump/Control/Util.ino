@@ -1125,12 +1125,16 @@ xSwitched:
 
 void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 {
-#ifdef PWM_ACCURATE_POWER
-	if(delta != 0 && delta != -32768) delta = WR.LoadPower[idx] * 220 / HP.dSDM.get_voltage();
-#endif
 	#define MP WR.LoadPower[idx]
 	int n = WR_LoadRun[idx] + delta;
-	if(n <= 0) n = 0; else if(n > MP) n = MP;
+	if(n <= 0) n = 0;
+	else if(n >= MP) n = MP;
+#ifdef PWM_ACCURATE_POWER
+	else {
+		n = n * 220 / HP.dSDM.get_voltage();
+		if(n > MP) n = MP;
+	}
+#endif
 	uint32_t t = rtcSAM3X8.unixtime();
 	if(WR.PWM_FullPowerTime) {
 		if(n > 0) {

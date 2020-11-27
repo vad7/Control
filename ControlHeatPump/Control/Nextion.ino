@@ -643,6 +643,10 @@ void Nextion::Update()
 			setComponentText("t1", buffer);
 			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE, sizeof(buffer)-1);
 			setComponentText("t2", buffer);
+			if(sizeof(CONFIG_NOTE) > sizeof(buffer)) {
+				Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE + sizeof(buffer)-1, sizeof(CONFIG_NOTE) - sizeof(buffer));
+				setComponentText("t2", buffer);
+			}
 		}
 	} else if(PageID == NXTID_PAGE_PROFILE) { // Обновление данных страницы 8 "Профили"
 #ifdef NEXTION_DEBUG
