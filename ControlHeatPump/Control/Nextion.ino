@@ -641,12 +641,15 @@ void Nextion::Update()
 		if(fUpdate == 2) {
 			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NAME, sizeof(buffer)-1);
 			setComponentText("t1", buffer);
+			NEXTION_PORT.write("t2.txt=\"");
 			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE, sizeof(buffer)-1);
-			setComponentText("t2", buffer);
+			NEXTION_PORT.write(buffer);
 			if(sizeof(CONFIG_NOTE) > sizeof(buffer)) {
 				Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE + sizeof(buffer)-1, sizeof(CONFIG_NOTE) - sizeof(buffer));
-				setComponentText("t2", buffer);
+				NEXTION_PORT.write(buffer);
 			}
+			NEXTION_PORT.write("\"");
+			NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);
 		}
 	} else if(PageID == NXTID_PAGE_PROFILE) { // Обновление данных страницы 8 "Профили"
 #ifdef NEXTION_DEBUG
