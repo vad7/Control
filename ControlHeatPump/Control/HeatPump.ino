@@ -2952,7 +2952,7 @@ MODE_HP HeatPump::get_Work()
 	case pCOMP_OFF:
 		if(onBoiler) {
 			if(Status.ret == pBh22 || Status.ret == pBp22) flagRBOILER = true;
-			journal.jprintf(" Stop Boiler [%s]\n", (char *)codeRet[get_ret()]);
+			journal.jprintf_time("Stop Boiler [%s]\n", (char *)codeRet[get_ret()]);
 		}
 		ret = pOFF;
 		break;
@@ -3147,6 +3147,7 @@ boolean HeatPump::Switch_R4WAY(boolean fCool)
 // проверка на паузу между включениями, возврат true - в паузе
 boolean HeatPump::check_compressor_pause()
 {
+	if(is_compressor_on()) return true;
 	uint16_t pause = (Status.modWork & (pHEAT | pCOOL)) ? Prof.Heat.CompressorPause : Option.pause;
 	if(stopCompressor && rtcSAM3X8.unixtime() - stopCompressor < pause) {
 		if(!compressor_in_pause) journal.jprintf_time("Waiting compressor, pause %d s...\n", pause - (rtcSAM3X8.unixtime() - stopCompressor));
@@ -3379,6 +3380,7 @@ void HeatPump::compressorOFF()
 	command_completed = rtcSAM3X8.unixtime();
 	if(is_compressor_on()) {
 		COMPRESSOR_OFF;                                             // Компрессор выключить
+		compressor_in_pause = false;
 	}
 
 #ifdef REVI
