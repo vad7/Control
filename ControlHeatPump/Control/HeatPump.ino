@@ -3147,7 +3147,7 @@ boolean HeatPump::Switch_R4WAY(boolean fCool)
 // проверка на паузу между включениями, возврат true - в паузе
 boolean HeatPump::check_compressor_pause()
 {
-	if(is_compressor_on()) return true;
+	if(is_compressor_on()) return false;
 	uint16_t pause = (Status.modWork & (pHEAT | pCOOL)) ? Prof.Heat.CompressorPause : Option.pause;
 	if(stopCompressor && rtcSAM3X8.unixtime() - stopCompressor < pause) {
 		if(!compressor_in_pause) journal.jprintf_time("Waiting compressor, pause %d s...\n", pause - (rtcSAM3X8.unixtime() - stopCompressor));
