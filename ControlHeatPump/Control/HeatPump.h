@@ -174,6 +174,7 @@ uint8_t WF_BoilerTargetPercent = 100;
 #define fHP_SunSwitching		2			// Солнечный коллектор переключается
 #define fHP_SunReady			3			// Солнечный коллектор открыт
 #define fHP_SunWork 			4			// Солнечный коллектор работает
+#define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define fAddHeat				0               // флаг Использование дополнительного тена при нагреве

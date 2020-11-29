@@ -1461,7 +1461,7 @@ void vReadSensor_delay1ms(int32_t ms)
 				HP.save_motoHour();
 				Stats.SaveStats(0);
 				Stats.SaveHistory(0);
-				journal.jprintf_date( "POWER LOST!\n");
+				journal.jprintf_date("POWER LOST!\n");
 				if(HP.get_State() == pSTARTING_HP || HP.get_State() == pWORK_HP) {
 					HP.sendCommand(pWAIT);
 					HP.NO_Power = 2;
@@ -1480,6 +1480,10 @@ void vReadSensor_delay1ms(int32_t ms)
 				if(--HP.fBackupPowerOffDelay == 0) {
 					journal.jprintf_time("Switched to Normal power!\n");
 					HP.Option.flags &= ~(1<<fBackupPower);
+					if(GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
+						HP.flags &= ~(1<<fHP_BackupNoPwrWAIT);
+						HP.sendCommand(pRESUME);
+					}
 				}
 			} else HP.Option.flags &= ~(1<<fBackupPower);
 		}

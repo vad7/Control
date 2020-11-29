@@ -1879,7 +1879,12 @@ xGoWait:
 		vTaskResume(xHandleUpdate);
 		return;
 	}
+	if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_err() != OK) {
+		SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+		goto xGoWait;
+	}
 #endif
+
 	// Дана команда старт - но возможно надо переходить в ожидание
 	// Определяем что делать
 	int8_t profile = Schdlr.calc_active_profile();
