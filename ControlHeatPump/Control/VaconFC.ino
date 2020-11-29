@@ -172,11 +172,15 @@ int8_t devVaconFC::get_readState()
 		{
 			state = ERR_LINK_FC; // признак потери связи с инвертором
 			power = current = FC_curr_freq = 0;
+			if(!GETBIT(flags, fOnOff)) return err; // Если не работаем, то и ошибку не генерим
 #ifdef SPOWER
 			HP.sInput[SPOWER].Read(true);
-			if(HP.sInput[SPOWER].is_alarm()) return err;
+			HP.sInput[SGENERATOR].Read(true);
+			if(HP.sInput[SPOWER].is_alarm() || HP.sInput[SGENERATOR].get_Input() == HP.sInput[SGENERATOR].get_alarmInput()) {
+				HP.sendCommand(pWAIT);
+				return err;
+			}
 #endif
-			if(!GETBIT(flags, fOnOff)) return err; // Если не работаем, то и ошибку не генерим
 			SETBIT1(flags, fErrFC); // Блок инвертора
 			set_Error(err, name); // генерация ошибки
 			return err; // Возврат
@@ -186,6 +190,10 @@ int8_t devVaconFC::get_readState()
 				uint16_t reg = read_0x03_16(FC_ERROR);
 				journal.jprintf("%s, Fault: %s(%d) - ", name, err ? cError : get_fault_str(reg), err ? err : reg);
 				err = ERR_FC_FAULT;
+				if(HP.NO_Power || GETBIT(HP.Option.flags, fBackupPower)) {
+					HP.sendCommand(pWAIT);
+					return err;
+				}
 			} else if(get_startTime() && rtcSAM3X8.unixtime() - get_startTime() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {
 				err = ERR_MODBUS_STATE;
 			}
