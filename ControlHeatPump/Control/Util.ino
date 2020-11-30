@@ -1131,7 +1131,7 @@ void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 	else if(n >= MP) n = MP;
 #ifdef PWM_ACCURATE_POWER
 	else {
-		n = n * 220 / HP.dSDM.get_voltage();
+		n = n * (220*220L) / (HP.dSDM.get_voltage()*HP.dSDM.get_voltage());
 		if(n > MP) n = MP;
 	}
 #endif

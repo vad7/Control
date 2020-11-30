@@ -3898,7 +3898,9 @@ void HeatPump::calculatePower()
   #else
 	if(dRelay[RBOILER].get_Relay()) corr_power220 = CORRECT_POWER220_EXCL_RBOILER;
   #endif
-	corr_power220 = corr_power220 * dSDM.get_voltage() / 220;
+  #ifdef PWM_ACCURATE_POWER
+	corr_power220 = corr_power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
+  #endif
 	_power220 -= corr_power220;
 	corr_power220 = 0;
 #else
@@ -3910,7 +3912,9 @@ void HeatPump::calculatePower()
 	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
 		 #endif
 		#endif
-	corr_power220 = corr_power220 * dSDM.get_voltage() / 220;
+		#ifdef PWM_ACCURATE_POWER
+	corr_power220 = corr_power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
+		#endif
 	if(!dRelay[RBOILER].get_Relay()) { // Если греем ваттроутером, то вычесть
 		_power220 -= corr_power220;
 		corr_power220 = 0;
@@ -3926,7 +3930,9 @@ void HeatPump::calculatePower()
 		int32_t corr = 0;
 		for(uint8_t i = 0; i < sizeof(correct_power220)/sizeof(correct_power220[0]); i++) if(dRelay[correct_power220[i].num].get_Relay()) corr += correct_power220[i].value;
 		if(corr) {
-			corr = corr * dSDM.get_voltage() / 220;
+#ifdef PWM_ACCURATE_POWER
+			corr = corr * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
+#endif
 			_power220 += corr;
 		}
 	}
