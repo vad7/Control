@@ -26,6 +26,20 @@
 #define NTP_PACKET_SIZE 48                  // временная отметка NTP находится в первых 48 байтах сообщения
 byte packetBuffer[NTP_PACKET_SIZE+1];       // буфер, в котором будут храниться входящие и исходящие пакеты
 
+// Перевод формата времени Time в формат Unix (секунды с 1970 года)
+#define SEC_1970_TO_2000      946684800UL
+static  const uint8_t dim[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+unsigned long TimeToUnixTime(tmElements_t *t) //[V]*
+{
+	if(t->Year == 0) return 0;
+	uint16_t dc;
+	dc = t->Day;
+	for(uint8_t i = 0; i < (t->Month - 1); i++)	dc += dim[i];
+	if((t->Month > 2) && (((t->Year - 2000) % 4) == 0)) ++dc;
+	dc = dc + (365 * (t->Year - 2000)) + (((t->Year - 2000) + 3) / 4) - 1;
+	return ((((((dc * 24L) + t->Hour) * 60) + t->Minute) * 60) + t->Second) + SEC_1970_TO_2000;
+}
+
 // Установка времени системы (сначала читаем из i2c часов)
 // Возвращает код ошибки. Вызов только из setup()!
 int8_t set_time(void)
@@ -35,11 +49,11 @@ int8_t set_time(void)
 	rtcSAM3X8.init();                             // Запуск внутренних часов
 	uint32_t t = TimeToUnixTime(getTime_RtcI2C());
 	if(!(HP.get_updateNTP() && set_time_NTP())) { // Обновить время по NTP
-		if(t) {
+		if(t > SEC_1970_TO_2000 + 366*24*60*60) {
 			rtcSAM3X8.set_clock(t);                // Установить внутренние часы по i2c
 			journal.jprintf(" Time updated from I2C RTC: %s %s\n", NowDateToStr(), NowTimeToStr());
 		} else {
-			journal.jprintf("Error read I2C RTC\n");
+			journal.jprintf("Error I2C RTC\n");
 		}
 	}
 	
@@ -53,9 +67,9 @@ int8_t set_time(void)
 #define NTP_buffer Socket[MAIN_WEB_TASK].outBuf
 #define NTP_buffer_size	64
 
-// 0x80000000 - Ошибка, иначе разница в сек
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
-int32_t set_time_NTP(void)
+// Возврат true - успешно
+bool set_time_NTP(void)
 {
 	EthernetClient tTCP; // For get time
 	unsigned long secs = 0;
@@ -138,7 +152,6 @@ int32_t set_time_NTP(void)
 			if(flag > 0) break; else journal.jprintf(" Error %d\n", flag);
 		}
 	}
-	int32_t ret = 0x80000000;
 	if(flag > 0) {  // Обновление времени если оно получено
 		unsigned long lt = rtcSAM3X8.unixtime();
 		if(lt != secs) {
@@ -149,10 +162,9 @@ int32_t set_time_NTP(void)
 		setDate_RtcI2C(rtcSAM3X8.get_days(), rtcSAM3X8.get_months(), rtcSAM3X8.get_years());
 		journal.jprintf("OK\n Set time from server: %s %s", NowDateToStr(), NowTimeToStr());
 		journal.jprintf(", was: %02d:%02d:%02d\n", lt % 86400L / 3600, lt % 3600 / 60, lt % 60);
-		ret = rtcSAM3X8.unixtime() - lt;
 	}
 	SemaphoreGive(xWebThreadSemaphore);
-	return ret;
+	return flag > 0;
 }
 
 #else
@@ -160,7 +172,7 @@ int32_t set_time_NTP(void)
 // Функция обновления времени по ntp вызывается из задачи или кнопкой. true - если время обновлено
 // Запрос времени от NTP сервера, возвращает время как long
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
-boolean set_time_NTP(void)
+bool set_time_NTP(void)
 {
 	EthernetUDP Udp;                                    // Для NTP сервера
 	unsigned long secs;
@@ -499,16 +511,3 @@ char*  StatDate(uint32_t idt,boolean forma,char *ret)
  return ret;   
 }
 
-// Перевод формата времени Time в формат Unix (секунды с 1970 года)
-#define SEC_1970_TO_2000      946684800
-static  const uint8_t dim[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
-unsigned long TimeToUnixTime(tmElements_t *t) //[V]*
-{
-	if(t->Year == 0) return 0;
-	uint16_t dc;
-	dc = t->Day;
-	for(uint8_t i = 0; i < (t->Month - 1); i++)	dc += dim[i];
-	if((t->Month > 2) && (((t->Year - 2000) % 4) == 0)) ++dc;
-	dc = dc + (365 * (t->Year - 2000)) + (((t->Year - 2000) + 3) / 4) - 1;
-	return ((((((dc * 24L) + t->Hour) * 60) + t->Minute) * 60) + t->Second) + SEC_1970_TO_2000;
-}
