@@ -703,6 +703,7 @@ void Nextion::StatusLine()
 		if(HP.get_errcode() == OK) {
 			sendCommand("vis ok,1");
 			sendCommand("vis er,0");
+			sendCommand("vis e,0");
 		} else {
 			sendCommand("vis er,1");
 			sendCommand("vis ok,0");
@@ -710,6 +711,9 @@ void Nextion::StatusLine()
 				Encode_UTF8_to_ISO8859_5(ntemp, "Ошибка", sizeof(ntemp)-1);
 				_itoa(HP.get_errcode(), ntemp);
 				setComponentText("er", ntemp);
+				Encode_UTF8_to_ISO8859_5(buffer, HP.get_lastErr(), sizeof(buffer)-1);
+				setComponentText("e", buffer);
+				sendCommand("vis e,1");
 			}
 		}
 

@@ -41,15 +41,9 @@ void set_Error(int8_t _err, char *nam)
 {
 	if(HP.is_compressor_on())    // СРАЗУ Если компрессор включен, выключить  ГЛАВНАЯ ЗАЩИТА
 	{ // Выключить компрессор для обоих вариантов
+		if(HP.dFC.get_present()) HP.dFC.stop_FC(); else HP.dRelay[RCOMP].set_OFF();
+		HP.set_stopCompressor();
 		journal.jprintf("$Compressor protection ");
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
-		HP.dRelay[RCOMP].set_OFF();
-#else
-#ifdef MODBUS_PORT_NUM
-		if(HP.dFC.write_0x06_16(FC_CONTROL, FC_C_STOP) == OK) // подать команду ход/стоп через модбас
-#endif
-#endif
-			HP.set_stopCompressor();
 	}
 	//   if ((HP.get_State()==pOFF_HP)&&(HP.error!=OK)) return HP.error;  // Если ТН НЕ работает, не стартует не останавливается и уже есть ошибка то останавливать нечего и выключать нечего выходим - ошибка не обновляется - важна ПЕРВАЯ ошибка
 
@@ -58,9 +52,33 @@ void set_Error(int8_t _err, char *nam)
 		strcpy(HP.source_error, nam);
 		strcpy(HP.note_error, NowTimeToStr());       // Cтереть всю строку и поставить время
 		strcat(HP.note_error, " ");
-		strcat(HP.note_error, nam);                  // Имя кто сгенерировал ошибку
-		strcat(HP.note_error, ": ");
-		strcat(HP.note_error, noteError[abs(_err)]); // Описание ошибки
+		if(_err == ERR_ANALOG_MIN) {
+			strcat(HP.note_error, "Низкое ");
+xSearch_sADC:
+			for(uint8_t i = 0; i < ANUMBER; i++)
+				if(strcmp(nam, HP.sADC[i].get_name()) == 0) {
+					strcat(HP.note_error, HP.sADC[i].get_note());
+					break;
+				}
+		} else if(_err == ERR_ANALOG_MAX) {
+			strcat(HP.note_error, "Высокое ");
+			goto xSearch_sADC;
+		} else if(_err == ERR_MINTEMP) {
+			strcat(HP.note_error, "Низкая ");
+xSearch_sTemp:
+			for(uint8_t i = 0; i < TNUMBER; i++)
+				if(strcmp(nam, HP.sTemp[i].get_name()) == 0) {
+					strcat(HP.note_error, HP.sTemp[i].get_note());
+					break;
+				}
+		} else if(_err == ERR_MAXTEMP) {
+			strcat(HP.note_error, "Высокая ");
+			goto xSearch_sTemp;
+		} else {
+			strcat(HP.note_error, nam);                  // Имя кто сгенерировал ошибку
+			strcat(HP.note_error, ": ");
+			strcat(HP.note_error, noteError[abs(_err)]); // Описание ошибки
+		}
 		journal.jprintf_time("$ERROR source: %s, code: %d\n", nam, _err); //journal.jprintf(", code: %d\n",_err);
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) HP.save_DumpJournal(true); // вывод отладочной информации для начала  если запущена freeRTOS
 		HP.message.setMessage(pMESSAGE_ERROR, HP.note_error, 0);    // сформировать уведомление об ошибке
@@ -3520,6 +3538,7 @@ void HeatPump::sendCommand(TYPE_COMMAND c)
 	if (command != pEMPTY) // Если команда выполняется (не pEMPTY), то следующую в очередь, если есть место
 	{
 		if(next_command != c){
+			if(c == pSTOP) return;
 			next_command = c;
 			journal.jprintf("Active command: %s, next: %s\n", get_command_name(command), get_command_name(next_command));
 		}
