@@ -1853,7 +1853,6 @@ void vServiceHP(void *)
 	static uint8_t  task_dailyswitch_countm = task_updstat_countm;
 	static TickType_t timer_sec = xTaskGetTickCount(), timer_idle = 0, timer_total = 0;
 	static uint16_t restart_cnt;
-	static uint16_t pump_in_pause_timer = 0;
 	for(;;) {
 		STORE_DEBUG_INFO(70);
 		register uint32_t t = xTaskGetTickCount();
@@ -1926,19 +1925,19 @@ void vServiceHP(void *)
 				if(HP.startPump == 1 && HP.get_pausePump() == 0 && HP.get_workPump()) { // Постоянно работают
 					goto xPumpsOn;
 				} else if(HP.get_workPump()) {
-					if(pump_in_pause_timer <= 1) {
+					if(HP.pump_in_pause_timer <= 1) {
 						if(HP.startPump <= 2) { // включить
-							pump_in_pause_timer = HP.get_workPump();
+							HP.pump_in_pause_timer = HP.get_workPump();
 xPumpsOn:					HP.dRelay[PUMP_OUT].set_ON();                  	// включить насос отопления
 							HP.Pump_HeatFloor(true);						// включить насос ТП
 							HP.startPump = 3;
 						} else { // выключить
 							HP.dRelay[PUMP_OUT].set_OFF();                 	// выключить насос отопления
 							HP.Pump_HeatFloor(false);						// выключить насос ТП
-							pump_in_pause_timer = HP.get_pausePump();
+							HP.pump_in_pause_timer = HP.get_pausePump();
 							HP.startPump = 2;
 						}
-					} else pump_in_pause_timer--;
+					} else HP.pump_in_pause_timer--;
 				}
 			}
 			STORE_DEBUG_INFO(76);

@@ -118,6 +118,7 @@ void HeatPump::initHeatPump()
 	uint8_t i;
 	NO_Power = 0;
 	fBackupPowerOffDelay = 0;
+	pump_in_pause_timer = 0;
 	flags = (1<<fHP_SunNotInited);
 	eraseError();
 
@@ -1782,10 +1783,12 @@ if(b && (get_modWork() & pBOILER)){
 			|| GETBIT(dRelay[RPUMPBH].flags, fR_StatusMain)
 #endif
 	)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
-		journal.jprintf(" Delay: stop OUT pump.\n");
-		for(uint16_t i = 0; i < Option.delayOffPump; i++) {
-			_delay(1000); // задержка перед выключение насосов после выключения компрессора (облегчение останова)
-			if(is_next_command_stop()) break;
+		if(get_workPump() == 0 || get_pausePump()) {
+			journal.jprintf(" Delay: stop OUT pump.\n");
+			for(uint16_t i = 0; i < Option.delayOffPump; i++) {
+				_delay(1000); // задержка перед выключение насосов после выключения компрессора (облегчение останова)
+				if(is_next_command_stop()) break;
+			}
 		}
 	} else {
 		_delay(d);                                // Задержка на d мсек
@@ -2941,7 +2944,8 @@ void HeatPump::vUpdate()
 			configHP(Status.modWork);
 			if(!startPump && get_modeHouse() != pOFF)  // Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
 			{
-				startPump = true;                                 // Поставить признак запуска задачи насос
+				pump_in_pause_timer = get_pausePump();
+				startPump = 1;                                 // Поставить признак запуска задачи насос
 				if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n", (char*) __FUNCTION__, "ON");     // Включить задачу насос кондесатора выключение в переключении насосов
 			}
 			command_completed = rtcSAM3X8.unixtime(); // поменялся режим
@@ -2949,7 +2953,7 @@ void HeatPump::vUpdate()
 	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
 		if(startPump)                                     // Остановить задачу насос
 		{
-			startPump = false;                            // Поставить признак останова задачи насос
+			startPump = 0;                            // Поставить признак останова задачи насос
 			if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n",(char*)__FUNCTION__, "OFF");
 		    command_completed = rtcSAM3X8.unixtime(); // поменялся режим
 		}

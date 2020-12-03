@@ -604,6 +604,7 @@ public:
 // Настройки опций
 	type_optionHP Option;                  // Опции теплового насоса
 
+	uint16_t pump_in_pause_timer;
 	uint32_t time_Sun;                    // тики солнечного коллектора
 	uint8_t  NO_Power;					  // Нет питания основных узлов, 2 - нужно запустить после восстановления
 	uint8_t  NO_Power_delay;
