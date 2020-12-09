@@ -772,7 +772,12 @@ void vWeb0(void *)
 #ifdef PWM_CALC_POWER_ARRAY
 					if(GETBIT(PWM_CalcFlags, PWM_fCalcNow)) break;
 #endif
-					boolean nopwr = (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power) && GETBIT(WR.Flags, WR_fActive); // Выключить все
+					// Выключить все
+					boolean nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
+#ifdef WR_PowerMeter_Modbus
+									|| WR_Error_Read_PowerMeter > WR_Error_Read_PowerMeter_Max
+#endif
+									 );
 					if(nopwr) WR_Refresh |= WR_Loads;
 					if(WR_Refresh || WR.PWM_FullPowerTime) {
 						for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -797,7 +802,6 @@ void vWeb0(void *)
 						}
 						WR_Refresh = false;
 					}
-					if(!active || !GETBIT(WR.Flags, WR_fActive)) break;
 #ifdef WR_Load_pins_Boiler_INDEX
 					if(GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && !HP.dRelay[RBOILER].get_Relay()) {
 #ifdef WR_Boiler_Substitution_INDEX
@@ -846,6 +850,7 @@ void vWeb0(void *)
 						}
 					}
 #endif
+					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 
 #ifdef WR_CurrentSensor_4_20mA
 					HP.sADC[IWR].Read();
@@ -873,6 +878,8 @@ void vWeb0(void *)
 #endif
 					//
 					if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d\n", pnet);
+					if(!GETBIT(WR.Flags, WR_fActive) || nopwr) break;
+
 #ifdef WR_TestAvailablePowerForRelayLoads
 					if(WR_TestLoadStatus) { // Тестирование нагрузки
 						if(++WR_TestLoadStatus > WR_TestAvailablePowerTime) {
@@ -1349,12 +1356,18 @@ void vReadSensor(void *)
 //			if(tm > WEB0_FREQUENT_JOB_PERIOD / 2) {
 //				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
 				i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-				if(i != OK) {
-					if(GETBIT(WR.Flags, WR_fLogFull) && HP.get_testMode() == NORMAL) journal.jprintf("WR: Modbus read err %d\n", i);
-				}
+				if(i == OK) {
+					WR_Error_Read_PowerMeter = 0;
 #ifdef PWM_CALC_POWER_ARRAY
-				else WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
+					WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
 #endif
+				} else {
+					if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
+					if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
+						WR_Error_Read_PowerMeter = -10;
+						if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
+					}
+				}
 //			}
 		}
 #else

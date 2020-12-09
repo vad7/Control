@@ -4020,6 +4020,7 @@ const char *noteTemp[] = {"Температура улицы",
 //	#define WR_CurrentSensor_4_20mA	IWR								// Использовать аналоговый датчик тока с выходом 4-20mA, номер ADC датчика
 	#define WR_PowerMeter_Modbus	3								// (0xF8) Использовать счетчик PZEM-004T Modbus для получения мощности, адрес
 	#define WR_PowerMeter_ModbusReg 0x0003							// Адрес регистра мощности (32b), десятые Вт
+	#define WR_Error_Read_PowerMeter_Max	3						// Количество ошибок подряд для ошибки
 
 	#define WR_Load_pins_Boiler_INDEX		0						// Индекс бойлера в массиве WR_Load_pins
 	#define WR_Boiler_Hysteresis			100						// Гистерезис бойлера, сотые градуса

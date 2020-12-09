@@ -115,7 +115,8 @@ uint8_t Request_LowConsume = 0xFF;
 #define  WR_fTYPE				uint8_t
 int16_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus
-volatile int32_t  WR_PowerMeter_Power = 0;
+volatile int32_t WR_PowerMeter_Power = 0;
+volatile uint8_t WR_Error_Read_PowerMeter = 0;
 #endif
 #ifdef WR_PNET_AVERAGE
 int16_t  WR_Pnet_avg[WR_PNET_AVERAGE];

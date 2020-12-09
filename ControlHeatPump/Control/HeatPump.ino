@@ -3244,7 +3244,7 @@ xNextStop:
 #endif
 	for(; d > 0; d--) { // задержка перед включением компрессора
 		_delay(1000);
-		if(error || is_next_command_stop()) return; // прерваться по ошибке или по команде
+		if(error || is_next_command_stop() || get_State() == pSTOPING_HP) return; // прерваться по ошибке или по команде
 	}
 	#ifdef DEFROST
 	}  // if(!(mod & pDEFROST))
@@ -3306,6 +3306,8 @@ xNextStop:
 		}
 #endif
 
+		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
+
 #ifdef FLOW_CONTROL      // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
 		for(uint8_t i = 0; i < FNUMBER; i++) {   // Проверка потока по каждому датчику
 		#ifdef SUPERBOILER   // Если определен супер бойлер
@@ -3331,6 +3333,8 @@ xNextStop:
 		#ifdef DEFROST
 		}  // if(!(mod & pDEFROST))
 		#endif
+
+		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
 
 		resetPID(); 										// Инициализировать переменные ПИД регулятора
 		if(Charts_when_comp_on) task_updstat_chars = 0;
