@@ -655,6 +655,7 @@ void pingW5200(boolean f)
 //             2 - вернуть значение после '=', 3 - проверить на "Ok"
 int Send_HTTP_Request(const char *server, const char *request, uint8_t fget_value)
 {
+	static int8_t Last_Error = 0;
 	if(server == NULL || request == NULL) return -2000000004;
 	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		return -2000000000;
@@ -784,34 +785,36 @@ xget_value_1:
 	}
 	SemaphoreGive(xWebThreadSemaphore);
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf(" Ret = %d\n", ret);
-	else if(ret < 0 && (HP.get_NetworkFlags() & (1<<fWebLogError))) {
-		journal.jprintf_time("Error %d send request to %s!", ret + 2000000000, server);
-		switch (ret)
-		{
-		case -2000000001:
-			journal.jprintf(" Response timeout");
-			break;
-		case -2000000002:
-			journal.jprintf(" Address wrong");
-			break;
-		case -2000000003:
-			journal.jprintf(" Connect fail");
-			break;
-		case -2000000011:
-			journal.jprintf(" Send error");
-			break;
-		case -2000000010:
-			journal.jprintf(" Empty response");
-			break;
-		case -2000000009:
-			journal.jprintf(" Response: %s", buffer);
-			break;
-		case -2000000008:
-			journal.jprintf(" ERR %s", buffer);
-			break;
+	else if(ret < 0) {
+		if(Last_Error != ret + 2000000000) {
+			journal.jprintf_time("Error %d send request to %s!", Last_Error = ret + 2000000000, server);
+			switch (ret)
+			{
+			case -2000000001:
+				journal.jprintf(" Response timeout");
+				break;
+			case -2000000002:
+				journal.jprintf(" Address wrong");
+				break;
+			case -2000000003:
+				journal.jprintf(" Connect fail");
+				break;
+			case -2000000011:
+				journal.jprintf(" Send error");
+				break;
+			case -2000000010:
+				journal.jprintf(" Empty response");
+				break;
+			case -2000000009:
+				journal.jprintf(" Response: %s", buffer);
+				break;
+			case -2000000008:
+				journal.jprintf(" ERR %s", buffer);
+				break;
+			}
+			journal.jprintf("\n");
 		}
-		journal.jprintf("\n");
-	}
+	} else Last_Error = 0;
 	return ret;
 }
 

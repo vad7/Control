@@ -1151,7 +1151,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	   uint8_t bit = var[sizeof(option_WR_Loads)-1] - '0';
 	   if(bit < WR_NumLoads) {
 		   WR.Loads = WR_Loads = (WR_Loads & ~(1<<bit)) | (n == 0 ? 0 : (1<<bit));
-		   //if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh = true;
+		   //if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh |= (1<<bit);
 		   return true;
 	   }
 	} else if(strncmp(var, option_WR_Loads_PWM, sizeof(option_WR_Loads_PWM)-1) == 0) {
@@ -1162,7 +1162,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 		   if(bit == WR_Load_pins_Boiler_INDEX) WR.PWM_Loads = (WR.PWM_Loads & ~(1<<WR_Boiler_Substitution_INDEX)) | (n == 0 ? 0 : (1<<WR_Boiler_Substitution_INDEX));
 #endif
 		   WR.PWM_Loads = (WR.PWM_Loads & ~(1<<bit)) | (n == 0 ? 0 : (1<<bit));
-		   //if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh = true;
+		   //if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh |= (1<<bit);
 		   return true;
 	   }
 	} else if(strncmp(var, option_WR_LoadPower, sizeof(option_WR_LoadPower)-1) == 0) {
@@ -1197,7 +1197,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 		return true;
 	} else if(strcmp(var,option_WR_fActive)==0) {
 		WR.Flags = (WR.Flags & ~(1<<WR_fActive)) | ((n!=0)<<WR_fActive);
-		if(n == 0) WR_Refresh = true;
+		if(n == 0) WR_Refresh |= WR_Loads;
 #ifdef WR_PNET_AVERAGE
 		else WR_Pnet_avg_init = true;
 #endif

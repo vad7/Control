@@ -1024,7 +1024,8 @@ void vWeb0(void *)
 #ifdef HTTP_MAP_Read_MPPT
 							if(mppt == 255) {
 								active = false;
-								if((mppt = WR_Check_MPPT()) == 2) break;	// Проверка наличия свободного солнца
+								mppt = WR_Check_MPPT();
+								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
 							}
 #endif
 							if(GETBIT(WR.PWM_Loads, i)) {
