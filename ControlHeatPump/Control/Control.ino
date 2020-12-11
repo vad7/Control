@@ -1663,7 +1663,7 @@ void vReadSensor_delay1ms(int32_t ms)
 							journal.jprintf_time("Profile changed to #%d\n", _profile);
 							if(frestart) HP.sendCommand(pRESUME);
 						}
-					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power) {
+					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
 						HP.sendCommand(pRESUME);
 					}
 				}
