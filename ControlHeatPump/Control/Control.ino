@@ -1681,15 +1681,17 @@ delayTask:	// чтобы задача отдавала часть времени
 		case pSTARTING_HP: _delay(10000); break; // 1 Стартует  - этого не должно быть в этом месте
 		case pWORK_HP:                           // 3 Работает   - анализ режима работы get_modWork()
 			if((HP.get_modWork() & pHEAT)) {	// Отопление
-				if(HP.get_ruleHeat()==pHYSTERESIS)  vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
-				else
-					vTaskDelay(HP.dFC.get_Uptime()*1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД  секунды
+				if(HP.get_ruleHeat()==pHYSTERESIS)
+					vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
+				else vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД  секунды
 			} else if((HP.get_modWork() & pCOOL)) { // охлаждение
-				if(HP.get_ruleCool()==pHYSTERESIS)  vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
-				else
-					vTaskDelay(HP.dFC.get_Uptime()*1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД секунды
-			} else if((HP.get_modWork() & pCOOL)) { // бойлер
-				vTaskDelay(HP.dFC.get_Uptime()*1000/portTICK_PERIOD_MS);                            // Время интегрирования ПИД секунды
+				if(HP.get_ruleCool()==pHYSTERESIS)
+					vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
+				else vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД секунды
+			} else if((HP.get_modWork() & pBOILER)) { // бойлер
+				if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
+					vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);  // Время интегрирования ПИД секунды
+				else vTaskDelay(TIME_CONTROL_BOILER/portTICK_PERIOD_MS);                                        // Гистерезис
 			} else { // Пауза
 				vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);                                        // Гистерезис
 			}
