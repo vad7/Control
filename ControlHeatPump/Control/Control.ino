@@ -1356,17 +1356,21 @@ void vReadSensor(void *)
 //			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: +%d\n", tm);
 //			if(tm > WEB0_FREQUENT_JOB_PERIOD / 2) {
 //				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
-				i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-				if(i == OK) {
-					WR_Error_Read_PowerMeter = 0;
-#ifdef PWM_CALC_POWER_ARRAY
-					WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
-#endif
+				if(GETBIT(HP.Option.flags, fBackupPower)) {
+					WR_PowerMeter_Power = -10;
 				} else {
-					if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
-					if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
-						WR_Error_Read_PowerMeter = -10;
-						if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
+					i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
+					if(i == OK) {
+						WR_Error_Read_PowerMeter = 0;
+#ifdef PWM_CALC_POWER_ARRAY
+						WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
+#endif
+					} else {
+						if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
+						if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
+							WR_PowerMeter_Power = -10;
+							if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
+						}
 					}
 				}
 //			}
