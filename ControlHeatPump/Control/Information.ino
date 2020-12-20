@@ -1092,12 +1092,12 @@ xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
 		int16_t trg = ((int8_t)DailySwitch[i].TimeOff) * 100;
 		if(st & 1) { // T>
-			if(trg < t) ret = 1;
-			else if(trg > t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
+			if(t > trg) ret = 1;
+			else if(trg - HP.Option.DailySwitchHysteresis * 10 > t) ret = 0;
 			else ret = -1;
 		} else { // T<
-			if(trg > t) ret = 1;
-			else if(trg < t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
+			if(t < trg) ret = 1;
+			else if(trg + HP.Option.DailySwitchHysteresis * 10 < t) ret = 0;
 			else ret = -1;
 		}
 	}
