@@ -1193,18 +1193,17 @@ void vWeb0(void *)
 				if(t - daily_http_time > 600UL) { // дискретность 10 минут
 					daily_http_time = t;
 					daily_http_time -= daily_http_time % 600;
-					uint32_t tt = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
+					uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
 					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
 						if(HP.Prof.DailySwitch[i].Device == 0) break;
 						if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
+						int8_t ds = HP.Prof.check_DailySwitch(i, hhmm);
+						if(ds < 0) continue;
 						if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-						uint32_t st = HP.Prof.DailySwitch[i].TimeOn * 10;
-						uint32_t end = HP.Prof.DailySwitch[i].TimeOff * 10;
 						strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
 						_itoa(HP.Prof.DailySwitch[i].Device - RNUMBER+1, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
-						_itoa(((end >= st && tt >= st && tt <= end) || (end < st && (tt >= st || tt <= end))) && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),
-								Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
+						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 						if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
 						} else {
 							if(HP.get_NetworkFlags() & (1<<fWebLogError)) journal.jprintf("Error set relay HTTP-%d relay!\n", HP.Prof.DailySwitch[i].Device - RNUMBER+1);
@@ -1919,14 +1918,12 @@ void vServiceHP(void *)
 					taskYIELD();
 				} else if(m != task_dailyswitch_countm) {
 					task_dailyswitch_countm = m;
-					uint32_t tt = rtcSAM3X8.get_hours() * 100 + m;
+					uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + m;
 					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
 						if(HP.Prof.DailySwitch[i].Device == 0) break;
 						if(HP.Prof.DailySwitch[i].Device >= RNUMBER) continue;
-						uint32_t st = HP.Prof.DailySwitch[i].TimeOn * 10;
-						uint32_t end = HP.Prof.DailySwitch[i].TimeOff * 10;
-						HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(((end >= st && tt >= st && tt <= end) || (end < st && (tt >= st || tt <= end)))
-								&& !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower) ? fR_StatusDaily : -fR_StatusDaily);
+						int8_t ds = HP.Prof.check_DailySwitch(i, hhmm);
+						if(ds >= 0) HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower) ? fR_StatusDaily : -fR_StatusDaily);
 					}
 				}
 				STORE_DEBUG_INFO(75);

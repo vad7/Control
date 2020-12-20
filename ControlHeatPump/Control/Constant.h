@@ -58,6 +58,9 @@ const char HEADER_BIN[] = "HP-SAVE-DATA";   // Заголовок (начало)
 #ifndef ADC_PRESCAL
 #define ADC_PRESCAL       2					// ADCClock = MCK / ( (PRESCAL+1) * 2 )
 #endif
+#ifndef TARIF_NIGHT_START
+#define TARIF_NIGHT_START 23				// Начальный час ночного тарифа электроэнергии
+#endif
 #ifndef TARIF_NIGHT_END
 #define TARIF_NIGHT_END   6					// Последний час ночного тарифа электроэнергии
 #endif
@@ -756,6 +759,7 @@ const char *option_f2BackupPowerAuto  = {"BPA"};
 const char *option_f2NextionGenFlashing={"NGF"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
+const char *option_DailySwitchHysteresis={"DSH"};
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM

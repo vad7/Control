@@ -36,7 +36,6 @@
 #define PRINTF_BUF 256                           // размер буфера для одной строки - большаяя длина нужна при отправке уведомлений, там длинные строки (видел 178)
 
 extern uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len,uint16_t pause);
-const char *MessageLongString = { "Jornal: Input string too long, skip string!"};  
 const char *errorReadI2C =    {"$ERROR - read I2C memory\n"};
 const char *errorWriteI2C =   {"$ERROR - write I2C memory\n"};
 const char *promtUser={"> "};   
@@ -143,10 +142,11 @@ struct type_boilerHP {
 #define fHeatFloor   2				  // флаг использования теплого пола
 #define fUseSun      3				  // флаг использования солнечного коллектора
 
+#define DS_TimeOn_Extended 236
 struct type_DailySwitch {
 	uint8_t Device;					// Реле, если >=RNUMBER, то дистанционные реле; 0 - нет и конец массива
-	uint8_t TimeOn;					// Время включения hh:m0
-	uint8_t TimeOff;				// Время выключения hh:m0
+	uint8_t TimeOn;					// Время включения hh:m0, или если >= 236, то TOUT: b1=0: >T, b1=1: <T, b2=1: ночью
+	uint8_t TimeOff;				// Время выключения hh:m0, или градусы, если TimeOn >= 236
 } __attribute__((packed));
 
 struct type_settingHP {
@@ -211,7 +211,8 @@ class Profile                         // Класс профиль
     char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр второй параметр - наличие частотника
     int16_t get_lenProfile(){return dataProfile.len;}       // получить длину профиля при записи
     int8_t  get_idProfile(){return dataProfile.id;}         // получить номер текущего профиля
-      
+    int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
+
     // Установка параметров
     boolean set_paramCoolHP(char *var, float x);           // Охлаждение Установить параметры ТН из числа (float)
     char*   get_paramCoolHP(char *var, char *ret, boolean fc);// Охлаждение Получить параметр второй параметр - наличие частотника

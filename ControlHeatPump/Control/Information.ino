@@ -1004,7 +1004,23 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		if(i >= DAILY_SWITCH_MAX) return false;
 		if(*var == prof_DailySwitchDevice) { // set_DSDn
 			DailySwitch[i].Device = x;
-		} else {
+		} else if(*var == prof_DailySwitchOn && x == 0 && *c != '0') { // [N][>,<]TOUT
+			x = DS_TimeOn_Extended;
+xExtended_next:
+			if(*c == '>') ;
+			else if(*c == '<') x += 1;
+			else if(*c == 'N') {
+				x += 2; // +ночью
+				c++;
+				goto xExtended_next;
+			} else return false;
+			c++;
+			if(strcmp(c, nameTemp[TOUT]) == 0) {
+				DailySwitch[i].TimeOn = x;
+			} else return false;
+		} else if(*var == prof_DailySwitchOff && DailySwitch[i].TimeOn >= DS_TimeOn_Extended) {
+			DailySwitch[i].TimeOff = x; // градусы
+		} else { // по времени
 			uint32_t h = x / 10;
 			if(h > 23) h = 23;
 			uint32_t m = x % 10;
@@ -1041,16 +1057,55 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 		uint8_t i = *(var + 1) - '0';
 		if(i >= DAILY_SWITCH_MAX) return false;
 		if(*var == prof_DailySwitchDevice) {
-		 _itoa(DailySwitch[i].Device, ret);
+			_itoa(DailySwitch[i].Device, ret);
 		} else if(*var == prof_DailySwitchOn) {
-		 m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", DailySwitch[i].TimeOn / 10, DailySwitch[i].TimeOn % 10);
+			uint8_t on = DailySwitch[i].TimeOn;
+			if(on >= DS_TimeOn_Extended) {
+				if(on & 2) strcat(ret, "N");
+				strcat(ret, (on & 1) ? "<" : ">");
+				strcat(ret, nameTemp[TOUT]);
+			} else m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", on / 10, on % 10);
 		} else if(*var == prof_DailySwitchOff) {
-		 m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", DailySwitch[i].TimeOff / 10, DailySwitch[i].TimeOff % 10);
+			if(DailySwitch[i].TimeOn >= DS_TimeOn_Extended) _itoa((int8_t)DailySwitch[i].TimeOff, ret);
+			else m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", DailySwitch[i].TimeOff / 10, DailySwitch[i].TimeOff % 10);
 		}
 		return ret;
 	} else
 		return  strcat(ret,(char*)cInvalid);
 }
+
+// Возврат: 0 - выкл, 1 - вкл, -1 - в гистерезисе
+int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
+{
+	uint32_t st = DailySwitch[i].TimeOn, end;
+	int8_t ret;
+	if(st >= DS_TimeOn_Extended) {
+		if(st & 2) { // ночь
+			st = TARIF_NIGHT_START * 100 + 1;
+			end = TARIF_NIGHT_END * 100 + 59;
+		} else goto xCheckTemp;
+	} else {
+		st *= 10;
+		end = DailySwitch[i].TimeOff * 10;
+	}
+	ret = (end >= st && hhmm >= st && hhmm <= end) || (end < st && (hhmm >= st || hhmm <= end));
+	if(ret == 0 && st >= DS_TimeOn_Extended) {
+xCheckTemp:
+		int16_t t = HP.sTemp[TOUT].get_Temp();
+		int16_t trg = (int8_t)DailySwitch[i].TimeOff;
+		if(st & 1) { // <T
+			if(trg < t) ret = 1;
+			else if(trg > t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
+			else ret = -1;
+		} else { // >T
+			if(trg > t) ret = 1;
+			else if(trg < t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
+			else ret = -1;
+		}
+	}
+	return ret;
+}
+
 
 // Временные данные для профиля
 static type_dataProfile temp_prof;
