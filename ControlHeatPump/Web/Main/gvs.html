@@ -98,8 +98,8 @@ window.onload = function() {
 		<td>Использовать ПИД управление инвертором</td>
 		<td><input id="get_boiler-pid" type="checkbox" onchange="setParam('get_Boiler(PID)');"></td>
 	</tr><tr>
-		<td>Целевая температура подачи °C [30..70]</td>
-		<td nowrap><input id="get_boiler-temp" type="number" min="30" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMP)');"></td>
+		<td>Целевая температура подачи °C [5..70]</td>
+		<td nowrap><input id="get_boiler-temp" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMP)');"></td>
 	</tr><tr>
 		<td>Постоянная интегрирования времени (сек.) [5..600]</td>
 		<td nowrap><input id="get_boiler-pt" type="number" min="5" max="600" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(PT)');"></td>
@@ -116,8 +116,8 @@ window.onload = function() {
 		<td><b>Защиты при работе теплового насоса</b></td>
 		<td></td>
 	</tr><tr>
-		<td>Максимальная температура подачи °C [20..70]</td>
-		<td nowrap><input id="get_boiler-max" type="number" min="20" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
+		<td>Максимальная температура подачи °C [5..70]</td>
+		<td nowrap><input id="get_boiler-max" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
 	</tr><tr>
 		<td><b>Опции</b></td><td></td>
 	</tr><tr>
