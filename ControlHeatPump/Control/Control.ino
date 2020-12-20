@@ -271,7 +271,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	//_delay(1);
+	_delay(1);
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL

@@ -12,7 +12,9 @@ window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
 	loadParam("get_listDSR,get_tblPDS");
 };
 function setDS(v, i) {
-	setParam("get_Prof(DS" + v + i + "=" + document.getElementById("get_prof-ds" + v.toLowerCase() + i).value.replace(":","").substr(0,3) + ")");
+	var val = document.getElementById("get_prof-ds" + v.toLowerCase() + i).value;
+	if(val[2] == ':') setParam("get_Prof(DS" + v + i + "=" + val.replace(":","").substr(0,3) + ")");
+	else setParam("get_Prof(DS" + v + i + "=" + val.toUpperCase() + ")");
 }
 function loadParam_after(paramid) {
 	if(paramid.indexOf("(KW")!=-1 || paramid.indexOf("(TEMP1")!=-1) {
@@ -208,7 +210,7 @@ function loadParam_after(paramid) {
 4. При использовании погодозависимости Целевая температура подачи указывается для уличной температуре 0 градусов<br/>
 5. Изменение целевой температуры подачи в зависимости от уличной температуры, доступно только для ПИД.<br/>
 6. Увеличении температуры подачи при уменьшении уличной температуры на 1 градус.<br>
-7. Время "ЧЧ:ММ" для включения по времени или по температуре ">TOUT", "<TOUT", и ночью "N[>,<]TOUT".<br>
+7. Время "ЧЧ:ММ" для включения по времени или по температуре "&gt;TOUT", "&lt;TOUT", и ночью "N[&gt;,&lt;]TOUT".<br>
 <br><br>
 </div>
 <select id="get_listdsr" hidden></select>

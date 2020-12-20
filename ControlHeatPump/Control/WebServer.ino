@@ -1532,12 +1532,19 @@ void parserGET(uint8_t thread, int8_t )
 						break;
 					}
 					if(HP.Prof.DailySwitch[i].Device >= RNUMBER) {
-						strReturn += m_snprintf(strReturn += m_strlen(strReturn), 256, "HTTP-%d;Дистанционное реле %d;%02d:%d0;%02d:%d0|", HP.Prof.DailySwitch[i].Device - RNUMBER+1, HP.Prof.DailySwitch[i].Device - RNUMBER+1,
-													HP.Prof.DailySwitch[i].TimeOn / 10, HP.Prof.DailySwitch[i].TimeOn % 10, HP.Prof.DailySwitch[i].TimeOff / 10, HP.Prof.DailySwitch[i].TimeOff % 10);
+						strReturn += m_snprintf(strReturn += m_strlen(strReturn), 256, "HTTP-%d;Дистанционное реле %d;", HP.Prof.DailySwitch[i].Device - RNUMBER+1, HP.Prof.DailySwitch[i].Device - RNUMBER+1);
 					} else {
-						strReturn += m_snprintf(strReturn += m_strlen(strReturn), 256, "%s;%s;%02d:%d0;%02d:%d0|", HP.dRelay[HP.Prof.DailySwitch[i].Device].get_name(), HP.dRelay[HP.Prof.DailySwitch[i].Device].get_note(),
-							HP.Prof.DailySwitch[i].TimeOn / 10, HP.Prof.DailySwitch[i].TimeOn % 10, HP.Prof.DailySwitch[i].TimeOff / 10, HP.Prof.DailySwitch[i].TimeOff % 10);
+						strReturn += m_snprintf(strReturn += m_strlen(strReturn), 256, "%s;%s;", HP.dRelay[HP.Prof.DailySwitch[i].Device].get_name(), HP.dRelay[HP.Prof.DailySwitch[i].Device].get_note());
 					}
+					uint8_t on = HP.Prof.DailySwitch[i].TimeOn;
+					if(on >= DS_TimeOn_Extended) {
+						if(on & 2) strcat(strReturn, "N");
+						strcat(strReturn, (on & 1) ? "<" : ">");
+						strcat(strReturn, nameTemp[TOUT]);
+						strcat(strReturn, ";");
+						_itoa((int8_t)HP.Prof.DailySwitch[i].TimeOff, strReturn);
+						strcat(strReturn, "|");
+					} else strReturn += m_snprintf(strReturn += m_strlen(strReturn), 256, "%02d:%d0;%02d:%d0|", on / 10, on % 10, HP.Prof.DailySwitch[i].TimeOff / 10, HP.Prof.DailySwitch[i].TimeOff % 10);
 				}
 #ifdef CORRECT_POWER220
 			} else if(strcmp(str,"PwrC")==0) {    // Функция get_tblPwrC
