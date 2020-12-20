@@ -1539,8 +1539,8 @@ void parserGET(uint8_t thread, int8_t )
 					uint8_t on = HP.Prof.DailySwitch[i].TimeOn;
 					if(on >= DS_TimeOn_Extended) {
 						if(on & 2) strcat(strReturn, "N");
-						strcat(strReturn, (on & 1) ? "<" : ">");
 						strcat(strReturn, nameTemp[TOUT]);
+						strcat(strReturn, (on & 1) ? ">" : "<");
 						strcat(strReturn, ";");
 						_itoa((int8_t)HP.Prof.DailySwitch[i].TimeOff, strReturn);
 						strcat(strReturn, "|");

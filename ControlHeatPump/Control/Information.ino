@@ -1006,16 +1006,14 @@ boolean Profile::set_paramProfile(char *var, char *c)
 			DailySwitch[i].Device = x;
 		} else if(*var == prof_DailySwitchOn && x == 0 && *c != '0') { // [N][>,<]TOUT
 			x = DS_TimeOn_Extended;
-xExtended_next:
-			if(*c == '>') ;
-			else if(*c == '<') x += 1;
-			else if(*c == 'N') {
-				x += 2; // +ночью
+			if(*c == 'N') {// +ночью
+				x += 2;
 				c++;
-				goto xExtended_next;
-			} else return false;
-			c++;
-			if(strcmp(c, nameTemp[TOUT]) == 0) {
+			}
+			if(strchr(c, '>')) ;
+			else if(strchr(c, '<')) x += 1;
+			else return false;
+			if(strncmp(c, nameTemp[TOUT], m_strlen(nameTemp[TOUT])) == 0) {
 				DailySwitch[i].TimeOn = x;
 			} else return false;
 		} else if(*var == prof_DailySwitchOff && DailySwitch[i].TimeOn >= DS_TimeOn_Extended) {
@@ -1062,8 +1060,8 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 			uint8_t on = DailySwitch[i].TimeOn;
 			if(on >= DS_TimeOn_Extended) {
 				if(on & 2) strcat(ret, "N");
-				strcat(ret, (on & 1) ? "<" : ">");
 				strcat(ret, nameTemp[TOUT]);
+				strcat(ret, (on & 1) ? ">" : "<");
 			} else m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", on / 10, on % 10);
 		} else if(*var == prof_DailySwitchOff) {
 			if(DailySwitch[i].TimeOn >= DS_TimeOn_Extended) _itoa((int8_t)DailySwitch[i].TimeOff, ret);
@@ -1089,15 +1087,15 @@ int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
 		end = DailySwitch[i].TimeOff * 10;
 	}
 	ret = (end >= st && hhmm >= st && hhmm <= end) || (end < st && (hhmm >= st || hhmm <= end));
-	if(ret == 0 && st >= DS_TimeOn_Extended) {
+	if(ret == 0 && (st = DailySwitch[i].TimeOn) >= DS_TimeOn_Extended) {
 xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
-		int16_t trg = (int8_t)DailySwitch[i].TimeOff;
-		if(st & 1) { // <T
+		int16_t trg = ((int8_t)DailySwitch[i].TimeOff) * 100;
+		if(st & 1) { // T>
 			if(trg < t) ret = 1;
 			else if(trg > t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
 			else ret = -1;
-		} else { // >T
+		} else { // T<
 			if(trg > t) ret = 1;
 			else if(trg < t + HP.Option.DailySwitchHysteresis * 10) ret = 0;
 			else ret = -1;
