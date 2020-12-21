@@ -1201,12 +1201,14 @@ void vWeb0(void *)
 						if(ds < 0) continue;
 						if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 						strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
-						_itoa(HP.Prof.DailySwitch[i].Device - RNUMBER+1, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
+						uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER+1;
+						_itoa(rel, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 						if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+							//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 						} else {
-							if(HP.get_NetworkFlags() & (1<<fWebLogError)) journal.jprintf("Error set relay HTTP-%d relay!\n", HP.Prof.DailySwitch[i].Device - RNUMBER+1);
+							if(HP.get_NetworkFlags() & (1<<fWebLogError)) journal.jprintf("Error set relay HTTP-%d relay!\n", rel);
 						}
 					}
 				}

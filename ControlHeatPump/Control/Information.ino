@@ -1079,14 +1079,19 @@ int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
 	int8_t ret;
 	if(st >= DS_TimeOn_Extended) {
 		if(st & 2) { // ночь
-			st = TARIF_NIGHT_START * 100 + 1;
-			end = TARIF_NIGHT_END * 100 + 59;
+			if(DailySwitch[i].Device < RNUMBER) {
+				st = TARIF_NIGHT_START * 100 + 1;
+				end = TARIF_NIGHT_END * 100 + 59;
+			} else { // HTTP relay
+				st = TARIF_NIGHT_START * 100 + 10;
+				end = TARIF_NIGHT_END * 100 + 50;
+			}
 		} else goto xCheckTemp;
 	} else {
 		st *= 10;
 		end = DailySwitch[i].TimeOff * 10;
 	}
-	ret = (end >= st && hhmm >= st && hhmm <= end) || (end < st && (hhmm >= st || hhmm <= end));
+	ret = (end >= st && hhmm >= st && hhmm < end) || (end < st && (hhmm >= st || hhmm < end));
 	if(ret == 0 && (st = DailySwitch[i].TimeOn) >= DS_TimeOn_Extended) {
 xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
