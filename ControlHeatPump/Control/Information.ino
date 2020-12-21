@@ -1010,8 +1010,8 @@ boolean Profile::set_paramProfile(char *var, char *c)
 				x += 2;
 				c++;
 			}
-			if(strchr(c, '>')) ;
-			else if(strchr(c, '<')) x += 1;
+			if(strchr(c, '<')) ;
+			else if(strchr(c, '>')) x += 1;
 			else return false;
 			if(strncmp(c, nameTemp[TOUT], m_strlen(nameTemp[TOUT])) == 0) {
 				DailySwitch[i].TimeOn = x;
