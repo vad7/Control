@@ -143,26 +143,16 @@ int8_t sensorTemp::Read()
 				   if((get_setup_flags() & ((1<<fTEMP_dont_log_errors) | (1<<fTEMP_ignory_errors))) == ((1<<fTEMP_dont_log_errors) | (1<<fTEMP_ignory_errors))) {
 					   if(ttemp == 8500) {
 						   if(nGap > 1) nGap--;
-					   } else if(nGap > GAP_NUMBER_BAD) {
-						   nGap = 0;
-						   lastTemp = ttemp;
-					   }
+					   } else if(nGap > GAP_NUMBER_BAD) nGap = 0;
 				   } else if(get_setup_flag(fTEMP_ignory_CRC)) {
-					   if(nGap > GAP_NUMBER_CRC ) {
-						   nGap = 0;
-					   	   lastTemp = ttemp;
-					   }
+					   if(nGap > GAP_NUMBER_CRC ) nGap = 0;
 				   } else if(get_setup_flag(fTEMP_ignory_errors)) {
-					   if(nGap > GAP_NUMBER_NERR ) {
-						   nGap = 0;
-					   	   lastTemp = ttemp;
-					   }
-				   } else if(nGap > GAP_NUMBER) {
-					   nGap = 0;
-					   lastTemp = ttemp;
+					   if(nGap > GAP_NUMBER_NERR ) nGap = 0;
+				   } else if(nGap > GAP_NUMBER) nGap = 0;
+				   if(nGap == 0 || !get_setup_flag(fTEMP_dont_log_errors)) {
+					   journal.jprintf_time("GAP %s t=%.2d(%.2d), %s\n", name, ttemp, lastTemp, nGap == 0 ? "accept" : "skip");
+					   if(nGap == 0) lastTemp = ttemp;
 				   }
-				   if(nGap == 0 || !get_setup_flag(fTEMP_dont_log_errors))
-					   journal.jprintf_time("GAP %s t=%.2d, %s\n", name, ttemp, nGap == 0 ? "accept" : "skip");
 				}
 			}
 		}
