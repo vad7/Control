@@ -320,7 +320,7 @@ int8_t devVaconFC::set_target(int16_t x, boolean show, int16_t _min, int16_t _ma
 		Adjust_EEV(x - FC_target);
 		FC_target = x;
 		if(show) journal.jprintf(" Set %s[%s]: %.2d%%\n", name, (char *)codeRet[HP.get_ret()], FC_target);
-	} else {  // генерация ошибки
+	} else if(err != ERR_NO_POWER_WHILE_WORK) {  // генерация ошибки
 		SETBIT1(flags, fErrFC);
 		set_Error(err, name);
 	}
@@ -525,7 +525,7 @@ int8_t devVaconFC::stop_FC()
         err = OK;
   #endif
     }
-    if(err == OK) {
+    if(err == OK || err == ERR_NO_POWER_WHILE_WORK) {
         journal.jprintf(" %s[%s] OFF\n", name, (char *)codeRet[HP.get_ret()]);
         SETBIT0(flags, fOnOff);
         startCompressor = 0;
@@ -812,9 +812,15 @@ int16_t devVaconFC::read_0x03_16(uint16_t cmd)
         if(err == OK) break; // Прочитали удачно
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
-        if(HP.sInput[SPOWER].is_alarm()) break;
+        if(HP.sInput[SPOWER].is_alarm()) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
 #endif
-        if(GETBIT(HP.Option.flags, fBackupPower)) break;
+        if(GETBIT(HP.Option.flags, fBackupPower)) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
         if(state == ERR_LINK_FC) {
         	result = ERR_LINK_FC;
         	break;
@@ -841,9 +847,15 @@ uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
         if(err == OK) break; // Прочитали удачно
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
-        if(HP.sInput[SPOWER].is_alarm()) break;
+        if(HP.sInput[SPOWER].is_alarm()) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
 #endif
-        if(GETBIT(HP.Option.flags, fBackupPower)) break;
+        if(GETBIT(HP.Option.flags, fBackupPower)) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
         if(state == ERR_LINK_FC) {
         	result = ERR_LINK_FC;
         	break;
@@ -866,6 +878,20 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
     {
         err = Modbus.writeHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, data); // послать запрос, Нумерация регистров с НУЛЯ!!!!
         if(err == OK) break; // Записали удачно
+#ifdef SPOWER
+        HP.sInput[SPOWER].Read(true);
+        if(HP.sInput[SPOWER].is_alarm()) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
+#endif
+        if(GETBIT(HP.Option.flags, fBackupPower)) {
+        	err = ERR_NO_POWER_WHILE_WORK;
+        	break;
+        }
+        if(state == ERR_LINK_FC) {
+        	break;
+        }
         numErr++; // число ошибок чтение по модбасу
         journal.jprintf_time(cErrorRS485, name, __FUNCTION__, err); // Выводим сообщение о повторном чтении
         if(check_blockFC()) break; // проверить необходимость блокировки
