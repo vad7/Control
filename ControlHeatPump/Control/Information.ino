@@ -464,6 +464,9 @@ void Profile::initProfile()
   Boiler.add_delta_hour = 6;		    // Начальный Час добавки температуры к установке бойлера
   Boiler.add_delta_end_hour = 6;        // Конечный Час добавки температуры к установке
   Boiler.DischargeDelta = 10;
+
+  DailySwitchStateT = 0;
+
 }
 
 // Охлаждение Установить параметры ТН из числа (float)
@@ -1097,13 +1100,21 @@ xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
 		int16_t trg = ((int8_t)DailySwitch[i].TimeOff) * 100;
 		if(st & 1) { // T>
-			if(t > trg) ret = 1;
-			else if(trg - HP.Option.DailySwitchHysteresis * 10 > t) ret = 0;
-			else ret = -1;
+			if(t > trg) {
+				ret = 1;
+				DailySwitchStateT = (DailySwitchStateT & (1<<i));
+			} else if(GETBIT(DailySwitchStateT, i) || trg - HP.Option.DailySwitchHysteresis * 10 > t) {
+				ret = 0;
+				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
+			} else ret = -1;
 		} else { // T<
-			if(t < trg) ret = 1;
-			else if(trg + HP.Option.DailySwitchHysteresis * 10 < t) ret = 0;
-			else ret = -1;
+			if(t < trg) {
+				ret = 1;
+				DailySwitchStateT = (DailySwitchStateT & (1<<i));
+			} else if(GETBIT(DailySwitchStateT, i) || trg + HP.Option.DailySwitchHysteresis * 10 < t) {
+				ret = 0;
+				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
+			} else ret = -1;
 		}
 	}
 	return ret;

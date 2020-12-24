@@ -194,6 +194,7 @@ class Profile                         // Класс профиль
     type_settingHP Heat;                                    // Настройки для режима отопления
     type_boilerHP Boiler;                                   // Настройка бойлера
 	type_DailySwitch DailySwitch[DAILY_SWITCH_MAX]; 		// дневное периодическое включение
+	uint32_t DailySwitchStateT;
     
      // Функции работы с профилем
     void initProfile();                                     // инициализация профиля
