@@ -1103,7 +1103,7 @@ xCheckTemp:
 			if(t > trg) {
 				ret = 1;
 				DailySwitchStateT = (DailySwitchStateT & (1<<i));
-			} else if(GETBIT(DailySwitchStateT, i) || trg - HP.Option.DailySwitchHysteresis * 10 > t) {
+			} else if(!GETBIT(DailySwitchStateT, i) || trg - HP.Option.DailySwitchHysteresis * 10 > t) {
 				ret = 0;
 				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
 			} else ret = -1;
@@ -1111,7 +1111,7 @@ xCheckTemp:
 			if(t < trg) {
 				ret = 1;
 				DailySwitchStateT = (DailySwitchStateT & (1<<i));
-			} else if(GETBIT(DailySwitchStateT, i) || trg + HP.Option.DailySwitchHysteresis * 10 < t) {
+			} else if(!GETBIT(DailySwitchStateT, i) || trg + HP.Option.DailySwitchHysteresis * 10 < t) {
 				ret = 0;
 				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
 			} else ret = -1;
