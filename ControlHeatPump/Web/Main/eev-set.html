@@ -8,7 +8,7 @@
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("hide_pid2,hide_EEVU,get_pEEV(FREON),get_pEEV(RULE),get_pEEV(MANUAL),get_pEEV(CONST),get_pEEV(MIN),get_pEEV(MAX),get_pEEV(SPEED),get_pEEV(DSP),get_pEEV(PSP),get_pEEV(SP),get_pEEV(DOP),get_pEEV(DON),get_pEEV(DOFF),get_pEEV(HM),get_pEEV(P2D),get_pEEV(ZERO),get_pEEV(cCORRECT),get_pEEV(cDELAY),get_pEEV(PINS),get_pEEV(REMARK)");
-	loadParam("get_pEEV(START),get_pEEV(LST),get_pEEV(CLOSE),get_pEEV(cCORRECT),get_pEEV(cDELAY),get_pEEV(cD),get_pEEV(cOH_MIN),get_pEEV(cOH_MAX),get_pEEV(cOH_START),get_pEEV(POM),get_pEEV(PMAX),get_pEEV(SPT),get_pEEV(PHT),get_pEEV(DIR),get_pEEV(TRG2),get_pEEV(TRG2D),get_pEEV(TTH),get_pEEV(cDM),get_pEEV(cPERIOD),get_pEEV(cDT),get_pEEV(TMT),get_pEEV(DBG),get_pEEV(T2L),get_pEEV(T2H),get_pEEV(T2C),get_pEEV(BF),get_pEEV(BS)");
+	loadParam("get_pEEV(START),get_pEEV(LST),get_pEEV(CLOSE),get_pEEV(cCORRECT),get_pEEV(cDELAY),get_pEEV(cD),get_pEEV(cOH_MIN),get_pEEV(cOH_MAX),get_pEEV(cOH_START),get_pEEV(POM),get_pEEV(PMAX),get_pEEV(SPT),get_pEEV(PHT),get_pEEV(DIR),get_pEEV(TRG2),get_pEEV(TRG2D),get_pEEV(TTH),get_pEEV(cDM),get_pEEV(cPERIOD),get_pEEV(cDT),get_pEEV(TMT),get_pEEV(DBG),get_pEEV(T2L),get_pEEV(T2H),get_pEEV(T2C),get_pEEV(BF),get_pEEV(BS),get_pEEV(HBM)");
 };
 </script>
 </head>
@@ -51,10 +51,13 @@ window.onload = function() {
     <tr><td>Минимальное количество шагов [0..max]</td><td nowrap><input type="number" id="get_peev-min"> <input type="submit" value=">" onclick="setParam('get_pEEV(MIN)');"></td></tr>
     <tr><td>Максимальное количество шагов [min..2000]</td><td nowrap><input type="number" id="get_peev-max"> <input type="submit" value=">" onclick="setParam('get_pEEV(MAX)');"></td></tr>
     <tr><td>Скорость, импульсы в сек [5..120]</td><td nowrap><input type="number" id="get_peev-speed"> <input type="submit" value=">" onclick="setParam('get_pEEV(SPEED)');"></td></tr>
+
     <tr><td><b>Управление ЭРВ</b></td><td></td></tr>
     <tr><td>Разница при которой происходит уменьшение ПИД или порог в <sup>(6)</sup>, 0 - выкл. (°C)</td><td><input type="number" id="get_peev-p2d" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pEEV(P2D)');"></td></tr>
     <tr><td>Ограничение за одну итерацию в шагах ЭРВ [1..200]</td><td><input type="number" id="get_peev-pmax"> <input type="submit" value=">" onclick="setParam('get_pEEV(PMAX)');"></td></tr>
+	<tr><td>Минимальная корректировка при переходе с отопление на бойлер<sup>8</sup>, %</td><td nowrap><input id="get_peev-hbm" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_pEEV(HBM)')"></td></tr>
     <tr name="hide_pid2"><td>Алгоритм ПИД - пропорционально измерению, иначе пропорционально ошибке <input type="submit" value="?" onclick='location.assign("eev-sethelp.html")'> </td><td nowrap><input type="checkbox" id="get_peev-pom" onchange="setParam('get_pEEV(POM)');"></td></tr>
+
     <tr><td><b>Прямой алгоритм управления ЭРВ без ПИД<sup>6</sup></b></td><td nowrap><input type="checkbox" id="get_peev-dir" onchange="setParam('get_pEEV(DIR)');"></td></tr>
     <tr><td>Порог детектирования тренда в прямом алгоритме</td><td><input type="number" id="get_peev-tth" step="1"> <input type="submit" value=">" onclick="setParam('get_pEEV(TTH)');"></td></tr>
 	<tr><td>Целевой перегрев 2 (TCOMPIN-T[PEVA]), °C</td><td nowrap><input id="get_peev-trg2" type="number" min="0" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pEEV(TRG2)')"></td></tr>
@@ -106,6 +109,7 @@ window.onload = function() {
 5. Если выбрана эта опция, то поиск нуля производится только один раз при первом включении ТН<br/>
 6. Управление без ПИД по двум перегревам. В зависимости от ошибки и ее тренда крутим ЭРВ в нужную сторону. Если есть превышение порога, то по множителю, иначе по одному шагу. Сначала управляется по выбранному алгоритму перегрева, потом, когда он установлен в заданном пределе, по перегреву на входе компрессора TCOMPIN-T[PEVA] (Overheat2).<br/>
 7. В зависимости от выбранной формулы нужны определенные датчики, иначе возникает ошибка ERR_TYPE_OVERHEAT (-38):<br/>
+8. Применяется если текущая позиция ЭРВ меньше: стартовая позиция бойлера + значение этого поля<br/>
 &nbsp; &nbsp; TEVAOUT_TEVAIN: нужно TEVAOUT TEVAIN + (TCONIN или TCOMPIN)<br/>
 &nbsp; &nbsp; TCOMPIN_TEVAIN: нужно TCOMPIN TEVAIN<br/>
 &nbsp; &nbsp; TEVAOUT_PEVA: нужно TEVAOUT PEVA + (TCONIN или TCOMPIN)<br/>

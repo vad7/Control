@@ -3119,14 +3119,19 @@ boolean HeatPump::configHP(MODE_HP conf)
 		if(is_compressor_on()) {                                       // Компрессор работает, переключаемся на ходу
 			switchBoiler(true);                                        // включить бойлер
 			// House -> Boiler
-			if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
+			int16_t newpos = dEEV.get_FromHeatToBoilerMove();
+			if(newpos || GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
 				_delay(EEV_DELAY_BEFORE_SET_BOILER_POS);
-				dEEV.set_EEV(dEEV.get_BoilerStartPos());
-	#ifdef EEV_PREFER_PERCENT
-				journal.jprintf(" EEV go BoilerPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
-	#else
-				journal.jprintf(" EEV go BoilerPos: %d\n", dEEV.get_EEV());
-	#endif
+				newpos = dEEV.get_EEV() + newpos;
+				if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) && newpos > dEEV.get_BoilerStartPos()) newpos = dEEV.get_BoilerStartPos();
+				if(dEEV.get_EEV() != newpos && newpos > dEEV.get_minEEV()) {
+					dEEV.set_EEV(newpos);
+#ifdef EEV_PREFER_PERCENT
+					journal.jprintf(" EEV go BoilerPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
+#else
+					journal.jprintf(" EEV go BoilerPos: %d\n", dEEV.get_EEV());
+#endif
+				}
 			}
 #ifdef SUPERBOILER
 			dRelay[PUMP_OUT].set_OFF();                                // Евгений добавил

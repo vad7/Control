@@ -508,6 +508,7 @@ const char *eev_trend_mul_threshold = {"TMT"};
 const char *eev_DebugToLog    = {"DBG"};
 const char *eev_fEEV_BoilerStartPos={"BF"};
 const char *eev_BoilerStartPos={"BS"};
+const char *eev_FromHeatToBoilerMove={"HBM"};
 
 // Описание имен параметров MQTT для функций get_paramMQTT set_paramMQTT
 const char *mqtt_USE_TS           =  {"USE_TS"};         // флаг использования ThingSpeak - формат передачи для клиента

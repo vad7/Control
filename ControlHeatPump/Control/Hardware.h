@@ -321,6 +321,7 @@ public:
 	uint8_t get_DelayStartPos() {return _data.DelayStartPos;}
 	uint16_t get_StartPos();
 	uint16_t get_BoilerStartPos() { return (uint32_t)_data.maxSteps * _data.BoilerStartPos / 100; };
+	int16_t get_FromHeatToBoilerMove() { return (int32_t)_data.maxSteps * _data.FromHeatToBoilerMove / 1000; };
 
 	char*   get_note(){ return note;}                      // Прочитать описание ЭРВ
 	char*   get_name(){ return name;}                      // Прочитать имя ЭРВ
@@ -395,7 +396,7 @@ private:
 		int16_t  tOverheatTCOMP;				// Целевой перегрев2 TCOMPIN-T[PEVA]
 		int16_t  tOverheatTCOMP_delta;			// Дельта целевого перегрева2 TCOMPIN-T[PEVA]
 		int8_t   trend_threshold;				// Порог детектирования тренда
-		uint8_t  _RESERVED_;
+		int8_t   FromHeatToBoilerMove;			// Минимальная корректировка при переходе с Отопление на Бойлер, десятые %
 		uint16_t trend_mul_threshold;			// Порог для *2, сотые градуса
 		int16_t  tOverheat2_low;				// Нижняя граница перегрева 2 для быстрого закрытия ЭРВ
 		int16_t  tOverheat2_low_hyst;			// Гистерезис для tOverheat2_low

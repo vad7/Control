@@ -1212,11 +1212,11 @@ void devEEV::get_paramEEV(char *var, char *ret)
 	} else if(strcmp(var, eev_cOH_MAX)==0){	_dtoa(ret, _data.OverheatMax, 2);
 	} else if(strcmp(var, eev_cOH_START)==0){_dtoa(ret, _data.OverHeatStart, 2);
 	} else if(strcmp(var, eev_cOH_TDELTA)==0){if(OHCor_tdelta) _dtoa(ret, OHCor_tdelta, 2); else strcat(ret, "-");
-	} else if(strcmp(var, eev_cOH_START)==0){_dtoa(ret, _data.OverHeatStart/100, 2);
-    } else if(strcmp(var, eev_cDELTA_Thr)==0){	_dtoa(ret, _data.OHCor_TDIS_TCON_Thr, 2);
+	} else if(strcmp(var, eev_cOH_START)==0){		_dtoa(ret, _data.OverHeatStart/100, 2);
+    } else if(strcmp(var, eev_cDELTA_Thr)==0){ 		_dtoa(ret, _data.OHCor_TDIS_TCON_Thr, 2);
     } else if(strcmp(var, eev_cOH_cDELTA_MAX)==0){	_itoa(_data.OHCor_TDIS_TCON_MAX, ret);
-    } else if(strcmp(var, eev_PID_MAX)==0){	_itoa(_data.pid_max, ret); // ограничение ПИД в шагах ЭРВ
-	} else if(strcmp(var, eev_SPEED)==0){  	_itoa(_data.speedEEV, ret);
+    } else if(strcmp(var, eev_PID_MAX)==0){			_itoa(_data.pid_max, ret); // ограничение ПИД в шагах ЭРВ
+	} else if(strcmp(var, eev_SPEED)==0){  			_itoa(_data.speedEEV, ret);
 	} else if(strcmp(var, eev_CLOSE)==0){           _itoa((_data.flags & (1<<fEevClose))!=0, ret);
 	} else if(strcmp(var, eev_LIGHT_START)==0){    	_itoa((_data.flags & (1<<fLightStart))!=0, ret);
 	} else if(strcmp(var, eev_START )==0){          _itoa((_data.flags & (1<<fStartFlagPos))!=0, ret);
@@ -1246,7 +1246,8 @@ void devEEV::get_paramEEV(char *var, char *ret)
 	} else if(strcmp(var, eev_tOverheat2_low)==0){	_dtoa(ret, _data.tOverheat2_low, 2);
 	} else if(strcmp(var, eev_tOverheat2_low_hyst)==0){	_dtoa(ret, _data.tOverheat2_low_hyst, 2);
 	} else if(strcmp(var, eev_tOverheat2_critical)==0){	_dtoa(ret, _data.tOverheat2_critical, 2);
-	} else if(strcmp(var, eev_BoilerStartPos)==0){ _itoa(_data.BoilerStartPos, ret);
+	} else if(strcmp(var, eev_BoilerStartPos)==0){	_itoa(_data.BoilerStartPos, ret);
+	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_dtoa(ret, _data.FromHeatToBoilerMove, 1);
 	} else if(strcmp(var, eev_fEEV_BoilerStartPos)==0) { strcat(ret, (char*)(GETBIT(_data.flags, fEEV_BoilerStartPos) ? cOne : cZero));
 	} else if(strcmp(var, eev_DebugToLog)==0) { strcat(ret, (char*)(DebugToLog ? cOne : cZero));
 	} else strcat(ret,"E10");
@@ -1399,12 +1400,13 @@ boolean devEEV::set_paramEEV(char *var,float x)
 		if (x==0) SETBIT0(_data.flags, fPID_PropOnMeasure); else SETBIT1(_data.flags, fPID_PropOnMeasure);
 		resetPID();
 	} else if(strcmp(var, eev_fEEV_BoilerStartPos)==0){ if(x==0) SETBIT0(_data.flags, fEEV_BoilerStartPos); else SETBIT1(_data.flags, fEEV_BoilerStartPos);
-	} else if(strcmp(var, eev_trend_threshold)==0){	_data.trend_threshold = x; return true;
+	} else if(strcmp(var, eev_trend_threshold)==0){		_data.trend_threshold = x; return true;
 	} else if(strcmp(var, eev_trend_mul_threshold)==0){	_data.trend_mul_threshold = rd(x, 100); return true;
-	} else if(strcmp(var, eev_tOverheat2_low)==0){	_data.tOverheat2_low = rd(x, 100); return true;
+	} else if(strcmp(var, eev_tOverheat2_low)==0){		_data.tOverheat2_low = rd(x, 100); return true;
 	} else if(strcmp(var, eev_tOverheat2_low_hyst)==0){	_data.tOverheat2_low_hyst = rd(x, 100); return true;
 	} else if(strcmp(var, eev_tOverheat2_critical)==0){	_data.tOverheat2_critical = rd(x, 100); return true;
-	} else if(strcmp(var, eev_BoilerStartPos)==0){ _data.BoilerStartPos = x; return true;
+	} else if(strcmp(var, eev_BoilerStartPos)==0){ 		_data.BoilerStartPos = x; return true;
+	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_data.FromHeatToBoilerMove = rd(x, 10); return true;
 	} else if(strcmp(var, eev_DebugToLog)==0){ DebugToLog = x; return true;
 	} else return false; // ошибочное имя параметра
 
