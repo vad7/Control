@@ -2372,7 +2372,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		} else if(FEED <= T + HYSTERESIS_BoilerTogetherHeatEn) {
 			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
 			SETBIT0(flags, fHP_BoilerTogetherHeat);
-		} else return pCOMP_OFF;
+		}// else return pCOMP_OFF;
 	}
 #endif
 
