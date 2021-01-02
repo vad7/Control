@@ -1110,9 +1110,13 @@ void WR_Switch_Load(uint8_t idx, boolean On)
 		strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 		_itoa(On, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 		if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+			SETBIT0(HP.flags, fHP_HTTP_RelayError);
 			goto xSwitched;
 		} else {
-			if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Error set R%d\n", idx + 1);
+			if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
+				SETBIT1(HP.flags, fHP_HTTP_RelayError);
+				journal.jprintf("WR: Error set R%d\n", idx + 1);
+			}
 		}
 	} else {
 		digitalWriteDirect(pin, On ? WR_RELAY_LEVEL_ON : !WR_RELAY_LEVEL_ON);
@@ -1212,9 +1216,12 @@ int8_t WR_Check_MPPT(void)
 			return 3;
 #endif
 		}
-		if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: MPPT request Error %d\n", err);
+		if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
+			SETBIT1(HP.flags, fHP_HTTP_RelayError);
+			journal.jprintf("WR: MPPT request Error %d\n", err);
+		}
 		return 0;
-	}
+	} else SETBIT0(HP.flags, fHP_HTTP_RelayError);
 	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Mode);
 	if(!fld) return 0;
 	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return 2;

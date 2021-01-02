@@ -3116,8 +3116,18 @@ boolean HeatPump::configHP(MODE_HP conf)
 		#endif
 	} else if((conf & pBOILER)) {  // Бойлер
 		if(Switch_R4WAY(false)) return false; 	 					   // 4-х ходовой на нагрев
-		if(is_compressor_on()) {                                       // Компрессор рабоатет, переключаемся на ходу
+		if(is_compressor_on()) {                                       // Компрессор работает, переключаемся на ходу
 			switchBoiler(true);                                        // включить бойлер
+			// House -> Boiler
+			if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
+				_delay(EEV_DELAY_BEFORE_SET_BOILER_POS);
+				dEEV.set_EEV(dEEV.get_BoilerStartPos());
+	#ifdef EEV_PREFER_PERCENT
+				journal.jprintf(" EEV go BoilerPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
+	#else
+				journal.jprintf(" EEV go BoilerPos: %d\n", dEEV.get_EEV());
+	#endif
+			}
 #ifdef SUPERBOILER
 			dRelay[PUMP_OUT].set_OFF();                                // Евгений добавил
 			_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
@@ -3259,8 +3269,13 @@ xNextStop:
 		dEEV.set_EEV(dEEV.get_preStartPos());
 		journal.jprintf("PreStartPos:");
 	} else if(dEEV.get_StartFlagPos()) { // Всегда начинать работу ЭРВ со стартовой позиции
-		dEEV.set_EEV((Status.modWork & pBOILER) && GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) ? dEEV.get_BoilerStartPos() : dEEV.get_StartPos());
-		journal.jprintf("StartPos:");
+		if((Status.modWork & pBOILER) && GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
+			dEEV.set_EEV(dEEV.get_BoilerStartPos());
+			journal.jprintf("BoilerPos:");
+		} else {
+			dEEV.set_EEV(dEEV.get_StartPos());
+			journal.jprintf("StartPos:");
+		}
 	} else if(lastEEV != -1) { // установка последнего значения ЭРВ
 		dEEV.set_EEV(lastEEV);
 		journal.jprintf("LastPos:");

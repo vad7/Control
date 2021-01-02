@@ -862,9 +862,12 @@ void vWeb0(void *)
 					active = false;
 					int err = Send_HTTP_Request(HTTP_MAP_Server, HTTP_MAP_Read_MAP, 1);
 					if(err) {
-						if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP request Error %d\n", err);
+						if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
+							SETBIT1(HP.flags, fHP_HTTP_RelayError);
+							journal.jprintf("WR: HTTP request Error %d\n", err);
+						}
 						break;
-					}
+					} else SETBIT0(HP.flags, fHP_HTTP_RelayError);
 					// todo: check "_MODE" >= 3
 					char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_PNET_calc);
 					if(!fld) {
@@ -1179,7 +1182,7 @@ void vWeb0(void *)
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, HP.Option.WF_ReqText, 4);
 					if(err != 0) {
-						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || rtcSAM3X8.get_minutes() == 59) journal.jprintf_time("WF: Request Error %d\n", err);
+						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || (rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 49)) journal.jprintf_time("WF: Request Error %d\n", err);
 					} else if(WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf) == OK) {
 						WF_Day = rtcSAM3X8.get_days();
 					}
@@ -1206,9 +1209,13 @@ void vWeb0(void *)
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 						if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+							SETBIT0(HP.flags, fHP_HTTP_RelayError);
 							//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 						} else {
-							if(HP.get_NetworkFlags() & (1<<fWebLogError)) journal.jprintf("Error set relay HTTP-%d relay!\n", rel);
+							if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
+								SETBIT1(HP.flags, fHP_HTTP_RelayError);
+								journal.jprintf(". Fail set HTTP-%d relay!\n", rel);
+							}
 						}
 					}
 				}

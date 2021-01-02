@@ -752,7 +752,7 @@ xget_value_1:
 														ret = (buffer[0] & ~0x20) == 'O' && (buffer[1] & ~0x20) == 'K'; // 'Ok'?
 														if(ret == 0 && (HP.get_NetworkFlags() & ((1<<fWebFullLog) | (1<<fWebLogError))) == (1<<fWebLogError)) {
 															*(Socket[MAIN_WEB_TASK].outBuf + datasize) = '\0';
-															journal.jprintf_time("Response: %s", buffer);
+															if(!GETBIT(HP.flags, fHP_HTTP_RelayError)) journal.jprintf_time("Response: %s", buffer);
 														}
 													}
 													if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf_time("Response: %s", buffer);
