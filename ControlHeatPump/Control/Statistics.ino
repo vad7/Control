@@ -34,10 +34,12 @@ int8_t Statistics::CreateOpenFile(uint8_t what)
 	if(what == ID_HISTORY) {
 		if(HistoryBlockCreating) goto xContinue;
 		HistoryBlockStart = 0;
+		HistoryBlockEnd = 0;
 		HistoryCurrentPos = 0;
 		strcpy(filename, history_file_start);
 	} else {
 		BlockStart = 0;
+		BlockEnd = 0;
 		CurrentPos = 0;
 		strcpy(filename, stats_file_start);
 	}
@@ -46,6 +48,7 @@ int8_t Statistics::CreateOpenFile(uint8_t what)
 	journal.jprintf(" File: %s ", filename);
 	SPI_switchSD();
 	if(!StatsFile.opens(filename, O_READ, &open_fname)) {
+xCreatefile:
 		uint16_t days = month == 1 ? 366 : (12 - month + 1) * 31;
 		if(!StatsFile.createContiguous(filename, what ? HISTORY_MAX_FILE_SIZE(days) : STATS_MAX_FILE_SIZE(days))) {
 			Error("create", what);
@@ -56,7 +59,13 @@ int8_t Statistics::CreateOpenFile(uint8_t what)
 		newfile = 1;
 	}
 	if(!StatsFile.contiguousRange(what ? &HistoryBlockStart : &BlockStart, what ? &HistoryBlockEnd : &BlockEnd)) {
-		Error("get blocks", what);
+		if(card.cardErrorCode() == 0 && card.cardErrorData() == 0 && StatsFile.fileSize() == 0) {
+			if(newfile) journal.jprintf("ERROR Create Contiguous!\n");
+			else {
+				journal.jprintf("EMPTY -> Recreate... ");
+				if(StatsFile.remove()) goto xCreatefile; else journal.jprintf("Failed!\n");
+			}
+		} else Error("get blocks", what);
 	} else {
 		journal.jprintf("[%u..%u] ", what ? HistoryBlockStart : BlockStart, what ? HistoryBlockEnd : BlockEnd);
 		if(newfile) {
