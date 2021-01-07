@@ -40,6 +40,13 @@ const char *errorReadI2C =    {"$ERROR - read I2C memory\n"};
 const char *errorWriteI2C =   {"$ERROR - write I2C memory\n"};
 const char *promtUser={"> "};   
 
+// для прекращения логирования
+enum {
+	fLog_HTTP_RelayError			= 0,		// Ошибка Send_HTTP_Request
+	fLog_DNS_Lookup
+};
+uint8_t Logflags = 0;							// fLog_*
+
 class Journal :public Print
 {
 public:

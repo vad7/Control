@@ -862,12 +862,12 @@ void vWeb0(void *)
 					active = false;
 					int err = Send_HTTP_Request(HTTP_MAP_Server, HTTP_MAP_Read_MAP, 1);
 					if(err) {
-						if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
-							SETBIT1(HP.flags, fHP_HTTP_RelayError);
+						if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+							SETBIT1(Logflags, fLog_HTTP_RelayError);
 							journal.jprintf("WR: HTTP request Error %d\n", err);
 						}
 						break;
-					} else SETBIT0(HP.flags, fHP_HTTP_RelayError);
+					} else SETBIT0(Logflags, fLog_HTTP_RelayError);
 					// todo: check "_MODE" >= 3
 					char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_PNET_calc);
 					if(!fld) {
@@ -1209,11 +1209,11 @@ void vWeb0(void *)
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 						if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
-							SETBIT0(HP.flags, fHP_HTTP_RelayError);
+							SETBIT0(Logflags, fLog_HTTP_RelayError);
 							//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 						} else {
-							if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(HP.flags, fHP_HTTP_RelayError)) {
-								SETBIT1(HP.flags, fHP_HTTP_RelayError);
+							if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+								SETBIT1(Logflags, fLog_HTTP_RelayError);
 								journal.jprintf(". Fail set HTTP-%d relay!\n", rel);
 							}
 						}
@@ -1440,7 +1440,7 @@ void vReadSensor(void *)
 			#endif
 		#endif
 			if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) {     // Поток меньше минимального ошибка осанавливаем ТН
-				journal.jprintf("%s low flow: %.3f\n",(char*) HP.sFrequency[i].get_name(), (float) HP.sFrequency[i].get_Value() / 1000);
+				journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
 				set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
 			}
 		}
@@ -1925,6 +1925,13 @@ void vServiceHP(void *)
 					if(task_updstat_countm == 59) HP.save_motoHour();		// сохранить раз в час
 					Stats.History();                                        // запись истории в файл
 					taskYIELD();
+#ifdef USE_ELECTROMETER_SDM
+					uint8_t h = rtcSAM3X8.get_hours();
+					if(m == 0 && (h == 0 || h == TARIF_NIGHT_START || h == TARIF_NIGHT_END+1)) {
+						static float tmp;
+						if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK) journal.jprintf_time("ENERGY: %.3f\n", tmp);
+					}
+#endif
 				} else if(m != task_dailyswitch_countm) {
 					task_dailyswitch_countm = m;
 					uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + m;
