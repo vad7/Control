@@ -3123,7 +3123,7 @@ boolean HeatPump::configHP(MODE_HP conf)
 			if(newpos || GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
 				_delay(EEV_DELAY_BEFORE_SET_BOILER_POS);
 				newpos = dEEV.get_EEV() + newpos;
-				if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) && newpos > dEEV.get_BoilerStartPos()) newpos = dEEV.get_BoilerStartPos();
+				//if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) && newpos > dEEV.get_BoilerStartPos()) newpos = dEEV.get_BoilerStartPos();
 				if(dEEV.get_EEV() != newpos && newpos > dEEV.get_minEEV()) {
 					dEEV.set_EEV(newpos);
 #ifdef EEV_PREFER_PERCENT
