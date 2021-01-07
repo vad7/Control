@@ -1664,12 +1664,12 @@ xErr:
 char* devSDM::get_paramSDM(char *var, char *ret)           
 {
 #ifdef USE_PZEM004T
-	static union {
+	union {
 		uint32_t tmp;
 		uint16_t tmp16[2];
 	};
 #else
-	static float tmp;
+	float tmp;
 #endif
 
 	if(strcmp(var,sdm_NAME)==0){         return strcat(ret,(char*)name);                                         }else      // Имя счетчика

@@ -301,12 +301,14 @@ uint8_t check_address(char *adr, IPAddress &ip)
 	dns.begin(Ethernet.dnsServerIP());    // только запоминаем dnsServerIP ничего больше не делаем с сокетом
 	ret = dns.getHostByName(adr, tempIP, W5200_SOCK_SYS); // adr должен быть в ОЗУ!
 	if(ret == 1) { // Адрес получен
+		SETBIT0(Logflags, fLog_DNS_Lookup);
 		if(xTaskGetSchedulerState() != taskSCHEDULER_RUNNING)
 			journal.jprintf(" Resolved %s using %s as %d.%d.%d.%d\n", adr, dns.get_protocol() ? "TCP" : "UDP", tempIP[0], tempIP[1], tempIP[2], tempIP[3]);
 		ip = tempIP;
 		return 2;
 	} else {
-		if((HP.get_NetworkFlags() & (1<<fWebLogError)) || xTaskGetSchedulerState() != taskSCHEDULER_RUNNING)
+		if(((HP.get_NetworkFlags() & (1<<fWebLogError)) && !GETBIT(Logflags, fLog_DNS_Lookup)) || xTaskGetSchedulerState() != taskSCHEDULER_RUNNING)
+			SETBIT1(Logflags, fLog_DNS_Lookup);
 			journal.jprintf(" DNS lookup %s using %s failed! Code: %d\n", adr, dns.get_protocol() ? "TCP" : "UDP", ret);
 		ip = tempIP;
 		return 0;
@@ -752,7 +754,7 @@ xget_value_1:
 														ret = (buffer[0] & ~0x20) == 'O' && (buffer[1] & ~0x20) == 'K'; // 'Ok'?
 														if(ret == 0 && (HP.get_NetworkFlags() & ((1<<fWebFullLog) | (1<<fWebLogError))) == (1<<fWebLogError)) {
 															*(Socket[MAIN_WEB_TASK].outBuf + datasize) = '\0';
-															if(!GETBIT(HP.flags, fHP_HTTP_RelayError)) journal.jprintf_time("Response: %s", buffer);
+															if(!GETBIT(Logflags, fLog_HTTP_RelayError)) journal.jprintf_time("Response: %s", buffer);
 														}
 													}
 													if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf_time("Response: %s", buffer);
