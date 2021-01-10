@@ -136,11 +136,12 @@ public:
 	void	CheckCreateNewFile();
 	int8_t	CreateOpenFile(uint8_t what);
 	void	History();										// Логирование параметров работы ТН, раз в 1 минуту
+
+	uint32_t compressor_on_timer;
 private:
 	void	Error(const char *text, uint8_t what);
 	uint16_t counts;										// Кол-во уже совершенных обновлений
 	uint16_t counts_work;									// Кол-во уже совершенных обновлений во время работы компрессора
-	uint32_t compressor_on_timer;
 	uint32_t previous;
 	uint8_t	 day;
 	uint8_t	 month;

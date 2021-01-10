@@ -3084,8 +3084,9 @@ boolean HeatPump::configHP(MODE_HP conf)
 		//switchBoiler(false);                                            // выключить бойлер
 		//_delay(DELAY_AFTER_SWITCH_RELAY);                               // Задержка
 	} else if((conf & pHEAT)) {    // Отопление
-		if(Switch_R4WAY(false)) return false; 							  // 4-х ходовой на нагрев
-		if(is_compressor_on()) {                                          // Компрессор рабоатет, переключаемся на ходу 
+		if(Switch_R4WAY(false)) return false; 							  // 4-х ходовой на нагре
+		if(is_compressor_on()) {                                          // Компрессор работает, переключаемся на ходу
+			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
 			switchBoiler(false);                                          // выключить бойлер 
 		} else {
 			PUMPS_ON;                                                     // включить насосы
@@ -3102,7 +3103,8 @@ boolean HeatPump::configHP(MODE_HP conf)
 		#endif
 	} else if((conf & pCOOL)) {  // Охлаждение
 		if(Switch_R4WAY(true)) return false; 							   // 4-х ходовой на охлаждение
-		if(is_compressor_on()) {                                           // Компрессор рабоатет, переключаемся на ходу   
+		if(is_compressor_on()) {                                           // Компрессор работает, переключаемся на ходу
+			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
 			switchBoiler(false);                                           // выключить бойлер
 		} else {
 			PUMPS_ON;                                                     // включить насосы
@@ -3117,6 +3119,7 @@ boolean HeatPump::configHP(MODE_HP conf)
 	} else if((conf & pBOILER)) {  // Бойлер
 		if(Switch_R4WAY(false)) return false; 	 					   // 4-х ходовой на нагрев
 		if(is_compressor_on()) {                                       // Компрессор работает, переключаемся на ходу
+			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
 			switchBoiler(true);                                        // включить бойлер
 			// House -> Boiler
 			int16_t newpos = dEEV.get_FromHeatToBoilerMove();
@@ -3146,6 +3149,7 @@ boolean HeatPump::configHP(MODE_HP conf)
 			_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
 			dRelay[RSUPERBOILER].set_ON();                             // Евгений добавил
 			_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
+			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
 			switchBoiler(true);                                        // включить бойлер
 			if(Status.ret<pBp5) dFC.set_target(SUPERBOILER_FC,true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // В режиме супер бойлер установить частоту SUPERBOILER_FC если не дошли до пида
 #else
