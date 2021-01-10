@@ -243,6 +243,7 @@ void Statistics::Init(uint8_t newyear)
 										break;
 									case STATS_OBJ_Power:
 									case STATS_OBJ_Power_OUT:
+									case STATS_OBJ_Power_RBOILER:
 									case STATS_OBJ_Power_GEO:
 										switch(Stats_data[i].type) {
 										case STATS_TYPE_SUM:
@@ -378,7 +379,7 @@ void Statistics::Update()
 	} else compressor_on_timer = 0;
 	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) {
 		if(Stats_data[i].when == STATS_WHEN_WORKD && compressor_on_timer < STATS_WORKD_TIME) continue;
-		uint8_t skip_value = 0;
+		//uint8_t skip_value = 0;
 		switch(Stats_data[i].object) {
 		case STATS_OBJ_Temp:
 			newval = HP.sTemp[Stats_data[i].number].get_Temp();
@@ -392,20 +393,8 @@ void Statistics::Update()
 			#endif
 			break;
 		case STATS_OBJ_Power: {
-			int32_t *ptr = NULL;
+			int32_t *ptr = &motohour_IN_work;
 			newval = HP.power220; // Вт
-			ptr = &motohour_IN_work;
-			switch(Stats_data[i].type) {
-			case STATS_TYPE_SUM:
-			//case STATS_TYPE_AVG:
-				newval = newval * tm / 3600; // в мВтч
-				if(ptr) *ptr += newval; // для motoHour
-			}
-			break;
-		}
-		case STATS_OBJ_Power_GEO: {
-			int32_t *ptr = NULL;
-			newval = HP.powerGEO; // Вт
 			switch(Stats_data[i].type) {
 			case STATS_TYPE_SUM:
 			//case STATS_TYPE_AVG:
@@ -415,14 +404,29 @@ void Statistics::Update()
 			break;
 		}
 		case STATS_OBJ_Power_OUT: {
-			int32_t *ptr = NULL;
+			int32_t *ptr = &motohour_OUT_work;
 			newval = HP.powerOUT; // Вт
-			ptr = &motohour_OUT_work;
 			switch(Stats_data[i].type) {
 			case STATS_TYPE_SUM:
 			//case STATS_TYPE_AVG:
 				newval = newval * tm / 3600; // в мВтч
 				if(ptr) *ptr += newval; // для motoHour
+			}
+			break;
+		}
+		case STATS_OBJ_Power_GEO: {
+			newval = HP.powerGEO; // Вт
+			switch(Stats_data[i].type) {
+			case STATS_TYPE_SUM:
+				newval = newval * tm / 3600; // в мВтч
+			}
+			break;
+		}
+		case STATS_OBJ_Power_RBOILER: {
+			newval = HP.power_RBOILER; // Вт
+			switch(Stats_data[i].type) {
+			case STATS_TYPE_SUM:
+				newval = newval * tm / 3600; // в мВтч
 			}
 			break;
 		}
@@ -441,18 +445,18 @@ void Statistics::Update()
 #endif
 		case STATS_OBJ_COP_Full:
 			if(Stats_data[i].type == STATS_TYPE_AVG) continue;
-#ifdef STATS_SKIP_COP_WHEN_RELAY_ON
-			static uint8_t skip_by_relay = 0;
-			if(HP.dRelay[STATS_SKIP_COP_WHEN_RELAY_ON].get_Relay()) {
-				skip_by_relay = 30 / (TIME_READ_SENSOR / 1000); // 30 sec pause
-				skip_value = 1;
-			} else if(skip_by_relay) {
-				skip_by_relay--;
-				skip_value = 1;
-			}
-#endif
+//#ifdef STATS_SKIP_COP_WHEN_RELAY_ON
+//			static uint8_t skip_by_relay = 0;
+//			if(HP.dRelay[STATS_SKIP_COP_WHEN_RELAY_ON].get_Relay()) {
+//				skip_by_relay = 30 / (TIME_READ_SENSOR / 1000); // 30 sec pause
+//				skip_value = 1;
+//			} else if(skip_by_relay) {
+//				skip_by_relay--;
+//				skip_value = 1;
+//			}
+//#endif
 			newval = HP.fullCOP;
-			if(newval == 0) skip_value = 1;
+			//if(newval == 0) skip_value = 1;
 			break;
 		case STATS_OBJ_Sun:
 			if(!GETBIT(HP.flags, fHP_SunWork)) continue;
@@ -463,16 +467,16 @@ void Statistics::Update()
 		}
 		switch(Stats_data[i].type){
 		case STATS_TYPE_MIN:
-			if(newval < Stats_data[i].value && !skip_value) Stats_data[i].value = newval;
+			if(newval < Stats_data[i].value /*&& !skip_value*/) Stats_data[i].value = newval;
 			break;
 		case STATS_TYPE_MAX:
-			if(newval > Stats_data[i].value && !skip_value) Stats_data[i].value = newval;
+			if(newval > Stats_data[i].value /*&& !skip_value*/) Stats_data[i].value = newval;
 			break;
 		case STATS_TYPE_SUM:
 			Stats_data[i].value += newval;
 			break;
 		case STATS_TYPE_AVG:
-			if(skip_value) newval = Stats_data[i].value / (Stats_data[i].when == STATS_WHEN_WORKD ? counts_work : counts);
+			/*if(skip_value)*/ newval = Stats_data[i].value / (Stats_data[i].when == STATS_WHEN_WORKD ? counts_work : counts);
 			Stats_data[i].value += newval;
 			break;
 		case STATS_TYPE_TIME:
@@ -507,6 +511,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 			case STATS_OBJ_Power_OUT:
 			case STATS_OBJ_Power_GEO:
 			case STATS_OBJ_Power_FC:
+			case STATS_OBJ_Power_RBOILER:
 			case STATS_OBJ_WattRouter_Out:
 				strcat(ret, "W");		// ось мощность
 				break;
@@ -570,6 +575,10 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 	case STATS_OBJ_Power_OUT:
 		if(flag) strcat(ret, "W"); // ось мощность
 		strcat(ret, "Выработано, кВтч"); // хранится в Вт
+		break;
+	case STATS_OBJ_Power_RBOILER:
+		if(flag) strcat(ret, "W"); // ось мощность
+		strcat(ret, "Бойлер(тэн), кВтч"); // хранится в Вт
 		break;
 	case STATS_OBJ_WattRouter_Out:
 		if(flag) strcat(ret, "W"); // ось мощность
@@ -639,6 +648,7 @@ xSkipEmpty:
 		break;
 	case STATS_OBJ_Power:					// кВт*ч
 	case STATS_OBJ_Power_OUT:
+	case STATS_OBJ_Power_RBOILER:
 	case STATS_OBJ_Power_GEO:
 		switch(Stats_data[i].type) {
 		case STATS_TYPE_SUM:
@@ -1032,6 +1042,9 @@ void Statistics::History()
 			break;
 		case STATS_OBJ_Power_OUT:
 			int_to_dec_str(HP.powerOUT, 1, &buf, 0); // W
+			break;
+		case STATS_OBJ_Power_RBOILER:
+			int_to_dec_str(HP.power_RBOILER, 1, &buf, 0); // W
 			break;
 		case STATS_OBJ_Power_GEO:
 			int_to_dec_str(HP.powerGEO, 1, &buf, 0); // W

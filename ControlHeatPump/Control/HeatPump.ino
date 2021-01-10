@@ -3928,53 +3928,45 @@ void HeatPump::calculatePower()
 
 	// Получение мощностей потребления электроэнергии
 	int32_t _power220 = 0;
+#ifdef CORRECT_POWER220_EXCL_RBOILER
+	if(dRelay[RBOILER].get_Relay()) {
+		_power220 = CORRECT_POWER220_EXCL_RBOILER;
+  #ifdef PWM_ACCURATE_POWER
+		_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
+		power_RBOILER = _power220;
+		_power220 = -_power220;
+  #endif
+	} else power_RBOILER = 0;
+#else
+	#ifdef WATTROUTER
+		#ifdef WR_Load_pins_Boiler_INDEX
+		 #ifdef WR_Boiler_Substitution_INDEX
+	_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX];
+		 #else
+	_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
+		 #endif
+		#endif
+		#ifdef PWM_ACCURATE_POWER
+	_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
+		#endif
+	if(dRelay[RBOILER].get_Relay()) {
+		power_RBOILER = _power220;
+	} else { // Если греем ваттроутером, то вычесть
+		power_RBOILER = 0;
+		_power220 = -_power220;
+	}
+	#endif
+#endif
+
 #ifdef USE_ELECTROMETER_SDM  // Если есть электросчетчик можно рассчитать полное потребление (с насосами)
 	if(dSDM.get_link()) {  // Если счетчик работает (связь не утеряна)
-		_power220 = dSDM.get_power();
+		_power220 += dSDM.get_power();
 	}
 #endif
 #ifdef ADD_FC_POWER_WHEN_GENERATOR
 	if(GETBIT(Option.flags, fBackupPower)) _power220 += dFC.get_power();  // получить текущую мощность компрессора
 #endif
-
-	int32_t corr_power220 = 0;
-#ifdef CORRECT_POWER220_EXCL_RBOILER
-  #ifdef WR_Load_pins_Boiler_INDEX
-   #ifdef WR_Boiler_Substitution_INDEX
-	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX];
-   #else
-	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
-   #endif
-  #else
-	if(dRelay[RBOILER].get_Relay()) corr_power220 = CORRECT_POWER220_EXCL_RBOILER;
-  #endif
-  #ifdef PWM_ACCURATE_POWER
-	corr_power220 = corr_power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
-  #endif
-	_power220 -= corr_power220;
-	corr_power220 = 0;
-#else
-	#ifdef WATTROUTER
-		#ifdef WR_Load_pins_Boiler_INDEX
-		 #ifdef WR_Boiler_Substitution_INDEX
-	corr_power220 = WR_LoadRun[digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX];
-		 #else
-	corr_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
-		 #endif
-		#endif
-		#ifdef PWM_ACCURATE_POWER
-	corr_power220 = corr_power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
-		#endif
-	if(!dRelay[RBOILER].get_Relay()) { // Если греем ваттроутером, то вычесть
-		_power220 -= corr_power220;
-		corr_power220 = 0;
-	}
-	#endif
-#endif
-	if(_power220 < 0) {
-		if(corr_power220 != 0) corr_power220 += _power220;
-		_power220 = 0;
-	}
+	if(_power220 < 0) _power220 = 0;
 #ifdef CORRECT_POWER220
 	{
 		int32_t corr = 0;
@@ -3988,8 +3980,6 @@ void HeatPump::calculatePower()
 	}
 #endif
 	power220 = _power220;
-	_power220 -= corr_power220; // Из мгновенного COP убираем бойлер
-	if(_power220 < 0) _power220 = 0;
 
 	// Расчет COP
 #ifndef COP_ALL_CALC    	// если COP надо считать не всегда

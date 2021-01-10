@@ -854,9 +854,14 @@ void parserGET(uint8_t thread, int8_t )
 		{
 #ifdef USE_UPS
 			if(HP.NO_Power) strcat(strReturn,"*.***");
-			else
+			else {
 #endif
 				_dtoa(strReturn, HP.power220, 3);
+				if(HP.power_RBOILER) {
+					strcat(strReturn,"+");
+					_dtoa(strReturn, HP.power_RBOILER / 100, 1);
+				}
+			}
 			ADD_WEBDELIM(strReturn); continue;
 		}
 		if (strcmp(str,"get_VCC")==0)  // Функция get_VCC  - получение напряжение питания контроллера

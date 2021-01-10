@@ -50,13 +50,14 @@ enum {
 	STATS_OBJ_Power_FC,
 	STATS_OBJ_Power_GEO,
 	STATS_OBJ_Power_OUT,
-	STATS_OBJ_Current_FC,	//= 16,
-	STATS_OBJ_Compressor,	//= 17,
-	STATS_OBJ_COP_Full,		//= 18,
-	STATS_OBJ_Sun,			//= 19,
-	STATS_OBJ_Relay,		//= 20,
-	STATS_OBJ_WattRouter_In,//= 21,
-	STATS_OBJ_WattRouter_Out//= 22
+	STATS_OBJ_Power_RBOILER,
+	STATS_OBJ_Current_FC,	//= 17,
+	STATS_OBJ_Compressor,	//= 18,
+	STATS_OBJ_COP_Full,		//= 19,
+	STATS_OBJ_Sun,			//= 20,
+	STATS_OBJ_Relay,		//= 21,
+	STATS_OBJ_WattRouter_In,//= 22,
+	STATS_OBJ_WattRouter_Out//= 23
 };
 
 const char *STATS_OBJ_names[] = {
