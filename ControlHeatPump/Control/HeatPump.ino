@@ -3955,6 +3955,7 @@ void HeatPump::calculatePower()
 		#endif
 	if(dRelay[RBOILER].get_Relay()) {
 		power_RBOILER = _power220;
+		_power220 = 0;
 	} else { // Если греем ваттроутером, то вычесть
 		power_RBOILER = 0;
 		_power220 = -_power220;
