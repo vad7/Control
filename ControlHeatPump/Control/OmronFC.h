@@ -207,7 +207,8 @@ public:
   int8_t start_FC();                               // Команда ход на инвертор (целевая частота выставляется)
   int8_t stop_FC();                                // Команда стоп на инвертор
   boolean isfOnOff(){return GETBIT(flags,fOnOff);} // получить состояние инвертора вкл или выкл
- 
+  inline bool isRetOilWork(){ return GETBIT(flags, fFC_RetOilSt); }
+
   void check_blockFC();                            // Установить запрет на использование инвертора
   boolean get_blockFC(){return GETBIT(flags,fErrFC);}// Получить флаг блокировки инвертора
   union_errorFC get_errorFC(){return error;}       // Получить структуру с ошибкой
