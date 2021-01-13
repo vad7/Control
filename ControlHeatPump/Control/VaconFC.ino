@@ -223,8 +223,13 @@ int8_t devVaconFC::get_readState()
 			if(err == OK) {
 				power = read_0x03_16(FC_POWER); // прочитать мощность
 				if(err == OK) {
-					current = read_0x03_16(FC_CURRENT); // прочитать ток
-					err = Modbus.get_err(); // Скопировать ошибку
+					if(GETBIT(flags, fFC_ReadCurrent)) {
+						FC_Temp = read_0x03_16(FC_TEMP);
+						if(err == OK && _data.FC_MaxTemperature && FC_Temp > _data.FC_MaxTemperature) {
+							set_Error(ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
+						}
+					} else current = read_0x03_16(FC_CURRENT);
+					flags ^= (1<<fFC_ReadCurrent);
 				}
 				if(GETBIT(_data.setup_flags,fLogWork) && GETBIT(flags, fOnOff)) {
 					journal.jprintf_time("FC: %Xh,%.2dHz,%.2dA,%.1d%%=%.3d\n", state, FC_curr_freq, current, power,	get_power());
@@ -636,7 +641,8 @@ void devVaconFC::get_paramFC(char *var,char *ret)
    	if(strcmp(var, fc_FC_TIME_READ)==0)   		{  _itoa(FC_TIME_READ, ret); } else
    	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
     if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
-     if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){ _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
+    if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
+   	if(strcmp(var, fc_FC_MaxTemperature)==0)  	{  _itoa(_data.FC_MaxTemperature, ret); } else
 
     strcat(ret,(char*)cInvalid);
 }
@@ -663,6 +669,7 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
+    if(strcmp(var,fc_FC_MaxTemperature)==0)     { _data.FC_MaxTemperature = x; return true; } else
    
 	x = rd(f, 100);
     	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){_data.dtCompTemp=x;return true; } else return false; } else // градусы
@@ -791,11 +798,12 @@ inline int16_t devVaconFC::read_stateFC()
 // Tемпература радиатора, C
 int16_t devVaconFC::read_tempFC()
 {
-#ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
-    return read_0x03_16(FC_TEMP);
-#else
-    return 0;
-#endif
+	return FC_Temp;
+//#ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
+//    return read_0x03_16(FC_TEMP);
+//#else
+//    return 0;
+//#endif
 }
 // Функции общения по модбас инвертора Чтение регистров
 #ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
@@ -809,7 +817,10 @@ int16_t devVaconFC::read_0x03_16(uint16_t cmd)
     for (i = 0; i < FC_NUM_READ; i++) // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
     {
         err = Modbus.readHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, (uint16_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) break; // Прочитали удачно
+        if(err == OK) {
+        	check_blockFC();
+        	break; // Прочитали удачно
+        }
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
         if(HP.sInput[SPOWER].is_alarm()) {
@@ -844,7 +855,10 @@ uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
     for (i = 0; i < FC_NUM_READ; i++) // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
     {
         err = Modbus.readHoldingRegisters32(FC_MODBUS_ADR, cmd - 1, (uint32_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) break; // Прочитали удачно
+        if(err == OK) {
+        	check_blockFC();
+        	break; // Прочитали удачно
+        }
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
         if(HP.sInput[SPOWER].is_alarm()) {
@@ -877,7 +891,10 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
     for (i = 0; i < FC_NUM_READ; i++) // делаем FC_NUM_READ попыток записи
     {
         err = Modbus.writeHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, data); // послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) break; // Записали удачно
+        if(err == OK) {
+        	check_blockFC();
+        	break; // Записали удачно
+        }
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
         if(HP.sInput[SPOWER].is_alarm()) {

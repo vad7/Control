@@ -24,8 +24,8 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.119"				// Версия прошивки
-#define VER_SAVE		150					// Версия формата сохраняемых данных в I2C память
+#define VERSION			"1.120"				// Версия прошивки
+#define VER_SAVE		151					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
 #endif
@@ -713,6 +713,7 @@ const char *fc_ReturnOilTime     = {"ROT"};
 const char *fc_ReturnOilMinFreq  = {"ROM"};
 const char *fc_ReturnOilFreq     = {"ROF"};
 const char *fc_ReturnOil_AdjustEEV_k = {"REK"};
+const char *fc_FC_MaxTemperature = {"MT"};
 
 // Описание имен параметров опций ТН  для функций get_optionHP ("get_oHP") set_optionHP ("set_oHP")
 const char *option_ADD_HEAT           = {"HEAT_list"};              // использование дополнительного нагревателя (значения 1 и 0)
@@ -921,7 +922,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
   #define ERR_MODBUS_VACON_0x06 -50       // Ведомое устройство занято обработкой команды. Ведущее устройство должно повторить сообщение позже, когда ведомое освободится.
   #define ERR_MODBUS_VACON_0x07 -51       // Ведомое устройство не может выполнить программную функцию, заданную в запросе.
   #define ERR_MODBUS_VACON_0x08 -52       // Ведомое устройство при чтении расширенной памяти обнаружило ошибку контроля четности
-  #define ERR_MODBUS_VACON_0000 -53       // пусто для сохранения нумерации
+  #define ERR_MODBUS_VACON_TEMP -53       // Перегрев радиатора инвертора
   #define ERR_MODBUS_VACON_0001 -54       // пусто для сохранения нумерации
   #define ERR_MODBUS_VACON_0002 -55       // пусто для сохранения нумерации
 #else           // Спицифические ошибки OMRON
@@ -935,18 +936,18 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #endif
 #define ERR_MODBUS_UNKNOW    -56         // Modbus не известная ошибка (сбой протокола)
 #define ERR_MODBUS_STATE     -57         // Запрещенное (не верное) состояние инвертора
-#define ERR_MODBUS_BLOCK    -58         // Попытка включения ТН при заблокированном инверторе
-#define ERR_PID_FEED       -59         // Алгоритм ПИД - достижение максимальной температуры подачи (защита) Подача целевая функция, защита выше, и этого не должно быть
-#define ERR_OUT_OF_MEMORY  -60         // Не хватает памяти для выделения массивов
-#define ERR_SAVE_PROFILE   -61         // Ошибка записи профиля в eeprom I2C
-#define ERR_LOAD_PROFILE   -62         // Ошибка чтения профиля из eeprom I2C
-#define ERR_CRC16_PROFILE  -63         // Ошибка контрольной суммы для профиля
-#define ERR_BAD_LEN_PROFILE -64        // Не совпадение размера данных при чтении профиля
+#define ERR_MODBUS_BLOCK     -58         // Попытка включения ТН при заблокированном инверторе
+#define ERR_PID_FEED         -59         // Алгоритм ПИД - достижение максимальной температуры подачи (защита) Подача целевая функция, защита выше, и этого не должно быть
+#define ERR_OUT_OF_MEMORY    -60         // Не хватает памяти для выделения массивов
+#define ERR_SAVE_PROFILE     -61         // Ошибка записи профиля в eeprom I2C
+#define ERR_LOAD_PROFILE     -62         // Ошибка чтения профиля из eeprom I2C
+#define ERR_CRC16_PROFILE    -63         // Ошибка контрольной суммы для профиля
+#define ERR_BAD_LEN_PROFILE  -64        // Не совпадение размера данных при чтении профиля
 #define ERR_DS2482_NOT_FOUND -65       // Мастер DS2482 не найден на шине, возможно ошибка шины I2C
-#define ERR_DS2482_ONEWIRE -66         // Мастер DS2482 не может сбросить шину OneWire бит PPD равен 0
-#define ERR_I2C_BUZY       -67         // При обращении к I2C шине превышено время ожидания ее освобождения
-#define ERR_DRV_EEV        -68         // Отказ драйвера L9333 ЭРВ (сработала защита драйвера)
-#define ERR_HEADER2_EEPROM -69         // Ошибка заголовка счетчиков в eeprom I2C
+#define ERR_DS2482_ONEWIRE   -66         // Мастер DS2482 не может сбросить шину OneWire бит PPD равен 0
+#define ERR_I2C_BUZY         -67         // При обращении к I2C шине превышено время ожидания ее освобождения
+#define ERR_DRV_EEV          -68         // Отказ драйвера L9333 ЭРВ (сработала защита драйвера)
+#define ERR_HEADER2_EEPROM   -69         // Ошибка заголовка счетчиков в eeprom I2C
 #define ERR_OPEN_I2C_JOURNAL -70       // Ошибка открытия журнала в I2C памяти (инициализация чипа)
 #define ERR_READ_I2C_JOURNAL -71       // Ошибка чтения журнала в I2C памяти
 #define ERR_WRITE_I2C_JOURNAL -72      // Ошибка записи журнала в I2C памяти
@@ -1033,7 +1034,7 @@ const char *noteError[] = {"Ok",                                                
                               "Ведомое устройство занято обработкой команды (0x06)",                            //-50
                               "Ведомое устройство не может выполнить программную функцию (0x07)",               //-51
                               "Ведомое устройство обнаружило ошибку контроля четности (0x08)",                  //-52
-                              "",                                                                               //-53
+                              "Перегрев радиатора инвертора",                                                   //-53
                               "",                                                                               //-54
                               "",                                                                               //-55
                             #else  // Спицифические ошибки OMRON

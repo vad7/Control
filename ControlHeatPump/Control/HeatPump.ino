@@ -2022,9 +2022,9 @@ xGoWait:
 	}
 
 	// 4. Определяем что нужно делать -----------------------------------------------------------
-	if(get_State() != pSTARTING_HP) return;            // Могли нажать кнопку стоп, выход из процесса запуска
-	MODE_HP mod = get_Work();                                   // определяем что делаем с компрессором
-	if(mod > pBOILER) mod = pOFF;                              // При первом пуске могут быть только состояния pOFF,pHEAT,pCOOL,pBOILER
+	if(get_State() != pSTARTING_HP) return;                // Могли нажать кнопку стоп, выход из процесса запуска
+	MODE_HP mod = get_Work();                              // определяем что делаем с компрессором
+	if(mod > pBOILER) mod = pOFF;                          // При первом пуске могут быть только состояния pOFF,pHEAT,pCOOL,pBOILER
 	journal.jprintf(" Start modWork:%d[%s]\n", (int) mod, codeRet[Status.ret]);
 	Status.modWork = mod;  // Установка режима!
 
@@ -2051,13 +2051,18 @@ xGoWait:
 	bool start_compressor_now = mod && mod <= pBOILER; // pCOOL or pHEAT or pBOILER
 	if(start_compressor_now) {
 #ifndef DEMO   // проверка блокировки инвертора
-		if((dFC.get_present()) && (dFC.get_blockFC()))          // есть инвертор но он блокирован
-		{
-			if(dFC.get_err() != ERR_485_BUZY) {
-				journal.jprintf("%s: is blocked, ignore start\n", dFC.get_name());
-				set_Error(ERR_MODBUS_BLOCK, (char*) __FUNCTION__);          // ВОТ ЗДЕСЬ КОМАНДА СТОП И ПРОЙДЕТ
+		if(dFC.get_present() && dFC.get_blockFC() && dFC.get_err() != ERR_485_BUZY) { // есть инвертор, но он блокирован
+#ifdef FC_VACON
+        	if(dFC.CheckLinkStatus() == ERR_LINK_FC) {
+        		journal.jprintf("%s: link error, ignore start\n", dFC.get_name());
+				set_Error(ERR_MODBUS_BLOCK, (char*) __FUNCTION__);
 				return;
-			}
+        	}
+#else
+			journal.jprintf("%s: is blocked, ignore start\n", dFC.get_name());
+			set_Error(ERR_MODBUS_BLOCK, (char*) __FUNCTION__);
+			return;
+#endif
 		}
 #endif
 	}
@@ -3380,22 +3385,19 @@ xNextStop:
 		journal.jprintf(" Pause %ds before go start position EEV . . .\n", dEEV.get_DelayStartPos());
 		_delay(dEEV.get_DelayStartPos() * 1000);  // Задержка после включения компрессора до ухода на рабочую позицию
 		journal.jprintf(" EEV go ");
-		if((dEEV.get_StartFlagPos()) || ((lastEEV == -1))) {
+		if(dEEV.get_StartFlagPos() || lastEEV == -1) { // если первая итерация или установлен соответсвующий флаг, то на стартовую позицию
 			dEEV.set_EEV(dEEV.get_StartPos());
-#ifdef EEV_PREFER_PERCENT
-			journal.jprintf("StartPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
-#else
-			journal.jprintf("StartPos: %d\n", dEEV.get_EEV());
-#endif
-		}    // если первая итерация или установлен соответсвующий флаг то на стартовую позицию
-		else { // установка последнего значения ЭРВ в противном случае
+			journal.jprintf("StartPos:");
+		} else { // установка последнего значения ЭРВ в противном случае
 			dEEV.set_EEV(lastEEV);
-#ifdef EEV_PREFER_PERCENT
-			journal.jprintf("lastEEV: %.2d\n", dEEV.calc_percent(lastEEV));
-#else
-			journal.jprintf("lastEEV: %d\n", lastEEV);
-#endif
+			journal.jprintf("LastPos:");
 		}
+		for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
+#ifdef EEV_PREFER_PERCENT
+		journal.jprintf(" %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
+#else
+		journal.jprintf(" %d\n", dEEV.get_EEV());
+#endif
 	}
 #endif
 	// 6. Обеспечение задержки отслеживания ЭРВ

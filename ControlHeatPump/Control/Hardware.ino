@@ -748,8 +748,7 @@ int8_t devEEV::set_EEV(int16_t x)
 		return err;
 	}
 	if(x < EEV_CLOSE_STEP) x = EEV_CLOSE_STEP; else if(x > _data.maxSteps) x = _data.maxSteps;
-	if(testMode != SAFE_TEST) stepperEEV.step(x);                   // не  SAFE_TEST - работаем
-	else EEV = x;                                                    // SAFE_TEST только координаты меняем
+	if(testMode != SAFE_TEST) stepperEEV.step(x); else EEV = x;       // SAFE_TEST - только координаты меняем
 	return err;
 }
 
