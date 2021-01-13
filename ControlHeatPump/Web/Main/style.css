@@ -77,7 +77,7 @@ body.actuators td, th { max-width: 360px;}
 th:nth-child(-n+2), td:nth-child(-n+2){text-align: left; }
 tr.inactive{display:none;}
 tr.alarm{background:#C1272D;color:white;}
-input[type=number]{max-width:55px;/*float: left;*/}
+input[type=number]{max-width:60px;/*float: left;*/}
 #a1,#a2,#p1,#p2{max-width:70px;min-width:60px;}
 input[type=submit]{/*float: left;*/}
 h1 input, h1 select{float:right;}
