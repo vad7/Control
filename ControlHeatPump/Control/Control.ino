@@ -1303,11 +1303,6 @@ void vReadSensor(void *)
 #else
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
-		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
-
-#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
-		HP.dSDM.get_readState(0); // Основная группа регистров
-#endif
 //#ifdef WR_PowerMeter_Modbus
 //		if(GETBIT(WR.Flags, WR_fActive)) {
 //			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: #%d\n", GetTickCount() - ttime);
@@ -1315,37 +1310,6 @@ void vReadSensor(void *)
 //			if(i != OK && GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
 //		}
 //#endif
-		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
-
-		if(OW_scan_flags == 0) {
-			uint8_t flags = 0;
-			for(i = 0; i < TNUMBER; i++) {                                   // Прочитать данные с температурных датчиков
-				if((prtemp & (1<<HP.sTemp[i].get_bus())) == 0) {
-					if(HP.sTemp[i].Read() == OK) flags |= HP.sTemp[i].get_setup_flags();
-				}
-				_delay(1);     												// пауза
-			}
-			int32_t temp;
-			if(GETBIT(flags, fTEMP_as_TIN_average)) { // Расчет средних датчиков для TIN
-				temp = 0;
-				uint8_t cnt = 0;
-				for(i = 0; i < TNUMBER; i++) {
-					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_average) && HP.sTemp[i].get_Temp() != STARTTEMP) {
-						temp += HP.sTemp[i].get_Temp();
-						cnt++;
-					}
-				}
-				if(cnt) temp /= cnt; else temp = STARTTEMP;
-			} else temp = STARTTEMP;
-			int16_t temp2 = temp;
-			if(GETBIT(flags, fTEMP_as_TIN_min)) { // Выбор минимальной температуры для TIN
-				for(i = 0; i < TNUMBER; i++) {
-					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
-				}
-			}
-			if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
-		}
-
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 #if (SDM_READ_PERIOD > 0)
 			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
@@ -1354,10 +1318,6 @@ void vReadSensor(void *)
 			}
 #endif
 #endif
-
-		HP.calculatePower();  // Расчет мощностей и СОР
-		Stats.Update();
-
 #if defined(WR_PowerMeter_Modbus) //&& TIME_READ_SENSOR > 1500
 		if(GETBIT(WR.Flags, WR_fActive)) {
 //			int32_t tm = TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime);
@@ -1389,24 +1349,48 @@ void vReadSensor(void *)
 #endif
 #endif
 
-#ifdef USE_UPS
-		if(HP.NO_Power && !HP.sInput[SPOWER].is_alarm()) { // Включаемся
-			if(HP.NO_Power_delay) {
-				if(--HP.NO_Power_delay == 0) HP.sendCommand(pNETWORK);
-			} else {
-				journal.jprintf_date( "POWER RESTORED!\n");
-				if(!HP.Schdlr.IsShedulerOn()) {  // Расписание не активно, иначе включаемся через расписание
-					if(HP.NO_Power == 2 && HP.get_State() == pWAIT_HP) {
-						HP.NO_Power = 0;
-						journal.jprintf("Resuming work...\n");
-						HP.sendCommand(pRESUME);
+		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
+
+		if(OW_scan_flags == 0) {
+			uint8_t flags = 0;
+			for(i = 0; i < TNUMBER; i++) {                                   // Прочитать данные с температурных датчиков
+				if((prtemp & (1<<HP.sTemp[i].get_bus())) == 0) {
+					if(HP.sTemp[i].Read() == OK) flags |= HP.sTemp[i].get_setup_flags();
+				}
+				_delay(1);     												// пауза
+			}
+			int32_t temp;
+			if(GETBIT(flags, fTEMP_as_TIN_average)) { // Расчет средних датчиков для TIN
+				temp = 0;
+				uint8_t cnt = 0;
+				for(i = 0; i < TNUMBER; i++) {
+					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_average) && HP.sTemp[i].get_Temp() != STARTTEMP) {
+						temp += HP.sTemp[i].get_Temp();
+						cnt++;
 					}
 				}
-				HP.NO_Power = 0;
+				if(cnt) temp /= cnt; else temp = STARTTEMP;
+			} else temp = STARTTEMP;
+			int16_t temp2 = temp;
+			if(GETBIT(flags, fTEMP_as_TIN_min)) { // Выбор минимальной температуры для TIN
+				for(i = 0; i < TNUMBER; i++) {
+					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+				}
 			}
+			if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 		}
+
+		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
+#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
+		HP.dSDM.get_readState(0); // Основная группа регистров
 #endif
+		HP.calculatePower();  // Расчет мощностей и СОР
+		Stats.Update();
+
 		vReadSensor_delay1ms((TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
+
+#ifdef USE_UPS
+#endif
 
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
@@ -1415,10 +1399,26 @@ void vReadSensor(void *)
 #endif
 
 		//  Опрос состояния инвертора
-	#ifdef USE_UPS
-		if(!HP.NO_Power)
-	#endif
-			if((HP.dFC.get_present()) && (GetTickCount() - readFC > FC_TIME_READ)) {
+#ifdef USE_UPS
+		if(HP.NO_Power) {
+			if(!HP.sInput[SPOWER].is_alarm()) { // Включаемся
+				if(HP.NO_Power_delay) {
+					if(--HP.NO_Power_delay == 0) HP.sendCommand(pNETWORK);
+				} else {
+					journal.jprintf_date( "POWER RESTORED!\n");
+					if(!HP.Schdlr.IsShedulerOn()) {  // Расписание не активно, иначе включаемся через расписание
+						if(HP.NO_Power == 2 && HP.get_State() == pWAIT_HP) {
+							HP.NO_Power = 0;
+							journal.jprintf("Resuming work...\n");
+							HP.sendCommand(pRESUME);
+						}
+					}
+					HP.NO_Power = 0;
+				}
+			}
+		} else
+#endif
+			if(HP.dFC.get_present() && (GetTickCount() - readFC > FC_TIME_READ)) {
 				readFC = GetTickCount();
 				HP.dFC.get_readState();
 			}

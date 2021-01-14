@@ -61,6 +61,8 @@ int8_t devVaconFC::initFC()
 	_data.ReturnOilPeriod = 1800000 / FC_TIME_READ;
 	_data.ReturnOilPerDivHz = 48000 / FC_TIME_READ;
 	_data.ReturnOilTime = FC_RETOIL_TIME;
+	_data.MaxPower = FC_MAX_POWER;
+	_data.MaxPowerBoiler = FC_MAX_POWER_BOILER;
 
 	flags = 0x00;                                	   // флаги  0 - наличие FC
 	_data.setup_flags = 0;
@@ -209,6 +211,7 @@ int8_t devVaconFC::get_readState()
 			}
 			if(err) {
 				set_Error(err, name); // генерация ошибки
+				return err;
 			}
 		} else if(state & FC_S_RUN) { // Привод работает, а не должен - останавливаем через модбас
 			if(rtcSAM3X8.unixtime() - HP.get_stopCompressor() > FC_DEACCEL_TIME / 100) {
@@ -219,17 +222,27 @@ int8_t devVaconFC::get_readState()
 		}
 		// Состояние прочитали и оно правильное все остальное читаем
 		{
-			FC_curr_freq = read_0x03_16(FC_FREQ); // прочитать текущую частоту
+			FC_curr_freq = read_0x03_16(FC_FREQ); 	// прочитать текущую частоту
 			if(err == OK) {
-				power = read_0x03_16(FC_POWER); // прочитать мощность
+				power = read_0x03_16(FC_POWER); 	// прочитать мощность
+#ifdef FC_MAX_CURRENT
+				if(err == OK) current = read_0x03_16(FC_CURRENT);
+#endif
 				if(err == OK) {
-					if(GETBIT(flags, fFC_ReadCurrent)) {
-						FC_Temp = read_0x03_16(FC_TEMP);
-						if(err == OK && _data.FC_MaxTemperature && FC_Temp > _data.FC_MaxTemperature) {
-							set_Error(ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
-						}
-					} else current = read_0x03_16(FC_CURRENT);
-					flags ^= (1<<fFC_ReadCurrent);
+					FC_Temp = read_0x03_16(FC_TEMP);
+					if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
+						set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
+						return err;
+					}
+					if(_data.FC_TargetTemp) {
+#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN); // подать команду
+						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, 0); // подать команду
+#else
+						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0) | (state & FC_S_DIR ? FC_C_DIR : 0)); // подать команду
+						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0) | (state & FC_S_DIR ? FC_C_DIR : 0)); // подать команду
+#endif
+					}
 				}
 				if(GETBIT(_data.setup_flags,fLogWork) && GETBIT(flags, fOnOff)) {
 					journal.jprintf_time("FC: %Xh,%.2dHz,%.2dA,%.1d%%=%.3d\n", state, FC_curr_freq, current, power,	get_power());
@@ -642,7 +655,8 @@ void devVaconFC::get_paramFC(char *var,char *ret)
    	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
     if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
     if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
-   	if(strcmp(var, fc_FC_MaxTemperature)==0)  	{  _itoa(_data.FC_MaxTemperature, ret); } else
+   	if(strcmp(var, fc_FC_MaxTemp)==0)  			{  _itoa(_data.FC_MaxTemp, ret); } else
+   	if(strcmp(var, fc_FC_TargetTemp)==0) 		{  _itoa(_data.FC_TargetTemp, ret); } else
 
     strcat(ret,(char*)cInvalid);
 }
@@ -669,7 +683,8 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
-    if(strcmp(var,fc_FC_MaxTemperature)==0)     { _data.FC_MaxTemperature = x; return true; } else
+    if(strcmp(var,fc_FC_MaxTemp)==0)  		    { _data.FC_MaxTemp = x; return true; } else
+    if(strcmp(var,fc_FC_TargetTemp)==0)  	    { _data.FC_TargetTemp = x; return true; } else
    
 	x = rd(f, 100);
     	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){_data.dtCompTemp=x;return true; } else return false; } else // градусы

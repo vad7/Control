@@ -126,7 +126,7 @@ const uint16_t  defaultPort=80;
 
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
-#define FC_TIME_READ      (8*1000)       // Время опроса инвертора в мск (было 6)
+#define FC_TIME_READ       4000UL       // Время опроса инвертора в мс (было 8)
 #define FC_NUM_READ        3             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке
 #define FC_DELAY_REPEAT    40            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      5             // мсек Время между последовательными запросами было 20
@@ -713,7 +713,8 @@ const char *fc_ReturnOilTime     = {"ROT"};
 const char *fc_ReturnOilMinFreq  = {"ROM"};
 const char *fc_ReturnOilFreq     = {"ROF"};
 const char *fc_ReturnOil_AdjustEEV_k = {"REK"};
-const char *fc_FC_MaxTemperature = {"MT"};
+const char *fc_FC_MaxTemp		 = {"MT"};
+const char *fc_FC_TargetTemp	 = {"TT"};
 
 // Описание имен параметров опций ТН  для функций get_optionHP ("get_oHP") set_optionHP ("set_oHP")
 const char *option_ADD_HEAT           = {"HEAT_list"};              // использование дополнительного нагревателя (значения 1 и 0)

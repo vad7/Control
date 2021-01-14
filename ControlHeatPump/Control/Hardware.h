@@ -413,7 +413,6 @@ private:
 #define fAutoResetFault	5        // флаг Автосброс не критичного сбоя инвертора
 #define fLogWork		6		 // флаг логировать параметры во время работы
 #define fFC_RetOilSt 	7        // Возврат масла рабочий
-#define fFC_ReadCurrent 8        // Ток прочитан
 #define FC_SAVED_FLAGS 	((1<<fAutoResetFault) | (1<<fLogWork) | (1<<fFC_RetOil))
 
 const char *noteFC_OK   = {" связь по Modbus установлена" };                     // Все впорядке

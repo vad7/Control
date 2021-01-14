@@ -4,45 +4,48 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
-	//window.onload = function() {
-	//};
-	function set_param(e) {
-		var els = e.parentElement.parentElement.getElementsByClassName("mdb");
-		for(var i = 1; i < els.length; i++) els[i].id = els[i].id.replace(/\d+$/, '') + parseInt(els[0].value);
-		loadParam(els[1].id.replace(/-/, '(') + ')');
+//window.onload = function() {
+//};
+function set_param(e) {
+	var els = e.parentElement.parentElement.getElementsByClassName("mdb");
+	for(var i = 1; i < els.length; i++) els[i].id = els[i].id.replace(/\d+$/, '') + parseInt(els[0].value);
+	loadParam(els[1].id.replace(/-/, '(') + ')');
+}
+function set_value(e) {
+	var els = e.parentElement.parentElement.getElementsByClassName("mdb");
+	setParam(els[1].id.replace(/-/, '(') + ')');
+}
+function add_new_modbus_row(data_type) {
+	var el = document.getElementById("tbl_modbus");
+	var row = el.insertRow(-1);
+	var dev = parseInt(document.getElementById("device").value);
+	var mid = dev +':'+ data_type + ':0" class="mdb"';
+	row.insertCell(-1).innerHTML = dev;
+	row.insertCell(-1).innerHTML = '<input class="mdb" style="max-width: 100;" value="0"> <input type="submit" value=">" onclick="set_param(this)">' + ' ' + data_type.toUpperCase(); 
+	row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="0"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" readonly> <input type="submit" value=">" onclick="set_value(this)">';
+	row.insertCell(-1).innerHTML = '<span id="get_modbus_err-'+mid+'></span>';
+}
+var refreshid = 0;
+function refresh_all() {
+	var pars = "";
+	var els = document.getElementById("tbl_modbus").rows;
+	var i = 1;
+	for(; i < els.length; i++) {
+		var id = els[i].getElementsByClassName("mdb")[1].id;
+		if(id.substr(-2) != ":0") pars += id.replace(/-/, '(') + ')' + (i < els.length - 1 ? ',' : '');
 	}
-	function set_value(e) {
-		var els = e.parentElement.parentElement.getElementsByClassName("mdb");
-		setParam(els[1].id.replace(/-/, '(') + ')');
+	if(pars.length){
+		urltimeout = 500 * i;
+		if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
+		loadParam(pars);
 	}
-	function add_new_modbus_row(data_type) {
-		var el = document.getElementById("tbl_modbus");
-		var row = el.insertRow(-1);
-		var dev = parseInt(document.getElementById("device").value);
-		var mid = dev +':'+ data_type + ':0" class="mdb"';
-		row.insertCell(-1).innerHTML = dev;
-		row.insertCell(-1).innerHTML = '<input class="mdb" style="max-width: 100;" value="0"> <input type="submit" value=">" onclick="set_param(this)">' + ' ' + data_type.toUpperCase(); 
-		row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="0"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" readonly> <input type="submit" value=">" onclick="set_value(this)">';
-		row.insertCell(-1).innerHTML = '<span id="get_modbus_err-'+mid+'></span>';
-	}
-	var refreshid = 0;
-	function refresh_all() {
-		var pars = "";
-		var els = document.getElementById("tbl_modbus").rows;
-		var i = 1;
-		for(; i < els.length; i++) {
-			var id = els[i].getElementsByClassName("mdb")[1].id;
-			if(id.substr(-2) != ":0") pars += id.replace(/-/, '(') + ')' + (i < els.length - 1 ? ',' : '');
-		}
-		if(pars.length){
-			urltimeout = 500 * i;
-			if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
-			loadParam(pars);
-		}
-	}
-	function loadParam_after(paramid) {
-		if(document.getElementById("refresh_auto").checked && paramid.indexOf("get_modbus")!=-1) refresh_all();
-	}
+}
+function loadParam_after(paramid) {
+	if(document.getElementById("refresh_auto").checked && paramid.indexOf("get_modbus")!=-1) refresh_all();
+}
+function modbus_load_dump() {
+    location.assign("settings_modbus-" + document.getElementById("device").value +"_"+ document.getElementById("dump_ftype").selectedOptions[0].value +"_"+ document.getElementById("dump_fsize").selectedOptions[0].value +"_"+ document.getElementById("dump_addr").value +"_"+ document.getElementById("dump_len").value +".bin");
+}
 </script>
 </head>
 <body class="actuators">
@@ -50,7 +53,11 @@
 <div class="content">
 <h1>Modbus RTU</h1>
 <br>
-<span style="font-size: larger;">Адрес устройства на шине RS485: </span><input id="device" type="number" min="0" max="255" step="1" value="1">
+<span style="font-size: larger;">Адрес устройства на шине RS485: </span><input id="device" type="number" min="0" max="255" step="1" value="1"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Дамп в файл с адреса: <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
+<input id="dump_addr" type="number" min="0" value="1"> ячеек: <input id="dump_len" type="number" min="1" value="100"> 
+<select id="dump_fsize"><option value="1">16 bit</option><option value="2">32 bit</option><option value="3">float</option></select>
+<input type="submit" value="Загрузить" onclick="modbus_load_dump()">
 <br>
 Частотник: 1, Счетчик: 2. Нумерация параметров с 0.
 <br> 

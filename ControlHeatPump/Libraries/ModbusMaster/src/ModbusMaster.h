@@ -52,7 +52,7 @@ Arduino library for communicating with Modbus slaves over RS232/485 (via RTU pro
 #include "FreeRTOS_ARM.h"                // поддержка многозадачности
 #endif
 
-#define MIN_TIME_BETWEEN_TRANSACTION	30 // ms
+#define MIN_TIME_BETWEEN_TRANSACTION	40UL // ms
 
 // Коды функций Modbus
 // Modbus function codes for bit access

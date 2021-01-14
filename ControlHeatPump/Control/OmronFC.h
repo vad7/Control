@@ -188,6 +188,8 @@ public:
   uint16_t get_dtTempBoiler(){return _data.dtTempBoiler;}        // Привышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
   uint16_t get_maxFreqGen(){return _data.maxFreqGen;}            // Максимальная частота инвертора при работе от генератора в 0.01
   uint16_t get_PidMaxStep(){return _data.PidMaxStep;}
+  uint16_t get_MaxPower() { return FC_MAX_POWER; }
+  uint16_t get_MaxPowerBoiler() { return FC_MAX_POWER_BOILER; }
 
   // Управление по модбас Общее для всех частотников
   int16_t get_target() {return FC;}            // Получить целевую частоту в 0.01 герцах

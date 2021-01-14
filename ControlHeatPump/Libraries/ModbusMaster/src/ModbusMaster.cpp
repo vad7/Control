@@ -600,11 +600,10 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 #ifdef MODBUSMASTER_DEBUG
 	  Serial.print("#");
 #endif
-	  u32StartTime = MIN_TIME_BETWEEN_TRANSACTION - u32StartTime;
 #ifdef MODBUS_FREERTOS
-	  while(u32StartTime--) if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(1); else delay(1);
+	  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime); else delay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime);
 #else
-	  while(u32StartTime--) delay(1);
+	  delay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime);
 #endif
   }
 #ifdef MODBUSMASTER_DEBUG

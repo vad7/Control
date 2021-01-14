@@ -201,12 +201,12 @@ void get_txtState(uint8_t thread, boolean header)
 
 
 // Получить настройки в текстовом виде
-void get_txtSettings(uint8_t thread)
+void get_txtSettings(uint8_t thread, char *filename)
 {
      uint8_t i,j;
      int16_t x; 
      
-     get_Header(thread,(char*)"settings.txt");
+     get_Header(thread, filename);
      sendPrintfRTOS(thread, "Состояние ТН: %s\r\nПоследняя ошибка: %d - %s\r\n", HP.StateToStr(),HP.get_errcode(),HP.get_lastErr());
      strcpy(Socket[thread].outBuf,"\n  1. Общие настройки\r\n");
      strcat(Socket[thread].outBuf,"Режим работы :");
@@ -702,11 +702,12 @@ void get_txtSettings(uint8_t thread)
 }
 
 // Передать полный дамп EEPROM
-bool get_binEeprom(uint8_t thread)
+bool get_binEeprom(uint8_t thread, char *filename)
 {
     strcpy(Socket[thread].outBuf, WEB_HEADER_OK_CT);
     strcat(Socket[thread].outBuf, WEB_HEADER_BIN_ATTACH);
-    strcat(Socket[thread].outBuf, "settings_eeprom.bin\"\r\n\r\n");
+    strcat(Socket[thread].outBuf, filename);
+    strcat(Socket[thread].outBuf, "\"\r\n\r\n");
     uint16_t len = strlen(Socket[thread].outBuf);
     if(sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, len, 0) != len) return 0;
     uint32_t ptr = 0;
@@ -726,14 +727,14 @@ bool get_binEeprom(uint8_t thread)
 }
 
 // Записать в клиента бинарный файл настроек
-bool get_binSettings(uint8_t thread)
+bool get_binSettings(uint8_t thread, char *filename)
 {
 	int len;
 	// 1. Заголовок
     strcpy(Socket[thread].outBuf, WEB_HEADER_OK_CT);
     strcat(Socket[thread].outBuf, WEB_HEADER_BIN_ATTACH);
-    strcat(Socket[thread].outBuf, "settings.bin\"\r\n\r\n");
-	strcat(Socket[thread].outBuf, "Ver. "); // Записать номер версии в которой делалось сохранение
+    strcat(Socket[thread].outBuf, filename);
+	strcat(Socket[thread].outBuf, "\"\r\n\r\nVer. "); // Записать номер версии в которой делалось сохранение
     strcat(Socket[thread].outBuf, VERSION);
     strcat(Socket[thread].outBuf, " ");
     // Сюда можно запихивать текстовую информацию, при чтении бинарных данных она будет игнорироваться
@@ -1115,3 +1116,83 @@ void get_mailState(EthernetClient client,char *tempBuf)
 	client.write(tempBuf,strlen(tempBuf));
 
 }
+
+// Передать дамп устройства Modbus: settings_modbus-N_T_S_A_L.bin,
+// N - устройство, A - начальный адрес, L - количество ячеек модбас, T - тип ячеек (3, 4)
+// S - размерность (1 = 16b, 2 = 32b, 3 = float)
+// Если адрес == FC_MODBUS_ADR, то адресация ячеек с 1, иначе с 0.
+bool get_binModbus(uint8_t thread, char *filename)
+{
+	union {
+		uint16_t cell_16b[2];
+		uint32_t cell_32b;
+		float	 cell_float;
+	};
+    strcpy(Socket[thread].outBuf, WEB_HEADER_OK_CT);
+    strcat(Socket[thread].outBuf, WEB_HEADER_BIN_ATTACH);
+    strcat(Socket[thread].outBuf, filename);
+    strcat(Socket[thread].outBuf, "\"\r\n\r\n");
+    uint16_t len = strlen(Socket[thread].outBuf);
+    if(sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, len, 0) != len) return false;
+    char *p = strchr(filename, '-');
+    if(p == NULL) return false;
+    uint8_t id = strtol(p + 1, &p, 0);
+    uint8_t type = strtol(p + 1, &p, 0);
+    uint8_t size = strtol(p + 1, &p, 0);
+    uint16_t addr = strtol(p + 1, &p, 0);
+    uint16_t cnt = strtol(p + 1, &p, 0);
+    if(id == FC_MODBUS_ADR && addr) addr--;
+    *Socket[thread].outBuf = '\0';
+	m_snprintf(Socket[thread].outBuf, sizeof(Socket[thread].outBuf), "Read Modbus dev %d from %d_%d - %d(T%d) cells\n", id, type, addr, cnt, size);
+	journal.jprintf("%s", Socket[thread].outBuf);
+	uint8_t outstr = 4;
+    for(; cnt > 0; cnt--) {
+    	int8_t err = -1;
+    	cell_32b = 0;
+    	if(type == 3) { // Holding Registers
+    		if(size == 1) {
+        		err = Modbus.readHoldingRegisters16(id, addr, &cell_16b[0]);
+        		if(err) err = Modbus.readHoldingRegisters16(id, addr, &cell_16b[0]);
+    		} else if(size == 2) {
+        		err = Modbus.readHoldingRegisters32(id, addr, &cell_32b);
+        		if(err) err = Modbus.readHoldingRegisters32(id, addr, &cell_32b);
+    		} else if(size == 3) {
+        		err = Modbus.readHoldingRegistersFloat(id, addr, &cell_float);
+        		if(err) err = Modbus.readHoldingRegistersFloat(id, addr, &cell_float);
+    		}
+    	} else if(type == 4) { // Input Registers
+    		if(size == 1) {
+        		err = Modbus.readInputRegisters16(id, addr, &cell_16b[0]);
+        		if(err) err = Modbus.readInputRegisters16(id, addr, &cell_16b[0]);
+    		} else if(size == 2) {
+        		err = Modbus.readInputRegisters32(id, addr, &cell_32b);
+        		if(err) err = Modbus.readInputRegisters32(id, addr, &cell_32b);
+    		} else if(size == 3) {
+        		err = Modbus.readInputRegistersFloat(id, addr, &cell_float);
+        		if(err) err = Modbus.readInputRegistersFloat(id, addr, &cell_float);
+    		}
+    	}
+    	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
+    		journal.jprintf("%d=", addr);
+    		if(err) journal.jprintf("error ");
+    		journal.jprintf("%d\n", err ? err : cell_32b);
+    	}
+    	if(err == OK) {
+    		_itoa(addr + (id == FC_MODBUS_ADR ? 1 : 0), Socket[thread].outBuf);
+    		strcat(Socket[thread].outBuf, "=");
+    		if(size == 3) _ftoa(Socket[thread].outBuf, cell_float, 3); else _itoa(cell_32b, Socket[thread].outBuf);
+    		strcat(Socket[thread].outBuf, "\n");
+    		if(++outstr == 100) {
+    			outstr = 0;
+    	    	if(sendBufferRTOS(thread, (uint8_t*)Socket[thread].outBuf, strlen(Socket[thread].outBuf)) != strlen(Socket[thread].outBuf)) {
+    	    		journal.jprintf("Error send file from %d\n", addr);
+    	    		return false;
+    	    	}
+    		}
+    	}
+    	addr++;
+    	if(size > 1) addr++;
+    }
+    return true;
+}
+

@@ -269,15 +269,17 @@ void readFileSD(char *filename, uint8_t thread)
 		return;
 	}
 	if(strncmp(filename, "settings", 8) == 0) {
-		filename += 8;
-		if(strcmp(filename, ".txt") == 0) {
-			get_txtSettings(thread);
+		if(strcmp(filename + 8, ".txt") == 0) {
+			get_txtSettings(thread, filename);
 			return;
-		} else if(strcmp(filename, ".bin") == 0) {
-			get_binSettings(thread);
+		} else if(strcmp(filename + 8, ".bin") == 0) {
+			get_binSettings(thread, filename);
 			return;
-		} else if(strcmp(filename, "_eeprom.bin") == 0) {
-			get_binEeprom(thread);
+		} else if(strcmp(filename + 8, "_eeprom.bin") == 0) {
+			get_binEeprom(thread, filename);
+			return;
+		} else if(strncmp(filename + 8, "_modbus", 7) == 0) {
+			get_binModbus(thread, filename);
 			return;
 		}
 		filename -= 8;
