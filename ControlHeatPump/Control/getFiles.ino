@@ -1192,6 +1192,7 @@ bool get_binModbus(uint8_t thread, char *filename)
     	}
     	addr++;
     	if(size > 1) addr++;
+    	_delay(5);
     }
     return true;
 }
