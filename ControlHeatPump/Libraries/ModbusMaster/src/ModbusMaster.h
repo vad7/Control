@@ -260,7 +260,7 @@ class ModbusMaster
     uint32_t last_transaction_time;
 
     // Modbus timeout [milliseconds] Depend on serial speed
-    static const uint16_t ku16MBResponseTimeout          = 100;   ///< Modbus timeout, every byte [milliseconds]
+    static const uint16_t ku16MBResponseTimeout          = 100UL;   ///< Modbus timeout, every byte [milliseconds]
     
     // idle callback function; gets called during idle time between TX and RX
     void (*_idle)();
