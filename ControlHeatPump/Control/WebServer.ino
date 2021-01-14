@@ -2024,7 +2024,7 @@ xGetOptionHP:
 				continue;
 			} else if(strcmp(str, "set_oHP") == 0)           // Функция set_optionHP - установить значение паремтра  опций
 			{
-				if(pm != ATOF_ERROR) {   // нет ошибки преобразования
+				if(pm != ATOF_ERROR && *z != '\0') {   // нет ошибки преобразования и не пусто
 					if(HP.set_optionHP(x, pm)) HP.get_optionHP(x, strReturn);  // преобразование удачно,
 					else strcat(strReturn, "E17"); // выход за диапазон значений
 				} else {

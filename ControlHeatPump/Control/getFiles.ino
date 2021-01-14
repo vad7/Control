@@ -1145,7 +1145,7 @@ bool get_binModbus(uint8_t thread, char *filename)
     *Socket[thread].outBuf = '\0';
 	m_snprintf(Socket[thread].outBuf, sizeof(Socket[thread].outBuf), "Read Modbus dev %d from %d_%d - %d(T%d) cells\n", id, type, addr, cnt, size);
 	journal.jprintf("%s", Socket[thread].outBuf);
-	uint8_t outstr = 4;
+	uint16_t outstr = 4;
     for(; cnt > 0; cnt--) {
     	int8_t err = -1;
     	cell_32b = 0;
@@ -1173,7 +1173,7 @@ bool get_binModbus(uint8_t thread, char *filename)
     		}
     	}
     	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
-    		journal.jprintf("%d=", addr);
+    		journal.jprintf("[%u] %d=", millis(), addr);
     		if(err) journal.jprintf("error ");
     		journal.jprintf("%d\n", err ? err : cell_32b);
     	}
@@ -1182,17 +1182,31 @@ bool get_binModbus(uint8_t thread, char *filename)
     		strcat(Socket[thread].outBuf, "=");
     		if(size == 3) _ftoa(Socket[thread].outBuf, cell_float, 3); else _itoa(cell_32b, Socket[thread].outBuf);
     		strcat(Socket[thread].outBuf, "\n");
-    		if(++outstr == 100) {
-    			outstr = 0;
-    	    	if(sendBufferRTOS(thread, (uint8_t*)Socket[thread].outBuf, strlen(Socket[thread].outBuf)) != strlen(Socket[thread].outBuf)) {
+    		if(++outstr == 50) {
+    			outstr = strlen(Socket[thread].outBuf);
+    	    	if(sendBufferRTOS(thread, (uint8_t*)Socket[thread].outBuf, outstr) != outstr) {
     	    		journal.jprintf("Error send file from %d\n", addr);
     	    		return false;
     	    	}
+    	    	*Socket[thread].outBuf = '\0';
+    			outstr = 0;
     		}
     	}
     	addr++;
     	if(size > 1) addr++;
+		xSemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
     	_delay(5);
+		if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
+			journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);
+			return false;
+		}
+    }
+    if(outstr) {
+		outstr = strlen(Socket[thread].outBuf);
+		if(sendBufferRTOS(thread, (uint8_t*)Socket[thread].outBuf, outstr) != outstr) {
+			journal.jprintf("Error send file from %d\n", addr);
+			return false;
+		}
     }
     return true;
 }
