@@ -1303,7 +1303,11 @@ void vReadSensor(void *)
 #else
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
+		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
 
+#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
+		HP.dSDM.get_readState(0); // Основная группа регистров
+#endif
 //#ifdef WR_PowerMeter_Modbus
 //		if(GETBIT(WR.Flags, WR_fActive)) {
 //			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: #%d\n", GetTickCount() - ttime);
@@ -1311,27 +1315,7 @@ void vReadSensor(void *)
 //			if(i != OK && GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
 //		}
 //#endif
-		//  Опрос состояния инвертора
-#ifdef USE_UPS
-		if(!HP.NO_Power)
-#endif
-			if((HP.dFC.get_present()) && (GetTickCount() - readFC > FC_TIME_READ)) {
-				readFC = GetTickCount();
-				HP.dFC.get_readState();
-			}
-
-#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
-#if (SDM_READ_PERIOD > 0)
-			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
-				readSDM=GetTickCount();
-				HP.dSDM.get_readState(2);     // Последняя группа регистров ТОК
-			}
-#endif
-#endif
-
 		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
-
-		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
 
 		if(OW_scan_flags == 0) {
 			uint8_t flags = 0;
@@ -1362,11 +1346,16 @@ void vReadSensor(void *)
 			if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 		}
 
-#ifdef USE_ELECTROMETER_SDM   		// Опрос состояния счетчика
-		HP.dSDM.get_readState(0); 	// Основная группа регистров
+#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
+#if (SDM_READ_PERIOD > 0)
+			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
+				readSDM=GetTickCount();
+				HP.dSDM.get_readState(2);     // Последняя группа регистров ТОК
+			}
+#endif
 #endif
 
-		HP.calculatePower();  		// Расчет мощностей и СОР
+		HP.calculatePower();  // Расчет мощностей и СОР
 		Stats.Update();
 
 #if defined(WR_PowerMeter_Modbus) //&& TIME_READ_SENSOR > 1500
@@ -1424,6 +1413,15 @@ void vReadSensor(void *)
 #ifdef EEV_DEF
 		HP.dEEV.set_Overheat(HP.is_heating()); // нагрев(1) или охлаждение(0)
 #endif
+
+		//  Опрос состояния инвертора
+	#ifdef USE_UPS
+		if(!HP.NO_Power)
+	#endif
+			if((HP.dFC.get_present()) && (GetTickCount() - readFC > FC_TIME_READ)) {
+				readFC = GetTickCount();
+				HP.dFC.get_readState();
+			}
 
 #ifdef DRV_EEV_L9333  // Опрос состяния драйвера ЭРВ
 		if (digitalReadDirect(PIN_STEP_DIAG)) // Перечитываем два раза
