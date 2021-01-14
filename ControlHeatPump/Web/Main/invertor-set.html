@@ -7,7 +7,7 @@
 	<script type='text/javascript' src='scripts.js'></script>
 	<script type="text/javascript">
 		window.onload = function() {
-		loadParam("hide_fcan,get_pFC(ARSTFLT),get_pFC(LOGW),get_pFC(UPTIME),get_pFC(PID_STEP),get_pFC(PID_STOP),get_pFC(DTC),get_pFC(FRQ),get_pFC(FRQB),get_pFC(MIN),get_pFC(MINC),get_pFC(MINB),get_pFC(MINU),get_pFC(MAXG),get_pFC(EEVK),get_pFC(PMS),get_pFC(ROM),get_pFC(REK)");
+		loadParam("hide_fcan,get_pFC(ARSTFLT),get_pFC(LOGW),get_pFC(UPTIME),get_pFC(PID_STEP),get_pFC(PID_STOP),get_pFC(DTC),get_pFC(FRQ),get_pFC(FRQB),get_pFC(MIN),get_pFC(MINC),get_pFC(MINB),get_pFC(MINU),get_pFC(MAXG),get_pFC(EEVK),get_pFC(PMS),get_pFC(ROM),get_pFC(REK),get_pFC(TT),get_pFC(FS)");
 		loadParam("get_pFC(MAXU),get_pFC(STEP),get_pFC(STEPB),get_pFC(DT),get_pFC(DTB),get_pFC(MAX),get_pFC(MAXC),get_pFC(MAXB),get_pFC(FRO),get_pFC(ROP),get_pFC(ROPH),get_pFC(ROT),get_pFC(ROF),get_pFC(ROE),get_pFC(TR),get_pFC(DAC),get_pFC(PIN),get_pFC(L0),get_pFC(L100),get_pFC(MT)");
 		};
 	</script>
@@ -37,7 +37,8 @@
     <tr><td>Защита по температуре нагнетания - сколько градусов не доходит до максимальной и при этом происходит уменьшение частоты (°C) [1...25]</td><td><input type="number" id="get_pfc-dtc" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pFC(DTC)');"></td></tr>
     <tr><td>Уменьшение частоты (отопление/охлаждение) при приближении к максимальной температуре подачи на °C [0...10]</td><td><input type="number" id="get_pfc-dt" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pFC(DT)');"></td></tr>
     <tr><td>Уменьшение частоты (ГВС) при приближении к максимальной температуре подачи на °C [0...10]</td><td><input type="number" id="get_pfc-dtb" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pFC(DTB)');"></td></tr>
-    <tr><td>Максимальная температура инвертора (0 - не проверять), °C</td><td><input type="number" id="get_pfc-mt"> <input type="submit" value=">" onclick="setParam('get_pFC(MT)');"></td></tr>
+    <tr><td>Максимальная температура инвертора для останова по ошибке (0 - не проверять), °C</td><td><input type="number" id="get_pfc-mt"> <input type="submit" value=">" onclick="setParam('get_pFC(MT)');"></td></tr>
+    <tr><td>Целевая температура инвертора, вентилятор управляется через <span id="get_pfc-fs">-</span> (0 - нет), °C</td><td><input type="number" id="get_pfc-tt"> <input type="submit" value=">" onclick="setParam('get_pFC(TT)');"></td></tr>
 
     <tr><td><b>Стартовые частоты</b></td><td></td></tr>
     <tr><td>Стартовая установка инвертора</td><td><input type="number" id="get_pfc-frq" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pFC(FRQ)');"></td></tr>

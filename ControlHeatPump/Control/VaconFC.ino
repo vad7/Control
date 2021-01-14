@@ -28,7 +28,9 @@ int8_t devVaconFC::initFC()
 	FC_target = 0; // Целевая скорость частотика
 	FC_curr_freq = 0; // текущая частота инвертора
 	power = 0; // Тееущая мощность частотника
+#ifdef FC_MAX_CURRENT
 	current = 0; // Текуший ток частотника
+#endif
 	startCompressor = 0; // время старта компрессора
 	state = ERR_LINK_FC; // Состояние - нет связи с частотником по Modbus
 	Adjust_EEV_delta = 0;
@@ -158,13 +160,15 @@ int8_t devVaconFC::get_readState()
 		err = OK;
 		state = FC_S_RDY;
 		power = 600;
-		current = 555;
 		FC_curr_freq = 4000 + (int32_t)FC_target * 30 / 100;
 	} else {
 #ifndef FC_ANALOG_CONTROL // Не аналоговое управление
 		if(!get_present()) {
 			state = ERR_LINK_FC;
-			power = current = FC_curr_freq = 0;
+			power = FC_curr_freq = 0;
+#ifdef FC_MAX_CURRENT
+			current = 0;
+#endif
 			return err; // выходим если нет инвертора или нет связи
 		}
 		// Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
@@ -172,7 +176,10 @@ int8_t devVaconFC::get_readState()
 		if(err) // Ошибка
 		{
 			state = ERR_LINK_FC; // признак потери связи с инвертором
-			power = current = FC_curr_freq = 0;
+			power = FC_curr_freq = 0;
+#ifdef FC_MAX_CURRENT
+			current = 0;
+#endif
 			if(!GETBIT(flags, fOnOff)) return err; // Если не работаем, то и ошибку не генерим
 #if defined(SPOWER)
 			if(HP.NO_Power) return err;
@@ -245,7 +252,7 @@ int8_t devVaconFC::get_readState()
 					}
 				}
 				if(GETBIT(_data.setup_flags,fLogWork) && GETBIT(flags, fOnOff)) {
-					journal.jprintf_time("FC: %Xh,%.2dHz,%.2dA,%.1d%%=%.3d\n", state, FC_curr_freq, current, power,	get_power());
+					journal.jprintf_time("FC: %Xh,%.2dHz,%.3d\n", state, FC_curr_freq, get_power());
 				}
 			}
 		}
@@ -583,6 +590,16 @@ int8_t devVaconFC::stop_FC()
 	return err;
 }
 
+// Получить текущий ток, сотые
+uint16_t devVaconFC::get_current()
+{
+#ifdef FC_MAX_CURRENT
+	  return current;
+#else
+	  return read_0x03_16(FC_CURRENT);
+#endif
+}
+
 // Получить параметр инвертора в виде строки, результат ДОБАВЛЯЕТСЯ в ret
 void devVaconFC::get_paramFC(char *var,char *ret)
 {
@@ -606,7 +623,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_INFO1)==0)                 {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
     if(strcmp(var,fc_cFC)==0)                   {  _dtoa(ret, FC_curr_freq, 2); strcat(ret, " Гц"); } else // Текущая частота!
     if(strcmp(var,fc_cPOWER)==0)                {  _itoa(get_power(), ret); } else
-    if(strcmp(var,fc_cCURRENT)==0)              {  _dtoa(ret, current, 2); } else
+    if(strcmp(var,fc_cCURRENT)==0)              {  _dtoa(ret, get_current(), 2); } else
     if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      {  strcat(ret,(char*)(GETBIT(_data.setup_flags,fAutoResetFault) ? cOne : cZero)); } else
     if(strcmp(var,fc_LogWork)==0)      			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fLogWork) ? cOne : cZero)); } else
     if(strcmp(var,fc_fFC_RetOil)==0)   			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fFC_RetOil) ? cOne : cZero)); } else
@@ -657,6 +674,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
    	if(strcmp(var, fc_FC_MaxTemp)==0)  			{  _itoa(_data.FC_MaxTemp, ret); } else
    	if(strcmp(var, fc_FC_TargetTemp)==0) 		{  _itoa(_data.FC_TargetTemp, ret); } else
+   	if(strcmp(var, fc_FC_C_COOLER_FAN_STR)==0)	{  strcat(ret, FC_C_COOLER_FAN_STR); } else
 
     strcat(ret,(char*)cInvalid);
 }
@@ -768,6 +786,7 @@ void devVaconFC::get_infoFC(char* buf)
 		m_snprintf(buf, 256, "|Режим тестирования!|;");
 	}
 }
+
 // Сброс сбоя инвертора
 boolean devVaconFC::reset_errorFC()
 {

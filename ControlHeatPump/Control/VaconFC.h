@@ -101,6 +101,7 @@ const char *FC_S_Z_str				= {"Stopped,"};
 #define FC_C_DIR		0x02	// 0 - По часовой стрелке, 1 - Против часовой стрелки
 #define FC_C_RST		0x04	// Сброс отказа
 #define FC_C_COOLER_FAN (1<<13)	// Вкл. вентилятора
+#define FC_C_COOLER_FAN_STR "FB.B13"
 
 const uint8_t FC_NonCriticalFaults[] = { 1, 2, 8, 9, 13, 14,/**/15, 16, 17, 25, 34, 41, 53 }; // Не критичные ошибки, которые можно сбросить
 
@@ -192,7 +193,7 @@ public:
   
   // Управление по модбас
   uint16_t	get_power(){return (uint32_t)nominal_power * power / 1000;}   // Получить текущую мощность в Вт
-  uint16_t	get_current(){return current;}          // Получить текущий ток в 0.01А
+  uint16_t	get_current();										          // Получить текущий ток в 0.01А
   void		get_infoFC(char *buf);                   // Получить информацию о частотнике
   void		get_infoFC_status(char *buffer, uint16_t st); // Вывести в buffer строковый статус.
   boolean	reset_errorFC();                        // Сброс ошибок инвертора
@@ -246,9 +247,10 @@ public:
   int16_t  FC_target;								// Целевая скорость инвертора в 0.01 %
   int16_t  FC_curr_freq;							// Чтение: текущая частота двигателя в 0.01 Гц
   int16_t  power;									// Чтение: Текущая мощность двигателя в +-0.1% от номинала
-  uint16_t current;									// Чтение: Текущий ток двигателя в 0.01 Ампер единицах
   int8_t   FC_Temp;									// Чтение: Температура радиатора инвертора, градусы
-  
+#ifdef FC_MAX_CURRENT
+  uint16_t current;									// Чтение: Текущий ток двигателя в 0.01 Ампер единицах
+#endif
   int16_t  state;									// Чтение: Состояние ПЧ регистр FC_STATUS
   int16_t  minFC;									// Минимальная скорость инвертора в 0.01 %
   int16_t  maxFC;									// Максимальная скорость инвертора в 0.01 %
