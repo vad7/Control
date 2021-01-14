@@ -3585,7 +3585,7 @@ void HeatPump::sendCommand(TYPE_COMMAND c)
 	if (command != pEMPTY) // Если команда выполняется (не pEMPTY), то следующую в очередь, если есть место
 	{
 		if(next_command != c){
-			if(c != pSTOP) return; // STOP имеет приоритет
+			if(next_command != pEMPTY && c != pSTOP) return; // STOP имеет приоритет
 			next_command = c;
 			journal.jprintf("Active command: %s, next: %s\n", get_command_name(command), get_command_name(next_command));
 		}
