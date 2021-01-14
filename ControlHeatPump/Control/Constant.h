@@ -716,6 +716,8 @@ const char *fc_ReturnOil_AdjustEEV_k = {"REK"};
 const char *fc_FC_MaxTemp		 = {"MT"};
 const char *fc_FC_TargetTemp	 = {"TT"};
 const char *fc_FC_C_COOLER_FAN_STR={"FS"};
+const char *fc_MaxPower			= {"MP"};
+const char *fc_MaxPowerBoiler	= {"MPB"};
 
 // Описание имен параметров опций ТН  для функций get_optionHP ("get_oHP") set_optionHP ("set_oHP")
 const char *option_ADD_HEAT           = {"HEAT_list"};              // использование дополнительного нагревателя (значения 1 и 0)

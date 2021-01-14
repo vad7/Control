@@ -672,6 +672,8 @@ void devVaconFC::get_paramFC(char *var,char *ret)
    	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
     if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
     if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
+   	if(strcmp(var, fc_MaxPower)==0)  			{  _itoa(_data.MaxPower, ret); } else
+   	if(strcmp(var, fc_MaxPowerBoiler)==0)		{  _itoa(_data.MaxPowerBoiler, ret); } else
    	if(strcmp(var, fc_FC_MaxTemp)==0)  			{  _itoa(_data.FC_MaxTemp, ret); } else
    	if(strcmp(var, fc_FC_TargetTemp)==0) 		{  _itoa(_data.FC_TargetTemp, ret); } else
    	if(strcmp(var, fc_FC_C_COOLER_FAN_STR)==0)	{  strcat(ret, FC_C_COOLER_FAN_STR); } else
@@ -701,6 +703,8 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
     if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
+    if(strcmp(var,fc_MaxPower)==0)  		    { _data.MaxPower = x; return true; } else
+    if(strcmp(var,fc_MaxPowerBoiler)==0)	    { _data.MaxPowerBoiler = x; return true; } else
     if(strcmp(var,fc_FC_MaxTemp)==0)  		    { _data.FC_MaxTemp = x; return true; } else
     if(strcmp(var,fc_FC_TargetTemp)==0)  	    { _data.FC_TargetTemp = x; return true; } else
    
