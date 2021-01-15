@@ -25,20 +25,30 @@ function add_new_modbus_row_ex(data_type, a, v) {
 	var mid = dev +':'+ data_type + ':' +a+ '" class="mdb"';
 	row.insertCell(-1).innerHTML = dev;
 	row.insertCell(-1).innerHTML = '<input class="mdb" style="max-width: 100;" value="' +a+ '"> <input type="submit" value=">" onclick="set_param(this)">' + ' ' + data_type.toUpperCase(); 
-	row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="' +v+ '"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" readonly> <input type="submit" value=">" onclick="set_value(this)">';
+	row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="' +v+ '"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" value="0x' +Number(v).toString(16).toUpperCase()+ '" readonly> <input type="submit" value=">" onclick="set_value(this)">';
 	row.insertCell(-1).innerHTML = '<span id="get_modbus_err-'+mid+'></span>';
 }
 var refreshid = 0;
 function refresh_all() {
 	var pars = "";
 	var els = document.getElementById("tbl_modbus").rows;
-	var i = 1;
+	var i = 1, cnt = 0;
 	for(; i < els.length; i++) {
 		var id = els[i].getElementsByClassName("mdb")[1].id;
-		if(id.substr(-2) != ":0") pars += id.replace(/-/, '(') + ')' + (i < els.length - 1 ? ',' : '');
+		if(id.substr(-2) != ":0") { 
+			pars += id.replace(/-/, '(') + '),';
+			cnt++;
+		}
+		if(cnt > 20) {
+			urltimeout = 200 * cnt;
+			cnt = 0;
+			if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
+			loadParam(pars);
+			pars = "";
+		}
 	}
-	if(pars.length){
-		urltimeout = 500 * i;
+	if(cnt) {
+		urltimeout = 200 * cnt;
 		if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
 		loadParam(pars);
 	}
