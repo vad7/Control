@@ -476,7 +476,7 @@ void Statistics::Update()
 			Stats_data[i].value += newval;
 			break;
 		case STATS_TYPE_AVG:
-			/*if(skip_value)*/ newval = Stats_data[i].value / (Stats_data[i].when == STATS_WHEN_WORKD ? counts_work : counts);
+			//if(skip_value) newval = Stats_data[i].value / (Stats_data[i].when == STATS_WHEN_WORKD ? counts_work : counts);
 			Stats_data[i].value += newval;
 			break;
 		case STATS_TYPE_TIME:
