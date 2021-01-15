@@ -540,18 +540,21 @@ int8_t devRelay::set_Relay(int8_t r)
 #ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
 		if(number == R4WAY) r = !r;
 #endif
-#ifdef WR_Load_pins_Boiler_INDEX
 		if(number == RBOILER) {
-#ifdef PIN_WR_Boiler_Substitution
+			Calc_COP_skip_timer = 2;	// Пропустить расчет COP на время переключения (*TIME_READ_SENSOR)
+#ifdef WR_Load_pins_Boiler_INDEX
+	#ifdef PIN_WR_Boiler_Substitution
 			if(r && digitalReadDirect(PIN_WR_Boiler_Substitution)) { // выключить подмену бойлера
 				WR_Change_Load_PWM(WR_Boiler_Substitution_INDEX, -32768);
 				_delay(10); // 1/100 Hz
 				digitalWriteDirect(PIN_WR_Boiler_Substitution, 0);
 				_delay(WR_Boiler_Substitution_swtime);
 			}
-#endif
+	#endif
 			WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, r ? 32767 : -32768);
 		} else
+#else
+		}
 #endif
 			digitalWriteDirect(pin, r);
 	}

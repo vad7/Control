@@ -101,11 +101,12 @@ int32_t motohour_OUT_work = 0; // рабочий для счетчиков - э�
 int32_t motohour_IN_work = 0;  // рабочий для счетчиков - энергия потребленная, Вт
 uint16_t task_updstat_chars = 0;
 #ifdef CHART_ONLY_COMP_ON
-boolean  Charts_when_comp_on = true;	// Графики в памяти только во время работы компрессора
+boolean Charts_when_comp_on = true;	// Графики в памяти только во время работы компрессора
 #else
-boolean  Charts_when_comp_on = false;
+boolean Charts_when_comp_on = false;
 #endif
 uint8_t Request_LowConsume = 0xFF;
+uint8_t Calc_COP_skip_timer = 0;				// Пропустить расчет COP на время *TIME_READ_SENSOR
 
 #ifdef WATTROUTER
 #define  WR_fActive				1				// Ваттроутер включен

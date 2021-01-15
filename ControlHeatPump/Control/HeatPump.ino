@@ -3999,17 +3999,18 @@ void HeatPump::calculatePower()
 
 	// Расчет COP
 #ifndef COP_ALL_CALC    	// если COP надо считать не всегда
-if(is_compressor_on()){		// Если компрессор работает
+	if(is_compressor_on()){		// Если компрессор работает
 #endif	
 //	uint16_t fc_pwr = dFC.get_power();  // получить текущую мощность компрессора
 //	if(fc_pwr) COP = powerOUT * 100 / fc_pwr; else COP=0; // Компрессорный COP в сотых долях !!!!!!
-	if(_power220 != 0) fullCOP = powerOUT * 100 / _power220; else fullCOP = 0; // ПОЛНЫЙ COP в сотых долях !!!!!!
-	#ifndef COP_ALL_CALC        // Ограничение переходных процессов для варианта расчета КОП только при работающем компрессоре, что бы графики нормально масштабировались
+	if(Calc_COP_skip_timer) Calc_COP_skip_timer--;
+	else {
+		if(_power220 != 0) fullCOP = powerOUT * 100 / _power220; else fullCOP = 0; // ПОЛНЫЙ COP в сотых долях !!!!!!
+	}
+#ifndef COP_ALL_CALC        // Ограничение переходных процессов для варианта расчета КОП только при работающем компрессоре, что бы графики нормально масштабировались
 //		if(COP>10*100) COP=8*100;       // COP не более 8
 		if(fullCOP>8*100) fullCOP=7*100; // полный COP не более 7
-	#endif
-#ifndef COP_ALL_CALC		// если COP надо считать не всегда
-	} else {				// компрессор не рабоатет
+	} else {				// компрессор не работает
 		fullCOP=0;
 //		COP=0;
 
