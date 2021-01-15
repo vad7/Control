@@ -16,13 +16,16 @@ function set_value(e) {
 	setParam(els[1].id.replace(/-/, '(') + ')');
 }
 function add_new_modbus_row(data_type) {
+	add_new_modbus_row_ex(data_type, "0", "0");
+}
+function add_new_modbus_row_ex(data_type, a, v) {
 	var el = document.getElementById("tbl_modbus");
 	var row = el.insertRow(-1);
 	var dev = parseInt(document.getElementById("device").value);
-	var mid = dev +':'+ data_type + ':0" class="mdb"';
+	var mid = dev +':'+ data_type + ':' +a+ '" class="mdb"';
 	row.insertCell(-1).innerHTML = dev;
-	row.insertCell(-1).innerHTML = '<input class="mdb" style="max-width: 100;" value="0"> <input type="submit" value=">" onclick="set_param(this)">' + ' ' + data_type.toUpperCase(); 
-	row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="0"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" readonly> <input type="submit" value=">" onclick="set_value(this)">';
+	row.insertCell(-1).innerHTML = '<input class="mdb" style="max-width: 100;" value="' +a+ '"> <input type="submit" value=">" onclick="set_param(this)">' + ' ' + data_type.toUpperCase(); 
+	row.insertCell(-1).innerHTML = '<input id="get_modbus_val-'+mid+' style="max-width: 100;" value="' +v+ '"> <input id="get_modbus_hex-'+mid+' style="background-color: transparent; max-width: 100;" readonly> <input type="submit" value=">" onclick="set_value(this)">';
 	row.insertCell(-1).innerHTML = '<span id="get_modbus_err-'+mid+'></span>';
 }
 var refreshid = 0;
@@ -46,6 +49,46 @@ function loadParam_after(paramid) {
 function modbus_load_dump() {
     location.assign("settings_modbus-" + document.getElementById("device").value +"_"+ document.getElementById("dump_ftype").selectedOptions[0].value +"_"+ document.getElementById("dump_fsize").selectedOptions[0].value +"_"+ document.getElementById("dump_addr").value +"_"+ document.getElementById("dump_len").value +".bin");
 }
+function load_dump(f) {
+	var file = f.files[0];
+	var reader = new FileReader();
+	reader.readAsText(file);
+	reader.onerror = function() { alert(reader.error); }
+	reader.onload = function() {
+		if(!reader.result.length) {	alert("Пустой файл!"); return; }
+		var a = reader.result.split("\n");
+		if(a.length < 2) { alert("Неверный формат файла!"); return;	}
+		var at = a[0].indexOf("from");
+		if(at == -1) { alert("Ну задан тип адресов (from x) в первой строке!"); return;	}
+		at = a[0].charAt(at+5);
+		var t = a[0].indexOf("T");
+		if(t == -1) { alert("Ну задан тип ячеек (Tx) в первой строке!"); return; }
+		t = a[0].charAt(t+1);
+		if(at == '4' && t == '1') t = 'w';
+		else if(at == '4' && t == '2') t = 'l';
+		else if(at == '4' && t == '3') t = 'f';
+		else if(at == '3' && t == '1') t = 'h';
+		else if(at == '3' && t == '3') t = 'i';
+		else { alert("Неверный тип ячеек (" +at+ "," +t+ ") в первой строке!"); return; }
+		for(var i = 1; i < a.length; i++) {
+			if(!a[i]) continue;
+			var c = a[i].split("=");
+			if(c.length) add_new_modbus_row_ex(t, c[0], c.length > 1 ? c[1] : "0");	
+		}
+		document.getElementById("write_button").hidden = false;
+	}
+}
+function modbus_write_all()
+{
+	if(!confirm("ЗАПИСАТЬ ЯЧЕЙКИ В УСТРОЙСТВО?")) return;
+	r = document.getElementById("tbl_modbus").rows;
+	info = document.getElementById("writing_num");
+	for(var i = 1; i < r.length; i++) {
+		setParam(r[i].children[2].children[0].id.replace(/-/, '(') + ')');
+		info.innerHTML = i;
+	}
+	info.innerHTML = info.innerHTML + " OK";
+}
 </script>
 </head>
 <body class="actuators">
@@ -53,14 +96,13 @@ function modbus_load_dump() {
 <div class="content">
 <h1>Modbus RTU</h1>
 <br>
-<span style="font-size: larger;">Адрес устройства на шине RS485: </span><input id="device" type="number" min="0" max="255" step="1" value="1"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Дамп в файл с адреса: <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
+<span style="font-size: larger;"><b>Адрес устройства на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> Частотник: 1, Счетчик: 2.
+<br>
+<h3><b>Дамп в файл с адреса:</b> <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
 <input id="dump_addr" type="number" min="0" value="1"> ячеек: <input id="dump_len" type="number" min="1" value="100"> 
 <select id="dump_fsize"><option value="1">16 bit</option><option value="2">32 bit</option><option value="3">float</option></select>
-<input type="submit" value="Загрузить" onclick="modbus_load_dump()">
-<br>
-Частотник: 1, Счетчик: 2. Нумерация параметров с 0.
-<br> 
+<input type="submit" value="Загрузить" onclick="modbus_load_dump()"> Прочитать дамп из: <input type="file" id="Load" onchange="load_dump(this)"> <input type="submit" value="Записать" id="write_button" onclick="modbus_write_all()" hidden> <span id="writing_num"></span>
+</h3>
 <h3>Чтение, Адреса 4...: <input type="submit" value="+ W(16bit)" onclick="add_new_modbus_row('w')"> <input type="submit" value="+ L(32bit)" onclick="add_new_modbus_row('l')"> <input type="submit" value="+ F(Float)" onclick="add_new_modbus_row('f')"> Запись, Адреса 3...: <input type="submit" value="+ H(16bit)" onclick="add_new_modbus_row('h')"> <input type="submit" value="+ I(Float)" onclick="add_new_modbus_row('i')"> <input type="submit" value="+ C(Coil)" onclick="add_new_modbus_row('c')"> <input type="submit" value="Обновить, авто:" onclick="refresh_all()"> <input type="checkbox" id="refresh_auto"></h3> 
 <table id="tbl_modbus">
 	<tr>
