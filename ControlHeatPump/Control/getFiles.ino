@@ -1141,10 +1141,10 @@ bool get_binModbus(uint8_t thread, char *filename)
     uint8_t size = strtol(p + 1, &p, 0);
     uint16_t addr = strtol(p + 1, &p, 0);
     uint16_t cnt = strtol(p + 1, &p, 0);
-    if(id == FC_MODBUS_ADR && addr) addr--;
     *Socket[thread].outBuf = '\0';
 	m_snprintf(Socket[thread].outBuf, sizeof(Socket[thread].outBuf), "Read Modbus dev %d from %d_%d - %d(T%d) cells\n", id, type, addr, cnt, size);
 	journal.jprintf("%s", Socket[thread].outBuf);
+    if(id == FC_MODBUS_ADR && addr) addr--;
 	uint16_t outstr = 4;
     for(; cnt > 0; cnt--) {
     	int8_t err = -1;

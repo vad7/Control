@@ -1,0 +1,6 @@
+Mini360(DC-DC) MP2307DN
+5V out:
+R2 (pin.5 to GND) = 8.2K (822)
+R1 (variable) = 36K(4.99V), 37K(5.1V)
+
+

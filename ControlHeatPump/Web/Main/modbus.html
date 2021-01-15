@@ -60,28 +60,35 @@ function load_dump(f) {
 		if(a.length < 2) { alert("Неверный формат файла!"); return;	}
 		var at = a[0].indexOf("from");
 		if(at == -1) { alert("Ну задан тип адресов (from x) в первой строке!"); return;	}
-		at = a[0].charAt(at+5);
+		at += 5;
+		var c = a[0].substring(at + 2).match(/\d+/g);
+		if(c.length >= 2) {
+			document.getElementById("dump_addr").value = c[0];
+			document.getElementById("dump_len").value = c[1];
+		}
+		at = a[0].charAt(at);
 		var t = a[0].indexOf("T");
 		if(t == -1) { alert("Ну задан тип ячеек (Tx) в первой строке!"); return; }
 		t = a[0].charAt(t+1);
+		document.getElementById("dump_fsize").value = t;
 		if(at == '4' && t == '1') t = 'w';
 		else if(at == '4' && t == '2') t = 'l';
 		else if(at == '4' && t == '3') t = 'f';
 		else if(at == '3' && t == '1') t = 'h';
 		else if(at == '3' && t == '3') t = 'i';
 		else { alert("Неверный тип ячеек (" +at+ "," +t+ ") в первой строке!"); return; }
+		document.getElementById("dump_ftype").value = at;
 		for(var i = 1; i < a.length; i++) {
 			if(!a[i]) continue;
-			var c = a[i].split("=");
-			if(c.length) add_new_modbus_row_ex(t, c[0], c.length > 1 ? c[1] : "0");	
+			c = a[i].split("=");
+			if(c.length) add_new_modbus_row_ex(t, c[0], c.length > 1 ? c[1] : "0");
 		}
-		document.getElementById("write_button").hidden = false;
 	}
 }
 function modbus_write_all()
 {
-	if(!confirm("ЗАПИСАТЬ ЯЧЕЙКИ В УСТРОЙСТВО?")) return;
 	r = document.getElementById("tbl_modbus").rows;
+	if(r.length <= 1 || !confirm("ЗАПИСАТЬ ЯЧЕЙКИ (" + (r.length-1) + ") В УСТРОЙСТВО?")) return;
 	info = document.getElementById("writing_num");
 	for(var i = 1; i < r.length; i++) {
 		setParam(r[i].children[2].children[0].id.replace(/-/, '(') + ')');
@@ -101,7 +108,8 @@ function modbus_write_all()
 <h3><b>Дамп в файл с адреса:</b> <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
 <input id="dump_addr" type="number" min="0" value="1"> ячеек: <input id="dump_len" type="number" min="1" value="100"> 
 <select id="dump_fsize"><option value="1">16 bit</option><option value="2">32 bit</option><option value="3">float</option></select>
-<input type="submit" value="Загрузить" onclick="modbus_load_dump()"> Прочитать дамп из: <input type="file" id="Load" onchange="load_dump(this)"> <input type="submit" value="Записать" id="write_button" onclick="modbus_write_all()" hidden> <span id="writing_num"></span>
+<input type="submit" value="Загрузить" onclick="modbus_load_dump()"><br>
+Прочитать из файла: &nbsp;&nbsp;&nbsp;<input type="file" id="Load" onchange="load_dump(this)"> <input type="submit" value="Записать" id="write_button" onclick="modbus_write_all()"> <span id="writing_num"></span>
 </h3>
 <h3>Чтение, Адреса 4...: <input type="submit" value="+ W(16bit)" onclick="add_new_modbus_row('w')"> <input type="submit" value="+ L(32bit)" onclick="add_new_modbus_row('l')"> <input type="submit" value="+ F(Float)" onclick="add_new_modbus_row('f')"> Запись, Адреса 3...: <input type="submit" value="+ H(16bit)" onclick="add_new_modbus_row('h')"> <input type="submit" value="+ I(Float)" onclick="add_new_modbus_row('i')"> <input type="submit" value="+ C(Coil)" onclick="add_new_modbus_row('c')"> <input type="submit" value="Обновить, авто:" onclick="refresh_all()"> <input type="checkbox" id="refresh_auto"></h3> 
 <table id="tbl_modbus">
