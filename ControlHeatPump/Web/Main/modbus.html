@@ -113,13 +113,13 @@ function modbus_write_all()
 <div class="content">
 <h1>Modbus RTU</h1>
 <br>
-<span style="font-size: larger;"><b>Адрес устройства на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> Частотник: 1, Счетчик: 2.
+<span style="font-size: larger;"><b>Адрес на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> Частотник: 1, Счетчик: 2.
 <br>
 <h3><b>Дамп в файл с адреса:</b> <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
 <input id="dump_addr" type="number" min="0" value="1"> ячеек: <input id="dump_len" type="number" min="1" value="100"> 
 <select id="dump_fsize"><option value="1">16 bit</option><option value="2">32 bit</option><option value="3">float</option></select>
 <input type="submit" value="Загрузить" onclick="modbus_load_dump()"><br>
-Прочитать из файла: &nbsp;&nbsp;&nbsp;<input type="file" id="Load" onchange="load_dump(this)"> <input type="submit" value="Записать" id="write_button" onclick="modbus_write_all()"> <span id="writing_num"></span>
+Прочитать из файла: &nbsp;&nbsp;&nbsp;<input type="file" id="Load" onchange="load_dump(this)"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Записать" id="write_button" onclick="modbus_write_all()"> <span id="writing_num"></span>
 </h3>
 <h3>Чтение, Адреса 4...: <input type="submit" value="+ W(16bit)" onclick="add_new_modbus_row('w')"> <input type="submit" value="+ L(32bit)" onclick="add_new_modbus_row('l')"> <input type="submit" value="+ F(Float)" onclick="add_new_modbus_row('f')"> Запись, Адреса 3...: <input type="submit" value="+ H(16bit)" onclick="add_new_modbus_row('h')"> <input type="submit" value="+ I(Float)" onclick="add_new_modbus_row('i')"> <input type="submit" value="+ C(Coil)" onclick="add_new_modbus_row('c')"> <input type="submit" value="Обновить, авто:" onclick="refresh_all()"> <input type="checkbox" id="refresh_auto"></h3> 
 <table id="tbl_modbus">
