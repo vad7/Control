@@ -763,7 +763,7 @@ void devVaconFC::get_infoFC(char* buf)
 			uint32_t i;
 			strcat(buf, "2101|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
-			buf += m_snprintf(buf += m_strlen(buf), 256, "|%Xh;", state);
+			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
 			if(err == OK) {
 				buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", read_0x03_16(FC_SPEED), power, get_power());
 				buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
