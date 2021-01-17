@@ -301,7 +301,7 @@ err=OK;
           if ((GETBIT(flags,fOnOff))&&(state!=3)) continue; else break;  // ТН включил компрессор а инвертор не имеет правильного состяния пытаемся прочитать еще один раз в проитвном случае все ок выходим
          } 
         _delay(FC_DELAY_REPEAT); 
-        journal.jprintf(cErrorRS485,name,__FUNCTION__,err);// Выводим сообщение о повторном чтении
+        journal.jprintf(cErrorRS485,name,__FUNCTION__,MX2_STATE,err);// Выводим сообщение о повторном чтении
         numErr++;                                          // число ошибок чтение по модбасу
  //       journal.jprintf_time(cErrorRS485,name,err);     // Вывод кода ошибки в журнал
       }
@@ -690,7 +690,7 @@ int16_t devOmronMX2::read_tempFC()
          err=Modbus.readCoil(FC_MODBUS_ADR,cmd-1, &result);              // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
          if (err==OK) break;                                                // Прочитали удачно
          _delay(FC_DELAY_REPEAT);
-         journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                // Выводим сообщение о повторном чтении
+         journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
          numErr++;                                                          // число ошибок чтение по модбасу
  //        journal.jprintf_time(cErrorRS485,name,err);                     // Вывод кода ошибки в журнал
          }
@@ -711,7 +711,7 @@ int16_t devOmronMX2::read_tempFC()
             err=Modbus.readHoldingRegisters16(FC_MODBUS_ADR,cmd-1,&result);  // Послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
             if (err==OK) break;                                                 // Прочитали удачно
             _delay(FC_DELAY_REPEAT);
-             journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                // Выводим сообщение о повторном чтении
+             journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
              numErr++;                                                          // число ошибок чтение по модбасу
    //         journal.jprintf_time(cErrorRS485,name,err);                     // Вывод кода ошибки в журнал
             }
@@ -733,7 +733,7 @@ int16_t devOmronMX2::read_tempFC()
            err=Modbus.readHoldingRegisters32(FC_MODBUS_ADR,cmd-1,&result);  // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
            if (err==OK) break;                                                 // Прочитали удачно
           _delay(FC_DELAY_REPEAT);
-          journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                 // Выводим сообщение о повторном чтении
+          journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                 // Выводим сообщение о повторном чтении
           numErr++;                                                           // число ошибок чтение по модбасу
     //       journal.jprintf_time(cErrorRS485,name,err);                   // Вывод кода ошибки в журнал
           }
@@ -755,7 +755,7 @@ int16_t devOmronMX2::read_tempFC()
          err = Modbus.readHoldingRegistersNN(FC_MODBUS_ADR,cmd-1,0x0a,error.inputBuf);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
          if (err==OK) break;                                                 // Прочитали удачно
          _delay(FC_DELAY_REPEAT);
-         journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                 // Выводим сообщение о повторном чтении
+         journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                 // Выводим сообщение о повторном чтении
           numErr++;                                                          // число ошибок чтение по модбасу
   //        journal.jprintf_time(cErrorRS485,name,err);                     // Вывод кода ошибки в журнал
          }
@@ -780,7 +780,7 @@ int16_t devOmronMX2::read_tempFC()
             else   err=Modbus.writeSingleCoil(FC_MODBUS_ADR,cmd-1,0);
             if (err==OK) break;                                            // Записали удачно
             _delay(FC_DELAY_REPEAT);
-           journal.jprintf(cErrorRS485,name,__FUNCTION__,err);             // Выводим сообщение о повторном чтении
+           journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);             // Выводим сообщение о повторном чтении
            numErr++;                                                       // число ошибок чтение по модбасу
   //         journal.jprintf_time(cErrorRS485,name,err);                  // Вывод кода ошибки в журнал
          }
@@ -798,7 +798,7 @@ int16_t devOmronMX2::read_tempFC()
            err=Modbus.writeHoldingRegisters16(FC_MODBUS_ADR,cmd-1,data);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
            if (err==OK) break;                                               // Записали удачно
            _delay(FC_DELAY_REPEAT);
-           journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                // Выводим сообщение о повторном чтении
+           journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
            numErr++;                                                          // число ошибок чтение по модбасу
    //        journal.jprintf_time(cErrorRS485,name,err);                     // Вывод кода ошибки в журнал
          }
@@ -816,7 +816,7 @@ int16_t devOmronMX2::read_tempFC()
            err=Modbus.writeHoldingRegisters32(FC_MODBUS_ADR, cmd-1, data);// послать запрос, Нумерация регистров с НУЛЯ!!!!
            if (err==OK) break;                                               // Записали удачно
            _delay(FC_DELAY_REPEAT);
-           journal.jprintf(cErrorRS485,name,__FUNCTION__,err);                // Выводим сообщение о повторном чтении
+           journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
            numErr++;                                                          // число ошибок чтение по модбасу
   //         journal.jprintf_time(cErrorRS485,name,err);                     // Вывод кода ошибки в журнал
          }

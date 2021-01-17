@@ -2248,7 +2248,7 @@ boolean HeatPump::boilerAddHeat()
 			}
 			if(!flagRBOILER || onBoiler) return false; // флажка нет или работет бойлер, но догрев не включаем
 			else {
-				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay() || GETBIT(Prof.Boiler.flags, fAddHeatingForce))) {  // Греем тэном
+				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay() || (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))))) {  // Греем тэном
 					return true;
 				} else { // бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
 					flagRBOILER = false;
@@ -3002,7 +3002,7 @@ MODE_HP HeatPump::get_Work()
 		ret = pOFF;
 		break;
 	case pCOMP_ON:
-		if(GETBIT(Option.flags, fBackupPower) && !GETBIT(Prof.Boiler.flags, fWorkOnGenerator)) {
+		if(GETBIT(Option.flags, fBackupPower) && !GETBIT(Prof.Boiler.flags, fBoilerOnGenerator)) {
 			Status.ret = pBgen;
 			ret = pOFF;
 		} else ret = pBOILER;

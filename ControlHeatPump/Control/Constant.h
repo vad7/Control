@@ -418,9 +418,9 @@ const char *cOk=  {"Ok" };
 const char *cError={"error"};
 const char *cInvalid={"invalid"};
 const char *cStrEnd={"\n"};
-const char *cErrorRS485={"%s: Read error %s, code=%d repeat . . .\n"};  // имя, функция, код
-const char *cErrorMutex={"Function %s: %s, mutex is buzy\n"};           // функция, мютекс
-const char *cAddHeat = {"+"};                                           // Значек нагрева ГВС ТЭНом
+const char *cErrorRS485={"%s: %s(%d) error %d\n"};  			// имя, функция, ячейка, код
+const char *cErrorMutex={"Function %s: %s, mutex is buzy\n"};   // функция, мютекс
+const char *cAddHeat = {"+"};                                   // Значек нагрева ГВС ТЭНом
 const char http_get_str1[] = "GET ";
 const char http_get_str2[] = " HTTP/1.0\r\nHost: ";
 const char http_get_str3[] = "\r\nAccept: text/html\r\n\r\n";
@@ -627,8 +627,9 @@ const char *boil_fBoilerPID   = {"PID"};                 // флаг ПИД вк
 const char *boil_dAddHeat     = {"dAH"};				 // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
 const char *boil_HeatUrgently = {"URG"};				 // флаг Срочно нужно ГВС
 const char *boil_DischargeDelta={"DD"};                  // Сброс тепла в отопление при приближении подачи к максимальной/догреву на °С
-const char *boil_fWorkOnGenerator={"WG"};                // флаг Греть ГВС без ТЭНа при работе от генератора
+const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть ГВС без ТЭНа при работе от генератора
 const char *boil_WF_MinTarget = {"WT"};
+const char *boil_fBoilerHeatElemSchPri={"TP"};
 
 // Дата время
 const char *time_TIME       = {"TIME"};         // текущее время  12:45 без секунд

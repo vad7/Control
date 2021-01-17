@@ -669,7 +669,8 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(strcmp(var,boil_WF_MinTarget)==0)    { Boiler.WF_MinTarget = rd(x, 100); return true;} else
 	if(strcmp(var,boil_WR_Target)==0)       { Boiler.WR_Target = rd(x, 100); return true;} else
 	if(strcmp(var,boil_DischargeDelta)==0)	{ Boiler.DischargeDelta = rd(x, 10); return true;} else
-	if(strcmp(var,boil_fWorkOnGenerator)==0){ if(x) SETBIT1(Boiler.flags, fWorkOnGenerator); else SETBIT0(Boiler.flags, fWorkOnGenerator); return true; } else
+	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(x) SETBIT1(Boiler.flags, fBoilerOnGenerator); else SETBIT0(Boiler.flags, fBoilerOnGenerator); return true; } else
+	if(strcmp(var,boil_fBoilerHeatElemSchPri)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHeatElemSchPri); else SETBIT0(Boiler.flags, fBoilerHeatElemSchPri); return true; } else
 	return false;
 }
 
@@ -714,7 +715,8 @@ char* Profile::get_boiler(char *var, char *ret)
  if(strcmp(var,boil_WR_Target)==0){      _dtoa(ret,Boiler.WR_Target/10,1); return ret;       }else
  if(strcmp(var,boil_DischargeDelta)==0){  _dtoa(ret, Boiler.DischargeDelta, 1); return ret;       }else
  if(strcmp(var,boil_HeatUrgently)==0){if(HP.HeatBoilerUrgently) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fWorkOnGenerator)==0){ if(GETBIT(Boiler.flags, fWorkOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+ if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+ if(strcmp(var,boil_fBoilerHeatElemSchPri)==0){ if(GETBIT(Boiler.flags, fBoilerHeatElemSchPri)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_TargetTemp)==0) {
 	 if(!GETBIT(HP.Prof.Boiler.flags, fTurboBoiler) && GETBIT(HP.Prof.Boiler.flags, fAddHeating)) {// режим догрева, не турбо
 		 _dtoa(ret, HP.Boiler_Target_AddHeating() / 10, 1);

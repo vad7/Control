@@ -1637,7 +1637,7 @@ xErr:
 #endif
 		numErr++;                  // число ошибок чтение по модбасу
 		if(GETBIT(HP.Option.flags, fSDMLogErrors)) {
-			journal.jprintf_time("%s: Read #%d error %d, repeat...\n", name, group, _err);      // Выводим сообщение о повторном чтении
+	        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, err); 	// Сообщение об ошибке
 		}
 		_delay(SDM_DELAY_REPEAD);  // Чтение не удачно, делаем паузу
 	}
@@ -1655,8 +1655,8 @@ xErr:
 #ifdef SDM_BLOCK                     // если стоит флаг блокировки связи
 	SETBIT0(flags,fSDMLink);             // связь со счетчиком потеряна
 #endif
-	if(!err && _err) {
-		journal.jprintf_time("%s: Read #%d error %d!\n", name, group, _err);
+	if(!err && _err && !GETBIT(HP.Option.flags, fSDMLogErrors)) {
+        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, err); 	// Сообщение об ошибке
 	}
 	// set_Error(_err,name);              // генерация ошибки    НЕТ счетчик не критичен
 	return err = _err;
