@@ -640,8 +640,7 @@ boolean Profile::set_boiler(char *var, char *c)
 											} return true;} else
 	if(strcmp(var,boil_fBoilerPID)==0)	    { if(x) SETBIT1(Boiler.flags,fBoilerPID); else SETBIT0(Boiler.flags,fBoilerPID); return true;} else
 	if(strcmp(var,boil_TURBO_BOILER)==0)	{ if(x) SETBIT1(Boiler.flags,fTurboBoiler); else SETBIT0(Boiler.flags,fTurboBoiler); return true;} else
-	if(strcmp(var,boil_SALMONELLA)==0)		{ if(x) { SETBIT1(Boiler.flags,fSalmonella); HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300); }
-												else { SETBIT0(Boiler.flags,fSalmonella); HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]); } return true;} else // Изменение максимальной температуры при включенном режиме сальмонелла
+	if(strcmp(var,boil_SALMONELLA)==0)		{ if(x) SETBIT1(Boiler.flags,fSalmonella); else SETBIT0(Boiler.flags,fSalmonella); return true;} else // Изменение максимальной температуры при включенном режиме сальмонелла
 	if(strcmp(var,boil_CIRCULATION)==0)		{ if(x) SETBIT1(Boiler.flags,fCirculation); else SETBIT0(Boiler.flags,fCirculation); return true;} else
 	if(strcmp(var,boil_TEMP_TARGET)==0)		{ if((x>=5)&&(x<=95)) {Boiler.TempTarget=rd(x, 100); return true;} else return false; } else  // Целевая температура бойлера
 	if(strcmp(var,ADD_DELTA_TEMP)==0)		{ if((x>=-50)&&(x<=50)) {Boiler.add_delta_temp=rd(x, 100); return true;}else return false; } else  // Добавка к целевой температуры ВНИМАНИЕ здесь еденица измерения ГРАДУСЫ
@@ -920,10 +919,10 @@ int32_t Profile::load(int8_t num)
   #endif
   update_list(num); 
    
-  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
-  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n", HP.sTemp[TBOILER].get_maxTemp());}
-  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
-  #endif
+//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
+//  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n", HP.sTemp[TBOILER].get_maxTemp());}
+//  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
+//  #endif
 
 #ifdef WATTROUTER
   WR_Loads = SaveON.WR_Loads;
@@ -973,10 +972,10 @@ int8_t Profile::loadFromBuf(int32_t adr,byte *buf)
     journal.jprintf(" Load setting from file OK, read: %d bytes VERIFICATION OFF!\n",adr-aStart);
   #endif
   
-  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
-  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n",HP.sTemp[TBOILER].get_maxTemp());}
-  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
-  #endif
+//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
+//  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n",HP.sTemp[TBOILER].get_maxTemp());}
+//  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
+//  #endif
 
   return OK;       
 }

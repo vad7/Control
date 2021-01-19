@@ -936,6 +936,13 @@ int8_t save_2bytes(uint32_t &addr_to, uint16_t data, uint16_t &crc)
 	return OK;
 }
 
+uint16_t load_struct_size(uint8_t *from)
+{
+	uint16_t size = *((uint16_t *)from);
+	if((size & 1) == 0) size &= 0xFF;
+	return size >> 1;
+}
+
 // memcpy: <size[byte: 1|2]><struct>
 void load_struct(void *to, uint8_t **from, uint16_t to_size)
 {
@@ -1209,7 +1216,7 @@ int8_t WR_Check_MPPT(void)
 {
 	int err = Send_HTTP_Request(HTTP_MAP_Server, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
-		if(HP.get_testMode() != NORMAL) {
+		if(testMode != NORMAL) {
 #ifdef WR_PowerMeter_Modbus
 			return WR_PowerMeter_Power % 10;
 #else

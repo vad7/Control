@@ -71,8 +71,6 @@ class sensorADC
     int8_t  set_testValue(int16_t p);                    // Установить значение датчика в режиме теста
     int8_t  set_minValue(int16_t p) { cfg.minValue = p; return OK; }
     int8_t  set_maxValue(int16_t p)  { cfg.maxValue = p; return OK; }
-    TEST_MODE get_testMode(){return testMode;}           // Получить текущий режим работы
-    void    set_testMode(TEST_MODE t){testMode=t;}       // Установить значение текущий режим работы
      
     char*   get_note(){return note;}                     // Получить наименование датчика
     char*   get_name(){return name;}                     // Получить имя датчика
@@ -100,7 +98,6 @@ class sensorADC
 		int16_t minValue;                                // минимально разрешенное значение
 		int16_t maxValue;                                // максимально разрешенное значение
     } __attribute__((packed)) cfg;// Save Group end
-    TEST_MODE testMode;                                  // Значение режима тестирования
     uint16_t lastADC;                                    // Последние значение отсчета ацп
        
     uint8_t pin;                                         // Канал АЦП (AD*) куда прицеплен датчик
@@ -139,8 +136,6 @@ public:
   char*   get_name(){return name;}                       // Получить имя датчика
   boolean get_testInput(){return testInput;}             // Получить Состояние датчика в режиме теста
   int8_t  set_testInput(int16_t i);                      // Установить Состояние датчика в режиме теста
-  TEST_MODE get_testMode(){return testMode;}             // Получить текущий режим работы
-  void  set_testMode(TEST_MODE t){testMode=t;}           // Установить значение текущий режим работы
   boolean get_alarmInput(){return alarmInput;}           // Состояние аварии датчика
   boolean is_alarm() { return Input == alarmInput; }	// Датчик сработал?
   int8_t  set_alarmInput(int16_t i);                     // Установить Состояние аварии датчика
@@ -156,7 +151,6 @@ private:
    boolean testInput;                                    // !save! Состояние датчика в режиме теста
    boolean alarmInput;                                   // !save! Состояние датчика в режиме аварии
    } __attribute__((packed));// Save Group end, last alarmInput
-   TEST_MODE testMode;                                   // Значение режима тестирования
    TYPE_SENSOR type;                                     // Тип датчика
    int8_t err;                                           // ошибка датчика (работа) при ошибке останов ТН
    byte flags;                                           // флаги  датчика
@@ -195,8 +189,6 @@ public:
   void    set_kfValue(uint16_t f) { kfValue=f; }         // Установить коэффициент пересчета
   uint16_t get_Capacity(){return Capacity;}              // Получить теплоемкость
   int8_t set_Capacity(uint16_t c);                       // Установить теплоемкость больше 5000 не устанавливается
-  TEST_MODE get_testMode(){return testMode;}             // Получить текущий режим работы
-  void  set_testMode(TEST_MODE t){testMode=t;}           // Установить значение текущий режим работы
   inline int8_t  get_pinF(){return pin;}                 // Получить ногу куда прицеплен датчик
   uint8_t *get_save_addr(void) { return (uint8_t *)&number; } // Адрес структуры сохранения
   uint16_t get_save_size(void) { return (byte*)&Capacity - (byte*)&number + sizeof(Capacity); } // Размер структуры сохранения
@@ -212,7 +204,6 @@ private:
    uint8_t  minValue;							     	 // десятые m3/h (0..25,5)
    uint16_t Capacity;                                    // значение теплоемкости теплоносителя в конутре где установлен датчик [Cp, Дж/(кг·град)]
    } __attribute__((packed));// END SAVE GROUP, Capacity the last
-   TEST_MODE testMode;                                   // Значение режима тестирования
    volatile uint16_t count;                              // число импульсов за базовый период (то что меняется в прерывании)
    uint32_t sTime;                                       // время начала базового периода в тиках
    int8_t err;                                           // ошибка датчика (работа) при ошибке останов ТН
@@ -246,13 +237,10 @@ public:
   char*   get_note(){return note;}                       // Получить наименование реле
   char*   get_name(){return name;}                       // Получить имя реле
   __attribute__((always_inline)) inline boolean get_present(){return GETBIT(flags,fPresent);} // Наличие датчика в текущей конфигурации
-  TEST_MODE get_testMode(){return testMode;}             // Получить текущий режим работы
-  void set_testMode(TEST_MODE t){testMode=t;}            // Установить значение текущий режим работы
   byte flags;                                           // флаги  0 - наличие реле, 1.. - fR_Status*
 private:
    uint8_t number;										// Номер массива реле
    boolean Relay;                                        // Состояние реле
-   TEST_MODE testMode;                                   // Значение режима тестирования
    uint8_t  pin;                                         // Ножка куда прицеплено реле
    char *note;                                           // наименование реле
    char *name;                                           // Имя реле
@@ -331,9 +319,6 @@ public:
 	int16_t get_maxEEV(){return  _data.maxSteps;}          // Максимальное число шагов ЭРВ (диапазон)
 	__attribute__((always_inline)) inline boolean get_present(){return GETBIT(_data.flags,fPresent);} // Наличие EEV в текущей конфигурации
 
-	TEST_MODE get_testMode(){return testMode;}             // Получить текущий режим работы
-	void set_testMode(TEST_MODE t){testMode=t;}            // Установить значение текущий режим работы
-
 	// Сохранение
 	uint8_t *get_save_addr(void) { return (uint8_t *)&_data; } // Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(_data); } // Размер структуры сохранения
@@ -355,7 +340,6 @@ private:
 	int16_t Overheat;                                    // Перегрев текущий (сотые градуса)
 	int16_t OHCor_tdelta;								 // Расчитанная целевая дельта Нагнетание-Конденсации
 	int16_t OHCor_tdelta_prev;							 // Расчитанная целевая дельта Нагнетание-Конденсации
-	TEST_MODE testMode;                                  // Значение режима тестирования
 	int8_t  err;                                         // ошибка ЭРВ (работа) при ошибке останов ТН
 	bool DebugToLog;
 

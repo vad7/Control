@@ -34,7 +34,6 @@ int8_t devOmronMX2::initFC()
   startCompressor=0;                // время старта компрессора
   state=ERR_LINK_FC;                // Состояние - нет связи с частотником
   dac=0;                            // Текущее значение ЦАП
-  testMode=NORMAL;                                 // Значение режима тестирования
   name=(char*)nameOmron;                           // Имя
   note=(char*)noteFC_NONE;                         // Описание инвертора   типа нет его
   // Настройки по умолчанию

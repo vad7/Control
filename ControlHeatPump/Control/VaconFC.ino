@@ -35,7 +35,6 @@ int8_t devVaconFC::initFC()
 	state = ERR_LINK_FC; // Состояние - нет связи с частотником по Modbus
 	Adjust_EEV_delta = 0;
 
-	testMode = NORMAL; // Значение режима тестирования
 	name = (char*) FC_VACON_NAME; // Имя
 	note = (char*) noteFC_NONE; // Описание инвертора   типа нет его
 
@@ -392,18 +391,6 @@ bool devVaconFC::check_blockFC()
     }
 #endif
     return false;
-}
-
-// Установить значение текущий режим работы
-void  devVaconFC::set_testMode(TEST_MODE t)
-{
-	testMode = t;
-	if(t == SAFE_TEST || t == TEST) {
-		SETBIT0(flags, fErrFC);
-		err = OK;
-	} else {
-	    //CheckLinkStatus(); // проверка связи с инвертором
-	}
 }
 
 // Команда ход на инвертор (целевая скорость НЕ ВЫСТАВЛЯЕТСЯ)

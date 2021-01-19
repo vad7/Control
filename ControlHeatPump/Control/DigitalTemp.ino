@@ -25,8 +25,6 @@ void sensorTemp::initTemp(int sensor)
       numErrorRead=0;                          // Ошибок нет
       sumErrorRead=0;                          // ошибок нет
       number = sensor;
-      minTemp=MINTEMP[sensor];                 // минимальная разрешенная температура
-      maxTemp=MAXTEMP[sensor];                 // максимальная разрешенная температура
       errTemp=ERRTEMP[sensor];                 // статическая ошибка датчика
       testTemp=TESTTEMP[sensor];               // Значение при тестировании
       lastTemp=STARTTEMP;                      // последняя считанная температура с датчика по умолчанию абсолютный ноль
@@ -36,7 +34,6 @@ void sensorTemp::initTemp(int sensor)
       if(SENSORTEMP[sensor]) SETBIT1(flags, fPresent); // наличие датчика в текушей конфигурации
       memset(address, 0, sizeof(address));	   // обнуление адресс датчика
       busOneWire = NULL;
-      testMode = NORMAL;                         // Значение режима тестирования
 #if T_NUMSAMLES > 1
       memset(t, 0, sizeof(t));	   			   // обнуление буффера значений
       sum=0;
@@ -172,9 +169,6 @@ int8_t sensorTemp::Read()
 	else                      Temp=sum/last+errTemp;
   #endif
 
-	// Проверка на ошибки именно здесь обрабатывются ошибки и передаются на верх
-	if(Temp<minTemp) { set_Error(err = ERR_MINTEMP, name); return err; }
-	if(Temp>maxTemp) { set_Error(err = ERR_MAXTEMP, name); return err; }
 	// дошли до сюда значит ошибок нет
 	return (err = OK);                                        // Новый цикл новые ошибки!! СБРОС ОШИБКИ
 }
@@ -208,12 +202,6 @@ int16_t sensorTemp::get_Temp()
 int16_t sensorTemp::get_rawTemp()
 {
 	return Temp;
-}
-
-// Установить значение температуры датчика в режиме теста
-int8_t sensorTemp::set_testTemp(int16_t t)            
-{
- if((t>=minTemp)&&(t<=maxTemp)) { testTemp=t; return OK;} else return WARNING_VALUE;
 }
 
 // Шина
@@ -527,3 +515,63 @@ char Radio_RSSI_to_Level(uint8_t RSSI)
 }
 
 #endif
+
+
+// в сотых градуса
+int16_t get_TempAlarmMin(uint8_t num)
+{
+	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) return TempAlarm[i].MinTemp * 100;
+	return TEMP_ALARM_TEMP_MIN * 100;
+}
+
+// в сотых градуса
+int16_t get_TempAlarmMax(uint8_t num)
+{
+	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) return TempAlarm[i].MaxTemp * 100;
+	return TEMP_ALARM_TEMP_MAX * 100;
+}
+
+void set_TempAlarmMin(uint8_t num, int8_t t)
+{
+	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) {
+		TempAlarm[i].MinTemp = t;
+		if(t == TEMP_ALARM_TEMP_MIN && TempAlarm[i].MaxTemp == TEMP_ALARM_TEMP_MAX) TempAlarm_remove(i);
+		return;
+	}
+	if(t != TEMP_ALARM_TEMP_MIN) {
+		uint8_t i = TempAlarm_add();
+		if(i != 255) TempAlarm[i].MinTemp = t;
+	}
+}
+
+void set_TempAlarmMax(uint8_t num, int8_t t)
+{
+	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) {
+		TempAlarm[i].MaxTemp = t;
+		if(t == TEMP_ALARM_TEMP_MAX && TempAlarm[i].MinTemp == TEMP_ALARM_TEMP_MIN) TempAlarm_remove(i);
+		return;
+	}
+	if(t != TEMP_ALARM_TEMP_MAX) {
+		uint8_t i = TempAlarm_add();
+		if(i != 255) TempAlarm[i].MaxTemp = t;
+	}
+}
+
+void TempAlarm_remove(uint8_t idx)
+{
+	if(!TempAlarm || idx >= TempAlarm_size) return;
+	if(idx < TempAlarm_size - 1) memcpy(&TempAlarm[idx], &TempAlarm[idx + 1], sizeof(_TempAlarm));
+	TempAlarm_size--;
+}
+
+uint8_t TempAlarm_add(void)
+{
+	if(TempAlarm) free(TempAlarm);
+	TempAlarm = (_TempAlarm*)malloc(++TempAlarm_size * sizeof(_TempAlarm));
+	if(!TempAlarm) {
+		journal.jprintf("Low memory(%d)\n", TempAlarm_size * sizeof(_TempAlarm));
+		TempAlarm_size = 0;
+		return 255;
+	}
+	return TempAlarm_size - 1;
+}

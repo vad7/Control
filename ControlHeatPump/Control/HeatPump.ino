@@ -120,6 +120,7 @@ void HeatPump::initHeatPump()
 	fBackupPowerOffDelay = 0;
 	pump_in_pause_timer = 0;
 	flags = (1<<fHP_SunNotInited);
+	testMode = NORMAL;
 	eraseError();
 
 	for(i = 0; i < TNUMBER; i++) sTemp[i].initTemp(i);            // Инициализация датчиков температуры
@@ -286,25 +287,6 @@ boolean HeatPump::get_updateNTP()
   return GETBIT(DateTime.flags,fUpdateNTP);
 }
 
-// Установить значение текущий режим работы
-void HeatPump::set_testMode(TEST_MODE b)
-{
-  int i=0; 
-  for(i=0;i<TNUMBER;i++) sTemp[i].set_testMode(b);         // датчики температуры
-  for(i=0;i<ANUMBER;i++) sADC[i].set_testMode(b);          // Датчик давления
-  for(i=0;i<INUMBER;i++) sInput[i].set_testMode(b);        // Датчики сухой контакт
-  for(i=0;i<FNUMBER;i++) sFrequency[i].set_testMode(b);    // Частотные датчики
-  
-  for(i=0;i<RNUMBER;i++) dRelay[i].set_testMode(b);        // Реле
-  #ifdef EEV_DEF
-  dEEV.set_testMode(b);                                    // ЭРВ
-  #endif
-  dFC.set_testMode(b);                                     // Частотник
-  testMode=b; 
-  // новый режим начинаем без ошибок - не надо при старте ошибки трутся
-//  eraseError();
-}
-
 // Получить источник загрузки веб морды
 TYPE_SOURSE_WEB HeatPump::get_SourceWeb()
 {
@@ -375,6 +357,9 @@ int32_t HeatPump::save(void)
 		// Сохранение отдельных объектов ТН
 		if(save_2bytes(addr, SAVE_TYPE_sTemp, crc)) break;
 		for(uint8_t i = 0; i < TNUMBER; i++) if(save_struct(addr, sTemp[i].get_save_addr(), sTemp[i].get_save_size(), crc)) break; // Сохранение датчиков температуры
+		if(error == ERR_SAVE_EEPROM) break;
+		if(save_2bytes(addr, SAVE_TYPE_TempAlarm, crc)) break;
+		if(save_struct(addr, (uint8_t*)TempAlarm, TempAlarm_size * sizeof(_TempAlarm), crc)) break; // Сохранение TempAlarm
 		if(error == ERR_SAVE_EEPROM) break;
 		if(save_2bytes(addr, SAVE_TYPE_sADC, crc)) break;
 		for(uint8_t i = 0; i < ANUMBER; i++) if(save_struct(addr, sADC[i].get_save_addr(), sADC[i].get_save_size(), crc)) break; // Сохранение датчика давления
@@ -503,6 +488,15 @@ x_Error:
 #endif
 		// не массивы <size[1|2]><struct>
 #ifdef EEV_DEF
+		} else if(type == SAVE_TYPE_TempAlarm) {
+			if(TempAlarm) free(TempAlarm);
+			n = load_struct_size(buffer);
+			TempAlarm = (_TempAlarm*)malloc(n);
+			if(!TempAlarm) {
+				journal.jprintf("Low memory(%d)\n", n);
+				goto xSkip;
+			}
+			load_struct(TempAlarm, &buffer, TempAlarm_size = n / sizeof(TempAlarm)); dEEV.after_load();
 		} else if(type == SAVE_TYPE_dEEV) {
 			load_struct(dEEV.get_save_addr(), &buffer, dEEV.get_save_size()); dEEV.after_load();
 #endif
@@ -2351,7 +2345,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		   FEED
 #endif
 		   > Prof.Boiler.tempInLim - Prof.Boiler.DischargeDelta * 10
-		   || (sTemp[TCOMP].get_Temp() > sTemp[TCOMP].get_maxTemp() - BOILER_TEMP_COMP_RESET)) // температура нагнетания компрессора больше максимальной -5 градусов
+		   || (sTemp[TCOMP].get_Temp() > get_TempAlarmMax(TCOMP) - BOILER_TEMP_COMP_RESET)) // температура нагнетания компрессора больше максимальной -5 градусов
 		{
 #ifdef DEBUG_MODWORK
 			journal.jprintf(" Boiler: Discharging %ds...\n", Prof.Boiler.Reset_Time);
@@ -2487,7 +2481,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			return pCOMP_NONE;
 		}
 #endif
-		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>sTemp[TCOMP].get_maxTemp()))  // температура компрессора
+		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>get_TempAlarmMax(TCOMP)))  // температура компрессора
 		{
 #ifdef DEBUG_MODWORK
 			journal.jprintf("%s %.2f (TCOMP: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,sTemp[TCOMP].get_Temp()/100.0);
@@ -2546,7 +2540,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 #ifdef	FC_MAX_CURRENT_BOILER
 			if((dFC.get_current()>(FC_MAX_CURRENT_BOILER*dFC.get_PidStop()/100)))                                                        {Status.ret=pBp19; resetPID(); return pCOMP_NONE;}   // ТОК для ГВС меньшая мощность
 #endif
-			if(((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>(sTemp[TCOMP].get_maxTemp()*dFC.get_PidStop()/100)))                      {Status.ret=pBp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
+			if(((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>(get_TempAlarmMax(TCOMP)*dFC.get_PidStop()/100)))                      {Status.ret=pBp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
 			if((sADC[PCON].get_present())&&(sADC[PCON].get_Value()>((sADC[PCON].get_maxValue()-FC_DT_CON_PRESS)*dFC.get_PidStop()/100))) {Status.ret=pBp21; resetPID(); return pCOMP_NONE;}   // давление конденсатора до максимальной минус 0.5 бара
 		}
 		//    надо менять
@@ -2677,7 +2671,7 @@ MODE_COMP HeatPump::UpdateHeat()
 			dFC.set_target(dFC.get_target()-dFC.get_stepFreq(),true,dFC.get_minFreq(),dFC.get_maxFreq()); resetPID(); return pCOMP_NONE;                     // Уменьшить частоту
 		}
 #endif
-		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>sTemp[TCOMP].get_maxTemp()))  // температура компрессора
+		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>get_TempAlarmMax(TCOMP)))  // температура компрессора
 		{
 #ifdef DEBUG_MODWORK
 			journal.jprintf("%s %.2f (TCOMP: %.2f)\n",STR_REDUCED,dFC.get_stepFreq()/100,sTemp[TCOMP].get_Temp()/100);
@@ -2747,7 +2741,7 @@ MODE_COMP HeatPump::UpdateHeat()
 #ifdef FC_MAX_CURRENT
 			if ((dFC.get_current()>(FC_MAX_CURRENT*dFC.get_PidStop()/100)))                                                              {Status.ret=pHp19; resetPID(); return pCOMP_NONE;}   // ТОК для ГВС меньшая мощность
 #endif
-			if ((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>(sTemp[TCOMP].get_maxTemp()*dFC.get_PidStop()/100))                       {Status.ret=pHp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
+			if ((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>(get_TempAlarmMax(TCOMP)*dFC.get_PidStop()/100))                       {Status.ret=pHp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
 			if ((sADC[PCON].get_present())&&(sADC[PCON].get_Value()>(sADC[PCON].get_maxValue()-FC_DT_CON_PRESS)*dFC.get_PidStop()/100))  {Status.ret=pHp21; resetPID(); return pCOMP_NONE;}   // давление конденсатора до максимальной минус 0.5 бара
 		}
 		//    надо менять
@@ -2852,7 +2846,7 @@ MODE_COMP HeatPump::UpdateCool()
 			dFC.set_target(dFC.get_target()-dFC.get_stepFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool());  resetPID(); return pCOMP_NONE;               // Уменьшить частоту
 		}
 #endif
-		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>sTemp[TCOMP].get_maxTemp()))  // температура компрессора
+		else if (is_compressor_on() &&((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp())>get_TempAlarmMax(TCOMP)))  // температура компрессора
 		{
 #ifdef DEBUG_MODWORK
 			journal.jprintf("%s %.2f (TCOMP: %.2f)\n",STR_REDUCED,dFC.get_stepFreq()/100.0,sTemp[TCOMP].get_Temp()/100.0);
@@ -2911,7 +2905,7 @@ MODE_COMP HeatPump::UpdateCool()
 #ifdef FC_MAX_CURRENT
 			if(dFC.get_current()>(FC_MAX_CURRENT*dFC.get_PidStop()/100)))                                                                  {Status.ret=pCp19; resetPID(); return pCOMP_NONE;}   // ТОК для ГВС меньшая мощность
 #endif
-			if((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp()>(sTemp[TCOMP].get_maxTemp()*dFC.get_PidStop()/100)))                          {Status.ret=pCp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
+			if((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp()>(get_TempAlarmMax(TCOMP)*dFC.get_PidStop()/100)))                          {Status.ret=pCp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
 			if((sADC[PCON].get_present())&&(sADC[PCON].get_Value()>(sADC[PCON].get_maxValue()-FC_DT_CON_PRESS)*dFC.get_PidStop()/100))     {Status.ret=pCp21; resetPID(); return pCOMP_NONE;}   // давление конденсатора до максимальной минус 0.5 бара
 		}
 		//    надо менять
@@ -3803,7 +3797,7 @@ void HeatPump::get_StateModworkStr(char *strReturn)
 // получить режим тестирования
 char * HeatPump::TestToStr()
 {
- switch ((int)get_testMode())
+ switch (testMode)
              {
               case NORMAL:    return (char*)"NORMAL";    break;
               case SAFE_TEST: return (char*)"SAFE_TEST"; break;

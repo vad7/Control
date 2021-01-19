@@ -97,8 +97,10 @@ struct type_motoHour
   uint64_t P2;      // выработанное тепло  сбрасываемый счетчик (сезон) [ватт*ч * 1000 или кВт*ч * 1000000]
 };
 
-int32_t motohour_OUT_work = 0; // рабочий для счетчиков - энергия отопления, Вт
-int32_t motohour_IN_work = 0;  // рабочий для счетчиков - энергия потребленная, Вт
+TEST_MODE testMode;					// Значение режима тестирования
+
+int32_t motohour_OUT_work = 0; 		// рабочий для счетчиков - энергия отопления, Вт
+int32_t motohour_IN_work = 0;  		// рабочий для счетчиков - энергия потребленная, Вт
 uint16_t task_updstat_chars = 0;
 #ifdef CHART_ONLY_COMP_ON
 boolean Charts_when_comp_on = true;	// Графики в памяти только во время работы компрессора
@@ -106,7 +108,7 @@ boolean Charts_when_comp_on = true;	// Графики в памяти тольк
 boolean Charts_when_comp_on = false;
 #endif
 uint8_t Request_LowConsume = 0xFF;
-uint8_t Calc_COP_skip_timer = 0;				// Пропустить расчет COP на время *TIME_READ_SENSOR
+uint8_t Calc_COP_skip_timer = 0;	// Пропустить расчет COP на время *TIME_READ_SENSOR
 
 #ifdef WATTROUTER
 #define  WR_fActive				1				// Ваттроутер включен
@@ -329,8 +331,6 @@ public:
 	__attribute__((always_inline)) inline int8_t get_errcode(){return error;} // Получить код последней ошибки
 	char    *get_lastErr(){return note_error;} // Получить описание последней ошибки, которая вызвала останов ТН, при удачном запуске обнуляется
 	void     scan_OneWire(char *result_str); // Сканирование шины OneWire на предмет датчиков
-	inline TEST_MODE get_testMode(){return testMode;} // Получить текущий режим работы
-	void     set_testMode(TEST_MODE t);    // Установить значение текущий режим работы
 	boolean  get_onBoiler(){return onBoiler;} // Получить состояние трехходового точнее если true то идет нагрев бойлера
 	uint8_t  get_fSD() { return fSD;}        // Получить флаг наличия РАБОТАЮЩЕЙ СД карты
 	void     set_fSD(uint8_t f) { fSD=f; }    // Установить флаг наличия РАБОТАЮЩЕЙ СД карты
@@ -365,6 +365,7 @@ public:
 //  ===================  К Л А С С Ы  ===========================
 // Датчики
 	sensorTemp sTemp[TNUMBER];          // Датчики температуры
+
 	#ifdef SENSOR_IP                    // Получение данных удаленного датчика
 	  sensorIP sIP[IPNUMBER];           // Массив удаленных датчиков
 	#endif
@@ -641,7 +642,6 @@ private:
 
 	type_motoHour motoHour;               // Структура для хранения счетчиков запись каждый час
 	type_motoHour motoHour_saved;
-	TEST_MODE testMode;                   // Значение режима тестирования
 	TYPE_COMMAND command;                 // Текущая команда управления ТН
 	TYPE_COMMAND next_command;            // Следующая команда управления ТН
 	type_status Status;                   // Описание состояния ТН

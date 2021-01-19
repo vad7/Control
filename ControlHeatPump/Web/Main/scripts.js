@@ -1,6 +1,6 @@
 // Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
 // &                       by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.120";
+var VER_WEB = "1.122";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
@@ -426,10 +426,10 @@ function loadParam(paramid, noretry, resultdiv) {
 												if(tnum == 1) {
 													content += '<td id="get_ntemp-' +T+ '"></td>';
 													content += '<td id="get_fulltemp-' +T+ '">-</td>';
-													content += '<td id="get_mintemp-' +T+ '">-</td>';
-													content += '<td id="get_maxtemp-' +T+ '">-</td>';
+													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" step="1"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" step="1"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input id="get_errtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_errTemp(' + count[j] + ')\');"></td>';
-													content += '<td nowrap><input id="get_testtemp-' +T+ '" type="number" step="0.1"><input type="submit" value=">" onclick="setParam(\'get_testTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_testtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_testTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input type="checkbox" id="get_ftemp4-' +T+ '" onchange="setParam(\'get_fTemp4(' +count[j]+')\');"><input type="checkbox" id="get_ftemp5-' +T+ '" onchange="setParam(\'get_fTemp5(' +count[j]+')\');"><input type="checkbox" id="get_ftemp6-' +T+ '" onchange="setParam(\'get_fTemp6(' +count[j]+')\');"></td>';
 													content += '<td id="get_btemp-' +T+ '">-</td>';
 													content += '<td id="get_estemp-' +T+ '">-</td>';

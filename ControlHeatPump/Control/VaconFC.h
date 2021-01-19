@@ -223,8 +223,6 @@ public:
   int16_t get_DAC(){return dac;};                  // Получить установленное значеие ЦАП
 #endif
   // Сервис
-  TEST_MODE	get_testMode() {return testMode;}      // Получить текущий режим работы
-  void		set_testMode(TEST_MODE t);			   // Установить значение текущий режим работы
   char *	get_note(){return  note;}                // Получить описание
   char *	get_name(){return  name;}                // Получить имя
   uint8_t  *get_save_addr(void) { return (uint8_t *)&_data; } // Адрес структуры сохранения
@@ -262,7 +260,6 @@ public:
   uint8_t pin;                                     // Ножка куда прицеплено FC
 #endif
   
-  TEST_MODE testMode;                              // Значение режима тестирования
   char *note;                                      // Описание
   char *name;                                      // Имя
 

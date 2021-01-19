@@ -153,7 +153,6 @@ void sensorADC::initSensorADC(uint8_t sensor, uint8_t pinA, uint16_t filter_size
 	adc_lastVal = 0;                                                               // последнее считанное значение
 	clearBuffer();
 
-	testMode = NORMAL;                           // Значение режима тестирования
 	cfg.minValue = ANALOG_MIN[sensor];                 // минимально разрешенное значение
 	cfg.maxValue = ANALOG_MAX[sensor];                 // максимально разрешенное значение
 	cfg.testValue = ANALOG_TEST[sensor];               // Значение при тестировании
@@ -296,7 +295,6 @@ void  sensorDiditalInput::initInput(int sensor)
    Input=false;                    // Состояние датчика
    number = sensor;
    testInput=TESTINPUT[sensor];    // Состояние датчика в режиме теста
-   testMode=NORMAL;                // Значение режима тестирования
    alarmInput=ALARMINPUT[sensor];  // Состояние датчика в режиме аварии
    err=OK;                         // ошибка датчика (работа) при ошибке останов ТН
    flags=0x00;                     // сброс флагов
@@ -389,7 +387,6 @@ void sensorFrequency::initFrequency(int sensor)
    minValue=MINFLOW[sensor];                      // минимальное значение датчика
    testValue=TESTFLOW[sensor];                    // Состояние датчика в режиме теста
    kfValue=TRANSFLOW[sensor];                     // коэффициент пересчета частоты в значение
-   testMode=NORMAL;                               // Значение режима тестирования
    count=0;                                       // число импульсов за базовый период (то что меняется в прерывании)
    err=OK;                                        // ошибка датчика (работа) при ошибке останов ТН
    flags=0x00;                                    // Обнулить флаги
@@ -496,7 +493,6 @@ void devRelay::initRelay(int sensor)
 {
    flags=0x00;
    number = sensor;
-   testMode=NORMAL;                // Значение режима тестирования
    flags=0x01;                     // наличие датчика в текушей конфигурации (отстатки прошлого, реле сейчас есть всегда)  флаги  0 - наличие датчика,  1- режим теста
    pin=pinsRelay[sensor];  
    pinMode(pin, OUTPUT);           // Настроить ножку на выход
@@ -579,7 +575,6 @@ void devEEV::initEEV()
 	setZero = false;                        // Признак процесса обнуления (шаговик ищет 0)
 	err = OK;                               // Ошибок нет
 	Resume(); 			                // Обнулить рабочие переменные
-	testMode = NORMAL;                      // Значение режима тестирования
 	DebugToLog = false;
 
 	// Устновка настроек по умолчанию (структара данных _data)

@@ -234,6 +234,7 @@ const uint16_t  defaultPort=80;
 #define SAVE_TYPE_clMQTT		-8
 #define SAVE_TYPE_PwrCorr		-9
 #define SAVE_TYPE_Wattrouter	-10
+#define SAVE_TYPE_TempAlarm		-11
 #define SAVE_TYPE_LIMIT			-100
 
 // ------------------- EEV ----------------------------------

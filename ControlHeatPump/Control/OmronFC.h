@@ -226,8 +226,6 @@ public:
   uint8_t get_pinA(){return  pin;}                 // Ножка куда прицеплено FC
    
   // Сервис
-  TEST_MODE get_testMode() {return testMode;};     // Получить текущий режим работы
-  void  set_testMode(TEST_MODE t) {testMode=t;};   // Установить значение текущий режим работы
   char*   get_note(){return  note;}                // Получить описание
   char*   get_name(){return  name;}                // Получить имя
   uint8_t *get_save_addr(void) { return (uint8_t *)&_data; } // Адрес структуры сохранения
@@ -254,7 +252,6 @@ private:
   int16_t levelOff;                                // Минимальная мощность при котором частотник отключается (ограничение минимальной мощности)
   uint8_t pin;                                     // Ножка куда прицеплено FC
   
-  TEST_MODE testMode;                              // Значение режима тестирования
   char *note;                                      // Описание
   char *name;                                      // Имя инвертора
 

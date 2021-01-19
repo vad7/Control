@@ -452,12 +452,16 @@ x_I2C_init_std_message:
 		journal.jprintf(" I2C memory is empty, a default settings will be used!\n");
 		HP.save_motoHour();
 	} else {
-		HP.load((uint8_t *)Socket[0].outBuf, 0);      // Загрузить настройки ТН
+		HP.load((uint8_t *)Socket[0].outBuf, 0);    // Загрузить настройки ТН
 		HP.Schdlr.load();							// Загрузка настроек расписания
 		HP.Prof.convert_to_new_version();
 		if(HP.Prof.load(HP.Option.numProf) < 0) journal.jprintf(" Error load profile #%d\n", HP.Option.numProf); // Загрузка текущего профиля
 		if(HP.Option.ver <= 133) {
 			HP.save();
+		}
+		if(TempAlarm_size == 0) {					// Если настройки ТН пустые, то заполняем лимиты температур
+			set_TempAlarmMax(TCOMP, 90);
+			set_TempAlarmMax(TBOILER, 85);
 		}
 	}
 	// обновить хеш для пользователей
@@ -1359,6 +1363,18 @@ void vReadSensor(void *)
 				}
 				_delay(1);     												// пауза
 			}
+			// Проверка на предельные температуры
+			for(i = 0; i < TempAlarm_size; i++) {
+				uint8_t num = TempAlarm[i].num;
+				int16_t T = HP.sTemp[num].get_Temp();
+				if(T < TempAlarm[i].MinTemp * 100) {
+					set_Error(HP.sTemp[num].set_Err(ERR_MINTEMP), HP.sTemp[num].get_name());
+				}
+				if(T > TempAlarm[i].MaxTemp * 100) {
+					set_Error(HP.sTemp[num].set_Err(ERR_MAXTEMP), HP.sTemp[num].get_name());
+				}
+			}
+
 			int32_t temp;
 			if(GETBIT(flags, fTEMP_as_TIN_average)) { // Расчет средних датчиков для TIN
 				temp = 0;

@@ -360,7 +360,7 @@ void Statistics::Update()
 {
 	if(NewYearFlag
 #ifndef TEST_BOARD
-			|| HP.get_testMode() != NORMAL
+			|| testMode != NORMAL
 #endif
 		) return; // waiting to switch a next year
 	uint32_t tm = GetTickCount() - previous;
@@ -988,7 +988,7 @@ void Statistics::History()
 {
 	if(!GETBIT(HP.Option.flags, fHistory)
 #ifndef TEST_BOARD
-			|| HP.get_testMode() != NORMAL
+			|| testMode != NORMAL
 #endif
 		) return;
 	uint16_t y = rtcSAM3X8.get_years();

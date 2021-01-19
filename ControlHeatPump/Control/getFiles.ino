@@ -489,11 +489,11 @@ void get_txtSettings(uint8_t thread, char *filename)
         
               if (HP.sTemp[i].get_present())
                 {
-                  strcat(Socket[thread].outBuf," T=");      _ftoa(Socket[thread].outBuf,(float)HP.sTemp[i].get_Temp()/100.0,2);
-                  strcat(Socket[thread].outBuf,", Tmin=");  _ftoa(Socket[thread].outBuf,(float)HP.sTemp[i].get_minTemp()/100.0,2);
-                  strcat(Socket[thread].outBuf,", Tmax=");  _ftoa(Socket[thread].outBuf,(float)HP.sTemp[i].get_maxTemp()/100.0,2);
-                  strcat(Socket[thread].outBuf,", Terr=");  _ftoa(Socket[thread].outBuf,(float)HP.sTemp[i].get_errTemp()/100.0,2);
-                  strcat(Socket[thread].outBuf,", Ttest="); _ftoa(Socket[thread].outBuf,(float)HP.sTemp[i].get_testTemp()/100.0,2);
+                  strcat(Socket[thread].outBuf," T=");      _dtoa(Socket[thread].outBuf, HP.sTemp[i].get_Temp(),2);
+                  strcat(Socket[thread].outBuf,", Tmin=");  _dtoa(Socket[thread].outBuf, get_TempAlarmMin(i),2);
+                  strcat(Socket[thread].outBuf,", Tmax=");  _dtoa(Socket[thread].outBuf, get_TempAlarmMax(i),2);
+                  strcat(Socket[thread].outBuf,", Terr=");  _dtoa(Socket[thread].outBuf, HP.sTemp[i].get_errTemp(),2);
+                  strcat(Socket[thread].outBuf,", Ttest="); _dtoa(Socket[thread].outBuf, HP.sTemp[i].get_testTemp(),2);
                   if (HP.sTemp[i].get_lastErr()!=OK) { strcat(Socket[thread].outBuf," error:"); _itoa(HP.sTemp[i].get_lastErr(),Socket[thread].outBuf); }  STR_END;
                 }
                 else strcat(Socket[thread].outBuf," absent \r\n"); 

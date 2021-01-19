@@ -739,12 +739,12 @@ void parserGET(uint8_t thread, int8_t )
 		if (strcmp(str,"get_testMode")==0)  // Функция get_testMode
 		{
 			for(i=0;i<=HARD_TEST;i++) // Формирование списка
-			{ strcat(strReturn,noteTestMode[i]); strcat(strReturn,":"); if(i==HP.get_testMode()) strcat(strReturn,cOne); else strcat(strReturn,cZero); strcat(strReturn,";");  }
+			{ strcat(strReturn,noteTestMode[i]); strcat(strReturn,":"); if(i==testMode) strcat(strReturn,cOne); else strcat(strReturn,cZero); strcat(strReturn,";");  }
 			ADD_WEBDELIM(strReturn) ;    continue;
 		}
 		if (strcmp(str,"get_remarkTest")==0)  // Функция remarkTest
 		{
-			switch (HP.get_testMode())
+			switch (testMode)
 			{
 			case NORMAL:    strcat(strReturn,noteRemarkTest[0]);     break; //  Режим работа не тст, все включаем
 			case SAFE_TEST: strcat(strReturn,noteRemarkTest[1]);     break; //  Ничего не включаем
@@ -1736,9 +1736,9 @@ void parserGET(uint8_t thread, int8_t )
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E09");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
 				{
-					HP.set_testMode((TEST_MODE)pm);             // Установить режим работы тестирования
+					testMode = TEST_MODE(pm);             // Установить режим работы тестирования
 					for(i=0;i<=HARD_TEST;i++)                    // Формирование списка
-					{ strcat(strReturn,noteTestMode[i]); strcat(strReturn,":"); if(i==HP.get_testMode()) strcat(strReturn,cOne); else strcat(strReturn,cZero); strcat(strReturn,";");  }
+					{ strcat(strReturn,noteTestMode[i]); strcat(strReturn,":"); if(i==testMode) strcat(strReturn,cOne); else strcat(strReturn,cZero); strcat(strReturn,";");  }
 				} // else
 				ADD_WEBDELIM(strReturn) ;    continue;
 			}
@@ -2265,17 +2265,19 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 							}
  							if(strncmp(str, "min", 3)==0)           // Функция get_minTemp
 							{
-								if (HP.sTemp[p].get_present()) // Если датчик есть в конфигурации то выводим значение
-									_dtoa(strReturn, HP.sTemp[p].get_minTemp(), 2);
-								else strcat(strReturn,"-");              // Датчика нет ставим прочерк
+								if (HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
+									l_i32 = get_TempAlarmMin(p);
+									if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+								}
 								ADD_WEBDELIM(strReturn); continue;
 							}
 
 							if(strncmp(str, "max", 3)==0)           // Функция get_maxTemp
 							{
-								if (HP.sTemp[p].get_present())          // Если датчик есть в конфигурации то выводим значение
-									_dtoa(strReturn, HP.sTemp[p].get_maxTemp(), 2);
-								else strcat(strReturn,"-");             // Датчика нет ставим прочерк
+								if(HP.sTemp[p].get_present()) {     // Если датчик есть в конфигурации, то выводим значение
+									l_i32 = get_TempAlarmMax(p);
+									if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
+								}
 								ADD_WEBDELIM(strReturn); continue;
 							}
 
@@ -2345,9 +2347,26 @@ x_get_aTemp:
 								continue;
 							}
 							if(strncmp(str, "test", 4)==0)           // Функция set_testTemp
-							{ 	if (HP.sTemp[p].set_testTemp(rd(pm, 100))==OK)    // Установить значение в сотых градуса
-									{ _dtoa(strReturn, HP.sTemp[p].get_testTemp(), 2); ADD_WEBDELIM(strReturn);  continue;  }
-								else { strcat(strReturn,"E05" WEBDELIM);  continue;}       // выход за диапазон ПРЕДУПРЕЖДЕНИЕ значение не установлено
+							{
+								HP.sTemp[p].set_testTemp(rd(pm, 100));    // Установить значение в сотых градуса
+								_dtoa(strReturn, HP.sTemp[p].get_testTemp(), 2);
+								ADD_WEBDELIM(strReturn);  continue;
+							}
+							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
+								l_i32 = pm;
+								if(*z == '\0' || *z == '-') l_i32 = TEMP_ALARM_TEMP_MIN;
+								set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
+								l_i32 = get_TempAlarmMin(p);
+								if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+								ADD_WEBDELIM(strReturn);  continue;
+							}
+							if(strncmp(str, "max", 3)==0) {         // Функция set_maxTemp
+								l_i32 = pm;
+								if(*z == '\0' || *z == '-') l_i32 = TEMP_ALARM_TEMP_MAX;
+								set_TempAlarmMax(p, l_i32);    		// Установить значение в градусах
+								l_i32 = get_TempAlarmMax(p);
+								if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
+								ADD_WEBDELIM(strReturn);  continue;
 							}
 							if(strncmp(str, "err", 3)==0)           // Функция set_errTemp
 							{ 	if (HP.sTemp[p].set_errTemp(rd(pm, 100))==OK)    // Установить значение в сотых градуса
@@ -2441,7 +2460,7 @@ xget_WR:
 							if(p == 0) { // get_WR(0)
 								if(i) { // <ip>/&set_WR(0=x) -> set power(= x / 10) + set MPPT flag(WR_Check_MPPT() = x % 10)
 #ifdef WR_PowerMeter_Modbus
-									if(HP.get_testMode() != NORMAL) WR_PowerMeter_Power = pm;
+									if(testMode != NORMAL) WR_PowerMeter_Power = pm;
 #endif
 								}
 								if(WR_Pnet == -32768) strcat(strReturn, "-"); else _itoa(WR_Pnet, strReturn);
