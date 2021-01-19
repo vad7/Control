@@ -49,7 +49,6 @@ void set_Error(int8_t _err, char *nam)
 
 	if(HP.error == OK) {
 		HP.error = _err;
-		strcpy(HP.source_error, nam);
 		strcpy(HP.note_error, NowTimeToStr());       // Cтереть всю строку и поставить время
 		strcat(HP.note_error, " ");
 		if(_err == ERR_ANALOG_MIN) {
@@ -174,7 +173,6 @@ void HeatPump::initHeatPump()
 void HeatPump::eraseError()
 {
 	strcpy(note_error, "OK");          // Строка c описанием ошибки
-	strcpy(source_error, "");          // Источник ошибки
 	error = OK;                         // Код ошибки
 }
 
@@ -358,9 +356,6 @@ int32_t HeatPump::save(void)
 		if(save_2bytes(addr, SAVE_TYPE_sTemp, crc)) break;
 		for(uint8_t i = 0; i < TNUMBER; i++) if(save_struct(addr, sTemp[i].get_save_addr(), sTemp[i].get_save_size(), crc)) break; // Сохранение датчиков температуры
 		if(error == ERR_SAVE_EEPROM) break;
-		if(save_2bytes(addr, SAVE_TYPE_TempAlarm, crc)) break;
-		if(save_struct(addr, (uint8_t*)TempAlarm, TempAlarm_size * sizeof(_TempAlarm), crc)) break; // Сохранение TempAlarm
-		if(error == ERR_SAVE_EEPROM) break;
 		if(save_2bytes(addr, SAVE_TYPE_sADC, crc)) break;
 		for(uint8_t i = 0; i < ANUMBER; i++) if(save_struct(addr, sADC[i].get_save_addr(), sADC[i].get_save_size(), crc)) break; // Сохранение датчика давления
 		if(error == ERR_SAVE_EEPROM) break;
@@ -375,6 +370,11 @@ int32_t HeatPump::save(void)
 		for(uint8_t i = 0; i < IPNUMBER; i++) if(save_struct(addr, sIP[i].get_save_addr(), sIP[i].get_save_size(), crc)) break; // Сохранение удаленных датчиков
 		if(error == ERR_SAVE_EEPROM) break;
 		#endif
+		if(TempAlarm_size) {
+			if(save_2bytes(addr, SAVE_TYPE_TempAlarm, crc)) break;
+			if(save_struct(addr, (uint8_t*)TempAlarm, TempAlarm_size * sizeof(_TempAlarm), crc)) break; // Сохранение TempAlarm
+			if(error == ERR_SAVE_EEPROM) break;
+		}
 		#ifdef EEV_DEF
 		if(save_2bytes(addr, SAVE_TYPE_dEEV, crc)) break;
 		if(save_struct(addr, dEEV.get_save_addr(), dEEV.get_save_size(), crc)) break; // Сохранение ЭВР
@@ -496,7 +496,8 @@ x_Error:
 				journal.jprintf("Low memory(%d)\n", n);
 				goto xSkip;
 			}
-			load_struct(TempAlarm, &buffer, TempAlarm_size = n / sizeof(TempAlarm)); dEEV.after_load();
+			load_struct(TempAlarm, &buffer, n);
+			TempAlarm_size = n / sizeof(_TempAlarm);
 		} else if(type == SAVE_TYPE_dEEV) {
 			load_struct(dEEV.get_save_addr(), &buffer, dEEV.get_save_size()); dEEV.after_load();
 #endif

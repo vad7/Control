@@ -540,7 +540,11 @@ void set_TempAlarmMin(uint8_t num, int8_t t)
 	}
 	if(t != TEMP_ALARM_TEMP_MIN) {
 		uint8_t i = TempAlarm_add();
-		if(i != 255) TempAlarm[i].MinTemp = t;
+		if(i != 255) {
+			TempAlarm[i].num = num;
+			TempAlarm[i].MinTemp = t;
+			TempAlarm[i].MaxTemp = TEMP_ALARM_TEMP_MAX;
+		}
 	}
 }
 
@@ -553,21 +557,24 @@ void set_TempAlarmMax(uint8_t num, int8_t t)
 	}
 	if(t != TEMP_ALARM_TEMP_MAX) {
 		uint8_t i = TempAlarm_add();
-		if(i != 255) TempAlarm[i].MaxTemp = t;
+		if(i != 255) {
+			TempAlarm[i].num = num;
+			TempAlarm[i].MinTemp = TEMP_ALARM_TEMP_MIN;
+			TempAlarm[i].MaxTemp = t;
+		}
 	}
 }
 
 void TempAlarm_remove(uint8_t idx)
 {
 	if(!TempAlarm || idx >= TempAlarm_size) return;
-	if(idx < TempAlarm_size - 1) memcpy(&TempAlarm[idx], &TempAlarm[idx + 1], sizeof(_TempAlarm));
+	if(idx < TempAlarm_size - 1) memcpy(&TempAlarm[idx], &TempAlarm[idx + 1], sizeof(_TempAlarm) * (TempAlarm_size - 1 - idx));
 	TempAlarm_size--;
 }
 
 uint8_t TempAlarm_add(void)
 {
-	if(TempAlarm) free(TempAlarm);
-	TempAlarm = (_TempAlarm*)malloc(++TempAlarm_size * sizeof(_TempAlarm));
+	TempAlarm = (_TempAlarm*)realloc(TempAlarm, ++TempAlarm_size * sizeof(_TempAlarm));
 	if(!TempAlarm) {
 		journal.jprintf("Low memory(%d)\n", TempAlarm_size * sizeof(_TempAlarm));
 		TempAlarm_size = 0;

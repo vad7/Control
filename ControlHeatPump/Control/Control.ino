@@ -271,7 +271,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	_delay(1);
+	//_delay(1);
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -462,6 +462,8 @@ x_I2C_init_std_message:
 		if(TempAlarm_size == 0) {					// Если настройки ТН пустые, то заполняем лимиты температур
 			set_TempAlarmMax(TCOMP, 90);
 			set_TempAlarmMax(TBOILER, 85);
+		} else {
+			for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num >= TNUMBER) TempAlarm_remove(i);
 		}
 	}
 	// обновить хеш для пользователей

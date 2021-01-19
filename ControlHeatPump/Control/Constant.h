@@ -215,7 +215,7 @@ const uint16_t  defaultPort=80;
 	#define I2C_PROFIL_NUM			5           // Максимальное число сохряняемых профилей
 	#define I2C_COUNT_EEPROM		0x00        // Адрес внутри чипа eeprom от куда пишется счетчики с начала чипа 0
 	#define I2C_SETTING_EEPROM		0x080       // Адрес внутри чипа eeprom от куда пишутся настройки ТН  а перед ним пишется счетчики
-	#define I2C_PROFILE_EEPROM		0x600       // Адрес внутри чипа eeprom от куда профили (адрес первого профиля)
+	#define I2C_PROFILE_EEPROM		0x700       // Адрес внутри чипа eeprom от куда профили (адрес первого профиля)
 	#define I2C_SCHEDULER_EEPROM	0xE60		// Адрес внутри чипа eeprom для Расписаний
 	#define MAX_CALENDARS			4   		// максимум 9
 	#define TIMETABLES_MAXSIZE		214 		// bytes

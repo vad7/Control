@@ -2265,8 +2265,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 							}
  							if(strncmp(str, "min", 3)==0)           // Функция get_minTemp
 							{
-								if (HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
-									l_i32 = get_TempAlarmMin(p);
+								if(HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
+									l_i32 = get_TempAlarmMin(p) / 100;
 									if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
 								}
 								ADD_WEBDELIM(strReturn); continue;
@@ -2275,7 +2275,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 							if(strncmp(str, "max", 3)==0)           // Функция get_maxTemp
 							{
 								if(HP.sTemp[p].get_present()) {     // Если датчик есть в конфигурации, то выводим значение
-									l_i32 = get_TempAlarmMax(p);
+									l_i32 = get_TempAlarmMax(p) / 100;
 									if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
 								}
 								ADD_WEBDELIM(strReturn); continue;
@@ -2354,17 +2354,17 @@ x_get_aTemp:
 							}
 							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
 								l_i32 = pm;
-								if(*z == '\0' || *z == '-') l_i32 = TEMP_ALARM_TEMP_MIN;
+								if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN;
 								set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
-								l_i32 = get_TempAlarmMin(p);
+								l_i32 = get_TempAlarmMin(p) / 100;
 								if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
 								ADD_WEBDELIM(strReturn);  continue;
 							}
 							if(strncmp(str, "max", 3)==0) {         // Функция set_maxTemp
 								l_i32 = pm;
-								if(*z == '\0' || *z == '-') l_i32 = TEMP_ALARM_TEMP_MAX;
+								if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MAX;
 								set_TempAlarmMax(p, l_i32);    		// Установить значение в градусах
-								l_i32 = get_TempAlarmMax(p);
+								l_i32 = get_TempAlarmMax(p) / 100;
 								if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
 								ADD_WEBDELIM(strReturn);  continue;
 							}
