@@ -148,7 +148,7 @@ int16_t devVaconFC::CheckLinkStatus(void)
     }
     return state;
 #else
-    return ERR_LINK_FC;
+    return OK;
 #endif
 }
 
@@ -596,7 +596,7 @@ uint16_t devVaconFC::get_current()
 #ifdef FC_MAX_CURRENT
 	  return current;
 #else
-	  return read_0x03_16(FC_CURRENT);
+	  return (testMode == NORMAL || testMode == HARD_TEST) ? read_0x03_16(FC_CURRENT) : 0;
 #endif
 }
 
@@ -818,7 +818,7 @@ boolean devVaconFC::reset_FC()
     else
 #endif
     {
-		reset_errorFC();
+    	if(testMode == NORMAL || testMode == HARD_TEST) reset_errorFC();
     }
     return err == OK;
 }

@@ -576,6 +576,7 @@ if(strcmp(var,hp_RULE)==0) {  switch ((int)x)
  if(strcmp(var,hp_WeatherBase)==0){ Heat.WeatherBase = x; return true; } else
  if(strcmp(var,hp_WeatherTargetRange)==0){ Heat.WeatherTargetRange = rd(x, 10); return true; } else
  if(strcmp(var,hp_CompressorPause)==0){ if(x >= 0) {Heat.CompressorPause = x * 60; return true; } else return false; } else
+ if(strcmp(var,hp_FC_FreqLimit)==0){ Heat.FC_FreqLimit = rd(x, 100); if(Heat.FC_FreqLimit < HP.dFC.get_minFreq()) Heat.FC_FreqLimit = HP.dFC.get_minFreq(); return true; } else
  return false; 
 }
 
@@ -616,6 +617,8 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
    if(strcmp(var,hp_WeatherBase)==0){ _dtoa(ret,Heat.WeatherBase,0); return ret;    } else
    if(strcmp(var,hp_WeatherTargetRange)==0){ _dtoa(ret,Heat.WeatherTargetRange,1); return ret;    } else
    if(strcmp(var,hp_CompressorPause)==0) { _itoa(Heat.CompressorPause / 60, ret); return ret; } else
+   if(strcmp(var,hp_FC_FreqLimit)==0) { _dtoa(ret, Heat.FC_FreqLimit, 2); return ret; } else
+   if(strcmp(var,hp_FC_FreqLimitHour)==0) { strcat_time(ret, Heat.FC_FreqLimitHour * 10); return ret; } else
    return  strcat(ret,(char*)cInvalid);
 }
 

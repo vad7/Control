@@ -1409,7 +1409,6 @@ void  HeatPump::updateChart()
 #endif
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Power_FC) Charts[j].add_Point(dFC.get_power() / 10);
-		else if(ChartsConstSetup[i].object == STATS_OBJ_Current_FC) Charts[j].add_Point(dFC.get_current());
 #ifdef USE_ELECTROMETER_SDM
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Voltage) Charts[j].add_Point(dSDM.get_voltage() * 100);
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Power) Charts[j].add_Point((int32_t)power220 / 10);
@@ -2536,8 +2535,8 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		newFC += dFC.get_target();
 #endif
 		if (newFC>dFC.get_maxFreqBoiler())   newFC=dFC.get_maxFreqBoiler();                                                 // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
-		if (newFC<dFC.get_minFreqBoiler())   newFC=dFC.get_minFreqBoiler(); //return pCOMP_OFF;                             // Уменьшать дальше некуда, выключаем компрессор
 	    if(GETBIT(Option.flags, fBackupPower) && newFC > dFC.get_maxFreqGen()) newFC = dFC.get_maxFreqGen();
+		if (newFC<dFC.get_minFreqBoiler())   newFC=dFC.get_minFreqBoiler(); //return pCOMP_OFF;                             // Уменьшать дальше некуда, выключаем компрессор
 
 		// Смотрим подход к границе защит если идет УВЕЛИЧЕНИЕ частоты
 		if (dFC.get_target()<newFC && dFC.get_PidStop() < 100 && is_compressor_on())                                                                                     // Идет увеличение частоты проверяем подход к границам
@@ -2617,8 +2616,16 @@ MODE_COMP HeatPump::UpdateHeat()
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_compressor_on() || onBoiler))  { Status.ret=pHh2;   return pCOMP_ON; } // Достигнут гистерезис ВКЛ
 		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и отопление не нужно
 		else if(rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && FEED > Prof.Heat.tempInLim) { Status.ret=pHh1; return pCOMP_OFF; } // Достигнута максимальная температура подачи ВЫКЛ (С учетом времени перехода с ГВС)
-		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная темература обратки ВКЛ
-		else                              { Status.ret = pHh4; return pCOMP_NONE; }  // Ничего не делаем  (сохраняем состояние)
+		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
+		else {
+			if(Prof.Heat.FC_FreqLimitHour) { // Ограничение частоты
+				newFC = rtcSAM3X8.get_hours() * 60 + rtcSAM3X8.get_minutes() <= Prof.Heat.FC_FreqLimitHour * 10 ? Prof.Heat.FC_FreqLimit : dFC.get_startFreq();
+				if(dFC.get_target() != newFC) {
+					dFC.set_target(newFC, true, dFC.get_minFreq(), dFC.get_maxFreq());
+				}
+			}
+			Status.ret = pHh4; return pCOMP_NONE; // Ничего не делаем  (сохраняем состояние)
+		}
 		break;
 	case pPID:   // ПИД регулирует подачу, а целевай функция гистререзис
 		// отработка гистререзиса целевой функции (дом/обратка)
@@ -2724,10 +2731,13 @@ MODE_COMP HeatPump::UpdateHeat()
 		else if(newFC < -dFC.get_PidMaxStep()) newFC = -dFC.get_PidMaxStep();
 		newFC += dFC.get_target();
 #endif
-
-		if (newFC>dFC.get_maxFreq())   newFC=dFC.get_maxFreq();                                                // ограничение диапазона
-		else if (newFC<dFC.get_minFreq())   newFC=dFC.get_minFreq();
-	    if(GETBIT(Option.flags, fBackupPower) && newFC > dFC.get_maxFreqGen()) newFC = dFC.get_maxFreqGen();
+		// ограничение диапазона
+		{
+			int16_t m = Prof.Heat.FC_FreqLimitHour && rtcSAM3X8.get_hours() * 60 + rtcSAM3X8.get_minutes() <= Prof.Heat.FC_FreqLimitHour * 10 ? Prof.Heat.FC_FreqLimit : dFC.get_maxFreq();
+			if(newFC > m) newFC = m;
+		}
+		if(GETBIT(Option.flags, fBackupPower) && newFC > dFC.get_maxFreqGen()) newFC = dFC.get_maxFreqGen();
+		if(newFC < dFC.get_minFreq()) newFC = dFC.get_minFreq();
 
 		// Смотрим подход к границе защит если идет УВЕЛИЧЕНИЕ частоты
 		if (dFC.get_target()<newFC && dFC.get_PidStop() < 100 && is_compressor_on())                                                                        // Идет увеличение частоты проверяем подход к границами если пересекли границы то частоту не меняем

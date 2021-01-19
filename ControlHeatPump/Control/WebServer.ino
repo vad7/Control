@@ -2060,8 +2060,17 @@ xGetOptionHP:
 			} else if (strcmp(str,"set_Heat")==0)           // Функция set_paramHeatHP - установить значение паремтра отопления ТН
 			{
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
-					if (HP.Prof.set_paramHeatHP(x,pm))  HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
-					else  strcat(strReturn,"E16") ; // ошибка преобразования строки
+					if (HP.Prof.set_paramHeatHP(x,pm)) {
+xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
+					} else strcat(strReturn,"E16") ; // ошибка преобразования строки
+				} else if(strcmp(x, hp_FC_FreqLimitHour) == 0) {
+					int16_t buf[2];
+					if(!parseInt16_t(z, ':', buf, 2, 10)) strcat(strReturn,"E16"); // ошибка преобразования строки
+					else {
+						HP.Prof.Heat.FC_FreqLimitHour = buf[0] * 6 + buf[1] / 10;
+						if(HP.Prof.Heat.FC_FreqLimitHour > 24 * 6) HP.Prof.Heat.FC_FreqLimitHour = 24 * 6;
+						goto xset_Heat_get;
+					}
 				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				ADD_WEBDELIM(strReturn) ; continue;
 			}

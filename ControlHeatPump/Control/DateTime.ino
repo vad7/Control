@@ -267,6 +267,20 @@ bool set_time_NTP(void)
 
 #endif // HTTP_TIME_REQUEST
 
+// Time: hours * 60 + minutes
+void strcat_time(char *buf, uint16_t t)
+{
+	buf += strlen(buf);
+	uint32_t x = t / 60;
+	buf[0] = '0' + x / 10;
+	buf[1] = '0' + x % 10;
+	buf[2] = ':';
+	x = t % 60;
+	buf[3] = '0' + x / 10;
+	buf[4] = '0' + x % 10;
+	buf[5] = '\0';
+}
+
 //  Получить текущее время (XX:XX:XX) в виде строки, не реентерабельна!
 char* NowTimeToStr(char *buf)
 {
