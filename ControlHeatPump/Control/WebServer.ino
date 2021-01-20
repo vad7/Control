@@ -802,10 +802,10 @@ void parserGET(uint8_t thread, int8_t )
 		if (strncmp(str, "set_LOAD", 8) == 0)  // Функция set_LOAD -
 		{
 			str += 8;
-			if(strcmp(str, "_SCHDLR") == 0) {
-				_itoa(HP.Schdlr.load(), strReturn); // загрузка расписаний
-			} else if(strcmp(str, "_HP_NOCRC") == 0) {
-				_itoa(HP.load((uint8_t*)Socket[thread].inPtr, 2), strReturn); // загрузка настроек без проверки CRC
+			if(strcmp(str, "_SCHDLR") == 0) { // загрузка расписаний
+				_itoa(HP.Schdlr.load(), strReturn);
+			} else if(strcmp(str, "_HP_NOCRC") == 0) { // загрузка настроек без проверки CRC
+				_itoa(HP.load((uint8_t*)Socket[thread].inPtr, 2), strReturn);
 				ADD_WEBDELIM(strReturn);
 				break;
 			}
