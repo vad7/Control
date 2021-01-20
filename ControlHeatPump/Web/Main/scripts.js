@@ -4,7 +4,7 @@ var VER_WEB = "1.122";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
-//var urlcontrol = 'http://192.168.0.7';
+var urlcontrol = 'http://192.168.0.7';
 //var urlcontrol = 'http://77.50.254.24:25402';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения. Но не более времени обновления параметров
 var urlupdate = 4000; // время обновления параметров в миллисекундах
@@ -426,9 +426,9 @@ function loadParam(paramid, noretry, resultdiv) {
 												if(tnum == 1) {
 													content += '<td id="get_ntemp-' +T+ '"></td>';
 													content += '<td id="get_fulltemp-' +T+ '">-</td>';
-													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" class="InpHide" step="1"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
-													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" class="InpHide" step="1"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
-													content += '<td nowrap><input id="get_errtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_errTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" class="InpHide" step="1" style="max-width:50px"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" class="InpHide" step="1" style="max-width:50px"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_errtemp-' +T+ '" type="number" class="InpHide" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_errTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input id="get_testtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_testTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input type="checkbox" id="get_ftemp4-' +T+ '" onchange="setParam(\'get_fTemp4(' +count[j]+')\');"><input type="checkbox" id="get_ftemp5-' +T+ '" onchange="setParam(\'get_fTemp5(' +count[j]+')\');"><input type="checkbox" id="get_ftemp6-' +T+ '" onchange="setParam(\'get_fTemp6(' +count[j]+')\');"></td>';
 													content += '<td id="get_btemp-' +T+ '">-</td>';

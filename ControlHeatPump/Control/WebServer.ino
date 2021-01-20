@@ -2282,7 +2282,11 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 							}
 
 							if(strncmp(str, "err", 3)==0)           // Функция get_errTemp
-							{ _dtoa(strReturn, HP.sTemp[p].get_errTemp(), 2); ADD_WEBDELIM(strReturn); continue; }
+							{
+								l_i32 = HP.sTemp[p].get_errTemp();
+								if(l_i32) _dtoa(strReturn, l_i32, 2);
+								ADD_WEBDELIM(strReturn); continue;
+							}
 
 							if(strncmp(str, "aT", 2) == 0)           // Функция get_aTemp (address)
 							{

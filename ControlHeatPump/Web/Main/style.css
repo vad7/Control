@@ -70,7 +70,8 @@ div.remtemp table table th {height:45px!important;}
 .onoffswitch-switch { display: block; width: 22px; margin: 0px; background: #F44E4E; position: absolute; top: 0; bottom: 0; right: 33px; border: 2px solid #FFFFFF; border-radius: 20px; transition: all 0.0s ease-in 0s; }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner { margin-left: 0;}
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch { right: 0px; background-color: #81D14E; }
-.InpHide { background-color: transparent }
+.InpHide { background-color:transparent; }
+.InpHide0 { background-color:transparent }
 table { width: 100%; border-collapse: collapse; margin:5px 0 0 0;} 
 th { background: #F7F7F7; font-weight:100; }
 td, th { font-size: 0.9em; padding: 5px; border: 0; text-align: center; /*max-width: 260px; min-width: 80px;*/}
