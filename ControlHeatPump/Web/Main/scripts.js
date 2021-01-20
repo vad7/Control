@@ -426,8 +426,8 @@ function loadParam(paramid, noretry, resultdiv) {
 												if(tnum == 1) {
 													content += '<td id="get_ntemp-' +T+ '"></td>';
 													content += '<td id="get_fulltemp-' +T+ '">-</td>';
-													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" step="1"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
-													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" step="1"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" class="InpHide" step="1"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
+													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" class="InpHide" step="1"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input id="get_errtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_errTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input id="get_testtemp-' +T+ '" type="number" step="0.01"><input type="submit" value=">" onclick="setParam(\'get_testTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input type="checkbox" id="get_ftemp4-' +T+ '" onchange="setParam(\'get_fTemp4(' +count[j]+')\');"><input type="checkbox" id="get_ftemp5-' +T+ '" onchange="setParam(\'get_fTemp5(' +count[j]+')\');"><input type="checkbox" id="get_ftemp6-' +T+ '" onchange="setParam(\'get_fTemp6(' +count[j]+')\');"></td>';
@@ -596,6 +596,9 @@ function loadParam(paramid, noretry, resultdiv) {
 									if(element) {
 										if(element.className == "charsw") {
 											element.innerHTML = element.title.substr(values[1].toLowerCase().replace(/[^\w\d]/g, ""), 1);
+										} else if(element.className == "InpHide") {
+											if(values[1]) element.className = "";
+											element.value = values[1];
 										} else if(/^E\d+/.test(values[1])) {
 											if(element.getAttribute("type") == "submit") alert("Ошибка " + values[1]);
 											else element.placeholder = values[1];

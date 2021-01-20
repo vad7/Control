@@ -1,6 +1,6 @@
 html, body {font-size:12px;padding:0;margin:0; font-family: Arial,'Helvetica Neue', Helvetica, sans-serif; }
 .content {-webkit-transition-property: margin; transition-property: margin; -webkit-transition-duration: 0.4s; transition-duration: 0.4s; -webkit-transition-timing-function: ease-out; transition-timing-function: ease-out;background: -webkit-linear-gradient(top, rgb(87, 129, 158) 0%, rgb(166, 190, 200) 38%, rgb(215, 205, 177) 90%, rgb(176, 161, 150) 100%);background: -o-linear-gradient(top, rgb(87, 129, 158) 0%, rgb(166, 190, 200) 38%, rgb(215, 205, 177) 90%, rgb(176, 161, 150) 100%);background: -ms-linear-gradient(top, rgb(87, 129, 158) 0%, rgb(166, 190, 200) 38%, rgb(215, 205, 177) 90%, rgb(176, 161, 150) 100%);background: -moz-linear-gradient(top, rgb(87, 129, 158) 0%, rgb(166, 190, 200) 38%, rgb(215, 205, 177) 90%, rgb(176, 161, 150) 100%);background: linear-gradient(to bottom, rgb(87, 129, 158) 0%, rgb(166, 190, 200) 38%, rgb(215, 205, 177) 90%, rgb(176, 161, 150) 100%);}
-.menu{width:220px;margin-left:0px; position: absolute; z-index: 500; left: 0;background: -webkit-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -o-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -ms-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -moz-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: linear-gradient(5deg, rgba25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);}
+.menu{width:220px;margin-left:0px; position: absolute; z-index: 500; left: 0;background: -webkit-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -o-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -ms-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: -moz-linear-gradient(85deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);background: linear-gradient(5deg, rgba(25, 29, 35, 0.85) 0%, rgba(47, 44, 42, 0.85) 100%);}
 .content{min-height: 100%; margin: 0; padding: 0 10px 0 230px;}
 .content > div{padding: 15px 0;}
 .menu-profiles{text-align:center;color:white;line-height: 30px;    font-size: 15px;}
@@ -24,7 +24,7 @@ html, body {font-size:12px;padding:0;margin:0; font-family: Arial,'Helvetica Neu
 .dateinfo #SS:before{content:"СТАТУС"}
 .menu > ul {list-style:none;margin: 25px 0 ;padding:0;text-transform: uppercase;    clear: both;}
 .menu > ul > li > a, .menu > ul > li > label{height:44px;color: white; text-decoration:none;padding: 0;display:inline-block;line-height:44px; width:220px}
-.menu > ul > li > a > i, .menu > ul > li > label > i{ width: 44px; height: 44px; margin-right:8px;display: inline-block; float: left; background: #0A0D0E center center no-repeat}
+.menu > ul > li > a > i, .menu > ul > li > label > i{ width: 44px; height: 44px; margin-right:8px; float: left; background: #0A0D0E center center no-repeat}
 .menu > ul > li:nth-child(1) a i{background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeBAMAAADJHrORAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADBQTFRFAAAAfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrO7SBdgAAAA90Uk5TAA8fLz9fb3+Pn6+/z9/vBChwMAAAAMlJREFUGNNjYCAOpKJyOf9PsN69ewOMy7h+9k////8/wPgyPxnmv3dgh/GZzycwcPxH8O2+Ms80iIfzWd8ZyO1+yGoA48c/ZvBn/MLAAOVz/BFg8GdA8OdvZIDyf0LtgvIZ1y8EEuePGED5TD5AnXb//wOd6R8KUv///2OG8PJaEH83iP+9vBSolxvOh5hPDD9/9zdkPtPvu+sVkPhsZ43vJCDz7xrfDUBW/+fuPWT1DHHvnqKYz+gigOC/3g0Be6HhsRsGNhCONwAcDW0lH10uAgAAAABJRU5ErkJggg==');}
 .menu > ul > li:nth-child(2) a i{background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAMAAAAM7l6QAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADNQTFRFAAAAfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrhc7B7QAAABB0Uk5TAA8fLz9PX29/j5+vv8/f7/rfIY4AAAEVSURBVCjPrdNJssMgDEXRBygg0979r/YPbCdOnD8LI1Ud8UpFI/1sxeJe0j8YKgD0rw1pUZMUfa0vHia0kiSlteKNHd8GzJpDot94dUkx1wVj8ba9eDbyOUPp8DD3s2VAN+zSjzscE2Zq0BsHXCrUYyiTIuUZ3sAkjf5izSkp5DphsCSpXzlTtwGr5ljwG6vBKEmSM8KdQ2VtD/N56AdLjwEwzgP4ZElm4VkfbAwLZmaWJFM0M7uwKhgAVb7CXuYXK3l0d/eYoKm4+1oX3qMtqgMWzKzxYt8fEcUAegRoT44M37PbBEjuniXNnRNtDxcBwJOZRduOG9M4wtOsAHkAznl4CnkPNwdYYa8f9+fqk5Z+963+ABD9EDAfeUAaAAAAAElFTkSuQmCC');}
 .menu > ul > li:nth-child(3) label i{background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAMAAAAM7l6QAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADNQTFRFAAAAfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrfcTrhc7B7QAAABB0Uk5TAA8fLz9PX29/j5+vv8/f7/rfIY4AAADaSURBVCjPvdLBjgMhDANQA0ljIED+/2v3sFWHYQ497frIU4SUGPiHyJEb2oojyzYN1/uwely+HNJ9S1f4+vwbKjG4ZYRoyIelz2yWkAkgGdPssrN7Vja0AJCU3f1gQBsQACBNn5xmfnOu9cFpWAEC5VWE7cFCvgCiaKalgxm2b+UVvHHy+0493Rgo+3R5P178OOHBSchu1klJD859tTFmqzFGWz0fPCl5sQKVKw/Og5dRlv2yTFs3VugcdJ/kdOeYiuugWA6gsHmrtXljAbY6fCvTlyp+K/If5QcMdQ/rzMtsngAAAABJRU5ErkJggg==');}
@@ -70,6 +70,7 @@ div.remtemp table table th {height:45px!important;}
 .onoffswitch-switch { display: block; width: 22px; margin: 0px; background: #F44E4E; position: absolute; top: 0; bottom: 0; right: 33px; border: 2px solid #FFFFFF; border-radius: 20px; transition: all 0.0s ease-in 0s; }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner { margin-left: 0;}
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch { right: 0px; background-color: #81D14E; }
+.InpHide { background-color: transparent }
 table { width: 100%; border-collapse: collapse; margin:5px 0 0 0;} 
 th { background: #F7F7F7; font-weight:100; }
 td, th { font-size: 0.9em; padding: 5px; border: 0; text-align: center; /*max-width: 260px; min-width: 80px;*/}
@@ -79,7 +80,7 @@ tr.inactive{display:none;}
 tr.alarm{background:#C1272D;color:white;}
 input[type=number]{max-width:60px;/*float: left;*/}
 #a1,#a2,#p1,#p2{max-width:70px;min-width:60px;}
-input[type=submit]{/*float: left;*/}
+/*input[type=submit]{float: left;}*/
 h1 input, h1 select{float:right;}
 #temps th:nth-child(6),#temps th:nth-child(7){min-width:75px;}
 input:out-of-range { background: red; content: 'Неверное число'; color: #fff; margin:0;}
