@@ -110,7 +110,7 @@ int8_t devVaconFC::initFC()
 	}
 	if(err == OK) {
 		// 10.Установить стартовую частоту
-		set_target(_data.startFreq, true, _data.minFreqUser, _data.maxFreqUser);// режим н знаем по этому границы развигаем
+		set_target(_data.startFreq, true, _data.minFreqUser, _data.maxFreqUser);// режим не знаем по этому границы развигаем
 	}
 	set_nominal_power();
 #endif // #ifndef FC_ANALOG_CONTROL
@@ -121,11 +121,12 @@ int8_t devVaconFC::initFC()
 void devVaconFC::set_nominal_power(void)
 {
 	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
+	typeof(nominal_power) n = nominal_power;
 	nominal_power = (uint32_t)read_0x03_16(FC_MOTOR_NVOLT) * 173 * read_0x03_16(FC_MOTOR_NA) / 100 * read_0x03_16(FC_MOTOR_NCOS) / 100 / 100;
 #ifdef FC_CORRECT_NOMINAL_POWER
 	nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
-	journal.jprintf(" Nominal: %d W\n", nominal_power);
+	if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
 }
 
 // Возвращает состояние, или ERR_LINK_FC, если нет связи по Modbus
@@ -460,8 +461,9 @@ xStarted:
         journal.jprintf(" %s[%s] ON\n", name, (char *)codeRet[HP.get_ret()]);
     } else {
         SETBIT1(flags, fErrFC);
-        set_Error(err, name);
-    } // генерация ошибки
+        set_Error(err, name);  // генерация ошибки
+    }
+    set_nominal_power();
 #else //  FC_ANALOG_CONTROL
 #ifdef DEMO
 #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп

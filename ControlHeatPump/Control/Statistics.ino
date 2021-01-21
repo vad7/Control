@@ -485,7 +485,7 @@ void Statistics::Update()
 		}
 	}
 	counts++;
-	if(compressor_on_timer >= STATS_WORKD_TIME) counts_work++;
+	if(compressor_on_timer >= STATS_WORKD_TIME && !HP.dFC.isRetOilWork()) counts_work++;
 //	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) journal.jprintf("%d=%d, ", i, Stats_data[i].value); journal.jprintf("\n");
 }
 
