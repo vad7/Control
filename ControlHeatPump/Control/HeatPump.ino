@@ -3106,7 +3106,8 @@ boolean HeatPump::configHP(MODE_HP conf)
 	} else if((conf & pHEAT)) {    // Отопление
 		if(Switch_R4WAY(false)) return false; 							  // 4-х ходовой на нагре
 		if(is_compressor_on()) {                                          // Компрессор работает, переключаемся на ходу
-			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
+			// skip STATS_WHEN_WORKD fields
+			if(Stats.compressor_on_timer > STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER) Stats.compressor_on_timer = STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER;
 			switchBoiler(false);                                          // выключить бойлер 
 		} else {
 			PUMPS_ON;                                                     // включить насосы
@@ -3124,7 +3125,8 @@ boolean HeatPump::configHP(MODE_HP conf)
 	} else if((conf & pCOOL)) {  // Охлаждение
 		if(Switch_R4WAY(true)) return false; 							   // 4-х ходовой на охлаждение
 		if(is_compressor_on()) {                                           // Компрессор работает, переключаемся на ходу
-			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
+			// skip STATS_WHEN_WORKD fields
+			if(Stats.compressor_on_timer > STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER) Stats.compressor_on_timer = STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER;
 			switchBoiler(false);                                           // выключить бойлер
 		} else {
 			PUMPS_ON;                                                     // включить насосы
@@ -3139,7 +3141,8 @@ boolean HeatPump::configHP(MODE_HP conf)
 	} else if((conf & pBOILER)) {  // Бойлер
 		if(Switch_R4WAY(false)) return false; 	 					   // 4-х ходовой на нагрев
 		if(is_compressor_on()) {                                       // Компрессор работает, переключаемся на ходу
-			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
+			// skip STATS_WHEN_WORKD fields
+			if(Stats.compressor_on_timer > STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER) Stats.compressor_on_timer = STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER;
 			switchBoiler(true);                                        // включить бойлер
 			// House -> Boiler
 			int16_t newpos = dEEV.get_FromHeatToBoilerMove();
@@ -3169,7 +3172,8 @@ boolean HeatPump::configHP(MODE_HP conf)
 			_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
 			dRelay[RSUPERBOILER].set_ON();                             // Евгений добавил
 			_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
-			Stats.compressor_on_timer = 0;								// skip STATS_WHEN_WORKD fields
+			// skip STATS_WHEN_WORKD fields
+			if(Stats.compressor_on_timer > STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER) Stats.compressor_on_timer = STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER;
 			switchBoiler(true);                                        // включить бойлер
 			if(Status.ret<pBp5) dFC.set_target(SUPERBOILER_FC,true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // В режиме супер бойлер установить частоту SUPERBOILER_FC если не дошли до пида
 #else
@@ -3949,6 +3953,7 @@ void HeatPump::calculatePower()
 
 	// Получение мощностей потребления электроэнергии
 	int32_t _power220 = 0;
+	// Вычитаем бойлер
 #ifdef RBOILER
 #ifdef CORRECT_POWER220_EXCL_RBOILER
 	if(dRelay[RBOILER].get_Relay()) {
@@ -3956,7 +3961,6 @@ void HeatPump::calculatePower()
   #ifdef PWM_ACCURATE_POWER
 		_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
 		power_RBOILER = _power220;
-		_power220 = -_power220;
   #endif
 	} else power_RBOILER = 0;
 #else
@@ -3974,18 +3978,19 @@ void HeatPump::calculatePower()
 	if(dRelay[RBOILER].get_Relay()) {
 		power_RBOILER = _power220;
 	} else power_RBOILER = 0;
-	_power220 = -_power220;
 	#endif
 #endif
 #endif
-
 #ifdef USE_ELECTROMETER_SDM  // Если есть электросчетчик можно рассчитать полное потребление (с насосами)
 	if(dSDM.get_link()) {  // Если счетчик работает (связь не утеряна)
-		_power220 += dSDM.get_power();
-	}
-#endif
 #ifdef ADD_FC_POWER_WHEN_GENERATOR
-	if(GETBIT(Option.flags, fBackupPower)) _power220 += dFC.get_power();  // получить текущую мощность компрессора
+		if(GETBIT(Option.flags, fBackupPower)) { // добавить текущую мощность компрессора
+			if(dSDM.get_power() + dFC.get_power() - _power220 < dFC.get_power() * 8 / 10) _power220 = dSDM.get_power() + dFC.get_power(); // <80%
+			else _power220 = dSDM.get_power() + dFC.get_power() - _power220;
+		} else
+#endif
+			if(dSDM.get_power() - _power220 < dFC.get_power() * 80 / 100) _power220 = dSDM.get_power(); else _power220 = dSDM.get_power() - _power220;
+	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;
 #ifdef CORRECT_POWER220

@@ -60,7 +60,8 @@ enum { // когда
 	STATS_WHEN_WORKD			// Во время работы компрессора, прошло STATS_WORKD_TIME
 	//STATS_WORK				// Во время работы компрессора
 };
-#define STATS_WORKD_TIME (90000UL/TIME_READ_SENSOR)	// 90 s
+#define STATS_WORKD_TIME (90000UL/TIME_READ_SENSOR)					// 90 s
+#define STATS_WORKD_SKIP_TIME_HEAT_BOILER (12UL/TIME_READ_SENSOR)	// 12 s
 
 //static char *stats_format = { "%.1f", "" }; // printf format string
 

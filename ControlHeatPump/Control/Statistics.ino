@@ -374,13 +374,10 @@ void Statistics::Update()
 	}
 	int32_t newval = 0;
 	if(HP.is_compressor_on()) compressor_on_timer += tm; else compressor_on_timer = 0;
-	bool Skip_STATS_WHEN_WORKD;
-	if(compressor_on_timer >= STATS_WORKD_TIME && !HP.dFC.isRetOilWork()) {
-		counts_work++;
-		Skip_STATS_WHEN_WORKD = false;
-	} else Skip_STATS_WHEN_WORKD = true;
+	if(compressor_on_timer >= STATS_WORKD_TIME && !HP.dFC.isRetOilWork()) counts_work++;
+	counts++;
 	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) {
-		if(Stats_data[i].when == STATS_WHEN_WORKD && Skip_STATS_WHEN_WORKD) continue;
+		if(Stats_data[i].when == STATS_WHEN_WORKD || (compressor_on_timer < STATS_WORKD_TIME && HP.dFC.isRetOilWork())) continue;
 		//uint8_t skip_value = 0;
 		switch(Stats_data[i].object) {
 		case STATS_OBJ_Temp:
@@ -486,8 +483,6 @@ void Statistics::Update()
 			break;
 		}
 	}
-	counts++;
-	if(!Skip_STATS_WHEN_WORKD) counts_work++;
 //	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) journal.jprintf("%d=%d, ", i, Stats_data[i].value); journal.jprintf("\n");
 }
 
