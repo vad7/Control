@@ -3989,7 +3989,7 @@ void HeatPump::calculatePower()
 			else _power220 = dSDM.get_power() + dFC.get_power() - _power220;
 		} else
 #endif
-			if(dSDM.get_power() - _power220 < dFC.get_power() * 80 / 100) _power220 = dSDM.get_power(); else _power220 = dSDM.get_power() - _power220;
+			if(dSDM.get_power() - _power220 < dFC.get_power() * 8 / 10) _power220 = dSDM.get_power(); else _power220 = dSDM.get_power() - _power220; // <80%
 	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;
