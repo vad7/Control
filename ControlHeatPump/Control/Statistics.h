@@ -60,8 +60,8 @@ enum { // когда
 	STATS_WHEN_WORKD			// Во время работы компрессора, прошло STATS_WORKD_TIME
 	//STATS_WORK				// Во время работы компрессора
 };
-#define STATS_WORKD_TIME (90000UL/TIME_READ_SENSOR)					// 90 s
-#define STATS_WORKD_SKIP_TIME_HEAT_BOILER (12UL/TIME_READ_SENSOR)	// 12 s
+#define STATS_WORKD_TIME 					90000UL	// ms
+#define STATS_WORKD_SKIP_TIME_HEAT_BOILER	12000UL	// ms
 
 //static char *stats_format = { "%.1f", "" }; // printf format string
 
@@ -138,7 +138,7 @@ public:
 	int8_t	CreateOpenFile(uint8_t what);
 	void	History();										// Логирование параметров работы ТН, раз в 1 минуту
 
-	uint32_t compressor_on_timer;
+	uint32_t compressor_on_timer;							// ms
 private:
 	void	Error(const char *text, uint8_t what);
 	uint16_t counts;										// Кол-во уже совершенных обновлений

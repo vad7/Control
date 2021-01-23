@@ -377,7 +377,7 @@ void Statistics::Update()
 	if(compressor_on_timer >= STATS_WORKD_TIME && !HP.dFC.isRetOilWork()) counts_work++;
 	counts++;
 	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) {
-		if(Stats_data[i].when == STATS_WHEN_WORKD || (compressor_on_timer < STATS_WORKD_TIME && HP.dFC.isRetOilWork())) continue;
+		if(Stats_data[i].when == STATS_WHEN_WORKD && (compressor_on_timer < STATS_WORKD_TIME || HP.dFC.isRetOilWork())) continue;
 		//uint8_t skip_value = 0;
 		switch(Stats_data[i].object) {
 		case STATS_OBJ_Temp:
