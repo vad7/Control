@@ -419,7 +419,7 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Установленное время: "); HP.get_datetime((char*)time_TIME,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Адрес NTP сервера: "); HP.get_datetime((char*)time_NTP,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Часовой пояс (часы): "); HP.get_datetime((char*)time_TIMEZONE,Socket[thread].outBuf);STR_END;
-     strcat(Socket[thread].outBuf,"Синхронизация времени по NTP раз в сутки: "); HP.get_datetime((char*)time_UPDATE,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Синхронизация времени по NTP раз в сутки: "); HP.get_datetime((char*)time_fDT_Update,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Синхронизация раз в час с I2C часами: "); HP.get_datetime((char*)time_UPDATE_I2C,Socket[thread].outBuf);STR_END;
   
      sendBufferRTOS(thread,(byte*)Socket[thread].outBuf,strlen(Socket[thread].outBuf));  

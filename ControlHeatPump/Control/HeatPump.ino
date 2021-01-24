@@ -273,18 +273,6 @@ void HeatPump::scan_OneWire(char *result_str)
 	}
 }
 
-// Установить синхронизацию по NTP
-void HeatPump::set_updateNTP(boolean b)   
-{
-	if (b) SETBIT1(DateTime.flags,fUpdateNTP); else SETBIT0(DateTime.flags,fUpdateNTP);
-}
-
-// Получить флаг возможности синхронизации по NTP
-boolean HeatPump::get_updateNTP()
-{
-  return GETBIT(DateTime.flags,fUpdateNTP);
-}
-
 // Получить источник загрузки веб морды
 TYPE_SOURSE_WEB HeatPump::get_SourceWeb()
 {
@@ -795,8 +783,8 @@ void HeatPump::resetSettingHP()
 	SETBIT0(Network.flags, fNoPing);               // !save! Запрет пинга контроллера
 
 	// Время
-	SETBIT1(DateTime.flags, fUpdateNTP);           // Обновление часов по NTP
-	SETBIT1(DateTime.flags, fUpdateI2C);           // Обновление часов I2C
+	SETBIT1(DateTime.flags, fDT_Update);           // Обновление часов по NTP
+	SETBIT1(DateTime.flags, fDT_UpdateI2C);           // Обновление часов I2C
 
 	strcpy(DateTime.serverNTP, (char*) NTP_SERVER);  // NTP сервер по умолчанию
 
@@ -1009,25 +997,19 @@ boolean HeatPump::set_datetime(char *var, char *c)
 		else {
 			strcpy(DateTime.serverNTP, c);
 			return true;
-		}                           // ок сохраняем
-	} else if(strcmp(var, time_UPDATE) == 0) {
-		if(strcmp(c, cZero) == 0) {
-			SETBIT0(DateTime.flags, fUpdateNTP);
-			return true;
-		} else if(strcmp(c, cOne) == 0) {
-			SETBIT1(DateTime.flags, fUpdateNTP);
-			countNTP = 0;
-			return true;
-		} else return false;
+		}
+	} else if(strcmp(var, time_fDT_Update) == 0) {
+		bitWrite(DateTime.flags, fDT_Update, *c == '1');
+		countNTP = 0;
+		return true;
+	} else if(strcmp(var, time_fDT_UpdateByHTTP) == 0) {
+		bitWrite(DateTime.flags, fDT_UpdateByHTTP, *c == '1');
+		countNTP = 0;
+		return true;
 	} else if(strcmp(var, time_UPDATE_I2C) == 0) {
-		if(strcmp(c, cZero) == 0) {
-			SETBIT0(DateTime.flags, fUpdateI2C);
-			return true;
-		} else if(strcmp(c, cOne) == 0) {
-			SETBIT1(DateTime.flags, fUpdateI2C);
-			countNTP = 0;
-			return true;
-		} else return false;
+		bitWrite(DateTime.flags, fDT_UpdateI2C, *c == '1');
+		countNTP = 0;
+		return true;
 	} else return false;
 
 	updateDateTime(dTime);    // было изменено время, надо скорректировать переменные времени
@@ -1045,10 +1027,10 @@ void HeatPump::get_datetime(char *var, char *ret)
 		strcat(ret, NowDateToStr());
 	} else if(strcmp(var, time_NTP) == 0) {
 		strcat(ret, DateTime.serverNTP);
-	} else if(strcmp(var, time_UPDATE) == 0) {
-		if(GETBIT(DateTime.flags, fUpdateNTP)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
+	} else if(strcmp(var, time_fDT_Update) == 0) {
+		if(GETBIT(DateTime.flags, fDT_Update)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, time_UPDATE_I2C) == 0) {
-		if(GETBIT(DateTime.flags, fUpdateI2C)) strcat(ret, (char*) cOne);
+		if(GETBIT(DateTime.flags, fDT_UpdateI2C)) strcat(ret, (char*) cOne);
 		else strcat(ret, (char*) cZero);
 	} else strcat(ret, (char*) cInvalid);
 }

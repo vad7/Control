@@ -245,9 +245,9 @@ struct type_optionHP
 
 
 //  Работа с отдельными флагами type_DateTimeHP
-#define fUpdateNTP     0                // флаг Обновление часов c ссервером раз в сутки и при старте
-#define fUpdateI2C     1                // флаг Обновление часов раз в час с I2C  часами
-#define fUpdateByHTTP  2                // флаг Обновление по HTTP - спец страница: define HTTP_TIME_REQUEST
+#define fDT_Update        0                // флаг Обновление часов c сервером раз в сутки и при старте
+#define fDT_UpdateI2C     1                // флаг Обновление часов раз в час с I2C  часами
+#define fDT_UpdateByHTTP  2                // флаг Обновление по HTTP - спец страница: define HTTP_TIME_REQUEST
 // Структура для хранения настроек времени, для удобного сохранения.
 struct type_DateTimeHP
 {
@@ -498,13 +498,13 @@ public:
 
 // Времена
 	void set_countNTP(uint32_t b) {countNTP=b;}             // Установить текущее время обновления по NTP, (секундах)
-	uint32_t get_countNTP()  {return countNTP;}             // Получить время последнего обновления по NTP (секундах)
-	void set_updateNTP(boolean b);                          // Установить синхронизацию по NTP
-	boolean get_updateNTP();                                // Получить флаг возможности синхронизации по NTP
+	uint32_t get_countNTP() {return countNTP;}              // Получить время последнего обновления по NTP (секундах)
+	boolean get_updateNTP() { return GETBIT(DateTime.flags,fDT_Update); }// Получить флаг возможности синхронизации по NTP
 	unsigned long get_saveTime(){return  DateTime.saveTime;}// Получить время сохранения текущих настроек
 	char* get_serverNTP() {return DateTime.serverNTP;}      // Получить адрес сервера
 	void updateDateTime(int32_t  dTime);                    // После любого изменения часов необходимо пересчитать все времна которые используются
-	boolean  get_updateI2C(){return GETBIT(DateTime.flags,fUpdateI2C);}// Получить необходимость обновления часов I2C
+	boolean  get_updateI2C(){return GETBIT(DateTime.flags,fDT_UpdateI2C);}// Получить необходимость обновления часов I2C
+	inline bool get_UpdateByHTTP() { return GETBIT(DateTime.flags, fDT_UpdateByHTTP); }
 	unsigned long timeNTP;                                  // Время обновления по NTP в тиках (0-сразу обновляемся)
 
 	__attribute__((always_inline)) inline uint32_t get_uptime() {return rtcSAM3X8.unixtime()-timeON;} // Получить время с последенй перезагрузки в секундах

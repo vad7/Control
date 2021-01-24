@@ -48,7 +48,7 @@ int8_t set_time(void)
 	journal.jprintf(" Init SAM3X8E RTC\n");
 	rtcSAM3X8.init();                             // Запуск внутренних часов
 	uint32_t t = TimeToUnixTime(getTime_RtcI2C());
-	if(!(HP.get_updateNTP() && set_time_NTP())) { // Обновить время по NTP
+	if(!(HP.get_updateNTP() && ((HP.get_UpdateByHTTP() && set_time_HTTP()) || (!HP.get_UpdateByHTTP() && set_time_NTP())))) { // Обновить время по NTP
 		if(t > SEC_1970_TO_2000 + 366*24*60*60) {
 			rtcSAM3X8.set_clock(t);                // Установить внутренние часы по i2c
 			journal.jprintf(" Time updated from I2C RTC: %s %s\n", NowDateToStr(), NowTimeToStr());
@@ -61,7 +61,6 @@ int8_t set_time(void)
 	return OK;
 }
 
-#ifdef HTTP_TIME_REQUEST
 // Формат HTTP 1.0 GET запроса: "http://server:port/curr_time.csv"
 // Ответ: "UTC time sec;"
 #define NTP_buffer Socket[MAIN_WEB_TASK].outBuf
@@ -69,8 +68,9 @@ int8_t set_time(void)
 
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
 // Возврат true - успешно
-bool set_time_NTP(void)
+bool set_time_HTTP(void)
 {
+#ifdef HTTP_TIME_REQUEST
 	EthernetClient tTCP; // For get time
 	unsigned long secs = 0;
 	int8_t flag = 0;
@@ -165,9 +165,11 @@ bool set_time_NTP(void)
 	}
 	SemaphoreGive(xWebThreadSemaphore);
 	return flag > 0;
-}
-
 #else
+	journal.jprintf("HTTP Time sync is not compiled!\n");
+	return false;
+#endif // HTTP_TIME_REQUEST
+}
 
 // Функция обновления времени по ntp вызывается из задачи или кнопкой. true - если время обновлено
 // Запрос времени от NTP сервера, возвращает время как long
@@ -264,8 +266,6 @@ bool set_time_NTP(void)
 
 	return flag;
 }
-
-#endif // HTTP_TIME_REQUEST
 
 // Time: hours * 60 + minutes
 void strcat_time(char *buf, uint16_t t)

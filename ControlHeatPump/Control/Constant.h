@@ -636,7 +636,8 @@ const char *boil_fBoilerHeatElemSchPri={"TP"};
 const char *time_TIME       = {"TIME"};         // текущее время  12:45 без секунд
 const char *time_DATE       = {"DATE"};         // текушая дата типа  12/04/2016
 const char *time_NTP        = {"NTP"};          // адрес NTP сервера строка до 60 символов.
-const char *time_UPDATE     = {"UPDATE"};       // Время синхронизации с NTP сервером.
+const char *time_fDT_Update = {"UPDATE"};  		// Время синхронизации с NTP сервером.
+const char *time_fDT_UpdateByHTTP = {"UHTTP"};
 const char *time_TIMEZONE   = {"TIMEZONE"};     // Часовой пояс
 const char *time_UPDATE_I2C = {"UPDATE_I2C"};   // Синхронизация времени раз в час с i2c часами
 
