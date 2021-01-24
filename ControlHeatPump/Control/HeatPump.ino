@@ -3985,11 +3985,11 @@ void HeatPump::calculatePower()
 	if(dSDM.get_link()) {  // Если счетчик работает (связь не утеряна)
 #ifdef ADD_FC_POWER_WHEN_GENERATOR
 		if(GETBIT(Option.flags, fBackupPower)) { // добавить текущую мощность компрессора
-			if(dSDM.get_power() + dFC.get_power() - _power220 < dFC.get_power() * 8 / 10) _power220 = dSDM.get_power() + dFC.get_power(); // <80%
+			if(dSDM.get_power() + dFC.get_power() - _power220 < (int32_t)dFC.get_power() * 8 / 10) _power220 = dSDM.get_power() + dFC.get_power(); // <80%
 			else _power220 = dSDM.get_power() + dFC.get_power() - _power220;
 		} else
 #endif
-			if(dSDM.get_power() - _power220 < dFC.get_power() * 8 / 10) _power220 = dSDM.get_power(); else _power220 = dSDM.get_power() - _power220; // <80%
+			if(dSDM.get_power() - _power220 < (int32_t)dFC.get_power() * 8 / 10) _power220 = dSDM.get_power(); else _power220 = dSDM.get_power() - _power220; // <80%
 	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;
