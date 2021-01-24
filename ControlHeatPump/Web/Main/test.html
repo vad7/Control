@@ -17,8 +17,17 @@ function loadParam_after(paramid) {
 		document.getElementById("str1").innerHTML = "Целевая частота, Гц";
 		document.getElementById("str2").innerHTML = "Текущая частота, Гц";
 		document.getElementById("str3").innerHTML = "Мощность текущая";
+	} else if(paramid.indexOf("get_tblRelay")!=-1) {
+		var elements = document.getElementsByName('relay');
+		for(var j = 0; j < elements.length; j++) elements[j].disabled = true;
 	}
 }
+function show_all() {
+	var elements = document.getElementsByTagName('input');
+	for(i=0; i<elements.length; i++) elements[i].disabled = false;
+}
+
+
 function show_all() {
 	var elements = document.getElementsByTagName('input');
 	for(i=0; i<elements.length; i++) elements[i].disabled = false;
