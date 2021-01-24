@@ -48,7 +48,7 @@ int8_t set_time(void)
 	journal.jprintf(" Init SAM3X8E RTC\n");
 	rtcSAM3X8.init();                             // Запуск внутренних часов
 	uint32_t t = TimeToUnixTime(getTime_RtcI2C());
-	if(!(HP.get_updateNTP() && ((HP.get_UpdateByHTTP() && set_time_HTTP()) || (!HP.get_UpdateByHTTP() && set_time_NTP())))) { // Обновить время по NTP
+	if(!(HP.get_updateNTP() && ((HP.get_UpdateByHTTP() && set_time_HTTP(false)) || (!HP.get_UpdateByHTTP() && set_time_NTP(false))))) { // Обновить время по NTP
 		if(t > SEC_1970_TO_2000 + 366*24*60*60) {
 			rtcSAM3X8.set_clock(t);                // Установить внутренние часы по i2c
 			journal.jprintf(" Time updated from I2C RTC: %s %s\n", NowDateToStr(), NowTimeToStr());
@@ -68,7 +68,7 @@ int8_t set_time(void)
 
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
 // Возврат true - успешно
-bool set_time_HTTP(void)
+bool set_time_HTTP(bool upd_vars)
 {
 #ifdef HTTP_TIME_REQUEST
 	EthernetClient tTCP; // For get time
@@ -157,6 +157,10 @@ bool set_time_HTTP(void)
 		if(lt != secs) {
 			rtcSAM3X8.set_clock(secs, 0);    // обновить внутренние часы
 		}
+		if(upd_vars) {
+			secs = rtcSAM3X8.unixtime();
+			HP.updateDateTime(secs > lt ? secs - lt : -(lt - secs));  // Обновить переменные времени
+		}
 		// обновились, можно и часы i2c обновить
 		setTime_RtcI2C(rtcSAM3X8.get_hours(), rtcSAM3X8.get_minutes(), rtcSAM3X8.get_seconds());
 		setDate_RtcI2C(rtcSAM3X8.get_days(), rtcSAM3X8.get_months(), rtcSAM3X8.get_years());
@@ -174,7 +178,7 @@ bool set_time_HTTP(void)
 // Функция обновления времени по ntp вызывается из задачи или кнопкой. true - если время обновлено
 // Запрос времени от NTP сервера, возвращает время как long
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
-bool set_time_NTP(void)
+bool set_time_NTP(bool upd_vars)
 {
 	EthernetUDP Udp;                                    // Для NTP сервера
 	unsigned long secs;
@@ -254,6 +258,10 @@ bool set_time_NTP(void)
 	} // for
 	Udp.stop();
 	if(flag) {  // Обновление времени если оно получено
+		if(upd_vars) {
+			uint32_t oldTime = rtcSAM3X8.unixtime();
+			HP.updateDateTime(secs > oldTime ? secs - oldTime : -(oldTime - secs));  // Обновить переменные времени
+		}
 		rtcSAM3X8.set_clock(secs, TIME_ZONE);    // обновить внутренние часы
 		// обновились, можно и часы i2c обновить
 		setTime_RtcI2C(rtcSAM3X8.get_hours(), rtcSAM3X8.get_minutes(), rtcSAM3X8.get_seconds());

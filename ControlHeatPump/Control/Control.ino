@@ -1149,7 +1149,7 @@ void vWeb0(void *)
 			{
 				WEB_STORE_DEBUG_INFO(6);
 				HP.timeNTP = thisTime;
-				HP.updateDateTime(set_time_NTP());                                                 // Обновить время
+				if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
 				active = false;
 			}
 			// 6. ping сервера если это необходимо
