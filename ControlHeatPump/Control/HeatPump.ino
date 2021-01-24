@@ -696,7 +696,7 @@ void HeatPump::updateDateTime(int32_t dTime)
 #endif
 	}
 }
-      
+
 
 // -------------------------------------------------------------------------
 // НАСТРОЙКИ ТН ------------------------------------------------------------
@@ -1029,9 +1029,10 @@ void HeatPump::get_datetime(char *var, char *ret)
 		strcat(ret, DateTime.serverNTP);
 	} else if(strcmp(var, time_fDT_Update) == 0) {
 		if(GETBIT(DateTime.flags, fDT_Update)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
+	} else if(strcmp(var, time_fDT_UpdateByHTTP) == 0) {
+		if(GETBIT(DateTime.flags, fDT_UpdateByHTTP)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, time_UPDATE_I2C) == 0) {
-		if(GETBIT(DateTime.flags, fDT_UpdateI2C)) strcat(ret, (char*) cOne);
-		else strcat(ret, (char*) cZero);
+		if(GETBIT(DateTime.flags, fDT_UpdateI2C)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else strcat(ret, (char*) cInvalid);
 }
 
