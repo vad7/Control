@@ -389,6 +389,7 @@ void Statistics::Update()
 		case STATS_OBJ_Voltage:
 		    #ifdef USE_ELECTROMETER_SDM
 			newval = HP.dSDM.get_voltage();
+			if(newval == 0) continue;
 			#endif
 			break;
 		case STATS_OBJ_Power: {
@@ -455,6 +456,7 @@ void Statistics::Update()
 //			}
 //#endif
 			newval = HP.fullCOP;
+			if(newval == 0) continue;
 			//if(newval == 0) skip_value = 1;
 			break;
 		case STATS_OBJ_Sun:
