@@ -812,7 +812,8 @@ function autoheight() {
 	for(var i = columns.length - 1; i >= 0; i--) {
 		columns[i].style.minHeight = max_col_height; // устанавливаем высоту каждой колонки равной максимальной
 	}
-	document.body.style.minWidth = Math.max(document.body.clientWidth, document.body.scrollWidth);
+	var i = document.body.scrollWidth - document.body.clientWidth;
+	document.body.style.minWidth = i >= 0 && i < 20 ? document.body.clientWidth : Math.max(document.body.clientWidth, document.body.scrollWidth);
 }
 
 function calcacp() {
