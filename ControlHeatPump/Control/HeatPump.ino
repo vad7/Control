@@ -719,7 +719,7 @@ void HeatPump::resetSettingHP()
 	motoHour.E2 = 0.0;                              // Значение потреленный энергии в начале сезона актуально при использовании счетчика SDM120 (вычитаем текущее и получам итого)
 	motoHour.D1 = motoHour.D2 = rtcSAM3X8.unixtime(); // Дата сброса счетчиков
 
-	startPump = false;                              // Признак работы задачи насос
+	startPump = 0;                                  // Признак работы задачи насос
 	flagRBOILER = false;                            // не идет нагрев бойлера
 	HeatBoilerUrgently = 0;
 	fSD = false;                                    // СД карта не рабоатет
@@ -1056,7 +1056,14 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_SunTempOff)==0)   	   { Option.SunTempOff = rd(x, 100); return true;} else
 	if(strcmp(var,option_SunRegGeo)==0)        { Option.flags = (Option.flags & ~(1<<fSunRegenerateGeo)) | ((n!=0)<<fSunRegenerateGeo); return true; }else
 	if(strcmp(var,option_DailySwitchHysteresis)==0){ Option.DailySwitchHysteresis = rd(x, 10); return true;} else
-	if(strcmp(var,option_PUMP_WORK)==0)        {if ((n>=0)&&(n<=65535)) {Option.workPump=n; return true;} else return false;}else                // работа насоса конденсатора при выключенном компрессоре МИНУТЫ
+	if(strcmp(var,option_PUMP_WORK)==0)        {if ((n>=0)&&(n<=65535)) { // работа насоса конденсатора при выключенном компрессоре
+		Option.workPump = n;
+		if(n == 0 && startPump == 3) {
+			HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
+			HP.Pump_HeatFloor(false);					// выключить насос ТП
+		}
+		return true;
+	} else return false; }else
 	if(strcmp(var,option_PUMP_PAUSE)==0)       {if ((n>=0)&&(n<=65535)) {Option.pausePump=n; return true;} else return false;}else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
 	if(strcmp(var,option_ATTEMPT)==0)          { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else                // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       { if(n>0) { if (get_State()==pWORK_HP) clearChart(); Option.tChart = n; return true; } else return false; } else // Сбросить статистистику, начать отсчет заново
@@ -1763,7 +1770,7 @@ if(b && (get_modWork() & pBOILER)){
 			|| GETBIT(dRelay[RPUMPBH].flags, fR_StatusMain)
 #endif
 	)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
-		if(get_workPump() == 0 || get_pausePump()) {
+		if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
 			journal.jprintf(" Delay: stop OUT pump.\n");
 			for(uint16_t i = 0; i < Option.delayOffPump; i++) {
 				_delay(1000); // задержка перед выключение насосов после выключения компрессора (облегчение останова)
@@ -1797,16 +1804,21 @@ if(b && (get_modWork() & pBOILER)){
    		   	dRelay[RPUMPO].set_ON();               	// насос отопления
    		   	onBoiler = false;
    		}
+   		_delay(d);									// Задержка на d мсек
    	} else {
    		dRelay[RPUMPBH].set_OFF();					// насос бойлера
-   		dRelay[RPUMPO].set_OFF();                	// насос отопления
 		onBoiler = false;
 		offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+		if(!get_workPump() || get_pausePump() || get_modeHouse() == pOFF) {
+			dRelay[RPUMPO].set_OFF(); 				// насос отопления
+		}
+   		_delay(d);									// Задержка на d мсек
    	}
-   	_delay(d); 										// Задержка на d мсек
   #else
-   	dRelay[RPUMPO].set_Relay(b);                	// насос отопления
-   	_delay(d); 										// Задержка на d мсек
+   	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) {
+   		dRelay[RPUMPO].set_Relay(b);                // насос отопления
+   	}
+   	_delay(d);									// Задержка на d мсек
   #endif
 #endif // R3WAY
    	if(!b) {
@@ -1815,7 +1827,7 @@ if(b && (get_modWork() & pBOILER)){
    		dRelay[RSUPERBOILER].set_OFF();
 #endif
    	}
-  	Pump_HeatFloor(b); 				  				// насос ТП
+   	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) Pump_HeatFloor(b); // насос ТП
 
 }
 // Сброс инвертора если он стоит в ошибке, проверяется наличие инвертора и проверка ошибки после сброса
@@ -1928,13 +1940,6 @@ xGoWait:
 
 	Status.ret = pNone;                                    // Состояние алгоритма
 	lastEEV = -1;                                          // -1 это признак того что слежение eev еще не рабоатет (выключения компрессора  небыло)
-
-	if(startPump)                                      // Если задача не остановлена то остановить (0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл))
-	{
-		startPump = 0;                                     // Поставить признак останова задачи насос
-	    if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n",(char*)__FUNCTION__, "OFF");
-	}
-
 	offBoiler = 0;                                         // Бойлер никогда не выключался
 	onSalmonella = false;                                  // Если true то идет Обеззараживание
 	onBoiler = false;                                      // Если true то идет нагрев бойлера
@@ -2015,6 +2020,7 @@ xGoWait:
 			if(get_State() != pSTARTING_HP) return;
 		}    // Могли нажать кнопку стоп, выход из процесса запуска
 
+	startPump = 0; // Если задача не остановлена то остановить (0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл))
 	//  6. Конфигурируем 3 и 4-х клапаны и включаем насосы ПАУЗА после включения насосов
 	if(!configHP(Status.modWork)) return;
 
@@ -2098,13 +2104,12 @@ void HeatPump::StopWait(boolean stop)
 #endif
   }
     
-  if(startPump)
-  {
-     startPump = 0;                                    // Поставить признак что насос выключен
-     if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n",(char*)__FUNCTION__, "OFF");
-  }
+  startPump = 0;                                    // Задача насосов в паузе выключена
+  dRelay[PUMP_OUT].set_OFF();						// выключить насос отопления
+  Pump_HeatFloor(false);							// выключить насос ТП
+  if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s\n",(char*)__FUNCTION__, "OFF");
 
- // Принудительное выключение отдельных узлов ТН если они есть в конфиге
+  // Принудительное выключение отдельных узлов ТН если они есть в конфиге
   #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
      dRelay[RBOILER].set_OFF();  // выключить тэн бойлера
   #endif
@@ -2121,6 +2126,7 @@ void HeatPump::StopWait(boolean stop)
      dRelay[RPUMPBH].set_OFF();
   #endif
   SETBIT0(flags, fHP_BoilerTogetherHeat);
+
 
   #ifdef CONFIG_5  // случаи бывают разные - должно работать без костылей.- но лучше перебдеть -))
    relayAllOFF(); // Все выключить, все (на всякий случай), * внимание - выключатся реле по расписанию!
@@ -2690,10 +2696,10 @@ MODE_COMP HeatPump::UpdateHeat()
 			|| dRelay[RPUMPB].get_Relay()
 #endif
 		) dRelay[RSUPERBOILER].set_OFF();
-		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000)         { Status.ret=pHp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)         { Status.ret=pHp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		if(onBoiler) Status.ret=pHp15; else Status.ret=pHp12;            // если нужно показывем что бойлер греется от предкондесатора
 #else
-		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000)    { Status.ret=pHp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)    { Status.ret=pHp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		Status.ret=pHp12;   // Дошли до сюда - ПИД на подачу. Компресор работает
 #endif
 
@@ -2855,10 +2861,10 @@ MODE_COMP HeatPump::UpdateCool()
 
 #ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
 		if (sTemp[TCOMP].get_Temp()+SUPERBOILER_DT>sTemp[TBOILER].get_Temp())  dRelay[RSUPERBOILER].set_ON(); else dRelay[RSUPERBOILER].set_OFF();
-		if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000)         { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)         { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		if (onBoiler) Status.ret=pCp15; else Status.ret=pCp12;                                          // если нужно показывем что бойлер греется от предкондесатора
 #else
-		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000)    { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)    { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		Status.ret=pCp12;   // Дошли до сюда - ПИД на подачу. Компресор работает
 #endif
 
@@ -2948,20 +2954,16 @@ void HeatPump::vUpdate()
 		if(is_compressor_on()) {  // ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
 			compressorOFF();
 			configHP(Status.modWork);
-			if(!startPump && get_modeHouse() != pOFF)  // Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
-			{
-				pump_in_pause_timer = get_pausePump();
-				startPump = 1;                                 // Поставить признак запуска задачи насос
-				if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n", (char*) __FUNCTION__, "ON");     // Включить задачу насос кондесатора выключение в переключении насосов
-			}
-			command_completed = rtcSAM3X8.unixtime(); // поменялся режим
+			command_completed = rtcSAM3X8.unixtime();  // поменялся режим
+		}
+		if(!startPump && get_modeHouse() != pOFF) {    // Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
+			pump_in_pause_timer = get_pausePump();
+			startPump = 1;                             // Поставить признак запуска задачи насос
 		}
 	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
-		if(startPump)                                     // Остановить задачу насос
-		{
-			startPump = 0;                            // Поставить признак останова задачи насос
-			if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s. . .\n",(char*)__FUNCTION__, "OFF");
-		    command_completed = rtcSAM3X8.unixtime(); // поменялся режим
+		if(startPump) {                                // Остановить задачу насос
+			startPump = 0;                             // Поставить признак останова задачи насос
+		    command_completed = rtcSAM3X8.unixtime();  // поменялся режим
 		}
 		if(!check_compressor_pause()) {
 			if(configHP(Status.modWork)) {                   // Конфигурируем насосы
@@ -3313,10 +3315,9 @@ xNextStop:
 	if (get_errcode()==OK)                                 // Компрессор включить если нет ошибок
 	{
 		// Дополнительные защиты перед пуском компрессора
-		if (startPump)                                      // Проверка задачи насос - должен быть выключен
-		{
-			startPump=false;                               // Поставить признак останова задачи насос
-			if(get_workPump()) journal.jprintf(" WARNING! %s: Pumps in pause, OFF . . .\n",(char*)__FUNCTION__);
+		if (startPump) {                                     // Проверка задачи насос - должен быть выключен
+			startPump = 0;                                 // Поставить признак останова задачи насос
+			journal.jprintf(" WARNING! Pumps in pause active!\n");
 		}
 		#ifdef DEFROST
 		if(!(get_modWork() & pDEFROST))  // При разморозке есть лишние проверки

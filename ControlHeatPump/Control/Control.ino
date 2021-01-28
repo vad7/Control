@@ -1973,18 +1973,16 @@ void vServiceHP(void *)
 				}
 			}
 			if(HP.startPump) {  // Если разрешена работа насоса( 0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл))
-				if(HP.startPump == 1 && HP.get_pausePump() == 0 && HP.get_workPump()) { // Постоянно работают
-					goto xPumpsOn;
-				} else if(HP.get_workPump()) {
+				if(HP.get_workPump()) {
 					if(HP.pump_in_pause_timer <= 1) {
-						if(HP.startPump <= 2) { // включить
+						if(HP.startPump <= 2) { 						// включить
 							HP.pump_in_pause_timer = HP.get_workPump();
-xPumpsOn:					HP.dRelay[PUMP_OUT].set_ON();                  	// включить насос отопления
-							HP.Pump_HeatFloor(true);						// включить насос ТП
+							HP.dRelay[PUMP_OUT].set_ON();               // включить насос отопления
+							HP.Pump_HeatFloor(true);					// включить насос ТП
 							HP.startPump = 3;
-						} else { // выключить
-							HP.dRelay[PUMP_OUT].set_OFF();                 	// выключить насос отопления
-							HP.Pump_HeatFloor(false);						// выключить насос ТП
+						} else if(HP.get_pausePump()) { 				// выключить
+							HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
+							HP.Pump_HeatFloor(false);					// выключить насос ТП
 							HP.pump_in_pause_timer = HP.get_pausePump();
 							HP.startPump = 2;
 						}

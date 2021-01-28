@@ -122,7 +122,14 @@ void devVaconFC::set_nominal_power(void)
 {
 	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
 	typeof(nominal_power) n = nominal_power;
-	nominal_power = (uint32_t)read_0x03_16(FC_MOTOR_NVOLT) * 173 * read_0x03_16(FC_MOTOR_NA) / 100 * read_0x03_16(FC_MOTOR_NCOS) / 100 / 100;
+	uint32_t pwr;
+	pwr = read_0x03_16(FC_MOTOR_NVOLT) * 173;
+	if(err) return;
+	pwr *= read_0x03_16(FC_MOTOR_NA);
+	if(err) return;
+	pwr = pwr / 100 * read_0x03_16(FC_MOTOR_NCOS) / 100 / 100;
+	if(err) return;
+	nominal_power = pwr;
 #ifdef FC_CORRECT_NOMINAL_POWER
 	nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
@@ -447,6 +454,7 @@ int8_t devVaconFC::start_FC()
 		}
 	}
 	if(err == OK) {
+	    set_nominal_power();
 #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
 		HP.dRelay[RCOMP].set_ON();
 #else
@@ -463,7 +471,6 @@ xStarted:
         SETBIT1(flags, fErrFC);
         set_Error(err, name);  // генерация ошибки
     }
-    set_nominal_power();
 #else //  FC_ANALOG_CONTROL
 #ifdef DEMO
 #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
