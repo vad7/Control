@@ -42,7 +42,7 @@
 </script>
 <script type="text/javascript">
 	window.onload = function() {
-	loadParam("get_SCHDLR(On),get_SCHDLR(Active),get_SCHDLR(n_list),get_SCHDLR(Calendar),get_listProf2_skip2,get_SCHDLR(ASM),get_SCHDLR(ASW)");
+	loadParam("get_SCHDLR(On),get_SCHDLR(Active),get_SCHDLR(n_list),get_SCHDLR(Calendar),get_listProf2_skip2,get_SCHDLR(ASM),get_SCHDLR(ASW),get_SCHDLR(NS)");
 };
 function get_sch_index() {
 	return document.getElementById('get_schdlr-n_list').options.selectedIndex;
@@ -54,6 +54,7 @@ function process_calendar(save) {
 	else {
 		loadParam(str+",get_SCHDLR(ASM"+i+")",0,"get_schdlr-asm");
 		loadParam("get_SCHDLR(ASW"+i+")",0,"get_schdlr-asw");
+		loadParam("get_SCHDLR(NS"+i+")",0,"get_schdlr-ns");
 	}
 }
 function loadParam_after(paramid) {
@@ -80,7 +81,7 @@ function SelectNewProfile() {
         <input type="submit" value="?" onclick='location.assign("scheduler-help.html")' style="float:none;">
         </h1>
 	<div class="row1">
-		<table style="width: 50%;">
+		<table style="width: 55%;">
 		<tr><td style="width: 45%;">Работа по расписанию</td><td style="width: 55%;"><input type="checkbox" name="get_schdlr-on" id="get_schdlr-on" onChange="setParam('get_SCHDLR(On)');"></td></tr>
 		<tr><td>Текущее расписание: </td><td><select id="get_schdlr-n_list" onchange='process_calendar(0);'></select>
 			<input type="submit" value=">" onclick="setParam('get_SCHDLR(Active='+get_sch_index()+')');"></td></tr>

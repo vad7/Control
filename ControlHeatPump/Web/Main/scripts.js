@@ -3,7 +3,7 @@
 var VER_WEB = "1.125";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
-//var urlcontrol = 'http://192.168.0.199';
+var urlcontrol = 'http://192.168.0.199';
 //var urlcontrol = 'http://192.168.0.7';
 //var urlcontrol = 'http://77.50.254.24:25402';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения. Но не более времени обновления параметров
@@ -49,14 +49,10 @@ function setParam(paramid, resultid) {
 		elval = len + ";" + elval;
 		clear = false;
 	} else if((clear = equate = elid.indexOf("=")==-1)) { // Не (x=n)
-		if((element = document.getElementById(elid.toLowerCase()))) {
-			if(element.getAttribute('type') == 'checkbox') {
-				if(element.checked) elval = 1; else elval = 0;
-			} else elval = element.value;
-		} else { // not found, try resultid
-			element = document.getElementById(resultid);
-			elval = element.value;
-		}
+		if(!(element = document.getElementById(elid.toLowerCase())) && resultid) element = document.getElementById(resultid);
+		if(element.getAttribute('type') == 'checkbox') {
+			if(element.checked) elval = 1; else elval = 0;
+		} else elval = element.value;
 		//if(typeof elval == 'string') elval = elval.replace(/[,=&]+/g, "");
 	}
 	if(/_modeHP|_listProf|_testMode|_listIP/.test(paramid)) {
@@ -603,8 +599,11 @@ function loadParam(paramid, noretry, resultdiv) {
 											if(element.getAttribute("type") == "submit") alert("Ошибка " + values[1]);
 											else element.placeholder = values[1];
 										} else if(element != document.activeElement) {
-											element.innerHTML = values[1];
-											element.value = element.type == "number" ? values[1].replace(/[^-0-9.,]/g, "") : values[1];
+											if(element.getAttribute('type') == 'checkbox') element.checked = values[1] == 1;
+											else {
+												element.innerHTML = values[1];
+												element.value = element.type == "number" ? values[1].replace(/[^-0-9.,]/g, "") : values[1];
+											}
 										}
 									}
 									if((element = document.getElementById(valueid + "-hide"))) {

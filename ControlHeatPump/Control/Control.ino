@@ -455,7 +455,8 @@ x_I2C_init_std_message:
 		HP.load((uint8_t *)Socket[0].outBuf, 0);    // Загрузить настройки ТН
 		HP.Schdlr.load();							// Загрузка настроек расписания
 		HP.Prof.convert_to_new_version();
-		if(HP.Prof.load(HP.Option.numProf) < 0) journal.jprintf(" Error load profile #%d\n", HP.Option.numProf); // Загрузка текущего профиля
+		int e = HP.Prof.load(HP.Option.numProf);
+		if(e < 0) journal.jprintf(" Error %d load profile #%d\n", e, HP.Option.numProf); // Загрузка текущего профиля
 		if(HP.Option.ver <= 133) {
 			HP.save();
 		}
@@ -1658,7 +1659,6 @@ void vReadSensor_delay1ms(int32_t ms)
 									HP.Schdlr.sch_data.Active = i;
 									HP.Schdlr.sch_data.AutoSelectMonthWeek[i] |= fSch_AS_Changed;
 									need_save = true;
-									break;
 								}
 							} else if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed) {
 								HP.Schdlr.sch_data.AutoSelectMonthWeek[i] &= ~fSch_AS_Changed;

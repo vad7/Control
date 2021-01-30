@@ -193,7 +193,7 @@ uint8_t Scheduler::web_set_param(char *param, char *val)
 		if(cnum >= MAX_CALENDARS) return 1;
 		uint8_t n = atoi(val);
 		if(n == 0) sch_data.AutoSelectMonthWeek[cnum] &= fSch_AS_DontSwitch;
-		else sch_data.AutoSelectMonthWeek[cnum] = (sch_data.AutoSelectMonthWeek[cnum] & 0x3) | (n << 2);
+		else sch_data.AutoSelectMonthWeek[cnum] = (sch_data.AutoSelectMonthWeek[cnum] & (fSch_AS_DontSwitch | 0x3)) | (n << 2);
 	} else ifparam(WEB_SCH_AutoSelectWeek) {
 		if((cnum = param[sizeof(WEB_SCH_AutoSelectWeek)-1]) == '\0') cnum = sch_data.Active; else cnum -= '0';
 		if(cnum >= MAX_CALENDARS) return 1;
@@ -286,7 +286,7 @@ int16_t Scheduler::load(uint8_t *data)
 #ifndef LOAD_VERIFICATION
 	if(ret >= 0)
 #endif
-	    journal.jprintf("%d bytes Ok.\n", ret);
+	    journal.jprintf(" %d bytes Ok.\n", ret);
 	} else {
 		journal.jprintf("CRC mismatch!\n");
 	}
