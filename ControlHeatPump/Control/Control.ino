@@ -1643,7 +1643,7 @@ void vReadSensor_delay1ms(int32_t ms)
 		{  // error: jump to label [-fpermissive] GCC
 			// Переключение расписания, когда текущий месяц и дясятидневка совпадают; если пропустили из-за выключенного НК или работы,
 			// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
-			if(HP.Schdlr.IsShedulerOn()) {
+			if(HP.Schdlr.IsShedulerOn() && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[HP.Schdlr.sch_data.Active] & fSch_AS_DontSwitch)) {
 				uint8_t d = rtcSAM3X8.get_days();
 				if(Scheduler_check_day != d) {
 					Scheduler_check_day = d;
@@ -1652,16 +1652,16 @@ void vReadSensor_delay1ms(int32_t ms)
 					bool need_save = false;
 					for(uint8_t i = 0; i < MAX_CALENDARS; i++) {
 						if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i]) {
-							if((HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & ~0x80) == ((rtcSAM3X8.get_months() << 3) | d)) {
-								if(HP.Schdlr.sch_data.Active != i && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & 0x80)) {
+							if((HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & ~fSch_AS_Changed) == ((rtcSAM3X8.get_months() << 2) | d)) {
+								if(HP.Schdlr.sch_data.Active != i && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed)) {
 									journal.jprintf_time("Schedule %d selected\n", i + 1);
 									HP.Schdlr.sch_data.Active = i;
-									HP.Schdlr.sch_data.AutoSelectMonthWeek[i] |= 0x80;
+									HP.Schdlr.sch_data.AutoSelectMonthWeek[i] |= fSch_AS_Changed;
 									need_save = true;
 									break;
 								}
-							} else if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & 0x80) {
-								HP.Schdlr.sch_data.AutoSelectMonthWeek[i] &= ~0x80;
+							} else if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed) {
+								HP.Schdlr.sch_data.AutoSelectMonthWeek[i] &= ~fSch_AS_Changed;
 								need_save = true;
 							}
 						}

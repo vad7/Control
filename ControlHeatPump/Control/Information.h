@@ -183,8 +183,9 @@ struct type_settingHP {
 	uint8_t _reserved_;
 };
 
-#define LEN_PROFILE_NAME       25     // Длина имени профиля
-#define fEnabled               0      // Разрешение данного профайла использоваться в коротком списке
+#define LEN_PROFILE_NAME        25  // Длина имени профиля
+#define fEnabled                0   // Разрешение данного профайла использоваться в коротком списке
+#define fPro_Main				1	// Основной профиль (нельзя авто-переключаться по расписанию)
 struct type_dataProfile               // Хранение общих данных
 {
 	int8_t id;                          // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!)
