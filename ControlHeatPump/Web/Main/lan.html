@@ -1,22 +1,26 @@
-<html>
-<head>
-	<title>Сетевые настройки. Народный контроллер ТН</title>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="style.css">
-	<script type='text/javascript' src='scripts.js'></script>
-	<script type="text/javascript">
-		window.onload = function() {
-		loadParam("get_Net(NO_PING),get_Net(PING),get_Net(NSLP),get_Net(NO_ACK),get_Net(DELAY_ACK),get_Net(SIZE),get_Net(MAC),get_Net(PORT),get_Net(IP),get_Net(SUBNET),get_Net(GATEWAY),get_Net(DNS),get_Net(DHCP),get_Net(PASS),get_Net(PASSADMIN),get_Net(PASSUSER),get_Net(INIT),get_Net(NSLR),get_Net(NSLS),get_Net(WLOG),get_Net(WFLOG)");
-		updateParam("get_socketInfo,get_socketRes");
-	};
-	</script>
+<html><head>
+<title>Сетевые настройки. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type='text/javascript' src='scripts.js'></script>
+<script type="text/javascript">
+window.onload = function() {
+	loadParam("get_Net(NO_PING),get_Net(PING),get_Net(NSLP),get_Net(NO_ACK),get_Net(DELAY_ACK),get_Net(SIZE),get_Net(MAC),get_Net(PORT),get_Net(IP),get_Net(SUBNET),get_Net(GATEWAY),get_Net(DNS),get_Net(DHCP),get_Net(PASS),get_Net(PASSADMIN),get_Net(PASSUSER),get_Net(INIT),get_Net(NSLR),get_Net(NSLS),get_Net(WLOG),get_Net(WFLOG)");
+	updateParam("get_socketInfo,get_socketRes");
+};
+function clear_cache()
+{
+	caches.keys().then((keyList) => Promise.all(keyList.map((key) => caches.delete(key))));
+	location.reload(1);
+}
+</script>
 </head>
 <body class="test">
 <div id="menu" class="menu"><script src="menu.js"></script></div>
 <div class="content">
-	<h1>Сеть<input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'>
-	<input type="submit" value="?" onclick='location.assign("lan-help.html")' style="float:none;">
+	<h1>Сеть (Ctrl-F5 для обновления после ввода пароля)<input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'> 
+	<input type="submit" value="?" onclick='location.assign("lan-help.html")' style="float:none;"> <input type="submit" value="Обновить" onclick='clear_cache();'>
 	</h1>
 	<div class="row1">
 	<h2>Сетевые настройки <sup>1</sup></h2>
