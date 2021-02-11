@@ -155,10 +155,11 @@ void web_server(uint8_t thread)
 					{
 						// Для обычного пользователя подменить файл меню, для сокращения функционала
 						if(GETBIT(Socket[thread].flags, fUser)) {
-							if(strcmp(Socket[thread].inPtr, "menu.js") == 0) strcpy(Socket[thread].inPtr, "menu-user.js");
-							else if(strstr(Socket[thread].inPtr, ".html")) {
+							if(strstr(Socket[thread].inPtr, ".html")) {
 								if(!(strcmp(Socket[thread].inPtr, "index.html") == 0
 									|| strcmp(Socket[thread].inPtr, "plan.html") == 0
+									|| strcmp(Socket[thread].inPtr, "stats.html") == 0
+									|| strcmp(Socket[thread].inPtr, "history.html") == 0
 									|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
 							}
 						}
@@ -535,6 +536,11 @@ void parserGET(uint8_t thread, int8_t )
 			continue;
 		}
 
+		if(strcmp(str, "USR") == 0) {// Команда USR
+			strcat(strReturn, GETBIT(Socket[thread].flags, fUser) ? "1" : "0");
+			ADD_WEBDELIM(strReturn) ;
+			continue;
+		}
 		if (strcmp(str,"get_version")==0) // Команда get_version
 		{
 			strcat(strReturn,VERSION);
