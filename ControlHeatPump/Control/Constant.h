@@ -425,6 +425,7 @@ const char *cAddHeat = {"+"};                                   // Значек 
 const char http_get_str1[] = "GET ";
 const char http_get_str2[] = " HTTP/1.0\r\nHost: ";
 const char http_get_str3[] = "\r\nAccept: text/html\r\n\r\n";
+const char header_Authorization_1[] = "Authorization: Basic ";
 const char http_key_ok1[]  = "HTTP/"; // "1.1"
 const char http_key_ok2[]  = " 200 OK\r\n";
 const char http_Length[]   = "Content-Length: "; // где лежит длина файла

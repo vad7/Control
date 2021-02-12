@@ -50,7 +50,6 @@ static const char *noteRemarkTest[] = {"Тестирование отключе�
                                
 const char* file_types[] = {"text/html", "image/x-icon", "text/css", "application/javascript", "image/jpeg", "image/png", "image/gif", "text/plain", "text/ajax"};
 
-const char header_Authorization_1[] = "Authorization: Basic ";
 const char header_Authorization_2[] = "&&!Z";
 const char* pageUnauthorized      = {"HTTP/1.0 401 Unauthorized\r\nWWW-Authenticate: Basic real_m=Admin Zone\r\nContent-Type: text/html\r\nAccess-Control-Allow-Origin: *\r\n\r\n"};
 const char* NO_SUPPORT            = {"not supported"};
@@ -208,7 +207,7 @@ xUNAUTHORIZED:
 						if(HP.get_NetworkFlags() & (1<<fWebLogError)) {
 							uint8_t ip[4];
 							W5100.readSnDIPR(sock, ip);
-							journal.jprintf("$UNAUTHORIZED (%d.%d.%d.%d)\n", ip[0], ip[1], ip[2], ip[3]);
+							journal.jprintf("$UNAUTHORIZED: %d.%d.%d.%d\n", ip[0], ip[1], ip[2], ip[3]);
 						}
 						sendConstRTOS(thread, pageUnauthorized);
 						break;
@@ -224,7 +223,7 @@ xUNAUTHORIZED:
 					}
 
 					default:
-						journal.jprintf("$Unknow  %s\n", (char*) Socket[thread].inBuf);
+						journal.jprintf("$Unknow: %s\n", (char*) Socket[thread].inBuf);
 					}
 
 					SPI_switchW5200();

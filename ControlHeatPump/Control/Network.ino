@@ -651,11 +651,11 @@ void pingW5200(boolean f)
 }
 
 // Запрос на сервер с ожиданием ответа, веб блокируется, вызов из MAIN_WEB_TASK
-// HTTP 1.0 GET, timeout - ms
+// HTTP 1.0 GET, timeout - ms, auth без завершающих "\r\n"
 // Ответ: "str=x", Возврат: int(x). Ошибка x <= -2000000000;
 // fget_value: 0 - не читать ответ, 1 - считать тело ответа в Socket[MAIN_WEB_TASK].outBuf, 4 - #1 + проверить Content-Length
 //             2 - вернуть значение после '=', 3 - проверить на "Ok"
-int Send_HTTP_Request(const char *server, const char *request, uint8_t fget_value)
+int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8_t fget_value)
 {
 	static int8_t Last_Error = 0;
 	if(server == NULL || request == NULL) return -2000000004;
@@ -683,6 +683,11 @@ int Send_HTTP_Request(const char *server, const char *request, uint8_t fget_valu
 			strcpy((char*)buffer + sizeof(http_get_str1)-1, request);
 			strcat((char*)buffer + sizeof(http_get_str1)-1, http_get_str2);
 			strcat((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1, server);
+			strcat((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1, "\r\n");
+			if(*auth) {
+				strcat((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1, header_Authorization_1);
+				strcat((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1 + sizeof(header_Authorization_1)-1, auth);
+			}
 			strcat((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1, http_get_str3);
 			if(tTCP.write(buffer, strlen((char*)buffer + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1 + sizeof(http_get_str3)-1) + sizeof(http_get_str1)-1 + sizeof(http_get_str2)-1 + sizeof(http_get_str3)-1) == 0) {
 				ret = -2000000011;
@@ -764,8 +769,8 @@ xget_value_1:
 									}
 								} else {
 									buffer[sizeof(http_key_ok2) + 3] = '\0';
-									if(HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) {
-										journal.jprintf(" ERR %s", buffer);
+//									if(HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) {
+//										journal.jprintf(" ERR %s", buffer);
 //										if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
 //											int datasize;
 //											while((datasize = tTCP.available())) {
@@ -774,7 +779,7 @@ xget_value_1:
 //											}
 //											journal.jprintf("\n");
 //										}
-									}
+//									}
 									ret = -2000000008;
 								}
 							} else ret = -2000000007;
