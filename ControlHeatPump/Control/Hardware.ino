@@ -947,6 +947,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 				if(DebugToLog) journal.jprintf(",skip:%d\n", pidw.max);
 				pidw.max--;
 			} else {	// Основной перегрев
+				newEEV = 0;
 				if(pidw.pre_err < -_data.pid2_delta) { // Перегрев больше, проверка порога - открыть ЭРВ
 					if(pidw.trend[trOH_default] >= _data.trend_threshold) {
 						if(DebugToLog) journal.jprintf(";#1");
@@ -979,7 +980,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 xSecond:			if(diff < -_data.tOverheatTCOMP_delta) { // Перегрев больше, проверка порога - открыть ЭРВ
 						if(pidw.trend[trOH_TCOMP] >= _data.trend_threshold) {
 							if(DebugToLog) journal.jprintf(";#5");
-							newEEV = 1;
+							newEEV += 1;
 							pidw.trend[trOH_TCOMP] = 0;
 						}
 					} else if(diff > _data.tOverheatTCOMP_delta) {
@@ -1017,16 +1018,17 @@ xSecond:			if(diff < -_data.tOverheatTCOMP_delta) { // Перегрев боль
 							    pidw.trend[trOH_TCOMP] = 0;
 							} else if(diff - pidw.pre_err2[0] > -_data.tOverheat2_low_hyst) {
 								if(DebugToLog) journal.jprintf(";#A");
-								newEEV = -1;
+								newEEV += -1;
 							}
 						} else if(pidw.trend[trOH_TCOMP] <= -_data.trend_threshold) {
 xSecond_sub_1:				if(pidw.hyst[0] > 0) {
 								if(DebugToLog) journal.jprintf(";#B");
-								newEEV = -1;
+								newEEV += -1;
 								pidw.trend[trOH_TCOMP] = 0;
 							}
 						}
-					} else if(fast) {
+					}
+					if(fast && newEEV == 0) {
 						if(DebugToLog) journal.jprintf(";#F");
 						//if(pidw.hyst[0] > 0)
 						newEEV = fast;
