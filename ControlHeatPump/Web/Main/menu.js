@@ -14,7 +14,7 @@ document.write('\
 <ul class="cd-accordion-menu">\
 <li class="index"><a href="index.html"><i></i>Состояние</a></li>\
 <li class="plan"><a href="plan.html"><i></i>Схема ТН</a></li>\
-<li name="USR" class="heating gvs profiles scheduler has-children" hidden>\
+<li name="USR" class="heating gvs profiles scheduler has-children">\
 	<input type="checkbox" name="group-1" id="group-1">\
 	<label for="group-1"><i></i>Отопление и ГВС</label>\
 	<ul>\
