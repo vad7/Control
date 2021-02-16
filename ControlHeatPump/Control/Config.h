@@ -4058,8 +4058,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WR_SKIP_EXTREMUM		200								// Отбрасывать пиковое значение больше Вт
 
 	#define HTTP_MAP_Server			"192.168.0.9"					// Адрес системы мониторинга Malina2 инвертора МАП МикроАрт
-	#define HTTP_MAP_Server_Login	"admin"
-	#define HTTP_MAP_Server_Pass	"admin"
+	#define HTTP_MAP_Server_Login	"admin"							// Пароль - HP.Option.Microart_pass
 	#define HTTP_MAP_Read_MAP		"/read_json.php?device=map"		// Запрос чтения массива данных МАП
 	#define HTTP_MAP_Read_MPPT		"/read_json.php?device=mppt"	// Запрос чтения массива данных КЭС
 	#define HTTP_MAP_RELAY_SW_1		"/write_sec.php?id=1&relay="	// 1..HTTP_MAP_RELAY_MAX

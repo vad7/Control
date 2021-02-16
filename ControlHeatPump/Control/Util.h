@@ -36,6 +36,14 @@ void _dtoa(char *outstr, int val, int precision);
 char* NowTimeToStr(char *buf = NULL);
 char* NowDateToStr(char *buf = NULL);
 
+// Структура для хранения переменных для паролей
+struct type_WebSecurity
+{
+	uint8_t len;
+	char *hash;
+};
+void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass);
+
 extern uint8_t PWMEnabled;
 extern uint8_t TCChanEnabled[];
 #define sizeof_TCChanEnabled 9

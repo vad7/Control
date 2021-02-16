@@ -468,8 +468,14 @@ x_I2C_init_std_message:
 		}
 	}
 	// обновить хеш для пользователей
-	HP.set_hashUser();
-	HP.set_hashAdmin();
+	calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, HP.get_passUser());
+	calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, HP.get_passAdmin());
+#ifdef HTTP_MAP_Server
+	journal.jprintf("MicroArt Malina server: %s", HTTP_MAP_Server);
+#ifdef HTTP_MAP_Server_Login
+	calc_WebSec_hash(&WebSec_Microart, (char*)HTTP_MAP_Server_Login, HP.Option.Microart_pass);
+#endif
+#endif
 
 	// 7. Инициализация СД карты и запоминание результата 3 попытки
 #ifndef NO_SD_CARD
@@ -642,7 +648,7 @@ x_I2C_init_std_message:
 
 	//journal.jprintf("16. Send a notification . . .\n");
 	//HP.message.setMessage(pMESSAGE_RESET,(char*)"Контроллер теплового насоса был сброшен",0);    // сформировать уведомление о сбросе контролла
-	journal.jprintf("17. Information:\n");
+	journal.jprintf("16. Information:\n");
 	freeRamShow();
 	HP.startRAM=freeRam()-HP.mRTOS;   // оценка свободной памяти до пуска шедулера, поправка на 1054 байта
 	journal.jprintf("FREE MEMORY %d bytes\n",HP.startRAM);
@@ -734,7 +740,7 @@ void vWeb0(void *)
 #ifdef PIN_WR_Boiler_Substitution
 	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
 #endif
-	journal.jprintf("WattRouter running\n");
+	journal.jprintf("WattRouter started\n");
 #endif
 
 	HP.timeNTP = thisTime = FreqTime = xTaskGetTickCount();        // В первый момент не обновляем
@@ -758,7 +764,7 @@ void vWeb0(void *)
 				if(GETBIT(HP.Option.flags, fBackupPower) != Request_LowConsume || (RepeatLowConsumeRequest && --RepeatLowConsumeRequest == 0)) {
 					strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_LowConsumeRequest);
 					_itoa(GETBIT(HP.Option.flags, fBackupPower), Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_LowConsumeRequest)-1);
-					int err = Send_HTTP_Request(HTTP_LowConsumeServer, Socket[MAIN_WEB_TASK].outBuf, false);
+					int err = Send_HTTP_Request(HTTP_LowConsumeServer, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, false);
 					if(err != -2000000000) {
 						if(err > -2000000000) Request_LowConsume = GETBIT(HP.Option.flags, fBackupPower);
 						else RepeatLowConsumeRequest = (uint16_t)(HTTP_REQUEST_ERR_REPEAT * 1000 / WEB0_OTHER_JOB_PERIOD + 1);
@@ -1187,7 +1193,7 @@ void vWeb0(void *)
 				WF_BoilerTargetPercent = 100;
 				if(rtcSAM3X8.get_hours() == WR.WF_Hour && strlen(HP.Option.WF_ReqServer)) {
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, HP.Option.WF_ReqText, 4);
+					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
 					if(err != 0) {
 						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || (rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 49)) journal.jprintf_time("WF: Request Error %d\n", err);
 					} else if(WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf) == OK) {
@@ -1215,7 +1221,7 @@ void vWeb0(void *)
 						_itoa(rel, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
-						if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+						if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
 							SETBIT0(Logflags, fLog_HTTP_RelayError);
 							//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 						} else {

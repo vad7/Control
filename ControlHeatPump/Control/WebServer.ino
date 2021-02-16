@@ -2022,6 +2022,10 @@ xGetOptionHP:
 					strcat(strReturn, HP.Option.WF_ReqServer);
 				} else if(strcmp(x, option_WF_ReqText)==0) {
 					strcat(strReturn, HP.Option.WF_ReqText);
+				} else if(strcmp(x, option_Microart_login)==0) {
+					strcat(strReturn, HTTP_MAP_Server_Login);
+				} else if(strcmp(x, option_Microart_pass)==0) {
+					strcat(strReturn, HP.Option.Microart_pass);
 				} else
 #endif
 					HP.get_optionHP(x, strReturn);
@@ -2040,6 +2044,9 @@ xGetOptionHP:
 						goto xGetOptionHP;
 					} else if(strcmp(x, option_WF_ReqText)==0) {
 						strncpy(HP.Option.WF_ReqText, z, sizeof(HP.Option.WF_ReqText)-1);
+						goto xGetOptionHP;
+					} else if(strcmp(x, option_Microart_pass)==0) {
+						strncpy(HP.Option.Microart_pass, z, sizeof(HP.Option.Microart_pass)-1);
 						goto xGetOptionHP;
 					}
 #endif
@@ -2884,8 +2891,9 @@ uint16_t GetRequestedHttpResource(uint8_t thread)
 		if(str) str += sizeof(header_Authorization_1) - 1;
 		else if((str = strstr((char*)Socket[thread].inBuf, header_Authorization_2))) str += sizeof(header_Authorization_2) - 1;
 		if(str) {
-			if(strncmp(str, HP.Security.hashAdmin, HP.Security.hashAdminLen) == 0) goto x_ok;
-			else if(strncmp(str, HP.Security.hashUser, HP.Security.hashUserLen) == 0 || !*HP.get_passUser()) SETBIT1(Socket[thread].flags, fUser); else return BAD_LOGIN_PASS;
+			if(strncmp(str, WebSec_admin.hash, WebSec_admin.len) == 0) goto x_ok;
+			else if(!*HP.get_passUser() || strncmp(str, WebSec_user.hash, WebSec_user.len) == 0) SETBIT1(Socket[thread].flags, fUser);
+			else return BAD_LOGIN_PASS;
 		} else if(!*HP.get_passUser()) SETBIT1(Socket[thread].flags, fUser); else return UNAUTHORIZED;
 	}
 x_ok:

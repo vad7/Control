@@ -172,6 +172,12 @@ uint8_t WF_BoilerTargetPercent = 100;
 #endif
 #endif
 
+type_WebSecurity WebSec_user;				// хеш паролей
+type_WebSecurity WebSec_admin;				// хеш паролей
+#ifdef HTTP_MAP_Server
+type_WebSecurity WebSec_Microart;			// хеш паролей
+#endif
+
 // Рабочие флаги ТН
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
 #define fHP_SunNotInited		1			// Солнечный коллектор не инициализирован
@@ -241,6 +247,7 @@ struct type_optionHP
  char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
+ char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 };// __attribute__((packed));
 
 
@@ -284,15 +291,6 @@ struct type_NetworkHP
     uint8_t delayAck;                     // !save! задержка мсек перед отправкой пакета
     char pingAdr[40];                     // !save! адрес для пинга, может быть в любом виде
     uint16_t pingTime;                    // !save! время пинга в секундах
-};
-
-// Структура для хранения переменных для паролей
-struct type_SecurityHP
-{
-  char hashUser[80];                      // Хеш для пользоваетля
-  uint16_t hashUserLen;                   // Длина хеша пользователя
-  char hashAdmin[80];                     // Хеш для администратора
-  uint16_t hashAdminLen;                  // Длина хеша администратора
 };
 
 // Структура для хранения состояния ТН в момент работы.
@@ -401,9 +399,6 @@ public:
 	//  inline uint16_t get_sizePacket() {return Network.sizePacket;} // Получить размер пакета при передаче
 	inline uint16_t get_sizePacket() {return 2048;} // Получить размер пакета при передаче
 
-	uint8_t set_hashUser();                               // расчитать хеш для пользователя возвращает длину хеша
-	uint8_t set_hashAdmin();                              // расчитать хеш для администратора возвращает длину хеша
-
 // Дата время
 	boolean set_datetime(char *var, char *c);              //  Установить параметр дата и время из строки
 	void    get_datetime(char *var,char *ret);             //  Получить параметр дата и время из строки
@@ -432,6 +427,7 @@ public:
 	boolean get_fPass() { return GETBIT(Network.flags,fPass);}   //  Получить флаг необходимости идентификации
 	boolean get_fInitW5200() { return GETBIT(Network.flags,fInitW5200);}  //  Получить флаг Контроля w5200
 	inline  char* get_passUser() { return Network.passUser; }
+	inline  char* get_passAdmin() { return Network.passAdmin; }
 
 // Параметры ТН
 	boolean set_optionHP(char *var, float x);                // Установить опции ТН из числа (float)
@@ -540,7 +536,6 @@ public:
 	uint8_t PauseStart;                                    // 1 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
 
 	uint8_t startPump;                                     // Признак запуска задачи насос 0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл)
-	type_SecurityHP Security;                              // хеш паролей
 	boolean safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)
 
 

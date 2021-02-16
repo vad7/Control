@@ -584,6 +584,26 @@ uint8_t initSpiDisk(boolean show)
 #endif
 }
 
+// расчитать хеш для пользователя
+void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass)
+{
+	char buf[64];
+	char outbuf[128];
+	journal.jprintf(" Hash %s: ", login);
+	strcpy(buf, login);
+	strcat(buf, ":");
+	strcat(buf, pass);
+	base64_encode(outbuf, buf, strlen(buf));
+	ws->len = strlen(outbuf);
+	ws->hash = (char*)malloc(ws->len + 1);
+	if(!ws->hash) journal.jprintf(" MEMORY LOW!\n");
+	else {
+		memcpy(ws->hash, outbuf, ws->len);
+		*(ws->hash + ws->len) = '\0';
+		journal.jprintf("%s\n", ws->hash);
+	}
+}
+
 // base64 -хеш функция ------------------------------------------------------------------------------------------------
 /* Copyright (c) 2013 Adam Rudd. */
 const char b64_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -1116,7 +1136,7 @@ void WR_Switch_Load(uint8_t idx, boolean On)
 		_itoa(abs(pin), Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 		strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 		_itoa(On, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
-		if(Send_HTTP_Request(HTTP_MAP_Server, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+		if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
 			SETBIT0(Logflags, fLog_HTTP_RelayError);
 			goto xSwitched;
 		} else {
@@ -1214,7 +1234,7 @@ inline int16_t WR_Adjust_PWM_delta(uint8_t idx, int16_t delta)
 // 0 - Oшибка, 1 - Нет свободной энергии, 2 - Нужна пауза, 3 - Есть свободная энергия
 int8_t WR_Check_MPPT(void)
 {
-	int err = Send_HTTP_Request(HTTP_MAP_Server, HTTP_MAP_Read_MPPT, 1);
+	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
 		if(testMode != NORMAL) {
 #ifdef WR_PowerMeter_Modbus
