@@ -585,20 +585,21 @@ uint8_t initSpiDisk(boolean show)
 }
 
 // расчитать хеш для пользователя
-void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass)
+void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass, char *buf)
 {
-	char buf[64];
-	char outbuf[128];
 	journal.jprintf(" Hash %s: ", login);
+	if(ws->hash) free(ws->hash);
 	strcpy(buf, login);
 	strcat(buf, ":");
 	strcat(buf, pass);
-	base64_encode(outbuf, buf, strlen(buf));
-	ws->len = strlen(outbuf);
+	int len = strlen(buf);
+	base64_encode(buf + len + 1, buf, len);
+	buf += len + 1;
+	ws->len = strlen(buf);
 	ws->hash = (char*)malloc(ws->len + 1);
 	if(!ws->hash) journal.jprintf(" MEMORY LOW!\n");
 	else {
-		memcpy(ws->hash, outbuf, ws->len);
+		memcpy(ws->hash, buf, ws->len);
 		*(ws->hash + ws->len) = '\0';
 		journal.jprintf("%s\n", ws->hash);
 	}

@@ -1943,9 +1943,10 @@ void parserGET(uint8_t thread, int8_t )
 				ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"set_Net")==0)           // Функция set_Network - установить значение паремтра Network
 			{
-				if (HP.set_network(x,z))  HP.get_network(x,strReturn);     // преобразование удачно
+				if (HP.set_network(x,z)) HP.get_network(x,strReturn);     // преобразование удачно
 				else strcat(strReturn,"E15") ; // ошибка преобразования строки
-				ADD_WEBDELIM(strReturn) ; continue;
+				ADD_WEBDELIM(strReturn);
+				break;
 			}
 
 			//11.  Графики -------------------------------------------
@@ -2047,7 +2048,10 @@ xGetOptionHP:
 						goto xGetOptionHP;
 					} else if(strcmp(x, option_Microart_pass)==0) {
 						strncpy(HP.Option.Microart_pass, z, sizeof(HP.Option.Microart_pass)-1);
-						goto xGetOptionHP;
+						calc_WebSec_hash(&WebSec_Microart, (char*)HTTP_MAP_Server_Login, HP.Option.Microart_pass, x + sizeof(option_Microart_pass));
+						strcat(strReturn, HP.Option.Microart_pass);
+						ADD_WEBDELIM(strReturn);
+						break;
 					}
 #endif
 					strcat(strReturn, "E11");   // ошибка преобразования во флоат
@@ -2891,8 +2895,8 @@ uint16_t GetRequestedHttpResource(uint8_t thread)
 		if(str) str += sizeof(header_Authorization_1) - 1;
 		else if((str = strstr((char*)Socket[thread].inBuf, header_Authorization_2))) str += sizeof(header_Authorization_2) - 1;
 		if(str) {
-			if(strncmp(str, WebSec_admin.hash, WebSec_admin.len) == 0) goto x_ok;
-			else if(!*HP.get_passUser() || strncmp(str, WebSec_user.hash, WebSec_user.len) == 0) SETBIT1(Socket[thread].flags, fUser);
+			if(WebSec_admin.hash && strncmp(str, WebSec_admin.hash, WebSec_admin.len) == 0) goto x_ok;
+			else if(!*HP.get_passUser() || !WebSec_user.hash || strncmp(str, WebSec_user.hash, WebSec_user.len) == 0) SETBIT1(Socket[thread].flags, fUser);
 			else return BAD_LOGIN_PASS;
 		} else if(!*HP.get_passUser()) SETBIT1(Socket[thread].flags, fUser); else return UNAUTHORIZED;
 	}

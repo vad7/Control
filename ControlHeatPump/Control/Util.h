@@ -42,7 +42,7 @@ struct type_WebSecurity
 	uint8_t len;
 	char *hash;
 };
-void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass);
+void calc_WebSec_hash(type_WebSecurity *ws, char *login, char *pass, char *buf);
 
 extern uint8_t PWMEnabled;
 extern uint8_t TCChanEnabled[];

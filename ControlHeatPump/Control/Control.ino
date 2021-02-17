@@ -271,7 +271,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	_delay(1);
+	//_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -468,12 +468,14 @@ x_I2C_init_std_message:
 		}
 	}
 	// обновить хеш для пользователей
-	calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, HP.get_passUser());
-	calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, HP.get_passAdmin());
+	WebSec_user.hash = WebSec_admin.hash = NULL;
+	calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, HP.get_passUser(), Socket[0].outBuf);
+	calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, HP.get_passAdmin(), Socket[0].outBuf);
 #ifdef HTTP_MAP_Server
 	journal.jprintf(" Microart Malina server: %s", HTTP_MAP_Server);
 #ifdef HTTP_MAP_Server_Login
-	calc_WebSec_hash(&WebSec_Microart, (char*)HTTP_MAP_Server_Login, HP.Option.Microart_pass);
+	WebSec_Microart.hash = NULL;
+	calc_WebSec_hash(&WebSec_Microart, (char*)HTTP_MAP_Server_Login, HP.Option.Microart_pass, Socket[0].outBuf);
 #endif
 #endif
 

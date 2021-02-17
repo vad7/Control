@@ -873,8 +873,8 @@ boolean HeatPump::set_network(char *var, char *c)
                                     else if (x == 1) {SETBIT1(Network.flags,fPass);  return true;}
                                     else return false;  
                                     }else
- if(strcmp(var,net_PASSUSER)==0){    strncpy(Network.passUser,c, PASS_LEN); calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, Network.passUser); return true; }else
- if(strcmp(var,net_PASSADMIN)==0){   strncpy(Network.passAdmin,c, PASS_LEN); calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, Network.passAdmin); return true; }else
+ if(strcmp(var,net_PASSUSER)==0){    strncpy(Network.passUser,c, PASS_LEN); calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, Network.passUser, var + sizeof(net_PASSUSER)); return true; }else
+ if(strcmp(var,net_PASSADMIN)==0){   strncpy(Network.passAdmin,c, PASS_LEN); calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, Network.passAdmin, var + sizeof(net_PASSADMIN)); return true; }else
  if(strcmp(var, net_fWebLogError) == 0) { Network.flags = (Network.flags & ~(1<<fWebLogError)) | ((x == 1)<<fWebLogError); return true; } else
  if(strcmp(var, net_fWebFullLog) == 0) { Network.flags = (Network.flags & ~(1<<fWebFullLog)) | ((x == 1)<<fWebFullLog); return true; } else
  if(strcmp(var,net_SIZE_PACKET)==0){
