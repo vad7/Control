@@ -992,7 +992,7 @@ xSecond:			if(diff < -_data.tOverheatTCOMP_delta) { // Перегрев боль
 								newEEV = diff - pidw.pre_err2[0];
 								if(newEEV >= 0) { //newEEV > _data.tOverheat2_low_hyst) {
 									if(DebugToLog) journal.jprintf(";#7");
-									newEEV = diff * _data.pid.Kp / (100*1000);
+									newEEV = diff * _data.pid2.Kp / (100*1000);
 									pidw.max = 1;
 									pidw.trend[trOH_default] = 0;
 								    pidw.trend[trOH_TCOMP] = 0;
@@ -1012,7 +1012,7 @@ xSecond:			if(diff < -_data.tOverheatTCOMP_delta) { // Перегрев боль
 						    	else if(diff - pidw.pre_err2[0] > _data.tOverheat2_low_hyst) newEEV = 4;
 						    	else goto xSecond_sub_1;
 								if(DebugToLog) journal.jprintf(";N%d", newEEV);
-								newEEV = diff * _data.pid.Kp / (100*1000) / newEEV - 1;
+								newEEV = diff * _data.pid2.Kp / (100*1000) / newEEV - 1;
 								pidw.max = 1;
 								pidw.trend[trOH_default] = 0;
 							    pidw.trend[trOH_TCOMP] = 0;
@@ -1031,7 +1031,7 @@ xSecond_sub_1:				if(pidw.hyst[0] > 0) {
 					if(fast && newEEV == 0) {
 						if(DebugToLog) journal.jprintf(";#F");
 						//if(pidw.hyst[0] > 0)
-						newEEV = fast;
+						newEEV += fast;
 					}
 				}
 				if(DebugToLog) journal.jprintf("=%d\n", newEEV);
