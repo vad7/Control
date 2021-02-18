@@ -71,7 +71,7 @@ document.write('\
 	</ul>\
 </li>\
 <li class="about"><a href="about.html"><i></i>О контроллере</a></li>\
-<li name="USR" id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=1"><i></i>Логин</a></li>\
+<li name="USR" id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=0"><i></i>Логин</a></li>\
 </ul>');
 document.write('\
 <div class="dateinfo">\

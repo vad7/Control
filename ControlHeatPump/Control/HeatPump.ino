@@ -1058,9 +1058,16 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_DailySwitchHysteresis)==0){ Option.DailySwitchHysteresis = rd(x, 10); return true;} else
 	if(strcmp(var,option_PUMP_WORK)==0)        {if ((n>=0)&&(n<=65535)) { // работа насоса конденсатора при выключенном компрессоре
 		Option.workPump = n;
+
+		journal.jprintf(">> %d, %d\n", startPump, pump_in_pause_timer);
+
 		if(n == 0 && startPump == 3) {
 			HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
 			HP.Pump_HeatFloor(false);					// выключить насос ТП
+			startPump = 0;
+		} else if(!startPump && get_State() == pWORK_HP && !is_compressor_on()) {
+			startPump = 1;
+			pump_in_pause_timer = 0;
 		}
 		return true;
 	} else return false; }else
@@ -2936,11 +2943,11 @@ void HeatPump::vUpdate()
 			startPump = 1;                             // Поставить признак запуска задачи насос
 		}
 	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
-		if(startPump) {                                // Остановить задачу насос
-			startPump = 0;                             // Поставить признак останова задачи насос
-		    command_completed = rtcSAM3X8.unixtime();  // поменялся режим
-		}
 		if(!check_compressor_pause()) {
+			if(startPump) {                                // Остановить задачу насос
+				startPump = 0;                             // Поставить признак останова задачи насос
+			    command_completed = rtcSAM3X8.unixtime();  // поменялся режим
+			}
 			if(configHP(Status.modWork)) {                   // Конфигурируем насосы
 				compressorON();                              // Включаем компрессор
 			}
