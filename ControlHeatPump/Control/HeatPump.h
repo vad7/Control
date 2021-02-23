@@ -243,11 +243,12 @@ struct type_optionHP
  uint16_t flags2;						// Флаги #2 до 16 флагов
  uint16_t SunMinWorktime;				// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
  uint16_t SunMinPause;					// Солнечный коллектор - минимальное время паузы после останова СК, сек
+ char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 #ifdef WEATHER_FORECAST
+ int8_t   WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
  char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
- char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 };// __attribute__((packed));
 
 

@@ -1139,7 +1139,10 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	#else
 		return true;
 	#endif
-	} else if(strcmp(var,option_maxBackupPower)==0)   {if ((n>=0)&&(n<=10000)) {Option.maxBackupPower=n; return true;} else return false;}       // Максимальная мощность при питании от генератора
+	} else if(strcmp(var,option_maxBackupPower)==0) {if ((n>=0)&&(n<=10000)) {Option.maxBackupPower=n; return true;} else return false;}       // Максимальная мощность при питании от генератора
+#ifdef WEATHER_FORECAST
+	else if(strcmp(var, option_WF_MinTemp)==0)   { Option.WF_MinTemp = n; return true; }
+#endif
 #ifdef WATTROUTER
 	else if(strncmp(var, option_WR_Loads, sizeof(option_WR_Loads)-1) == 0) {
 	   uint8_t bit = var[sizeof(option_WR_Loads)-1] - '0';
@@ -1270,9 +1273,12 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	   return strcat(ret, (char*) cZero);
 	#endif
 	} else
-	if(strcmp(var,option_maxBackupPower)==0)   {return _itoa(Option.maxBackupPower,ret);}else    // Максимальная мощность при питании от генератора
-	if(strcmp(var,option_SunTempOn)==0)        {_dtoa(ret,Option.SunTempOn/10, 1); return ret; } else
-	if(strcmp(var,option_SunTempOff)==0)       {_dtoa(ret,Option.SunTempOff/10, 1); return ret; }
+	if(strcmp(var,option_maxBackupPower)==0)   { return _itoa(Option.maxBackupPower,ret); } else    // Максимальная мощность при питании от генератора
+	if(strcmp(var,option_SunTempOn)==0)        { _dtoa(ret,Option.SunTempOn/10, 1); return ret; } else
+	if(strcmp(var,option_SunTempOff)==0)       { _dtoa(ret,Option.SunTempOff/10, 1); return ret; }
+#ifdef WEATHER_FORECAST
+	else if(strcmp(var,option_WF_MinTemp)==0)  { return _itoa(Option.WF_MinTemp, ret); }
+#endif
 #ifdef WATTROUTER
 	else if(strncmp(var, option_WR_Loads, sizeof(option_WR_Loads)-1)==0) {
 	   uint8_t bit = var[sizeof(option_WR_Loads)-1] - '0';
