@@ -270,8 +270,8 @@ const uint16_t  defaultPort=80;
 #define MAX_WEATHER       (50*100)       // Максимальная температура подачи при погодозависимости
 #define HYSTERESIS_RHEAD				20	// Гистерезис работы дополнительного тэна отопления (вычитается из целевой) в сотых градуса
 #define HYSTERESIS_RBOILER				30	// Гистерезис работы дополнительного тэна ГВС догрева (вычитается из целевой) в сотых градуса
-#define HYSTERESIS_BoilerTogetherHeatSt	500	// Гистерезис совместного нагрева бойлера с отоплением в сотых градуса
-#define HYSTERESIS_BoilerTogetherHeatEn	200	// Гистерезис совместного нагрева бойлера с отоплением в сотых градуса
+#define HYSTERESIS_BoilerTogetherHeatSt	400	// Гистерезис совместного нагрева бойлера с отоплением в сотых градуса
+#define HYSTERESIS_BoilerTogetherHeatEn	190	// Гистерезис совместного нагрева бойлера с отоплением в сотых градуса
 #define HYSTERESIS_BoilerAddHeat      	300	// Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
 #define HYSTERESIS_HeatFloor		 	20	// Гистерезис раздельного управления реле теплого пола
 #define SALMONELLA_DAY    3              // День когда включается алгоритм обеззараживания воды (Понедельник 1 воскресенье 7)
@@ -817,6 +817,7 @@ const char *hp_WeatherTargetRange = {"KWR"};
 const char *hp_CompressorPause = {"CP"};
 const char *hp_FC_FreqLimitHour = {"FLH"};
 const char *hp_FC_FreqLimit = {"FL"};
+const char *hp_fP_ContinueAfterBoiler = {"CAB"};
 
 // Действуют для отопления и ГВС
 const char *ADD_DELTA_TEMP     = {"ADT"};		// Добавка температуры к установке, в градусах

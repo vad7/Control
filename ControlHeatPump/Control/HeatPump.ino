@@ -2348,7 +2348,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		} else if(FEED <= T + HYSTERESIS_BoilerTogetherHeatEn) {
 			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
 			SETBIT0(flags, fHP_BoilerTogetherHeat);
-		}// else return pCOMP_OFF;
+		} else if(is_compressor_on()) return pCOMP_OFF; // догреваем до конца, только потом возможен экслюзивный нагрев бойлера
 	}
 #endif
 
@@ -2586,8 +2586,12 @@ MODE_COMP HeatPump::UpdateHeat()
 	case pHYSTERESIS:  // Гистерезис нагрев.
 		if(t1>target && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)) {Status.ret=pHh3; return pCOMP_OFF;} // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_compressor_on() || onBoiler))  { Status.ret=pHh2;   return pCOMP_ON; } // Достигнут гистерезис ВКЛ
-		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и отопление не нужно
-		else if(rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && FEED > Prof.Heat.tempInLim) { Status.ret=pHh1; return pCOMP_OFF; } // Достигнута максимальная температура подачи ВЫКЛ (С учетом времени перехода с ГВС)
+		else if(onBoiler) {
+			if(GETBIT(Prof.Heat.flags, fP_ContinueAfterBoiler)) { // Опционально переходим в отопление внутри гистерезиса
+				Status.ret = pHh4;
+				return pCOMP_ON;
+			} else return pCOMP_OFF; // Бойлер нагрет и отопление не нужно
+		} else if(rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && FEED > Prof.Heat.tempInLim) { Status.ret=pHh1; return pCOMP_OFF; } // Достигнута максимальная температура подачи ВЫКЛ (С учетом времени перехода с ГВС)
 		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else {
 			if(Prof.Heat.FC_FreqLimitHour) { // Ограничение частоты
@@ -2603,8 +2607,12 @@ MODE_COMP HeatPump::UpdateHeat()
 		// отработка гистререзиса целевой функции (дом/обратка)
 		if(t1 > target && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)) { Status.ret=pHp3; return pCOMP_OFF; } // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_compressor_on() || onBoiler)) { Status.ret=pHp2; return pCOMP_ON; } // Достигнут гистерезис (компрессор не работает) ВКЛ
-		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и отопление не нужно
-		else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED>Prof.Heat.tempInLim)) {Status.ret=pHp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__);return pCOMP_OFF;}  // Достижение максимальной температуры подачи - это ошибка ПИД не работает (есть задержка срабатывания для переключения с ГВС)
+		else if(onBoiler) {
+			if(GETBIT(Prof.Heat.flags, fP_ContinueAfterBoiler)) { // Опционально переходим в отопление внутри гистерезиса
+				Status.ret = pHh4;
+				return pCOMP_ON;
+			} else return pCOMP_OFF; // Бойлер нагрет и отопление не нужно
+		} else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED>Prof.Heat.tempInLim)) {Status.ret=pHp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__);return pCOMP_OFF;}  // Достижение максимальной температуры подачи - это ошибка ПИД не работает (есть задержка срабатывания для переключения с ГВС)
        
         // Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
 	    else if((GETBIT(Option.flags,fBackupPower))&&(getPower()>get_maxBackupPower())) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту

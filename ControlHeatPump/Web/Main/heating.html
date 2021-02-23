@@ -7,7 +7,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
-	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN)");
+	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Cool(KW),get_Heat(KW),get_Cool(W),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL)");
 	loadParam("get_listDSR,get_tblPDS");
 };
@@ -174,6 +174,11 @@ function loadParam_after(paramid) {
 		<td>Использовать солнечный коллектор (TSUN>TEVAOUTG+Δ°)</td>
 		<td><input type="checkbox" id="get_cool-sun" onchange="setParam('get_Cool(SUN)');"></td>
 		<td><input type="checkbox" id="get_heat-sun" onchange="setParam('get_Heat(SUN)');"></td>
+	</tr>
+	<tr>
+		<td>Продолжить работу после нагрева бойлера, если внутри гистерезиса</td>
+		<td></td>
+		<td><input type="checkbox" id="get_heat-cab" onchange="setParam('get_Heat(CAB)');"></td>
 	</tr>
 </tbody>
 </table>
