@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.127"				// Версия прошивки
+#define VERSION			"1.128"				// Версия прошивки
 #define VER_SAVE		153					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -769,6 +769,7 @@ const char *option_f2BackupPowerAuto  = {"BPA"};
 const char *option_f2NextionGenFlashing={"NGF"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
+const char *option_WF_MinTemp         = {"WMT"};
 const char option_Microart_login[]    = "ML";
 const char option_Microart_pass[]     = "MP";
 const char *option_DailySwitchHysteresis={"DSH"};
