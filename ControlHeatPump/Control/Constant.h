@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.128"				// Версия прошивки
+#define VERSION			"1.129"				// Версия прошивки
 #define VER_SAVE		153					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -131,6 +131,9 @@ const uint16_t  defaultPort=80;
 #define FC_DELAY_REPEAT    40            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      5             // мсек Время между последовательными запросами было 20
 #define FC_WRITE_READ      10            // мсек Время между последовательной записью
+#ifndef FC_ANALOG_RESOLUTION
+#define FC_ANALOG_RESOLUTION	8		// Bit (8..12)
+#endif
 
 // Глобальные переменные счетчика SDMxxx на модбасе
 // настройки связи со счетчиком по умолчанию (из коробки см инструкцию) требуется для его программирования для работы
@@ -357,11 +360,11 @@ const char* HEADER_ANSWER         = {"HTTP/1.1 200 OK\r\nContent-Type: text/ajax
 static uint8_t  fWebUploadingFilesTo = 0;                // Куда грузим файлы: 1 - SPI flash, 2 - SD card
 
 // Microart Malina2
-//const char HTTP_MAP_JSON_MODE[]			= { "\"_MODE\"" };
-const char HTTP_MAP_JSON_PNET_calc[]	= {	"\"_PNET_calc\"" }; // "_PNET_calc":"0.0"
-const char HTTP_MAP_JSON_Sign[]			= {	"\"Sign\"" }; // "Sign":"-"
-const char HTTP_MAP_JSON_Mode[]			= {	"\"Mode\"" }; // "Mode":"S"
-
+//const char HTTP_MAP_JSON_MODE[]			= "\"_MODE\"";
+const char HTTP_MAP_JSON_PNET_calc[]	= "\"_PNET_calc\""; // "_PNET_calc":"0.0"
+const char HTTP_MAP_JSON_Sign[]			= "\"Sign\""; // "Sign":"-"
+const char HTTP_MAP_JSON_Mode[]			= "\"Mode\""; // "Mode":"S"
+const char HTTP_MAP_JSON_P_Out[]		= "\"P_Out\""; // Power out, W
 
 // Константы регистров контроллера питания SOPC SAM3x ---------------------------------------
 // Регистр SMMR
@@ -773,6 +776,7 @@ const char *option_WF_MinTemp         = {"WMT"};
 const char option_Microart_login[]    = "ML";
 const char option_Microart_pass[]     = "MP";
 const char *option_DailySwitchHysteresis={"DSH"};
+const char *option_PWM2               = {"PWM2"};
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
@@ -790,6 +794,7 @@ const char *option_WR_PWM_Freq			= {"WF"};
 const char *option_WR_PWM_FullPowerTime = {"WFPT"};
 const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
 const char *option_WR_WF_Hour			= {"WFH"};
+const char *option_WR_MinNetLoadSunDivider={"WSD"};
 
 // Отопление/охлаждение параметры
 const char *hp_RULE      = {"RULE"};             // алгоритм работы

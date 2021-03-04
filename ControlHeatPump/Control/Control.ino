@@ -963,6 +963,10 @@ void vWeb0(void *)
 							if(mppt == -1) {
 								active = false;
 								if((mppt = WR_Check_MPPT()) > 1) break;				// Проверка наличия свободного солнца
+								if(WR.MinNetLoadSunDivider) {
+									pnet -= WR_LastSunPowerOut / WR.MinNetLoadSunDivider;
+									if(pnet < 0) break;
+								}
 							}
 #endif
 							int chg = WR_LoadRun[i];

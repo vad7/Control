@@ -42,7 +42,6 @@ document.write('\
 		<li class="eev"><a href="eev.html">ЭРВ</a></li>\
 		<li class="relay"><a href="relay.html">Реле</a></li>\
 		<li class="invertor"><a href="invertor.html"><i></i>Инвертор</a></li>\
-		<li class="wattrouter"><a href="wattrouter.html"><i></i>Ваттроутер</a></li>\
 	</ul>\
 </li>\
 <li name="USR" class="lan config system files time notice mqtt const has-children">\
@@ -70,6 +69,7 @@ document.write('\
 		<li class="freertos"><a href="freertos.html">ОС RTOS</a></li>\
 	</ul>\
 </li>\
+<li class="wattrouter"><a href="wattrouter.html"><i></i>Ваттроутер</a></li>\
 <li class="about"><a href="about.html"><i></i>О контроллере</a></li>\
 <li name="USR" id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=0"><i></i>Логин</a></li>\
 </ul>');

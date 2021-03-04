@@ -135,6 +135,7 @@ uint32_t WR_SwitchTime[WR_NumLoads];
 uint32_t WR_LastSwitchTime = 0;
 uint8_t  WR_TestLoadStatus = 0; 		// >0 - идет тестирование нагрузки
 uint8_t  WR_TestLoadIndex;
+int32_t  WR_LastSunPowerOut = 0;
 
 #ifdef PWM_CALC_POWER_ARRAY
 // Вычисление массива точного расчета мощности
@@ -163,7 +164,7 @@ struct {
 	uint8_t  PWM_FullPowerTime;			// Время работы на максимальной мощности для PWM и время паузы после, 0 - выкл, минут
 	uint8_t  PWM_FullPowerLimit;		// Процент ограничения мощности после времени максимальной работы, %
 	uint8_t  WF_Hour;					// Час получения прогноза погоды
-	uint8_t  __RESERVED__;
+	uint8_t  MinNetLoadSunDivider;		// Увеличение минимальной мощности из сети в зависимости от выработки MPPT (MinNetLoad += SunPower / n)
 	int16_t  LoadPower[WR_NumLoads];	// Мощности нагрузки, Вт
 } WR;
 

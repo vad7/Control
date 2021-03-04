@@ -1180,6 +1180,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var,option_WR_fLog)==0)         { WR.Flags = (WR.Flags & ~(1<<WR_fLog)) | ((n!=0)<<WR_fLog); return true; }
 	else if(strcmp(var,option_WR_fLogFull)==0)     { WR.Flags = (WR.Flags & ~(1<<WR_fLogFull)) | ((n!=0)<<WR_fLogFull); return true; }
 	else if(strcmp(var,option_WR_WF_Hour)==0)      { if(n >= 0 && n <= 23) { WR.WF_Hour = n; return true; } else return false; }
+	else if(strcmp(var,option_WR_MinNetLoadSunDivider)==0){ WR.MinNetLoadSunDivider = n; return true; }
 	else if(strcmp(var,option_WR_PWM_Freq)==0)     {
 #ifdef WR_ONE_PERIOD_PWM
 		WR.PWM_Freq = PWM_WRITE_OUT_FREQ_DEFAULT;
@@ -1201,6 +1202,11 @@ boolean HeatPump::set_optionHP(char *var, float x)
 		return true;
 	}
 #endif
+	else if(strcmp(var,option_PWM2)==0) { // PWM2 output
+		analogWriteResolution(FC_ANALOG_RESOLUTION);
+		if(n > (1<<FC_ANALOG_RESOLUTION) - 1) n = (1<<FC_ANALOG_RESOLUTION) - 1; else if(n < 0) n = 0;
+        analogWrite(2, n);
+	}
 	return false;
 }
 
@@ -1308,6 +1314,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	else if(strcmp(var, option_WR_fLogFull) == 0)  { if(GETBIT(WR.Flags, WR_fLogFull)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_fActive) == 0)   { if(GETBIT(WR.Flags, WR_fActive)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_WF_Hour) == 0)   { return _itoa(WR.WF_Hour, ret); }
+	else if(strcmp(var, option_WR_MinNetLoadSunDivider) == 0){ return _itoa(WR.MinNetLoadSunDivider, ret); }
 #endif
 	return strcat(ret,(char*)cInvalid);
 }

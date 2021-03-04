@@ -1249,7 +1249,10 @@ int8_t WR_Check_MPPT(void)
 		}
 		return 0;
 	} else SETBIT0(Logflags, fLog_HTTP_RelayError);
-	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Mode);
+	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_P_Out);
+	if(!fld) return 0;
+	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
+	fld = strstr(fld, HTTP_MAP_JSON_Mode);
 	if(!fld) return 0;
 	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return 2;
 	fld = strstr(fld, HTTP_MAP_JSON_Sign);
