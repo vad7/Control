@@ -1205,7 +1205,9 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var,option_PWM2)==0) { // PWM2 output
 		analogWriteResolution(FC_ANALOG_RESOLUTION);
 		if(n > (1<<FC_ANALOG_RESOLUTION) - 1) n = (1<<FC_ANALOG_RESOLUTION) - 1; else if(n < 0) n = 0;
-        analogWrite(2, n);
+        PWM_Write(2, n);
+		journal.jprintf("PWM#2=%d\n", n);
+		return true;
 	}
 	return false;
 }
