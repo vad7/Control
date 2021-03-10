@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.129"				// Версия прошивки
+#define VERSION			"1.130"				// Версия прошивки
 #define VER_SAVE		153					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -570,6 +570,8 @@ const char prof_DailySwitch[] 	= "DS";
 const char prof_DailySwitchDevice = 'D';		// DSD
 const char prof_DailySwitchOn  	= 'S';			// DSS
 const char prof_DailySwitchOff 	= 'E';			// DSE
+const char prof_DailySwitchState= 'O';			// DSO
+
 
 // Описание имен параметров уведомлений для функций set_messageSetting get_messageSetting
 const char *mess_MAIL         = {"MAIL"};                // флаг уведомления скидывать на почту

@@ -109,6 +109,7 @@ boolean Charts_when_comp_on = false;
 #endif
 uint8_t Request_LowConsume = 0xFF;
 uint8_t Calc_COP_skip_timer = 0;	// Пропустить расчет COP на время *TIME_READ_SENSOR
+uint32_t DailySwitch_on = 0;		// bit array
 
 #ifdef WATTROUTER
 #define  WR_fActive				1				// Ваттроутер включен

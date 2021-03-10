@@ -1223,11 +1223,12 @@ void vWeb0(void *)
 						if(ds < 0) continue;
 						if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 						strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
-						uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER+1;
+						uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER + 1;
 						_itoa(rel, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 						strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 						_itoa(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower),	Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 						if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+							DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (ds<<i);
 							SETBIT0(Logflags, fLog_HTTP_RelayError);
 							//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 						} else {
@@ -1969,7 +1970,10 @@ void vServiceHP(void *)
 						if(HP.Prof.DailySwitch[i].Device == 0) break;
 						if(HP.Prof.DailySwitch[i].Device >= RNUMBER) continue;
 						int8_t ds = HP.Prof.check_DailySwitch(i, hhmm);
-						if(ds >= 0) HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower) ? fR_StatusDaily : -fR_StatusDaily);
+						if(ds >= 0) {
+							HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(ds && !HP.NO_Power && !GETBIT(HP.Option.flags, fBackupPower) ? fR_StatusDaily : -fR_StatusDaily);
+							DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (ds<<i);
+						}
 					}
 				}
 				STORE_DEBUG_INFO(75);

@@ -1,6 +1,6 @@
 // Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
 // &                       by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.129";
+var VER_WEB = "1.130";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
@@ -548,15 +548,18 @@ function loadParam(paramid, noretry, resultdiv) {
 											document.getElementById(valueid).innerHTML = content;
 											loadParam(loadsens);
 										} else if(values[0] == 'get_tblPDS') {
-											var content = "";
+											var content = "", upsens = "";
 											var trows = values[1].split('|');
 											var elem = document.getElementById("get_listdsr");
 											for(var j = 0; j < trows.length - 1; j++) {
 												var tflds = trows[j].split(';');
+												upsens += 'get_Prof(DSO' + j + '),'; 
 												content += '<tr><td><select id="get_prof-dsd' + j + '" onchange="setParam(\'get_Prof(DSD' + j + ')\')">' + elem.innerHTML.replace('>' + tflds[0] + '<', ' selected>' + tflds[0] + '<') + '<\select></td><td>' + tflds[1] 
-													+ '</td><td nowrap><input id="get_prof-dss' + j + '" type="text" size="6" value="' + tflds[2] + '"> <input type="submit" value=">" onclick="setDS(\'S\',' + j + ')"></td><td nowrap><input id="get_prof-dse' + j + '" type="text" size="6" value="' + tflds[3] + '"> <input type="submit" value=">" onclick="setDS(\'E\',' + j + ')"></td></tr>';
+													+ '</td><td nowrap><input id="get_prof-dss' + j + '" type="text" size="6" value="' + tflds[2] + '"> <input type="submit" value=">" onclick="setDS(\'S\',' + j + ')"> <span id="get_prof-dso' + j + '" style="color:red"></span></td>'
+													+ '<td nowrap><input id="get_prof-dse' + j + '" type="text" size="6" value="' + tflds[3] + '"> <input type="submit" value=">" onclick="setDS(\'E\',' + j + ')"></td></tr>';
 											}
 											document.getElementById(valueid).innerHTML = content;
+											updateParam(upsens);
 										} else if(values[0] == 'get_tblWR') {
 											var content = "", upsens = "", loadsens = "";
 											var count = Number(values[1]);

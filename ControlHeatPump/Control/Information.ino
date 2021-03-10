@@ -1071,6 +1071,8 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 		if(i >= DAILY_SWITCH_MAX) return false;
 		if(*var == prof_DailySwitchDevice) {
 			_itoa(DailySwitch[i].Device, ret);
+		} else if(*var == prof_DailySwitchState) { // get_Prof(DSO)
+			if(GETBIT(DailySwitch_on, i)) strcat(ret, "*");
 		} else if(*var == prof_DailySwitchOn) {
 			uint8_t on = DailySwitch[i].TimeOn;
 			if(on >= DS_TimeOn_Extended) {
@@ -1088,11 +1090,11 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 }
 
 // Возврат: 0 - выкл, 1 - вкл, -1 - в гистерезисе
-int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
+int8_t Profile::check_DailySwitch(uint8_t idx, uint32_t hhmm)
 {
 	int8_t wr = -1; // >=0 index WR relay, -1 - not WR relay, -2 - no turn off
 #ifdef WATTROUTER
-	int8_t pin = DailySwitch[i].Device < RNUMBER ? HP.dRelay[DailySwitch[i].Device].get_pinD() : -(DailySwitch[i].Device - RNUMBER+1);
+	int8_t pin = DailySwitch[idx].Device < RNUMBER ? HP.dRelay[DailySwitch[idx].Device].get_pinD() : -(DailySwitch[idx].Device - RNUMBER + 1);
 	for(int8_t i = 0; i < WR_NumLoads; i++) {
 		if(pin != WR_Load_pins[i] || !GETBIT(WR.Loads, i)) continue;
 		if(WR_LoadRun[i] == WR.LoadPower[i]) return -1;
@@ -1100,11 +1102,11 @@ int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
 		break;
 	}
 #endif
-	uint32_t st = DailySwitch[i].TimeOn, end;
+	uint32_t st = DailySwitch[idx].TimeOn, end;
 	int8_t ret = 0;
 	if(st >= DS_TimeOn_Extended) {
 		if(st & 2) { // ночь
-			if(DailySwitch[i].Device < RNUMBER) {
+			if(DailySwitch[idx].Device < RNUMBER) {
 				st = TARIF_NIGHT_START * 100 + 1;
 				end = TARIF_NIGHT_END * 100 + 59;
 			} else { // HTTP relay
@@ -1114,36 +1116,36 @@ int8_t Profile::check_DailySwitch(uint8_t i, uint32_t hhmm)
 		} else goto xCheckTemp;
 	} else {
 		st *= 10;
-		end = DailySwitch[i].TimeOff * 10;
+		end = DailySwitch[idx].TimeOff * 10;
 	}
 	ret = (end >= st && hhmm >= st && hhmm < end) || (end < st && (hhmm >= st || hhmm < end));
-	if(ret == 0 && (st = DailySwitch[i].TimeOn) >= DS_TimeOn_Extended) {
+	if(ret == 0 && (st = DailySwitch[idx].TimeOn) >= DS_TimeOn_Extended) {
 xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
-		int16_t trg = ((int8_t)DailySwitch[i].TimeOff) * 100;
+		int16_t trg = ((int8_t)DailySwitch[idx].TimeOff) * 100;
 		if(st & 1) { // T>
 			if(t > trg) {
 				ret = 1;
-				DailySwitchStateT = (DailySwitchStateT & (1<<i));
-			} else if(!GETBIT(DailySwitchStateT, i) || trg - HP.Option.DailySwitchHysteresis * 10 > t) {
+				DailySwitchStateT = (DailySwitchStateT & (1<<idx));
+			} else if(!GETBIT(DailySwitchStateT, idx) || trg - HP.Option.DailySwitchHysteresis * 10 > t) {
 				ret = 0;
-				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
+				DailySwitchStateT = (DailySwitchStateT & ~(1<<idx));
 			} else ret = -1;
 		} else { // T<
 			if(t < trg) {
 				ret = 1;
-				DailySwitchStateT = (DailySwitchStateT & (1<<i));
-			} else if(!GETBIT(DailySwitchStateT, i) || trg + HP.Option.DailySwitchHysteresis * 10 < t) {
+				DailySwitchStateT = (DailySwitchStateT & (1<<idx));
+			} else if(!GETBIT(DailySwitchStateT, idx) || trg + HP.Option.DailySwitchHysteresis * 10 < t) {
 				ret = 0;
-				DailySwitchStateT = (DailySwitchStateT & ~(1<<i));
+				DailySwitchStateT = (DailySwitchStateT & ~(1<<idx));
 			} else ret = -1;
 		}
 	}
 	if(wr != -1) {
 		if(ret == 0) {
 			if(wr == -2) ret = -1;
-			else SETBIT1(WR_Loads, i);
-		} else if(ret == 1) SETBIT0(WR_Loads, i);
+			else if(GETBIT(WR.Loads, wr)) SETBIT1(WR_Loads, wr);
+		} else if(ret == 1) SETBIT0(WR_Loads, wr);
 	}
 	return ret;
 }
