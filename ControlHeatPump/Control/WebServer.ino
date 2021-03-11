@@ -159,6 +159,7 @@ void web_server(uint8_t thread)
 									|| strcmp(Socket[thread].inPtr, "plan.html") == 0
 									|| strcmp(Socket[thread].inPtr, "stats.html") == 0
 									|| strcmp(Socket[thread].inPtr, "history.html") == 0
+									|| strcmp(Socket[thread].inPtr, "wattrouter.html") == 0
 									|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
 							}
 						}
