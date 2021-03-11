@@ -898,6 +898,8 @@ void vWeb0(void *)
 					if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d\n", pnet);
 					if(!GETBIT(WR.Flags, WR_fActive) || nopwr) break;
 
+					int16_t _MinNetLoad = WR.MinNetLoad;
+					if(WR.MinNetLoadSunDivider) _MinNetLoad += WR_LastSunPowerOut / WR.MinNetLoadSunDivider;
 #ifdef WR_TestAvailablePowerForRelayLoads
 					if(WR_TestLoadStatus) { // Тестирование нагрузки
 						if(++WR_TestLoadStatus > WR_TestAvailablePowerTime) {
@@ -908,7 +910,7 @@ void vWeb0(void *)
 								uint8_t idx = WR_TestAvailablePowerForRelayLoads;
 #endif
 							WR_Change_Load_PWM(idx, -WR.LoadPower[WR_TestLoadIndex]);
-							if(pnet <= WR.MinNetLoad) {
+							if(pnet <= _MinNetLoad) {
 //								for(uint8_t i = 0; i < 5; i++) { // >1/100 sec
 //									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 //								}
@@ -921,7 +923,7 @@ void vWeb0(void *)
 					{
 						// Если возможна только релейная нагрузка, то отбрасываем пики и усредняем
 						bool need_average = true;
-						if(pnet > WR.MinNetLoad) {
+						if(pnet > _MinNetLoad) {
 							for(int8_t i = 0; i < WR_NumLoads; i++) {
 								if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
 								need_average = false;
@@ -951,8 +953,8 @@ void vWeb0(void *)
 							WR_Pnet = pnet;
 					}
 					// проверка перегрузки
-					if(WR_Pnet - WR.MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
-						pnet = WR_Pnet - WR.MinNetLoad; // / 2;
+					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
+						pnet = WR_Pnet - _MinNetLoad; // / 2;
 						int8_t mppt = -1;
 						for(int8_t i = WR_NumLoads-1; i >= 0; i--) { // PWM only
 							if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
@@ -963,10 +965,6 @@ void vWeb0(void *)
 							if(mppt == -1) {
 								active = false;
 								if((mppt = WR_Check_MPPT()) > 1) break;				// Проверка наличия свободного солнца
-								if(WR.MinNetLoadSunDivider) {
-									pnet -= WR_LastSunPowerOut / WR.MinNetLoadSunDivider;
-									if(pnet < 0) break;
-								}
 							}
 #endif
 							int chg = WR_LoadRun[i];
@@ -1057,7 +1055,7 @@ void vWeb0(void *)
 								int16_t chg;
 								if(mppt < 3) { 								// Добавляем помаленьку, когда MPPT говорит, что нет энергии
 									if(skip_next_small_increase) break;
-									chg = WR.MinNetLoad - pnet;
+									chg = _MinNetLoad - pnet;
 									if(chg < WR_PWM_POWER_MIN) break;
 									skip_next_small_increase = 2;
 								} else chg = WR.LoadAdd;
