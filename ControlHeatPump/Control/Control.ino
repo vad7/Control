@@ -1614,7 +1614,7 @@ void vReadSensor_delay1ms(int32_t ms)
 					{ HP.dRelay[RPUMPB].set_ON(); }
 					else
 #endif  // #ifndef SUPERBOILER 
-						if (HP.get_Circulation())                                               // Циркуляция разрешена
+						if (HP.get_Circulation() && (!GETBIT(HP.Prof.Boiler.flags, fBoilerCircSchedule) || HP.scheduleBoiler()))   // Циркуляция разрешена
 						{
 #ifdef SUPERBOILER
 							if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler() || (HP.dRelay[RSUPERBOILER].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay()))) {
@@ -1632,13 +1632,13 @@ void vReadSensor_delay1ms(int32_t ms)
 							if (HP.get_CirculPause()==0) { HP.dRelay[RPUMPB].set_ON(); goto delayTask;/* continue;*/}  // В условиях стоит время паузы 0 - включаем насос ГВС
 							if(HP.dRelay[RPUMPB].get_Relay())                                       // Насос включен Смотрим времена
 							{
-								if(((long)xTaskGetTickCount()-RPUMPBTick ) > HP.get_CirculWork()*configTICK_RATE_HZ)   // ждем время мсек
+								if(xTaskGetTickCount()-RPUMPBTick > HP.get_CirculWork()*configTICK_RATE_HZ)   // ждем время мсек
 								{
 									RPUMPBTick=xTaskGetTickCount();
 									HP.dRelay[RPUMPB].set_OFF();                                  // выключить насос
 								}
 							} else {                                                                // Насос выключен
-								if(((long)xTaskGetTickCount()-RPUMPBTick ) >  HP.get_CirculPause()*configTICK_RATE_HZ)   // ждем время мсек
+								if(xTaskGetTickCount()-RPUMPBTick >  HP.get_CirculPause()*configTICK_RATE_HZ)   // ждем время мсек
 								{
 									RPUMPBTick=xTaskGetTickCount();
 									HP.dRelay[RPUMPB].set_ON();                                    // включить насос

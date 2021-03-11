@@ -644,6 +644,7 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(strcmp(var,boil_TURBO_BOILER)==0)	{ if(x) SETBIT1(Boiler.flags,fTurboBoiler); else SETBIT0(Boiler.flags,fTurboBoiler); return true;} else
 	if(strcmp(var,boil_SALMONELLA)==0)		{ if(x) SETBIT1(Boiler.flags,fSalmonella); else SETBIT0(Boiler.flags,fSalmonella); return true;} else // Изменение максимальной температуры при включенном режиме сальмонелла
 	if(strcmp(var,boil_CIRCULATION)==0)		{ if(x) SETBIT1(Boiler.flags,fCirculation); else SETBIT0(Boiler.flags,fCirculation); return true;} else
+	if(strcmp(var,boil_fBoilerCircSchedule)==0) { if(x) SETBIT1(Boiler.flags,fBoilerCircSchedule); else SETBIT0(Boiler.flags,fBoilerCircSchedule); return true;} else
 	if(strcmp(var,boil_TEMP_TARGET)==0)		{ if((x>=5)&&(x<=95)) {Boiler.TempTarget=rd(x, 100); return true;} else return false; } else  // Целевая температура бойлера
 	if(strcmp(var,ADD_DELTA_TEMP)==0)		{ if((x>=-50)&&(x<=50)) {Boiler.add_delta_temp=rd(x, 100); return true;}else return false; } else  // Добавка к целевой температуры ВНИМАНИЕ здесь еденица измерения ГРАДУСЫ
 	if(strcmp(var,ADD_DELTA_HOUR)==0)		{ if((x>=0)&&(x<=23)) {Boiler.add_delta_hour=x; return true;} else return false; } else      // Начальный Час добавки температуры к установке бойлера
@@ -689,6 +690,7 @@ char* Profile::get_boiler(char *var, char *ret)
  if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_SALMONELLA)==0){      if (GETBIT(Boiler.flags,fSalmonella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_CIRCULATION)==0){     if (GETBIT(Boiler.flags,fCirculation))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+ if(strcmp(var,boil_fBoilerCircSchedule)==0){ if (GETBIT(Boiler.flags,fBoilerCircSchedule))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_TEMP_TARGET)==0){     _dtoa(ret,Boiler.TempTarget/10,1); return ret;    }else
  if(strcmp(var,ADD_DELTA_TEMP)==0) 		{ _dtoa(ret,Boiler.add_delta_temp/10, 1); return ret; }else
  if(strcmp(var,ADD_DELTA_HOUR)==0) 		{ _itoa(Boiler.add_delta_hour, ret); return ret;           }else
