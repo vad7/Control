@@ -540,7 +540,7 @@ int8_t devVaconFC::stop_FC()
             startCompressor = 0;
             return err; // выходим если нет инвертора или нет связи
     	}
-  #ifdef MODBUS_PORT_NUM
+  #ifndef FC_USE_RCOMP
         err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
   #else
         err = OK;
