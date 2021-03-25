@@ -823,6 +823,7 @@ void vWeb0(void *)
 						if(digitalReadDirect(PIN_WR_Boiler_Substitution)) {
 							if(WR_LoadRun[WR_Boiler_Substitution_INDEX] == 0 && HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
 								digitalWriteDirect(PIN_WR_Boiler_Substitution, 0); // Переключаемся на бойлер
+								if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf_time("WR: SW->Boiler\n");
 							}
 						} else
 #endif
