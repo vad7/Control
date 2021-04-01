@@ -3378,6 +3378,7 @@ const char *noteTemp[] = {"Температура улицы",
 //		#define NEXTION_DEBUG 			// Отладка дисплея Nextion - отправка
 //		#define NEXTION_DEBUG2 			// Отладка дисплея Nextion - прием
 //		#define DEBUG_PID				// Отладка ПИДа
+		#define USE_RC_CLOCK_SOURCE		// Использовать RC цепочку для часов
 		#define I2C_FRAM_MEMORY  0		// 1 - FRAM память
 		#undef ONEWIRE_DS2482
 		#undef ONEWIRE_DS2482_SECOND

@@ -261,6 +261,9 @@ xRewriteHeader:
 				SerialDbg.print("Error ");
 				SerialDbg.print(ret);
 				SerialDbg.println(" write to EEPROM!");
+#ifdef TEST_BOARD
+				break;
+#endif
 			} else SerialDbg.println("Wait...");
 			while(1) ;
 		}
