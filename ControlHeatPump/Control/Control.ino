@@ -941,6 +941,25 @@ void vWeb0(void *)
 								break;
 							}
 						}
+						// Медианный фильтр
+						static int median1, median2;
+						if(WR_Pnet_avg_init) {
+							median1 = median2 = pnet;
+#ifndef WR_PNET_AVERAGE
+							WR_Pnet_avg_init = false;
+#endif
+							}
+						int median3 = pnet;
+						if(median1 <= median2 && median1 <= median3) {
+							pnet = median2 <= median3 ? median2 : median3;
+						} else if(median2 <= median1 && median2 <= median3) {
+							pnet = median1 <= median3 ? median1 : median3;
+						} else {
+							pnet = median1 <= median2 ? median1 : median2;
+						}
+						median1 = median2;
+						median2 = median3;
+						//
 #ifdef WR_PNET_AVERAGE
 						if(WR_Pnet_avg_init) { // first time
 							for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;

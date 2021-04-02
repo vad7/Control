@@ -126,8 +126,8 @@ volatile uint8_t WR_Error_Read_PowerMeter = 0;
 int16_t  WR_Pnet_avg[WR_PNET_AVERAGE];
 uint8_t  WR_Pnet_avg_idx = 0;
 int32_t  WR_Pnet_avg_sum = 0;
-boolean  WR_Pnet_avg_init = true;
 #endif
+boolean  WR_Pnet_avg_init = true;
 WR_fTYPE WR_Refresh = 0;
 WR_fTYPE WR_Loads;						// зависим от профиля
 int16_t  WR_LoadRun[WR_NumLoads];
