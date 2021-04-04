@@ -765,7 +765,7 @@ uint16_t devEEV::get_StartPos()
 // На входе флаг нагрева или охлаждения
 // Если датчик давления отсутствует до давление будет -1000, и по этому опредяляем его наличие в конфигурации и как определять перегрев
 // Если ЭРВ запрещена в конфигурации, то перегрев не вычисляется =0 и сразу выходим
-int16_t devEEV::set_Overheat(boolean fHeating) // int16_t rto,int16_t out, int16_t in, int16_t p)
+int16_t devEEV::set_Overheat(boolean fHeating __attribute__((unused))) // int16_t rto,int16_t out, int16_t in, int16_t p)
 {
 	if(!get_present()) {
 		Overheat = 0;
@@ -820,6 +820,9 @@ xTEVAOUT_PEVA:
 			Overheat = (fHeating ? HP.sTemp[TEVAOUT].get_Temp() : HP.sTemp[TCONIN].get_Temp()) - tPEVA + _data.Correction;
 #elif defined(TCOMPIN)
 			Overheat = (fHeating ? HP.sTemp[TEVAOUT].get_Temp() : HP.sTemp[TCOMPIN].get_Temp()) - tPEVA + _data.Correction;
+#else
+			err = ERR_TYPE_OVERHEAT;
+			set_Error(err, name);
 #endif
 		} else {
 			err = ERR_TYPE_OVERHEAT;

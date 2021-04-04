@@ -120,6 +120,7 @@ int8_t devVaconFC::initFC()
 // Вычисление номинальной мощности двигателя компрессора = U*sqrt(3)*I*cos, W
 void devVaconFC::set_nominal_power(void)
 {
+#ifndef FC_ANALOG_CONTROL
 	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
 	typeof(nominal_power) n = nominal_power;
 	uint32_t pwr;
@@ -134,6 +135,7 @@ void devVaconFC::set_nominal_power(void)
 	nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
 	if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
+#endif
 }
 
 // Возвращает состояние, или ERR_LINK_FC, если нет связи по Modbus
@@ -300,7 +302,9 @@ int8_t devVaconFC::get_readState()
 #else // Аналоговое управление
 		err = OK;
 		power = 0;
+	#ifdef FC_MAX_CURRENT
 		current = 0;
+	#endif
 #endif
 	}
 	return err;
@@ -414,10 +418,10 @@ int8_t devVaconFC::start_FC()
 	if(!get_present() || GETBIT(flags, fErrFC)) return err = ERR_MODBUS_BLOCK; // выходим если нет инвертора или он заблокирован по ошибке
     err = OK;
 #ifndef FC_ANALOG_CONTROL // Не аналоговое управление
-#ifdef DEMO
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+ #ifdef DEMO
+  #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
     HP.dRelay[RCOMP].set_ON(); // ПЛОХО через глобальную переменную
-#endif // FC_USE_RCOMP
+  #endif // FC_USE_RCOMP
     if(err == OK) {
         SETBIT1(flags, fOnOff);
         startCompressor = rtcSAM3X8.unixtime();
@@ -427,7 +431,7 @@ int8_t devVaconFC::start_FC()
         SETBIT1(flags, fErrFC);
         set_Error(err, name);
     } // генерация ошибки
-#else // DEMO
+ #else // DEMO
     // set_target(FC_START_FC,true);  // Запись в регистр инвертора стартовой частоты  НЕ всегда скорость стартовая - супербойлер
 	if((state & FC_S_FLT)) { // Действующий отказ
 		uint16_t reg = read_0x03_16(FC_ERROR);
@@ -455,13 +459,13 @@ int8_t devVaconFC::start_FC()
 	}
 	if(err == OK) {
 	    set_nominal_power();
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+  #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
 		HP.dRelay[RCOMP].set_ON();
-#else
+  #else
 		err = write_0x06_16(FC_CONTROL, FC_C_RUN); // Команда Ход
-#endif
+  #endif
 	}
-#endif // DEMO	
+ #endif // DEMO
     if(err == OK) {
 xStarted:
     	SETBIT1(flags, fOnOff);
@@ -472,29 +476,29 @@ xStarted:
         set_Error(err, name);  // генерация ошибки
     }
 #else //  FC_ANALOG_CONTROL
-#ifdef DEMO
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+ #ifdef DEMO
+  #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
     HP.dRelay[RCOMP].set_ON(); // ПЛОХО через глобальную переменную
-#endif // FC_USE_RCOMP
+  #endif // FC_USE_RCOMP
 xStarted:
     SETBIT1(flags, fOnOff);
     startCompressor = rtcSAM3X8.unixtime();
     journal.jprintf(" %s ON\n", name);
-#else // DEMO
+ #else // DEMO
     // Боевая часть
     if((testMode == NORMAL) || (testMode == HARD_TEST)) //   Режим работа и хард тест, все включаем,
     {
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+  #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
         HP.dRelay[RCOMP].set_ON(); // ПЛОХО через глобальную переменную
-#else
+  #else
         err = ERR_FC_CONF_ANALOG;
         SETBIT1(flags, fErrFC);
         set_Error(err, name); // Ошибка конфигурации
-#endif
-#ifdef FC_ANALOG_OFF_SET_0
+  #endif
+  #ifdef FC_ANALOG_OFF_SET_0
         dac = (int32_t)FC_target * (_data.level100 - _data.level0) / (100*100) + _data.level0;
         analogWrite(pin, dac);
-#endif
+  #endif
     }
 xStarted:
     SETBIT1(flags, fOnOff);
@@ -592,7 +596,11 @@ uint16_t devVaconFC::get_current()
 #ifdef FC_MAX_CURRENT
 	  return current;
 #else
+	#ifndef FC_ANALOG_CONTROL
 	  return (testMode == NORMAL || testMode == HARD_TEST) ? read_0x03_16(FC_CURRENT) : 0;
+	#else
+	  return 0;
+	#endif
 #endif
 }
 
@@ -603,13 +611,13 @@ void devVaconFC::get_paramFC(char *var,char *ret)
 	ret += m_strlen(ret);
     if(strcmp(var,fc_ON_OFF)==0)                { if (GETBIT(flags,fOnOff))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
     if(strcmp(var,fc_INFO)==0)                  {
-    	                                        #ifndef FC_ANALOG_CONTROL  
+#ifndef FC_ANALOG_CONTROL
     	                                        get_infoFC(ret);
-    	                                        #else
-                                                 strcat(ret, "|Данные не доступны, управление через ") ;
-                                                 if((g_APinDescription[pin].ulPinAttribute & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) strcat(ret, "аналоговый"); else strcat(ret, "ШИМ");
-                                                 strcat(ret, " выход|;");
-                                                #endif              
+#else
+                                                strcat(ret, "|Данные не доступны, управление через ") ;
+                                                if((g_APinDescription[pin].ulPinAttribute & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) strcat(ret, "аналоговый"); else strcat(ret, "ШИМ");
+                                                strcat(ret, " выход|;");
+#endif
     	                                        } else
     if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else
     if(strcmp(var,fc_NOTE)==0)                  {  strcat(ret,note);             } else
@@ -839,6 +847,7 @@ int16_t devVaconFC::read_tempFC()
 //    return 0;
 //#endif
 }
+
 // Функции общения по модбас инвертора Чтение регистров
 #ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 // Функция 0х03 прочитать 2 байта, возвращает значение, ошибка обновляется

@@ -3228,7 +3228,9 @@ void HeatPump::compressorON()
 
 	if(is_compressor_on()) return;                                  // Компрессор уже работает
 	if(is_next_command_stop()) {
+#ifdef AUTO_START_GENERATOR
 xNextStop:
+#endif
 		journal.jprintf(" Next command stop(%d), skip start", next_command);
 		return;
 	}
@@ -3845,7 +3847,7 @@ int16_t HeatPump::get_temp_condensing(void)
 int16_t HeatPump::get_overcool(void)
 {
 	if(!is_heating()) {
-#ifdef TCONOUT
+#if defined(TCONOUT) && defined(TEVAIN)
 		return get_temp_condensing() - sTemp[TEVAIN].get_Temp();
 #else
 	return 0;

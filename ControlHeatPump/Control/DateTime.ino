@@ -68,7 +68,7 @@ int8_t set_time(void)
 
 // Вызов только из setup() или из MAIN_WEB_TASK !!!
 // Возврат true - успешно
-bool set_time_HTTP(bool upd_vars)
+bool set_time_HTTP(bool upd_vars __attribute__((unused)))
 {
 #ifdef HTTP_TIME_REQUEST
 	EthernetClient tTCP; // For get time

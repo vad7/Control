@@ -862,8 +862,9 @@ void parserGET(uint8_t thread, int8_t )
 		{
 #ifdef USE_UPS
 			if(HP.NO_Power) strcat(strReturn,"*.***");
-			else {
+			else
 #endif
+			{
 				_dtoa(strReturn, HP.power220, 3);
 				if(HP.power_RBOILER) {
 					strcat(strReturn,"+");

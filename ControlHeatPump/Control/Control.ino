@@ -724,7 +724,9 @@ void vWeb0(void *)
 	static unsigned long resW5200 = 0;
 	static unsigned long iniW5200 = 0;
 	static unsigned long pingt = 0;
+#ifdef HTTP_LowConsumeRequest
 	static uint16_t RepeatLowConsumeRequest = 0;
+#endif
 	static boolean network_last_link = true;
 #ifdef MQTT
 	static unsigned long narmont=0;
@@ -941,14 +943,14 @@ void vWeb0(void *)
 								break;
 							}
 						}
+#ifdef WR_PNET_AVERAGE
+	#if WR_PNET_AVERAGE == 0
 						// Медианный фильтр
 						static int median1, median2;
 						if(WR_Pnet_avg_init) {
 							median1 = median2 = pnet;
-#ifndef WR_PNET_AVERAGE
 							WR_Pnet_avg_init = false;
-#endif
-							}
+						}
 						int median3 = pnet;
 						if(median1 <= median2 && median1 <= median3) {
 							pnet = median2 <= median3 ? median2 : median3;
@@ -960,7 +962,8 @@ void vWeb0(void *)
 						median1 = median2;
 						median2 = median3;
 						//
-#ifdef WR_PNET_AVERAGE
+						WR_Pnet = need_average ? pnet : median3;
+	#else
 						if(WR_Pnet_avg_init) { // first time
 							for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;
 							WR_Pnet_avg_sum = pnet * int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
@@ -971,9 +974,9 @@ void vWeb0(void *)
 							if(WR_Pnet_avg_idx < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]) - 1) WR_Pnet_avg_idx++; else WR_Pnet_avg_idx = 0;
 						}
 						if(need_average) WR_Pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
-						else
+						else WR_Pnet = pnet;
+	#endif
 #endif
-							WR_Pnet = pnet;
 					}
 					// проверка перегрузки
 					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку

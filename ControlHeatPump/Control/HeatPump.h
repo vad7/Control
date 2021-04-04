@@ -122,7 +122,7 @@ int16_t  WR_Pnet = -32768;
 volatile int32_t WR_PowerMeter_Power = 0;
 volatile uint8_t WR_Error_Read_PowerMeter = 0;
 #endif
-#ifdef WR_PNET_AVERAGE
+#if WR_PNET_AVERAGE > 0
 int16_t  WR_Pnet_avg[WR_PNET_AVERAGE];
 uint8_t  WR_Pnet_avg_idx = 0;
 int32_t  WR_Pnet_avg_sum = 0;

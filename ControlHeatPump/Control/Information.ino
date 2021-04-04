@@ -1094,8 +1094,8 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 // Возврат: 0 - выкл, 1 - вкл, -1 - в гистерезисе
 int8_t Profile::check_DailySwitch(uint8_t idx, uint32_t hhmm)
 {
-	int8_t wr = -1; // >=0 index WR relay, -1 - not WR relay, -2 - no turn off
 #ifdef WATTROUTER
+	int8_t wr = -1; // >=0 index WR relay, -1 - not WR relay, -2 - no turn off
 	int8_t pin = DailySwitch[idx].Device < RNUMBER ? HP.dRelay[DailySwitch[idx].Device].get_pinD() : -(DailySwitch[idx].Device - RNUMBER + 1);
 	for(int8_t i = 0; i < WR_NumLoads; i++) {
 		if(pin != WR_Load_pins[i] || !GETBIT(WR.Loads, i)) continue;
@@ -1143,12 +1143,14 @@ xCheckTemp:
 			} else ret = -1;
 		}
 	}
+#ifdef WATTROUTER
 	if(wr != -1) {
 		if(ret == 0) {
 			if(wr == -2) ret = -1;
 			else if(GETBIT(WR.Loads, wr)) SETBIT1(WR_Loads, wr);
 		} else if(ret == 1) SETBIT0(WR_Loads, wr);
 	}
+#endif
 	return ret;
 }
 
