@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -51,6 +51,7 @@
 #include "Information.h"
 #include "MQTT.h"
 #include "Statistics.h"
+#include "LCD2004.h"
 
 void vUpdateStepperEEV(void *);
 #include "StepMotor.h"
@@ -117,6 +118,7 @@ void USART2_Handler(void)   // Interrupt handler for UART2
 	Serial4.IrqHandler();     // In turn calls on the Serial2 interrupt handler
 }
 #endif
+
 
 // Структура для хранения одного сокета, нужна для организации многопотоковой обработки
 #define fABORT_SOCK   0                     // флаг прекращения передачи (произошел сброс сети)
@@ -598,6 +600,10 @@ x_I2C_init_std_message:
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
 	if(xTaskCreate(vServiceHP, "ServiceHP", STACK_vUpdateCommand, NULL, 2, &HP.xHandleSericeHP)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*STACK_vUpdateCommand;// 200, до обрезки стеков было 300
+#ifdef LCD2004
+	if(xTaskCreate(vKeysLCD, "KeysLCD", 90, NULL, 2, &HP.xHandleKeysLCD) == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS = HP.mRTOS+64+4* 90;
+#endif
 
 	vSemaphoreCreateBinary(HP.xCommandSemaphore);                       // Создание семафора
 	if (HP.xCommandSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);

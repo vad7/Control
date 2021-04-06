@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмное обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -75,6 +75,7 @@ const uint16_t  defaultPort=80;
 #define GETBIT(b,f)   ((b&(1<<(f)))?true:false)              // получить состяние бита
 #define SETBIT1(b,f)  (b|=(1<<(f)))                          // установка бита в 1
 #define SETBIT0(b,f)  (b&=~(1<<(f)))                         // установка бита в 0
+#define ALIGN(a) ((a + 3) & ~3)
 
 // ------------------- SPI ----------------------------------
 // Карта памяти
@@ -105,6 +106,22 @@ const uint16_t  defaultPort=80;
 #define NEXTION_UPDATE       5000           // Время обновления информации на дисплее Nextion (мсек)
 #define NEXTION_BOOT_TIME    300            // Время для загрузки дисплея, если при сбросе дисплей не находится надо увеличить (мсек)
 #define NEXTION_READ         50             // Время опроса дисплея Nextion (мсек) разбор входной очереди
+
+#define LCD_COLS				20			// Колонок на LCD экране
+#define LCD_ROWS				4			// Строк на LCD экране
+#define DISPLAY_UPDATE			2500           // Время обновления информации на дисплее (мсек)
+#define KEY_CHECK_PERIOD		10             // ms
+#define KEY_DEBOUNCE_TIME		50             // ms
+#define DISPLAY_SETUP_TIMEOUT	600000         // ms
+#define LCD_SetupFlag 			0x80000000
+#define LCD_SetupMenuItems		5
+#define LCD_SetupMenu_Relays	0x100
+#define LCD_SetupMenu_Sensors	0x200
+#define LCD_SetupMenu_Temp		0x300
+#define LCD_SetupMenu_Options	0x400
+#define LCD_SetupMenu_UpdateFW	0x500
+#define LCD_SetupMenu_Relays_Max 8
+const char *LCD_SetupMenu[LCD_SetupMenuItems] = { "1. Exit", "2. Relays", "3. Sensors", "4. Temperature", "5. Options", "6. Prepare FW update" };
 
 // Конфигурирование Modbus для инвертора и счетчика SDM
 #ifndef MODBUS_PORT_NUM

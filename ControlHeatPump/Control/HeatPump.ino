@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмное обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -1479,7 +1479,7 @@ void HeatPump::get_Chart(int index, char *str)
 }
 
 // Обновить настройки дисплея Nextion
-void HeatPump::updateNextion(bool need_init)
+void HeatPump::updateNextion(bool need_init __attribute__((unused)))
 {
 #ifdef NEXTION
 	if(GETBIT(Option.flags, fNextion))  // Дисплей подключен

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -587,6 +587,9 @@ public:
 	#endif
 	#if    W5200_THREAD > 3
 	TaskHandle_t xHandleUpdateWeb3;                     // Заголовок задачи "Веб сервер"
+	#endif
+	#ifdef LCD2004
+	TaskHandle_t xHandleKeysLCD;
 	#endif
 
 	SemaphoreHandle_t xCommandSemaphore;                // Семафор команды
