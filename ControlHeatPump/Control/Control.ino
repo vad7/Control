@@ -250,10 +250,12 @@ void setup() {
 #endif
 #ifdef LCD2004
 	lcd.begin(LCD_COLS, LCD_ROWS); // Setup: cols, rows
-	lcd.print((char*)"HeatPump v");
-	lcd.print((char*)VERSION);
+	lcd.print("HeatPump v");
+	lcd.print(VERSION);
+	lcd.setCursor(0, 1);
+	lcd.print("vad7@yahoo.com");
 	lcd.setCursor(0, 3);
-	lcd.print((char*)"vad7@yahoo.com");
+	lcd.print("Loading...");
 #endif
 	while(ret) {
 		SerialDbg.print("Wrong I2C EEPROM or setup, press KEY[D");
@@ -451,11 +453,13 @@ x_I2C_init_std_message:
 	journal.jprintf("2. Init %s main class . . .\n",(char*)nameHeatPump);
 	HP.initHeatPump();                           // Основной класс
 
+#ifndef LCD2004
 	// 5. Проверка сброса сети
 	// Нажатие при включении - режим safeNetwork (настрока сети по умолчанию 192.168.0.177  шлюз 192.168.0.1, не спрашивает пароль на вход в веб морду)
 	journal.jprintf("3. Read safe Network key . . .\n");
 	HP.safeNetwork = !digitalReadDirect(PIN_KEY1);
 	journal.jprintf(" Mode safeNetwork %s\n", HP.safeNetwork ? "ON" : "OFF");
+#endif
 
 	// 6. Чтение ЕЕПРОМ, надо раньше чем инициализация носителей веб морды, что бы знать откуда грузить
 	journal.jprintf("4. Load data from I2C memory . . .\n");

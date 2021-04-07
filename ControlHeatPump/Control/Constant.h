@@ -107,6 +107,8 @@ const uint16_t  defaultPort=80;
 #define NEXTION_BOOT_TIME    300            // Время для загрузки дисплея, если при сбросе дисплей не находится надо увеличить (мсек)
 #define NEXTION_READ         50             // Время опроса дисплея Nextion (мсек) разбор входной очереди
 
+#ifdef LCD2004
+#undef KEY_ON_OFF
 #define LCD_COLS				20			// Колонок на LCD экране
 #define LCD_ROWS				4			// Строк на LCD экране
 #define DISPLAY_UPDATE			2000           // Время обновления информации на дисплее (мсек)
@@ -115,19 +117,24 @@ const uint16_t  defaultPort=80;
 #define DISPLAY_SETUP_TIMEOUT	600000         // ms
 #define LCD_SetupFlag 			0x80000000
 #define LCD_SetupMenuItems		6
-#define LCD_MaxItem				4				// 0..
-#define LCD_SetupMenu_Relays	0x100
-#define LCD_SetupMenu_Sensors	0x200
-#define LCD_SetupMenu_Temp		0x300
-#define LCD_SetupMenu_Options	0x400
+#define LCD_MainScreenMaxItem	3				// 0..
+#define LCD_SetupMenu_OnOff		0x100
+#define LCD_SetupMenu_Relays	0x200
+#define LCD_SetupMenu_Sensors	0x300
+#define LCD_SetupMenu_Network	0x400
 #define LCD_SetupMenu_UpdateFW	0x500
 #define LCD_SetupMenu_Relays_Max 8
-const char *LCD_SetupMenu[LCD_SetupMenuItems] = { "1. Exit", "2. Relays", "3. Sensors", "4. Temperature", "5. Options", "6. Prepare FW update" };
-const char LCD_Str_House[] = "House";
+const char *LCD_SetupMenu[LCD_SetupMenuItems] = { "Exit", "On/Off", "Relays", "Sensors", "Safe Network", "Prepare FW update" };
+const char LCD_Str_SetupInfo[] = "Long press OK - Exit";
+const char LCD_Str_House[] = "House ";
 const char LCD_Str_Boiler[] = "Boiler";
-const char LCD_Str_Freq[] = "Freq";
-const char LCD_Str_On[] = "ON?";
-const char LCD_Str_Off[] = "OFF?";
+const char LCD_Str_Freq[] = "Freq. ";
+const char LCD_Str_HP[] = "HeatPump";
+const char LCD_Str_On[] = "ON";
+const char LCD_Str_Off[] = "OFF";
+const char LCD_Str_SafeNework[] = "OK - SafeNetwork";
+const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
+#endif
 
 // Конфигурирование Modbus для инвертора и счетчика SDM
 #ifndef MODBUS_PORT_NUM

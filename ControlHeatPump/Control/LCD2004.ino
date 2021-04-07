@@ -57,19 +57,43 @@ xSetupExit:
 					lcd.command(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
 					LCD_setup = 0;
 					setup_timeout = 0;
+					vTaskDelay(KEY_DEBOUNCE_TIME * 10);
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Relays) { // inside menu item selected - Relay
 					HP.dRelay[LCD_setup & 0xFF].set_Relay(HP.dRelay[LCD_setup & 0xFF].get_Relay() ? fR_StatusAllOff : fR_StatusManual);
-//					if((LCD_setup & 0xFF) == RFILL) FillingTankLastLevel = 0;
-				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Options) { // inside menu item selected - Options
-//					HP.fNetworkReset = 1;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Network) { // inside menu item selected
+					HP.safeNetwork ^= 1;
+					HP.sendCommand(pNETWORK);
+					goto xSetupExit;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_UpdateFW) { // inside menu item selected
+					if(HP.dEEV.EEV != -1) HP.dEEV.set_EEV(HP.dEEV.get_maxEEV());
+					int i;
+					if((i = HP.save_motoHour()) == OK)
+						if((i = Stats.SaveStats(1)) == OK)
+							i = Stats.SaveHistory(1);
+					lcd.setCursor(0, 1);
+					if(i == OK) {
+						lcd.print("OK");
+					} else {
+						lcd.print("Error ");
+						lcd.print(i);
+					}
+					vTaskDelay(3000);
+					goto xSetupExit;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) { // inside menu item selected
+					if((HP.get_State() != pSTARTING_HP) || (HP.get_State() != pSTOPING_HP)) {
+						if(LCD_setup & 0xFF) HP.sendCommand(pSTART); else HP.sendCommand(pSTOP);
+					}
 					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == 0) {	// select menu item
 					LCD_setup = (LCD_setup << 8) | LCD_SetupFlag;
-					if((LCD_setup & 0xFF00) == LCD_SetupMenu_Temp) { // Flow check
-//						FlowPulseCounter = 0;
-//						FlowPulseCounterRest = _FlowPulseCounterRest = HP.sFrequency[FLOW].PassedRest;
+					if((LCD_setup & 0xFF00) == LCD_SetupMenu_Network) {
 						lcd.command(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
+					} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_UpdateFW) {
+						if(HP.is_compressor_on()) LCD_setup >>= 8;
 					} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Sensors) {
+						lcd.command(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
+					} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) {
+						if(HP.IsWorkingNow() && HP.get_State() != pSTOPING_HP) LCD_setup |= 1; else LCD_setup &= ~1;
 						lcd.command(LCD_DISPLAYCONTROL | LCD_DISPLAYON);
 					}
 				} else { // inside menu item selected
@@ -78,20 +102,13 @@ xSetupExit:
 				DisplayTick = ~DisplayTick;
 				setup_timeout = DISPLAY_SETUP_TIMEOUT / KEY_CHECK_PERIOD;
 			} else if(HP.get_errcode() && !Error_Beep_confirmed) Error_Beep_confirmed = true; // Supress beeping
-			else if((LCD_setup & 0xFF00) == 0) { // Enter Setup
+			else if((LCD_setup & 0xFFFF) == 0) { // Enter Setup
 				LCD_setup = LCD_SetupFlag;
 				lcd.command(LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKON);
 				DisplayTick = ~DisplayTick;
 				setup_timeout = DISPLAY_SETUP_TIMEOUT / KEY_CHECK_PERIOD;
-			} else if((LCD_setup & 0x1FF) == 0x0100) { // Switch HP
-				if((HP.get_State() != pSTARTING_HP) || (HP.get_State() != pSTOPING_HP)) {
-					if((LCD_setup & 0xFF00) == 0x0200) HP.sendCommand(pSTOP); else HP.sendCommand(pSTART);
-				}
-				LCD_setup = 0;
-				DisplayTick = ~DisplayTick;
 			} else {
 				LCD_setup ^= 0x0100;
-				if((LCD_setup & 0xFF00) == 0) LCD_setup = 0;
 				DisplayTick = ~DisplayTick;
 			}
 			while(!digitalReadDirect(PIN_KEY_OK)) vTaskDelay(KEY_DEBOUNCE_TIME);
@@ -101,25 +118,25 @@ xSetupExit:
 			while(!digitalReadDirect(PIN_KEY_UP)) vTaskDelay(KEY_DEBOUNCE_TIME);
 			if(LCD_setup & LCD_SetupFlag) {
 				if((LCD_setup & 0xFF00) == 0) { // select menu item
-					if((LCD_setup & 0xFF) < LCD_SetupMenuItems-1) {
-						LCD_setup++;
-						DisplayTick = ~DisplayTick;
-					}
+					if((LCD_setup & 0xFF) < LCD_SetupMenuItems-1) LCD_setup++; else LCD_setup &= ~0xFF;
+					DisplayTick = ~DisplayTick;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_UpdateFW) {
+					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Relays) {
 					LCD_setup++;
 					if((LCD_setup & 0xFF) >= (RNUMBER > LCD_SetupMenu_Relays_Max ? LCD_SetupMenu_Relays_Max : RNUMBER)) {
 						LCD_setup &= ~0xFF;
 					}
 					DisplayTick = ~DisplayTick;
-				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Options) { // Options
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) {
+					LCD_setup ^= 1;
+					DisplayTick = ~DisplayTick;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Network) {
 					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Sensors) DisplayTick = ~DisplayTick;
 				setup_timeout = DISPLAY_SETUP_TIMEOUT / KEY_CHECK_PERIOD;
 			} else if(LCD_setup & 0xFF00) {
 				switch (LCD_setup & 0xFF) {
-				case 0: // On/Off
-					LCD_setup ^= 0x0200;
-					break;
 				case 1: // House
 					HP.setTargetTemp(10);
 					break;
@@ -128,32 +145,33 @@ xSetupExit:
 					break;
 				}
 			} else {
-				if((LCD_setup & 0xFF) > 0) LCD_setup--;
+				if((LCD_setup & 0xFF) > 0) {
+					LCD_setup--;
+					DisplayTick = ~DisplayTick;
+				}
 			}
 			//journal.jprintfopt("[UP]\n");
 		} else if(!digitalReadDirect(PIN_KEY_DOWN)) {
 			vTaskDelay(KEY_DEBOUNCE_TIME);
 			while(!digitalReadDirect(PIN_KEY_DOWN)) vTaskDelay(KEY_DEBOUNCE_TIME);
 			if(LCD_setup & LCD_SetupFlag) {
-				if((LCD_setup & 0xFF00) == LCD_SetupMenu_Temp) { // Temperature
-
-				} else if((LCD_setup & 0xFF00) == 0) {
-					if(LCD_setup & 0xFF) {
-						LCD_setup--;
-						DisplayTick = ~DisplayTick;
-					}
+				if((LCD_setup & 0xFF00) == 0) {
+					if(LCD_setup & 0xFF) LCD_setup--; else LCD_setup = (LCD_setup & ~0xFF) | (LCD_SetupMenuItems-1);
+					DisplayTick = ~DisplayTick;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_UpdateFW) {
+					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Relays) {
 					if((LCD_setup & 0xFF) != 0) LCD_setup--; else LCD_setup |= RNUMBER > LCD_SetupMenu_Relays_Max ? LCD_SetupMenu_Relays_Max-1 : RNUMBER-1;
 					DisplayTick = ~DisplayTick;
-				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Options) { // Options
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) {
+					LCD_setup ^= 1;
+					DisplayTick = ~DisplayTick;
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Network) {
 					goto xSetupExit;
 				}
 				setup_timeout = DISPLAY_SETUP_TIMEOUT / KEY_CHECK_PERIOD;
 			} else if(LCD_setup & 0xFF00) {
 				switch (LCD_setup & 0xFF) {
-				case 0: // On/Off
-					LCD_setup ^= 0x0200;
-					break;
 				case 1: // House
 					HP.setTargetTemp(-10);
 					break;
@@ -162,7 +180,10 @@ xSetupExit:
 					break;
 				}
 			} else {
-				if((LCD_setup & 0xFF) < LCD_MaxItem) LCD_setup++;
+				if((LCD_setup & 0xFF) < LCD_MainScreenMaxItem) {
+					LCD_setup++;
+					DisplayTick = ~DisplayTick;
+				}
 			}
 			//journal.jprintfopt("[DWN]\n");
 		}
@@ -185,54 +206,28 @@ xSetupExit:
 						lcd.print(HP.sInput[i].get_name());
 					}
 					lcd.setCursor(10 * ((LCD_setup & 0xFF) % 2), (LCD_setup & 0xFF) / 2);
-				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Temp) {
-					// 12345678901234567890
-					// Edges: 41234
-					// Liters: 112.1234
-					// Flow: 2332
-					// Sp: 124.123  154.123
-					lcd.setCursor(0, 0);
-					strcpy(buf, "Flow: "); buf += 6;
-//					buf = dptoa(buf, HP.sFrequency[FLOW].get_Value(), 3);
-//					buffer_space_padding(buf, LCD_COLS - (buf - buffer));
-					lcd.print(buffer);
-
-					lcd.setCursor(0, 1);
-					strcpy(buf = buffer, "Edges: "); buf += 7;
-//					uint32_t tmp = (FlowPulseCounter * HP.sFrequency[FLOW].get_kfValue() + FlowPulseCounterRest - _FlowPulseCounterRest) / 100;
-//					buf += i10toa(tmp, buf, 0);
-//					buffer_space_padding(buf, LCD_COLS - (buf - buffer));
-					lcd.print(buffer);
-
-					lcd.setCursor(0, 2);
-					strcpy(buf = buffer, "Liters: "); buf += 8;
-//					tmp *= 100;
-//					buf += i10toa(tmp / HP.sFrequency[FLOW].get_kfValue(), buf, 0);
-					*buf++ = '.';
-//					buf += i10toa((uint32_t)(tmp % HP.sFrequency[FLOW].get_kfValue()) * 10000 / HP.sFrequency[FLOW].get_kfValue(), buf, 4);
-//					buffer_space_padding(buf, LCD_COLS - (buf - buffer));
-					lcd.print(buffer);
-
-					lcd.setCursor(0, 3);
-					strcpy(buf = buffer, "Sp: "); buf += 4;
-//					buf = dptoa(buf, HP.CalcFilteringSpeed(HP.FilterTankSquare), 3);
-//					*buf++ = ' '; *buf++ = ' ';
-//					buf = dptoa(buf, HP.CalcFilteringSpeed(HP.FilterTankSoftenerSquare), 3);
-//					buffer_space_padding(buf, LCD_COLS - (buf - buffer));
-					lcd.print(buffer);
-
-					DisplayTick = xTaskGetTickCount() - (DISPLAY_UPDATE - 1000);
-					vTaskDelay(KEY_CHECK_PERIOD);
-					continue;
-				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Options) { // Options
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) {
 					lcd.clear();
-
-					lcd.print("Ok - Network reset");
+					lcd.print(LCD_Str_HP);
+					lcd.print(" - ");
+					lcd.print(LCD_setup & 0xFF ? LCD_Str_On : LCD_Str_Off);
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_Network) {
+					lcd.clear();
+					lcd.print(LCD_Str_SafeNework);
+					if(HP.safeNetwork) {
+						lcd.print(' ');
+						lcd.print(LCD_Str_Off);
+					}
+				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_UpdateFW) {
+					lcd.clear();
+					lcd.print(LCD_Str_PrepareUpdate);
 				} else {
 					lcd.clear();
+					lcd.print((LCD_setup & 0xFF) + 1);
+					lcd.print(". ");
 					lcd.print(LCD_SetupMenu[LCD_setup & 0xFF]);
 					lcd.setCursor(0, 1);
-					lcd.print("Long press OK - Exit");
+					lcd.print(LCD_Str_SetupInfo);
 					lcd.setCursor(0, 3);
 					NowDateToStr(buffer);
 					buffer[10] = ' ';
@@ -248,23 +243,25 @@ xSetupExit:
 				//  Boiler: 54.2→60.0°
 				//  Freq: 50.2
 				lcd.setCursor(0, 0);
-				buf += m_snprintf(buf, sizeof(buf), " [%s]: %s", (LCD_setup & 0xFF00) == 1 ? LCD_Str_On : (LCD_setup & 0xFF00) == 3 ? LCD_Str_Off : codeRet[HP.get_ret()], HP.StateToStrEN());
+				buf += m_snprintf(buf, sizeof(buffer), " [%s]: %s", (LCD_setup & 0xFF00) == 1 ? LCD_Str_On : (LCD_setup & 0xFF00) == 3 ? LCD_Str_Off : codeRet[HP.get_ret()], HP.StateToStrEN());
 				buffer_space_padding(buf, LCD_COLS - (buf - buffer));
 				lcd.print(buffer);
 				lcd.setCursor(0, 1);
-				buf = buffer + m_snprintf(buffer, sizeof(buf), " %s: %.1d\x7E", LCD_Str_House, HP.sTemp[TIN].get_Temp()/10);
-				if(HP.get_modeHouse() == pOFF) strcat(buf, "-"); else HP.getTargetTempStr2(buf);
+				buf = buffer + m_snprintf(buffer, sizeof(buffer), " %s: %.1d\x7E", LCD_Str_House, HP.sTemp[TIN].get_Temp()/10);
+				if(HP.get_modeHouse() == pOFF) strcat(buf, "-"); else HP.getTargetTempStr(buf);
 				strcat(buf, "\xDF");
 				buf += m_strlen(buf);
 				buffer_space_padding(buf, LCD_COLS - (buf - buffer));
 				lcd.print(buffer);
 				lcd.setCursor(0, 2);
-				buf = buffer + m_snprintf(buffer, sizeof(buf), " %s: %.1d\x7E%.1d\xDF", LCD_Str_Boiler, HP.sTemp[TBOILER].get_Temp()/10, HP.Prof.Boiler.TempTarget/10);
+				buf = buffer + m_snprintf(buffer, sizeof(buffer), " %s: %.1d\x7E%.1d\xDF", LCD_Str_Boiler, HP.sTemp[TBOILER].get_Temp()/10, HP.Prof.Boiler.TempTarget/10);
 				buffer_space_padding(buf, LCD_COLS - (buf - buffer));
 				lcd.print(buffer);
 				lcd.setCursor(0, 3);
-				buf = buffer + m_snprintf(buffer, sizeof(buf), " %s: ", LCD_Str_Freq);
-				if(HP.dFC.get_present()) _dtoa(buf, HP.dFC.get_frequency(), 2); else strcat(buf, "-");
+				buf = buffer + m_snprintf(buffer, sizeof(buffer), " %s: ", LCD_Str_Freq);
+				if(HP.dFC.get_present()) {
+					if(HP.is_compressor_on()) _dtoa(buf, HP.dFC.get_frequency(), 2); else strcat(buf, LCD_Str_Off);
+				} else strcat(buf, "-");
 				buf += m_strlen(buf);
 				buffer_space_padding(buf, LCD_COLS - (buf - buffer));
 				lcd.print(buffer);
