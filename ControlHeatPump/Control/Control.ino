@@ -248,6 +248,13 @@ void setup() {
 #ifndef DEBUG_NATIVE_USB
 	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
 #endif
+#ifdef LCD2004
+	lcd.begin(LCD_COLS, LCD_ROWS); // Setup: cols, rows
+	lcd.print((char*)"HeatPump v");
+	lcd.print((char*)VERSION);
+	lcd.setCursor(0, 3);
+	lcd.print((char*)"vad7@yahoo.com");
+#endif
 	while(ret) {
 		SerialDbg.print("Wrong I2C EEPROM or setup, press KEY[D");
 		SerialDbg.print(PIN_KEY1);

@@ -35,6 +35,7 @@ uint8_t _ftoa(char *outstr, float val, unsigned char precision);
 void _dtoa(char *outstr, int val, int precision);
 char* NowTimeToStr(char *buf = NULL);
 char* NowDateToStr(char *buf = NULL);
+void buffer_space_padding(char * buf, int add);
 
 // Структура для хранения переменных для паролей
 struct type_WebSecurity

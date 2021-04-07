@@ -1005,6 +1005,14 @@ int32_t round_div_int32(int32_t value, int16_t div)
 	}
 }
 
+void buffer_space_padding(char * buf, int add)
+{
+	if(add > 0) {
+		while(add--) *buf++ = ' ';
+		*buf = '\0';
+	}
+}
+
 inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to) {
 	if (from == to)
 		return value;

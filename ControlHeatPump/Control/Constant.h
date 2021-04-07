@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.140"				// Версия прошивки
+#define VERSION			"1.141"				// Версия прошивки
 #define VER_SAVE		153					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -109,12 +109,13 @@ const uint16_t  defaultPort=80;
 
 #define LCD_COLS				20			// Колонок на LCD экране
 #define LCD_ROWS				4			// Строк на LCD экране
-#define DISPLAY_UPDATE			2500           // Время обновления информации на дисплее (мсек)
+#define DISPLAY_UPDATE			2000           // Время обновления информации на дисплее (мсек)
 #define KEY_CHECK_PERIOD		10             // ms
 #define KEY_DEBOUNCE_TIME		50             // ms
 #define DISPLAY_SETUP_TIMEOUT	600000         // ms
 #define LCD_SetupFlag 			0x80000000
-#define LCD_SetupMenuItems		5
+#define LCD_SetupMenuItems		6
+#define LCD_MaxItem				4				// 0..
 #define LCD_SetupMenu_Relays	0x100
 #define LCD_SetupMenu_Sensors	0x200
 #define LCD_SetupMenu_Temp		0x300
@@ -122,6 +123,11 @@ const uint16_t  defaultPort=80;
 #define LCD_SetupMenu_UpdateFW	0x500
 #define LCD_SetupMenu_Relays_Max 8
 const char *LCD_SetupMenu[LCD_SetupMenuItems] = { "1. Exit", "2. Relays", "3. Sensors", "4. Temperature", "5. Options", "6. Prepare FW update" };
+const char LCD_Str_House[] = "House";
+const char LCD_Str_Boiler[] = "Boiler";
+const char LCD_Str_Freq[] = "Freq";
+const char LCD_Str_On[] = "ON?";
+const char LCD_Str_Off[] = "OFF?";
 
 // Конфигурирование Modbus для инвертора и счетчика SDM
 #ifndef MODBUS_PORT_NUM
@@ -1314,7 +1320,7 @@ enum TYPE_RET_HP
   pEND18                            // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
 //  Для вывода кодов
-const char *codeRet[]={ "none","MinPause","Bh1","Bh2","Bh3","Bh4","Bh5","Bh22","Bp3","Bp1","Bp2","Bp6","Bp7","Bp8","Bp9","Bp5","Bp10","Bp11","Bp12","Bp14","Bp16","Bp17","Bp18","Bp19","Bp20","Bp21","Bp22", "Bp23","Bp24","Bp25","Bp26","Bp27","Bp28","Bp29","Bdis","Bgen",\
+const char *codeRet[]={ "none","Wait","Bh1","Bh2","Bh3","Bh4","Bh5","Bh22","Bp3","Bp1","Bp2","Bp6","Bp7","Bp8","Bp9","Bp5","Bp10","Bp11","Bp12","Bp14","Bp16","Bp17","Bp18","Bp19","Bp20","Bp21","Bp22", "Bp23","Bp24","Bp25","Bp26","Bp27","Bp28","Bp29","Bdis","Bgen",\
                        "Hh3","Hh1","Hh2","Hh13","Hh4","Hp3","Hp1","Hp2","Hp6","Hp7","Hp8","Hp9","Hp5","Hp10","Hp11","Hp12","Hp15","Hp16","Hp17","Hp18","Hp19","Hp20","Hp21","Hp23","Hp24","Hp25","Hp26","Hp27","Hp28","Hp29",\
                        "Ch3","Ch1","Ch2","Ch13","Ch4","Cp3","Cp1","Cp2","Cp6","Cp7","Cp8","Cp9","Cp5","Cp10","Cp11","Cp12","Cp15","Cp16","Cp17","Cp18","Cp19","Cp20","Cp21","Cp23","Cp24","Cp25","Cp26","Cp27","Cp28","Cp29","null"};           
 
