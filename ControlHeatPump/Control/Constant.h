@@ -112,7 +112,7 @@ const uint16_t  defaultPort=80;
 #define LCD_COLS				20			// Колонок на LCD экране
 #define LCD_ROWS				4			// Строк на LCD экране
 #define DISPLAY_UPDATE			2000           // Время обновления информации на дисплее (мсек)
-#define KEY_CHECK_PERIOD		10             // ms
+#define KEY_CHECK_PERIOD		5              // ms
 #define KEY_DEBOUNCE_TIME		50             // ms
 #define DISPLAY_SETUP_TIMEOUT	600000         // ms
 #define LCD_SetupFlag 			0x80000000

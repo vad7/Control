@@ -144,6 +144,7 @@ xSetupExit:
 					HP.setTempTargetBoiler(100);
 					break;
 				}
+				DisplayTick = ~DisplayTick;
 			} else {
 				if((LCD_setup & 0xFF) > 0) {
 					LCD_setup--;
@@ -179,6 +180,7 @@ xSetupExit:
 					HP.setTempTargetBoiler(-100);
 					break;
 				}
+				DisplayTick = ~DisplayTick;
 			} else {
 				if((LCD_setup & 0xFF) < LCD_MainScreenMaxItem) {
 					LCD_setup++;
@@ -243,7 +245,9 @@ xSetupExit:
 				//  Boiler: 54.2→60.0°
 				//  Freq: 50.2
 				lcd.setCursor(0, 0);
-				buf += m_snprintf(buf, sizeof(buffer), " [%s]: %s", (LCD_setup & 0xFF00) == 1 ? LCD_Str_On : (LCD_setup & 0xFF00) == 3 ? LCD_Str_Off : codeRet[HP.get_ret()], HP.StateToStrEN());
+				if(HP.get_errcode()) {
+					buf += m_snprintf(buf, sizeof(buffer), " [E%d]: %s", HP.get_errcode(), HP.StateToStrEN());
+				} else buf += m_snprintf(buf, sizeof(buffer), " [%s]: %s", codeRet[HP.get_ret()], HP.StateToStrEN());
 				buffer_space_padding(buf, LCD_COLS - (buf - buffer));
 				lcd.print(buffer);
 				lcd.setCursor(0, 1);
