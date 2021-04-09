@@ -649,6 +649,9 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_LEVEL0)==0)                {  _itoa(_data.level0,ret);       } else
     if(strcmp(var,fc_LEVEL100)==0)              {  _itoa(_data.level100,ret);     } else
 #endif
+#ifdef DEFROST
+   	if(strcmp(var,fc_defrostFreq)==0)           {  _dtoa(ret, _data.defrostFreq, 2); } else // %
+#endif
     if(strcmp(var,fc_BLOCK)==0)                 { if (GETBIT(flags,fErrFC))  strcat(ret,(char*)cYes); } else
     if(strcmp(var,fc_ERROR)==0)                 {  _itoa(err,ret);          } else
     if(strcmp(var,fc_UPTIME)==0)                {  _itoa(_data.Uptime,ret); } else   // вывод в секундах
@@ -698,9 +701,9 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_LEVEL100)==0)              { if ((x>=0)&&(x<=4096)) { _data.level100=x; return true;} else return false;    } else
 #endif
     if(strcmp(var,fc_BLOCK)==0)                 { SemaphoreGive(xModbusSemaphore); // отдать семафор ВСЕГДА  
-                                                if(x==0) { if(reset_FC()) note=(char*)noteFC_OK; }
-                                                else     { SETBIT1(flags,fErrFC); note=(char*)noteFC_NO; }
-                                                return true;            
+                                                	if(x==0) { if(reset_FC()) note=(char*)noteFC_OK; }
+                                                	else     { SETBIT1(flags,fErrFC); note=(char*)noteFC_NO; }
+                                                	return true;
                                                 } else  // только чтение
     if(strcmp(var,fc_UPTIME)==0)                { if((x>=1)&&(x<650)){_data.Uptime=x;return true; } else return false; } else   // хранение в сек
     if(strcmp(var,fc_ReturnOilPeriod)==0)       { _data.ReturnOilPeriod = (int16_t) x / (FC_TIME_READ/1000); return true; } else
@@ -735,6 +738,9 @@ boolean devVaconFC::set_paramFC(char *var, float f)
 		if(strcmp(var,fc_ReturnOilFreq)==0)         { _data.ReturnOilFreq = x; return true; } else
 		if(strcmp(var,fc_AdjustEEV_k)==0)           { _data.AdjustEEV_k = x; return true; } else
 		if(strcmp(var,fc_ReturnOil_AdjustEEV_k)==0) { _data.ReturnOil_AdjustEEV_k = x; return true; } else
+#ifdef DEFROST
+		if(strcmp(var,fc_defrostFreq)==0) 			{ _data.defrostFreq = x; return true; } else
+#endif
 		if(strcmp(var,fc_STEP_FREQ_BOILER)==0)      { if(x>=0 && x<10000){_data.stepFreqBoiler=x;return true; } } // %
  
     return false;

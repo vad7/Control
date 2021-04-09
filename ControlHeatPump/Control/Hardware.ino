@@ -1227,11 +1227,17 @@ void devEEV::get_paramEEV(char *var, char *ret)
 	} else if(strcmp(var, eev_PRE_START_POS)==0){	_dtoa(ret, calc_percent(_data.preStartPos), 2);
 	} else if(strcmp(var, eev_START_POS)==0){    	_dtoa(ret, calc_percent(_data.StartPos), 2);
 	} else if(strcmp(var, eev_PosAtHighTemp)==0){ 	_dtoa(ret, calc_percent(_data.PosAtHighTemp), 2);
+#ifdef DEFROST
+	} else if(strcmp(var, eev_defrostPos)==0)   { 	_dtoa(ret, calc_percent(_data.defrostPos), 2);
+#endif
 #else
 	} else if(strcmp(var, eev_MANUAL)==0){ 			_itoa(_data.manualStep, ret);
 	} else if(strcmp(var, eev_PRE_START_POS)==0){	_itoa(_data.preStartPos, ret);
 	} else if(strcmp(var, eev_START_POS)==0){    	_itoa(_data.StartPos, ret);
 	} else if(strcmp(var, eev_PosAtHighTemp)==0){ 	_itoa(_data.PosAtHighTemp, ret);
+#ifdef DEFROST
+	} else if(strcmp(var, eev_defrostPos)==0)   { 	_itoa(_data.defrostPos, ret);
+#endif
 #endif
 	} else if(strcmp(var, eev_DELAY_ON_PID)==0){  	_itoa(_data.delayOnPid, ret);
 	} else if(strcmp(var, eev_DELAY_START_POS)==0){	_itoa(_data.DelayStartPos, ret);
@@ -1365,6 +1371,10 @@ boolean devEEV::set_paramEEV(char *var,float x)
 		if(x >= 0 && x <= 100) { _data.StartPos = calc_pos(rd(x, 100)); return true; } else return false;
 	} else if(strcmp(var, eev_PosAtHighTemp)==0){
 		if(x >= 0 && x <= 100) { _data.PosAtHighTemp = calc_pos(rd(x, 100)); return true; } else return false;
+#ifdef DEFROST
+	} else if(strcmp(var, eev_defrostPos)==0){
+		if(x >= 0 && x <= 100) { _data.defrostPos = calc_pos(rd(x, 100)); return true; } else return false;
+#endif
 #else 	// шаги
 	} else if(strcmp(var, eev_MANUAL)==0){
 		if ((x>=_data.minSteps)&&(x<=_data.maxSteps)){ _data.manualStep = x; /*if(_data.ruleEEV == MANUAL)*/ set_EEV(_data.manualStep); return true; } else return false;
@@ -1374,6 +1384,10 @@ boolean devEEV::set_paramEEV(char *var,float x)
 		if ((x>=_data.minSteps)&&(x<=_data.maxSteps)) { _data.StartPos=x; return true;} else return false;
 	} else if(strcmp(var, eev_PosAtHighTemp)==0){
 		_data.PosAtHighTemp=x; return true;
+#ifdef DEFROST
+	} else if(strcmp(var, eev_defrostPos)==0){
+		_data.defrostPos=x; return true;
+#endif
 #endif
 	} else if(strcmp(var, eev_DELAY_ON_PID)==0){
 		if ((x>=0)&&(x<=255)) { _data.delayOnPid=x; return true;} else return false;	// секунды размер 1 байт

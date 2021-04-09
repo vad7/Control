@@ -1122,7 +1122,13 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_DELAY_R4WAY)==0)      {if ((n>=0)&&(n<=600)) {Option.delayR4WAY=n; return true;} else return false;}else         // Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
 	if(strcmp(var,option_DELAY_BOILER_SW)==0)  {if ((n>=0)&&(n<=1200)) {Option.delayBoilerSW=n; return true;} else return false;}else     // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {if ((n>=0)&&(n<=1200)) {Option.delayBoilerOff=n; return true;} else return false;}        // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
-	else if(strcmp(var,option_fBackupPower)==0)     {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
+#ifdef DEFROST
+	else if(strcmp(var, option_DefrostTempLimit)==0) { Option.DefrostTempLimit = rd(x, 100); return true; }
+	else if(strcmp(var, option_DefrostTempEnd)==0) { Option.DefrostTempEnd = rd(x, 100); return true; }
+	else if(strcmp(var, option_DefrostStartDTemp)==0) { Option.DefrostStartDTemp = rd(x, 100); return true; }
+	else if(strcmp(var, option_DefrostTempSteam)==0) { Option.DefrostTempSteam = rd(x, 100); return true; }
+#endif
+	else if(strcmp(var, option_fBackupPower)==0)  {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
 	else if(strcmp(var, option_f2BackupPowerAuto) == 0) {
 	#ifdef SGENERATOR
 		if(n == 0) { SETBIT0(Option.flags2, f2BackupPowerAuto);	return true;
@@ -1284,6 +1290,12 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_maxBackupPower)==0)   { return _itoa(Option.maxBackupPower,ret); } else    // Максимальная мощность при питании от генератора
 	if(strcmp(var,option_SunTempOn)==0)        { _dtoa(ret,Option.SunTempOn/10, 1); return ret; } else
 	if(strcmp(var,option_SunTempOff)==0)       { _dtoa(ret,Option.SunTempOff/10, 1); return ret; }
+#ifdef DEFROST
+	else if(strcmp(var, option_DefrostTempLimit)==0) { _dtoa(ret,Option.DefrostTempLimit/10, 1); return ret; }
+	else if(strcmp(var, option_DefrostTempEnd)==0) { _dtoa(ret,Option.DefrostTempEnd/10, 1); return ret; }
+	else if(strcmp(var, option_DefrostStartDTemp)==0) { _dtoa(ret,Option.DefrostStartDTemp/10, 1); return ret; }
+	else if(strcmp(var, option_DefrostTempSteam)==0) { _dtoa(ret,Option.DefrostTempSteam/10, 1); return ret; }
+#endif
 #ifdef WEATHER_FORECAST
 	else if(strcmp(var,option_WF_MinTemp)==0)  { return _itoa(Option.WF_MinTemp, ret); }
 #endif
@@ -1677,7 +1689,7 @@ boolean HeatPump::switchBoiler(boolean b)
 #endif
 		if((Status.modWork != pOFF) && (get_modeHouse() != pOFF) && (get_State() != pSTOPING_HP)) { // Если не пауза И отопление/охлаждение дома НЕ выключено И нет процесса выключения ТН то надо включаться
 			dRelay[RPUMPO].set_ON();     // файнкойлы
-			Pump_HeatFloor(true);
+			if(!(Status.modWork & pDEFROST)) Pump_HeatFloor(true);
 		//    if (Status.modWork == pBOILER)  return onBoiler; // Идет сброс тепла паузу на переключение делать не надо ***
 		} else { // пауза ИЛИ работа дома не задействована - все выключить
 			Pump_HeatFloor(false);
@@ -3174,8 +3186,6 @@ boolean HeatPump::configHP(MODE_HP conf)
 		#ifdef RHEAT
 			if (dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
 		#endif
-	} else if((conf & pDEFROST)) {  // Разморозка
-		// to do...
 	} else { // ?
 		set_Error(ERR_CONFIG,(char*)__FUNCTION__);   // Ошибка!  что то пошло не так
 		return false;
@@ -3260,7 +3270,7 @@ xNextStop:
 
 	// 1. Обеспечение минимальной паузы компрессора
 #ifdef EEV_DEF
-	if(lastEEV != -1) {         // Не первое включение компрессора после старта ТН
+	if(lastEEV != -1 && get_modWork() != pDEFROST) {         // Не первое включение компрессора после старта ТН
 		if(compressor_in_pause) return;
 #ifdef DEBUG_MODWORK
 		journal.jprintf_time("compressorON > modWork:%X[%s], now %s\n",get_modWork(),codeRet[Status.ret], is_compressor_on() ? "ON" : "OFF");
@@ -3268,10 +3278,10 @@ xNextStop:
 	}//get_fEEVStartPosByTemp()
 
 	// 2. Задержка перед включением компрессора
-	#ifdef DEFROST
+#ifdef DEFROST
 	if(!(get_modWork() & pDEFROST))  // При разморозке есть лишние проверки
 	{
-	#endif
+#endif
 #ifdef DEBUG_MODWORK
 	journal.jprintf_time("Pause %d s before start compressor\n", Option.delayOnPump);
 #endif
@@ -3284,9 +3294,9 @@ xNextStop:
 		_delay(1000);
 		if(error || is_next_command_stop() || get_State() == pSTOPING_HP) return; // прерваться по ошибке или по команде
 	}
-	#ifdef DEFROST
+#ifdef DEFROST
 	}  // if(!(mod & pDEFROST))
-	#endif
+#endif
 
 	// 3. Установка ЭРВ
 	journal.jprintf(" EEV go ");
@@ -3378,6 +3388,19 @@ xNextStop:
 
 		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
 
+#ifdef RDHEAT  // Если не разморозка отключить обогрев паддона, при старте компрессора
+		if((get_modWork() & pDEFROST) && dRelay[RHCOMP].get_Relay()) {
+			dRelay[RDHEAT].set_OFF();
+			_delay(DELAY_AFTER_SWITCH_RELAY);
+		}
+#endif
+#ifdef RHCOMP
+		if(dRelay[RHCOMP].get_Relay()) {
+			dRelay[RHCOMP].set_OFF();  // Выключить подогрев компрессора
+			_delay(DELAY_AFTER_SWITCH_RELAY);
+		}
+#endif
+
 		resetPID(); 										// Инициализировать переменные ПИД регулятора
 		if(Charts_when_comp_on) task_updstat_chars = 0;
 	    command_completed = rtcSAM3X8.unixtime();
@@ -3388,27 +3411,36 @@ xNextStop:
 		set_Error(ERR_COMP_ERR,(char*)__FUNCTION__);return;
 	}
 
-	// 5. Если нужно облегченный пуск  в зависимости от флага fEEV_light_start
 #ifdef EEV_DEF
-	if(dEEV.get_LightStart())                  //  ЭРВ ОБЛЕГЧЕННЫЙ ПУСК
-	{
-		journal.jprintf(" Pause %ds before go start position EEV . . .\n", dEEV.get_DelayStartPos());
-		_delay(dEEV.get_DelayStartPos() * 1000);  // Задержка после включения компрессора до ухода на рабочую позицию
-		journal.jprintf(" EEV go ");
-		if(dEEV.get_StartFlagPos() || lastEEV == -1) { // если первая итерация или установлен соответсвующий флаг, то на стартовую позицию
-			dEEV.set_EEV(dEEV.get_StartPos());
-			journal.jprintf("StartPos:");
-		} else { // установка последнего значения ЭРВ в противном случае
-			dEEV.set_EEV(lastEEV);
-			journal.jprintf("LastPos:");
+  #ifdef DEFROST
+	if((get_modWork() & pDEFROST) && dEEV.get_defrostPos()) {
+		dEEV.set_EEV(dEEV.get_defrostPos());
+		journal.jprintf("EEV go DefrostPos\n");
+	} else {
+  #endif
+		//  ЭРВ ОБЛЕГЧЕННЫЙ ПУСК
+		if(dEEV.get_LightStart())
+		{
+			journal.jprintf(" Pause %ds before go start position EEV . . .\n", dEEV.get_DelayStartPos());
+			_delay(dEEV.get_DelayStartPos() * 1000);  // Задержка после включения компрессора до ухода на рабочую позицию
+			journal.jprintf(" EEV go ");
+			if(dEEV.get_StartFlagPos() || lastEEV == -1) { // если первая итерация или установлен соответсвующий флаг, то на стартовую позицию
+				dEEV.set_EEV(dEEV.get_StartPos());
+				journal.jprintf("StartPos:");
+			} else { // установка последнего значения ЭРВ в противном случае
+				dEEV.set_EEV(lastEEV);
+				journal.jprintf("LastPos:");
+			}
+			for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
+	#ifdef EEV_PREFER_PERCENT
+			journal.jprintf(" %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
+	#else
+			journal.jprintf(" %d\n", dEEV.get_EEV());
+	#endif
 		}
-		for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
-#ifdef EEV_PREFER_PERCENT
-		journal.jprintf(" %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
-#else
-		journal.jprintf(" %d\n", dEEV.get_EEV());
-#endif
+  #ifdef DEFROST
 	}
+  #endif
 #endif
 	// 6. Обеспечение задержки отслеживания ЭРВ
 #ifdef EEV_DEF
@@ -3487,159 +3519,111 @@ void HeatPump::compressorOFF()
 
 // РАЗМОРОЗКА ВОЗДУШНИКА ----------------------------------------------------------
 // Все что касается разморозки воздушника. Функция работает следющим образом: пока не закончена разморозка из функции нет выхода, т.е. она автономна
+// Реализовано два алгоритма - по датчику SFROZEN или по температуре
 #ifdef DEFROST
 void HeatPump::defrost()
 {
 	if((get_State() == pSTOPING_HP) || (!is_compressor_on()) || (get_State() == pSTARTING_HP)) return; // На режимах СТАРТ, ОСТАНОВКА, ПАУЗА выходим
-
-#ifdef R4WAY            // Нет четырехходового - нет режима охлаждения
-	if(dRelay[R4WAY].get_Relay() == false) return; // режим охлаждения - размораживать не надо, у меня false это охлаждение.
-#else
-	set_Error(ERR_DEFROST_R4WAY, (char*)__FUNCTION__);return;                 // Четырех ходового нет разморозка не возможна - это косяк конфигурации
-#endif
-
-	// Реализовано два алгоритма выбор по наличию SFROZEN
-#ifdef SFROZEN    // Алгоритм разморозки по датчику  SFROZEN             
-	if (sInput[SFROZEN].get_Input()==SFROZEN_OFF) {startDefrost=0;return;  }    // размораживать не надо - датчик говорит что все ок
-
-	// организация задержки перед включением
-	if (startDefrost==0) startDefrost=xTaskGetTickCount();               // первое срабатывание датчика - запоминаем время (тики)
-	if (xTaskGetTickCount()-startDefrost<Option.delayDefrostOn*1000)  return; //  Еще рано размораживать
-	// придется размораживать
-	journal.jprintf("Start defrost\n");
-	Switch_R4WAY(true);  // охлаждение
-
-	compressorON();                                                 // включить компрессор на холод
-
-	while (sInput[SFROZEN].get_Input()!=SFROZEN_OFF)                     // ждем оттаивания
-	{
-		_delay(10*1000);                              // Задержка на 10 сек
-		journal.jprintf(" Wait process defrost . . .\n");
-		if((get_State()==pOFF_HP)||(get_State()==pSTARTING_HP)||(get_State()==pSTOPING_HP)) break;     // ТН выключен или включается или выключается выходим из разморозки
+	if(get_modWork() & pCOOL) return; // режим охлаждения - размораживать не надо
+#ifdef SFROZEN
+	if(sInput[SFROZEN].get_Input() == SFROZEN_OFF) {
+		startDefrost = 0;
+		return;
 	}
-#else          // Алгоритм разморозки по температуре
-	if(sTemp[TOUT].get_Temp() > Option.DefrostTempLimit) return; // Если температура на улице выше, то не обмерзает
+	if((is_compressor_on()) && (rtcSAM3X8.unixtime() - startCompressor < DEFROST_START_HP_DELAY * 60)) return; // компрессор работает, но прошло менее х минут - размораживать не надо
+#else
+	if(sTemp[TOUT].get_Temp() > Option.DefrostTempLimit) {
+		startDefrost = 0;
+		return;
+	}
 	if((is_compressor_on()) && (rtcSAM3X8.unixtime() - startCompressor < DEFROST_START_HP_DELAY * 60)) return; // компрессор работает, но прошло менее х минут - размораживать не надо
 	if(sTemp[TOUT].get_Temp() - sTemp[TEVAIN].get_Temp() < Option.DefrostStartDTemp) {
 		startDefrost = 0;
 		return;
-	}   // размораживать не надо - условие не наступило
+	}
+#endif
 	// организация задержки перед включением
-	if(startDefrost == 0) startDefrost = xTaskGetTickCount(); // первое срабатывание датчика - запоминаем время (тики)// Наступило условие, средняя температура испарителя ниже воздуха, более чем 15С - запоминаем время (тики)
-	if(xTaskGetTickCount() - startDefrost < Option.delayDefrostOn * 1000) return;  // Еще рано размораживать
-	journal.jprintf("Start Defrost\n");                                       // Пошла оттайка
-
+	if(startDefrost == 0) startDefrost = xTaskGetTickCount() | 1;
+	else if(xTaskGetTickCount() - startDefrost < Option.delayDefrostOn * 1000) return;  // Еще рано размораживать
+	journal.jprintf("Start Defrost\n");
 	Status.modWork = pDEFROST;
+	command_completed = rtcSAM3X8.unixtime(); 			// поменялся режим
+#ifdef RDHEAT
+	if(sTemp[TOUT].get_Temp() < DEFROST_RDHEAT_START) { // Подогрев поддона
+		dRelay[RDHEAT].set_ON();
+		_delay(DELAY_AFTER_SWITCH_RELAY);
+	}
+#endif
 	if(is_compressor_on()) {  // Не будем ничего делать, если компрессор остановился. Это ошибка или СТОП
-		configHP(get_modWork()); // Откл. компрессор, выравнять давления, вентилятор сдует лишний холод, включить насос СО...
+		if(onBoiler) switchBoiler(false);
+#ifdef RSUPERBOILER
+		dRelay[RSUPERBOILER].set_OFF();
+#endif
+#ifdef EEV_DEF
+		lastEEV = dEEV.get_EEV();                           // Запомнить последнюю позицию ЭРВ
+		dEEV.Pause();                                       // Поставить на паузу задачу Обновления ЭРВ
+		journal.jprintf(" Stop control EEV\n");
+		dEEV.set_EEV(EEV_CLOSE_STEP);
+		journal.jprintf(" EEV closed\n");
+#endif
+		COMPRESSOR_OFF;
+		stopCompressor = rtcSAM3X8.unixtime();              // Запомнить время выключения компрессора
+		_delay(DEFROST_COMPR_RESTART_DELAY * 1000);			// пауза для выравнивания давлений
+		if((get_State() == pOFF_HP) || (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) return;
 	} else {
-		journal.jprintf("Compressor is off - can't defrost!\n");
+		journal.jprintf("Compressor is off!\n");
 		return;
-	} // Выходим, компрессор остановлен, возможно ошибка!
-
+	}
 	if(sTemp[TOUT].get_Temp() <= Option.DefrostTempSteam) // Если температура на улице ниже или равна, то оттаиваем паром
 	{
-		// ******************* первая ветка, разморозка паром ****************************
 #ifdef R4WAY
 		Switch_R4WAY(true);
 		_delay(DELAY_AFTER_SWITCH_RELAY);                              // Клапан включить на разморозку
 #endif
-		dRelay[PUMP_IN].set_OFF();
-		_delay(DELAY_AFTER_SWITCH_RELAY); // Выкл. вентилятор после выравнивания давлений, дальше запускается компрессор на разморозку.
+		dRelay[PUMP_IN].set_OFF();										// Выкл. вентилятор после выравнивания давлений, дальше запускается компрессор на разморозку.
+		_delay(DELAY_AFTER_SWITCH_RELAY);
 		if(dFC.get_present()) dFC.set_target(dFC.get_defrostFreq(), true, dFC.get_minFreq(), dFC.get_maxFreq()); // установить частоту для разморозки.
 		compressorON();                                                // Сконфигурировали, пускаем компрессор.
 
-		// ******************* Тут крутится, процесс разморозки паром, пока не оттает испаритель *******************
-
-#ifndef SFROZEN                             // Нет датчика разморозки. Определяем оттайку по температурным датчикам.
-		while(sTemp[TEVAIN].get_Temp() < Option.DefrostTempEnd)  // Ждем поднятия температуры фреона на входе "!испарителя!".
-#else                                       // Датчик разморозки есть
-		while (sInput[SFROZEN].get_Input()!=SFROZEN_OFF)  // ждем оттаивания
+		journal.jprintf("Wait, Gas defrosting...\n");
+#ifndef SFROZEN         						                    // Нет датчика разморозки. Определяем оттайку по температурным датчикам.
+		while(sTemp[TEVAIN].get_Temp() < Option.DefrostTempEnd)  	// Ждем поднятия температуры фреона на входе "!испарителя!".
+#else                              							         // Датчик разморозки есть
+		while (sInput[SFROZEN].get_Input() != SFROZEN_OFF)  // ждем оттаивания
 #endif
-			{
-				journal.jprintf("Wait, Gas defrosting...\n");
-				_delay(5 * 1000);
-				if((rtcSAM3X8.unixtime() - startCompressor > 240) || (get_State() == pOFF_HP) || (get_errcode() != OK)
-						|| (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) break; // Размораживает более 4мин, ТН выключен, стартует, выходим из разморозки
-			}
-		dRelay[RPUMPI].set_ON(), journal.jprintf("FANs, blow off water \n"), _delay(10 * 1000), dRelay[RPUMPI].set_OFF();
-	} else {                    // Если температура на улице выше TEMP_STEAM_DEFROST то оттаиваем вентиляторами
-
-		// ******************* Вторая ветка, оттайка вентилятором ***********************************
-
-		if(!(dFC.isfOnOff())) dRelay[PUMP_OUT].set_OFF();           // Оттайка может идти более 10мин, отключим насос СО
-#ifndef SFROZEN                               // Нет датчика разморозки. Определяем оттайку по температурным датчикам.
-		while(sTemp[TEVAING].get_Temp() - 100 > sTemp[TEVAIN].get_Temp() && sTemp[TEVAIN].get_Temp() < 300) // Ждем оттаивания, выход воздуха с испарителя > температура улицы - 1.0С
-#else                                                                        // Датчик разморозки есть
-			while (sInput[SFROZEN].get_Input()!=SFROZEN_OFF)                         // ждем оттаивания
-#endif
-			{
-				journal.jprintf("Wait, Fan defrosting...\n");
-				if((rtcSAM3X8.unixtime() - stopCompressor > 600) || (get_errcode() != OK) || (get_State() == pOFF_HP)
-						|| (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) break; // ТН выключен, стартует или оттайка более 10мин. Выходим из разморозки
-				_delay(15 * 1000);                                                         // Задержка на 15 сек
-			}
-	}                                                                          // Испаритель чистый...
-
-	if(is_compressor_on()) configHP(get_modWork());   // Оттаивали паром? Откл. компрессор, выравнять давления.
-
-	// ******************* Завершение разморозки ************************************
-
-	if((get_errcode() == OK) && (get_State() != pSTOPING_HP) && (get_State() != pOFF_HP)) {
-		journal.jprintf("Defrost complete...\n");
-	} else journal.jprintf("Defrosting not completed. Stop, or Error...\n");  //  Есть ошибки, выходим из разморозки.
-
-
-
-
-
-
-
-	// Дальше в зависимости от работает компрессор или нет - это главное условие
-	if(is_compressor_on()) {
-		if(dRelay[R4WAY].get_Relay() == true) // Если четырехходовой стоит на тепло - Главный вариант
 		{
-			// Компрессор работает и 4-х ходовой стоит на тепле то хитро переключаем 4-х ходовой в положение холод
-			compressorOFF();
-			if(sTemp[TOUT].get_Temp() <= Option.DefrostTempSteam) // Если температура на улице ниже или равна TEMP_STEAM_DEFROST то оттаиваем паром
-			{
-				dRelay[PUMP_IN].set_OFF();                                        // выключаем вентиляторы
-				_delay(1 * 1000);
-				dRelay[PUMP_IN1].set_OFF();                                       // выключаем вентиляторы
-			}
-		} else {
-			set_Error(ERR_DEFROST_R4WAY, (char*) __FUNCTION__);
-			return;
-		}
-
-	} else  // Компрессор не работает - тяжелый случай все делаем руками
-	{
-		dRelay[R4WAY].set_OFF();                                                      // переключаем 4ходовик на оттайку
-		_delay(1 * 1000);
-		dRelay[PUMP_OUT].set_OFF();                                                // Включение насоса выходного контура
-		if(sTemp[TOUT].get_Temp() > TEMP_STEAM_DEFROST) // Если температура на улице ниже или равна TEMP_STEAM_DEFROST то оттаиваем паром
-		{
-			dRelay[PUMP_IN].set_ON();                                                  // включаем вентиляторы
+			if((rtcSAM3X8.unixtime() - startCompressor > DEFROST_GAS_TIME_MAX) || (get_State() == pOFF_HP) || (get_errcode() != OK)
+					|| (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) break;
 			_delay(1 * 1000);
-			dRelay[PUMP_IN1].set_ON();                                                 // включаем вентиляторы
 		}
-		compressorON();                                                    // включить компрессор на разморозку
-	} // Компрессор не рабоатет
+		dRelay[PUMP_IN].set_ON();
+		_delay(Option.delayDefrostOff * 1000);				// Задержка, путь стекут остатки воды
+		dRelay[PUMP_IN].set_OFF();
+		if(is_compressor_on()) compressorOFF();
 
-	// ТН в нужном состояниии надо только ждать
-	while(sTemp[TEVAOUT].get_Temp() < TEMP_END_DEFROST) // Ждем оттаивания, поднятия температууры выхода испарителя. Испаритель и конденсатор меняются местами?
-	{
-		_delay(10 * 1000);                                                      // Задержка на 10 сек
-		journal.jprintf(" Wait process HEAT GAS defrost . . .\n");
-		if(error || (get_State() == pOFF_HP) || (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) break; // ТН выключен или включается или выключается выходим из разморозки
+	} else {                    // Если температура на улице выше, то оттаиваем вентиляторами
+
+		journal.jprintf("Wait, Fan defrosting...\n");
+		dRelay[PUMP_OUT].set_OFF();           // Оттайка может идти более 10мин, отключим насос СО
+#ifndef SFROZEN                               // Нет датчика разморозки. Определяем оттайку по температурным датчикам.
+		while(sTemp[TEVAING].get_Temp() - DEFROST_FAN_DEFROST_STOP_DT > sTemp[TEVAIN].get_Temp() && sTemp[TEVAIN].get_Temp() < DEFROST_FAN_DEFROST_MAX_TEMP) // Ждем оттаивания, выход воздуха с испарителя > температура улицы - d
+#else
+		while (sInput[SFROZEN].get_Input() != SFROZEN_OFF)                   // ждем оттаивания
+#endif
+		{
+			if((rtcSAM3X8.unixtime() - stopCompressor > DEFROST_FAN_TIME_MAX) || (get_State() == pOFF_HP) || (get_errcode() != OK)
+					|| (get_State() == pSTARTING_HP) || (get_State() == pSTOPING_HP)) break;
+			_delay(1 * 1000);
+		}
+		_delay(Option.delayDefrostOff * 1000);
+	}                                                                          // Испаритель чистый...
+#ifdef RDHEAT
+	dRelay[RDHEAT].set_OFF();
+	_delay(DELAY_AFTER_SWITCH_RELAY);
+#endif
+	if((get_errcode() == OK) && (get_State() != pSTOPING_HP) && (get_State() != pOFF_HP)) {
+		journal.jprintf("Defrost complete\n");
 	}
-#endif // #ifdef SFROZEN 
-	// Завершение
-	journal.jprintf(" Finish defrost, wait delayDefrostOff min.\n");
-	compressorOFF();                          // выключить компрессор   Пока пусть будет так, в далнейшем надо дорабоать
-	_delay(Option.delayDefrostOff * 1000);                                     // Задержка путь стекут остатки воды
-	journal.jprintf("Finish defrost\n");                                     // выходим ТН сам определит что надо делать
-
 }
 #endif
 

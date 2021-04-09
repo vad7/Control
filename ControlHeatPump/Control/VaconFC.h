@@ -190,6 +190,9 @@ public:
   uint16_t get_PidMaxStep(){return _data.PidMaxStep;}
   uint16_t get_MaxPower() { return _data.MaxPower; }
   uint16_t get_MaxPowerBoiler() { return _data.MaxPowerBoiler; }
+#ifdef DEFROST
+  int16_t get_defrostFreq(){ return _data.defrostFreq; }
+#endif
   
   // Управление по модбас
   uint16_t	get_power(){return (uint32_t)nominal_power * power / 1000;}   // Получить текущую мощность в Вт
@@ -297,6 +300,9 @@ public:
 	  uint16_t MaxPowerBoiler;			// Максимальная мощность инвертора при нагреве бойлера, Вт
 	  int8_t   FC_MaxTemp;				// Максимальная температура внутри инвертора, градусы, 0 - не проверяется
 	  int8_t   FC_TargetTemp;			// Целевая температура внутри инвертора, градусы, 0 - не регулируется
+#ifdef DEFROST
+	  int16_t  defrostFreq;             // Скорость инвертора при разморозки в 0.01 %
+#endif
 #ifdef FC_ANALOG_CONTROL
 	  int16_t  level0;                  // Отсчеты ЦАП соответсвующие 0   скорость
 	  int16_t  level100;                // Отсчеты ЦАП соответсвующие максимальной скорости

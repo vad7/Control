@@ -245,13 +245,13 @@ struct type_optionHP
  uint16_t flags2;						// Флаги #2 до 16 флагов
  uint16_t SunMinWorktime;				// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
  uint16_t SunMinPause;					// Солнечный коллектор - минимальное время паузы после останова СК, сек
- char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 #ifdef DEFROST
- int16_t  DefrostTempLimit;				// температура выше которой разморозка не включается
- int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка
- int16_t  DefrostTempSteam;				// температура ниже которой оттаиваем паром
- int16_t  DefrostTempEnd;				// температура окончания отттайки
+ int16_t  DefrostTempLimit;				// температура выше которой разморозка не включается, сотые градуса
+ int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка, сотые градуса
+ int16_t  DefrostTempSteam;				// температура ниже которой оттаиваем паром, сотые градуса
+ int16_t  DefrostTempEnd;				// температура окончания отттайки, сотые градуса
 #endif
+ char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 #ifdef WEATHER_FORECAST
  int8_t   WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
  char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http

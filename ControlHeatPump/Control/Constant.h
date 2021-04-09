@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.141"				// Версия прошивки
+#define VERSION			"1.142"				// Версия прошивки
 #define VER_SAVE		153					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -544,6 +544,7 @@ const char *eev_DebugToLog    = {"DBG"};
 const char *eev_fEEV_BoilerStartPos={"BF"};
 const char *eev_BoilerStartPos={"BS"};
 const char *eev_FromHeatToBoilerMove={"HBM"};
+const char *eev_defrostPos    = {"DFP"};
 
 // Описание имен параметров MQTT для функций get_paramMQTT set_paramMQTT
 const char *mqtt_USE_TS           =  {"USE_TS"};         // флаг использования ThingSpeak - формат передачи для клиента
@@ -758,6 +759,9 @@ const char *fc_FC_TargetTemp	 = {"TT"};
 const char *fc_FC_C_COOLER_FAN_STR={"FS"};
 const char *fc_MaxPower			= {"MP"};
 const char *fc_MaxPowerBoiler	= {"MPB"};
+#ifdef DEFROST
+const char *fc_defrostFreq		= {"DFF"};
+#endif
 
 // Описание имен параметров опций ТН  для функций get_optionHP ("get_oHP") set_optionHP ("set_oHP")
 const char *option_ADD_HEAT           = {"HEAT_list"};              // использование дополнительного нагревателя (значения 1 и 0)
@@ -810,6 +814,12 @@ const char option_Microart_login[]    = "ML";
 const char option_Microart_pass[]     = "MP";
 const char *option_DailySwitchHysteresis={"DSH"};
 const char *option_PWM2               = {"PWM2"};
+#ifdef DEFROST
+const char *option_DefrostTempLimit	  = {"DFTL"};
+const char *option_DefrostStartDTemp  = {"DFSDT"};
+const char *option_DefrostTempSteam   = {"DFTS"};
+const char *option_DefrostTempEnd     = {"DFTE"};
+#endif
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
