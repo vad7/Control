@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -310,6 +310,9 @@ public:
 	uint16_t get_StartPos();
 	uint16_t get_BoilerStartPos() { return (uint32_t)_data.maxSteps * _data.BoilerStartPos / 100; };
 	int16_t get_FromHeatToBoilerMove() { return (int32_t)_data.maxSteps * _data.FromHeatToBoilerMove / 1000; };
+#ifdef DEFROST
+	uint16_t get_defrostPos(){ return _data.defrostPos; }
+#endif
 
 	char*   get_note(){ return note;}                      // Прочитать описание ЭРВ
 	char*   get_name(){ return name;}                      // Прочитать имя ЭРВ
@@ -384,6 +387,9 @@ private:
 		uint16_t trend_mul_threshold;			// Порог для *2, сотые градуса
 		int16_t  tOverheat2_low;				// Нижняя граница перегрева 2 для быстрого закрытия ЭРВ
 		int16_t  tOverheat2_low_hyst;			// Гистерезис для tOverheat2_low
+#ifdef DEFROST
+		uint16_t defrostPos;					// Позиция при разморозке
+#endif
 	} _data;                                    // Конец структуры для сохранения настроек
 };
 

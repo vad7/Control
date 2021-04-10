@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -245,6 +245,12 @@ struct type_optionHP
  uint16_t flags2;						// Флаги #2 до 16 флагов
  uint16_t SunMinWorktime;				// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
  uint16_t SunMinPause;					// Солнечный коллектор - минимальное время паузы после останова СК, сек
+#ifdef DEFROST
+ int16_t  DefrostTempLimit;				// температура выше которой разморозка не включается, сотые градуса
+ int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка, сотые градуса
+ int16_t  DefrostTempSteam;				// температура ниже которой оттаиваем паром, сотые градуса
+ int16_t  DefrostTempEnd;				// температура окончания отттайки, сотые градуса
+#endif
  char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
 #ifdef WEATHER_FORECAST
  int8_t   WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
@@ -587,6 +593,9 @@ public:
 	#endif
 	#if    W5200_THREAD > 3
 	TaskHandle_t xHandleUpdateWeb3;                     // Заголовок задачи "Веб сервер"
+	#endif
+	#ifdef LCD2004
+	TaskHandle_t xHandleKeysLCD;
 	#endif
 
 	SemaphoreHandle_t xCommandSemaphore;                // Семафор команды

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
- * &                       by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -51,6 +51,7 @@
 #include "Information.h"
 #include "MQTT.h"
 #include "Statistics.h"
+#include "LCD2004.h"
 
 void vUpdateStepperEEV(void *);
 #include "StepMotor.h"
@@ -117,6 +118,7 @@ void USART2_Handler(void)   // Interrupt handler for UART2
 	Serial4.IrqHandler();     // In turn calls on the Serial2 interrupt handler
 }
 #endif
+
 
 // Структура для хранения одного сокета, нужна для организации многопотоковой обработки
 #define fABORT_SOCK   0                     // флаг прекращения передачи (произошел сброс сети)
@@ -245,6 +247,15 @@ void setup() {
 #endif
 #ifndef DEBUG_NATIVE_USB
 	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
+#endif
+#ifdef LCD2004
+	lcd.begin(LCD_COLS, LCD_ROWS); // Setup: cols, rows
+	lcd.print("HeatPump v");
+	lcd.print(VERSION);
+	lcd.setCursor(0, 1);
+	lcd.print("vad7@yahoo.com");
+	lcd.setCursor(0, 3);
+	lcd.print("Loading...");
 #endif
 	while(ret) {
 		SerialDbg.print("Wrong I2C EEPROM or setup, press KEY[D");
@@ -442,11 +453,13 @@ x_I2C_init_std_message:
 	journal.jprintf("2. Init %s main class . . .\n",(char*)nameHeatPump);
 	HP.initHeatPump();                           // Основной класс
 
+#ifndef LCD2004
 	// 5. Проверка сброса сети
 	// Нажатие при включении - режим safeNetwork (настрока сети по умолчанию 192.168.0.177  шлюз 192.168.0.1, не спрашивает пароль на вход в веб морду)
 	journal.jprintf("3. Read safe Network key . . .\n");
 	HP.safeNetwork = !digitalReadDirect(PIN_KEY1);
 	journal.jprintf(" Mode safeNetwork %s\n", HP.safeNetwork ? "ON" : "OFF");
+#endif
 
 	// 6. Чтение ЕЕПРОМ, надо раньше чем инициализация носителей веб морды, что бы знать откуда грузить
 	journal.jprintf("4. Load data from I2C memory . . .\n");
@@ -598,6 +611,10 @@ x_I2C_init_std_message:
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
 	if(xTaskCreate(vServiceHP, "ServiceHP", STACK_vUpdateCommand, NULL, 2, &HP.xHandleSericeHP)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*STACK_vUpdateCommand;// 200, до обрезки стеков было 300
+#ifdef LCD2004
+	if(xTaskCreate(vKeysLCD, "KeysLCD", 90, NULL, 2, &HP.xHandleKeysLCD) == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS = HP.mRTOS+64+4* 90;
+#endif
 
 	vSemaphoreCreateBinary(HP.xCommandSemaphore);                       // Создание семафора
 	if (HP.xCommandSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
