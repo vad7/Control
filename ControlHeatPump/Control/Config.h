@@ -32,8 +32,8 @@
 //#define CONFIG_4		// dobrinia инвертор+ЭРВ + с РТО и датчиком давления испарителя
 //#define CONFIG_5		// pav2000inv  Инвертор BLDC с шаговым ЭРВ и РТО
 //#define CONFIG_6		// NTC      Частотник PWM, 1 фаза, 4 реле, ЭРВ, NTC
-#define CONFIG_B1		// Board1   Базовая для платы v1
-//#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
+//#define CONFIG_B1		// Board1   Базовая для платы v1
+#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
 
 // -----------------------------------------------------------------------------------------------------------------------------------
 // =============================================== C O N F I G   1 ===================================================================
@@ -3337,6 +3337,7 @@ const char *noteTemp[] = {"Температура улицы",
   	//#define USE_SDM630        	  	// Наличие счетчика SDM630 - 3 фазы
   	//#define SDM_VOLTAGE      4		// Ячейка напряжения
   	//#define USE_PZEM004T			// Наличие электросчетчика PZEM-004T v3 Modbus/UART
+	#define USE_DDS238			// Наличие электросчетчика DDS238-2 ZN/S RS485
   	#define ADD_FC_POWER_WHEN_GENERATOR // Прибавлять расчитанную мощность частотника к показаниям счетчика, когда работа через генератор
   	//#define USE_UPS					// Используется ИБП на контроллер, проверка через вход SPOWER
   	//#define AUTO_START_GENERATOR 60 // Автозапуск генератора (реле RGEN), ждать секунд (для прогрева)
@@ -4160,8 +4161,9 @@ const char *noteTemp[] = {"Температура улицы",
 	#endif
 	#define USE_ELECTROMETER_SDM    // + Наличие счетчика SDM
 	#define USE_SDM630        	  	// Наличие счетчика SDM630 - 3 фазы
-	#define SDM_VOLTAGE      4		// Ячейка напряжения
 	//#define USE_PZEM004T			// Наличие электросчетчика PZEM-004T v3 Modbus/UART
+  	//#define USE_DDS238			// Наличие электросчетчика DDS238-2 ZN/S RS485
+	#define SDM_VOLTAGE      4		// Ячейка напряжения
 	#define ADD_FC_POWER_WHEN_GENERATOR // Прибавлять расчитанную мощность частотника к показаниям счетчика, когда работа через генератор
 	#define USE_UPS					// Используется ИБП на контроллер, проверка через вход SPOWER
 	#define AUTO_START_GENERATOR 60 // Автозапуск генератора (реле RGEN), ждать секунд (для прогрева)
@@ -4839,8 +4841,9 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WATTROUTER												// Включить
 	#define WR_NumLoads				4								// Кол-во нагрузок (1..8)
 //	#define WR_CurrentSensor_4_20mA	IWR								// Использовать аналоговый датчик тока с выходом 4-20mA, номер ADC датчика
-	#define WR_PowerMeter_Modbus	3								// (0xF8) Использовать счетчик PZEM-004T Modbus для получения мощности, адрес
-	#define WR_PowerMeter_ModbusReg 0x0003							// Адрес регистра мощности (32b), десятые Вт
+	#define WR_PowerMeter_Modbus	3								// Использовать счетчик Modbus для получения мощности, адрес
+	#define WR_PowerMeter_DDS238									// Счетчик двунаправленный DDS238-2 ZN/S, иначе PZEM-004T Modbus
+	#define WR_PowerMeter_ModbusReg 0x000E							// Адрес регистра мощности
 	#define WR_Error_Read_PowerMeter_Max	3						// Количество ошибок подряд для ошибки
 
 	#define WR_Load_pins_Boiler_INDEX		0						// Индекс бойлера в массиве WR_Load_pins
@@ -4858,6 +4861,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PIN_WR_Boiler_Substitution		43
 #endif
 
+	#define WR_MIN_LOAD_POWER			10							// Минимальная мощность нагрузки, если отдача превышает потребление, Вт
 	#define WR_PWM_POWER_MIN			40							// Минимальная мощность для PWM, Вт
 	#define WR_TestAvailablePowerForRelayLoads WR_Load_pins_Boiler_INDEX// Использовать нагрузку PWM для проверки доступной мощности перед включением релейной нагрузки, индекс
 	#define WR_TestAvailablePowerTime 	2							// Сколько циклов (WEB0_FREQUENT_JOB_PERIOD) ждать проверки нагрузки

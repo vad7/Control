@@ -427,6 +427,7 @@ uint16_t maxPower;                      // максимальная мощнос
 };
 // Input register Function code 04 to read input parameters:
 #ifdef USE_PZEM004T	// Использовать PZEM-004T v3 Modbus (UART)
+	#define USE_NOT_SDM_METER
 	const char *nameSDM = {"PZEM-004"};         // Имя счетчика
 	#define SDM_VOLTAGE          0x0000			// int16, 0.1V
 	#define SDM_CURRENT          0x0001			// int32, 0.001A
@@ -440,7 +441,23 @@ uint16_t maxPower;                      // максимальная мощнос
 	#define SDM_MODBUS_ADDR      0x0002			// 1..F7
 	// Special command
 	#define PWM_RESET_ENERGY	 0x42
-#else                                      // Регистры однофазного счетчика sdm120
+#endif
+#ifdef USE_DDS238	// Использовать DDS238-2 ZN/S RS485
+	#define USE_NOT_SDM_METER
+	const char *nameSDM = {"DDS238"};         // Имя счетчика
+	#define SDM_AC_ENERGY        0x0000			// uint32, 0.01kWh
+	// Export Energy 	         0x0008  		// uint32, 0.01kWh
+	// Import Energy 	         0x000A  		// uint32, 0.01kWh
+	#define SDM_VOLTAGE          0x000C			// uint16, 0.1V
+	#define SDM_CURRENT          0x000D			// uint16, 0.01A
+	#define SDM_AC_POWER         0x000E			// int16, 1W
+	#define SDM_RE_POWER         0x000F			// int16, 1VAr
+	#define SDM_POW_FACTOR       0x0010			// uint16, 0.001
+	#define SDM_FREQUENCY        0x0011			// uint16, 0.01Hz
+	// Address (Hi byte), Baundrate (Low byte) 0x0015
+	// Relay out                 0x001A			// uint16, 0/1
+#endif
+#ifndef USE_NOT_SDM_METER   // Регистры однофазного счетчика sdm*
   #ifdef USE_SDM630    // Регистры 3-х фазного счетчика SDM630.
 	const char *nameSDM = {"SDM630"};                               // Имя счетчика
 	// Адрес уже уменьшен на 1

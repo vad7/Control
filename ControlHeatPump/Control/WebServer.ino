@@ -2480,7 +2480,7 @@ x_get_aTemp:
 						} else { // get_WR(n)
 xget_WR:
 							if(p == 0) { // get_WR(0)
-								if(i) { // <ip>/&set_WR(0=x) -> set power(= x / 10) + set MPPT flag(WR_Check_MPPT() = x % 10)
+								if(i) { // <ip>/&set_WR(0=x) -> set power(= x)
 #ifdef WR_PowerMeter_Modbus
 									if(testMode != NORMAL) WR_PowerMeter_Power = pm;
 #endif

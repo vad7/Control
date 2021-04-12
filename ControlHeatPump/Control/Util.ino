@@ -1247,11 +1247,7 @@ int8_t WR_Check_MPPT(void)
 	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
 		if(testMode != NORMAL) {
-#ifdef WR_PowerMeter_Modbus
-			return WR_PowerMeter_Power % 10;
-#else
 			return 3;
-#endif
 		}
 		if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
 			SETBIT1(Logflags, fLog_HTTP_RelayError);

@@ -1511,7 +1511,7 @@ boolean devSDM::uplinkSDM()
 //	if((GETBIT(flags,fSDM))&&(GETBIT(flags,fSDMLink))) return err;  // Если есть счетчик и есть связь выходим
 	for(i = 0; i < SDM_NUM_READ; i++)   // делаем SDM_NUM_READ попыток чтения
 	{
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 		uint16_t tmp;
 		if((errModbus=Modbus.readHoldingRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp)) == OK) {
 			SETBIT1(flags, fSDMLink);
@@ -1555,7 +1555,7 @@ boolean devSDM::uplinkSDM()
 // При программировании параметры сразу начинают рабоать
 boolean  devSDM::progConnect()
 {
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 	return true;
 #else
   float band; 
@@ -1588,7 +1588,7 @@ boolean  devSDM::progConnect()
 // Прочитать инфо с счетчика, group: 0 - основная (расчет мощности), 2 - через SDM_READ_PERIOD
 int8_t devSDM::get_readState(uint8_t group)
 {
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 	static union {
 		uint32_t tmp;
 		uint16_t tmp16[2];
@@ -1611,15 +1611,20 @@ int8_t devSDM::get_readState(uint8_t group)
 	{
 		// Читаем значения счетчика
 		if(group == 0) {
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
+	#ifdef USE_PZEM004T
 			Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
 			if(_err == OK) AcPower = tmp / 10; else goto xErr;
+	#else
+			Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp16[0]);
+			if(_err == OK) AcPower = tmp16[0]; else goto xErr;
+	#endif
 #else
 			_err = Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
 			if(_err == OK) AcPower = tmp; else goto xErr;
 #endif
 /*
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 			_err = Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp); // Суммарная активная энергия
 #else
 			_err = Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp); // Суммарная активная энергия
@@ -1634,7 +1639,7 @@ int8_t devSDM::get_readState(uint8_t group)
 		}
 		if(group == 2) {
 #if defined(SDM_MAX_VOLTAGE) || defined(SDM_MIN_VOLTAGE) || (SDM_READ_PERIOD > 0)
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 			_err = Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]);   // Напряжение
 			if(_err==OK) { Voltage = tmp16[0] / 10; group = 1; } else goto xErr;
 #else
@@ -1679,7 +1684,7 @@ xErr:
 // Получить параметр счетчика в виде строки
 char* devSDM::get_paramSDM(char *var, char *ret)           
 {
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 	union {
 		uint32_t tmp;
 		uint16_t tmp16[2];
@@ -1696,7 +1701,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 #if defined(SDM_MAX_VOLTAGE) || defined(SDM_MIN_VOLTAGE) || (SDM_READ_PERIOD > 0)
 		_ftoa(ret, Voltage, 2);
 #else
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 		Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]);
 		_dtoa(ret, tmp16[0], 1);
 #else
@@ -1707,9 +1712,14 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 		return ret;
 	}else
 	if(strcmp(var,sdm_CURRENT)==0){ // Ток
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
+	#ifdef USE_PZEM004T
 		Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
 		_dtoa(ret, tmp, 3);
+	#else
+		Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_CURRENT, &tmp16[0]);
+		_dtoa(ret, tmp * 10, 3);
+	#endif
 #else
 		Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
 		_ftoa(ret, tmp, 3);
@@ -1721,9 +1731,13 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 		return ret;
 	}else
 	if(strcmp(var,sdm_ACENERGY)==0){ // Суммарная активная энергия
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 		Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp);
+	#ifdef USE_PZEM004T
 		_dtoa(ret, tmp, 3);
+	#else
+		_dtoa(ret, tmp * 10, 3);
+	#endif
 #else
 		Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp);
 		_ftoa(ret, tmp, 3);
@@ -1751,24 +1765,32 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	//			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
 	//			   _ftoa(ret, tmp, 2);																			   }else       // Ток
 		   if(strcmp(var,sdm_POW_FACTOR)==0){
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 			   Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp16[0]);
+	#ifdef USE_PZEM004T
 			   _dtoa(ret, tmp16[0], 2);
+	#else
+			   _dtoa(ret, tmp16[0], 3);
+	#endif
 #else
 			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp);
 			   _ftoa(ret, tmp, 2);
 #endif
 		   } else if(strcmp(var,sdm_PHASE)==0){
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 			   strcat(ret, "-");
 #else
 			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp);
 			   _ftoa(ret, tmp, 2);
 #endif
 		   } else if(strcmp(var,sdm_FREQ)==0){
-#ifdef USE_PZEM004T
+#ifdef USE_NOT_SDM_METER
 			   Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp16[0]);
+	#ifdef USE_PZEM004T
 			   _dtoa(ret, tmp16[0], 1);
+	#else
+			   _dtoa(ret, tmp16[0], 2);
+	#endif
 #else
 			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp);
 			   _ftoa(ret, tmp, 2);

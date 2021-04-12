@@ -119,7 +119,7 @@ uint32_t DailySwitch_on = 0;		// bit array
 #define  WR_fTYPE				uint8_t
 int16_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus
-volatile int32_t WR_PowerMeter_Power = 0;
+volatile int32_t WR_PowerMeter_Power = 0;		// W
 volatile uint8_t WR_Error_Read_PowerMeter = 0;
 #endif
 #if WR_PNET_AVERAGE > 0
