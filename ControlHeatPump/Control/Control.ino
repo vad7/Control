@@ -957,6 +957,7 @@ void vWeb0(void *)
 								}
 							}
 						}
+#ifdef WR_SKIP_EXTREMUM
 						if(need_average) {
 							if(WR_Pnet != -32768 && /*abs*/(pnet - WR_Pnet) > WR_SKIP_EXTREMUM) {
 								WR_Pnet = -32768;
@@ -964,6 +965,7 @@ void vWeb0(void *)
 								break;
 							}
 						}
+#endif
 #ifdef WR_PNET_AVERAGE
 	#if WR_PNET_AVERAGE == 0
 						// Медианный фильтр
@@ -1370,13 +1372,6 @@ void vReadSensor(void *)
 #else
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
-//#ifdef WR_PowerMeter_Modbus
-//		if(GETBIT(WR.Flags, WR_fActive)) {
-//			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: #%d\n", GetTickCount() - ttime);
-//			i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-//			if(i != OK && GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
-//		}
-//#endif
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 #if (SDM_READ_PERIOD > 0)
 			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
@@ -1398,6 +1393,7 @@ void vReadSensor(void *)
 					i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
 	#else
 					i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
+					WR_PowerMeter_Power /= 10;
 	#endif
 					if(i == OK) {
 						WR_Error_Read_PowerMeter = 0;

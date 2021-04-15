@@ -4842,8 +4842,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WR_NumLoads				4								// Кол-во нагрузок (1..8)
 //	#define WR_CurrentSensor_4_20mA	IWR								// Использовать аналоговый датчик тока с выходом 4-20mA, номер ADC датчика
 	#define WR_PowerMeter_Modbus	3								// Использовать счетчик Modbus для получения мощности, адрес
-	#define WR_PowerMeter_DDS238									// Счетчик двунаправленный DDS238-2 ZN/S, иначе PZEM-004T Modbus
-	#define WR_PowerMeter_ModbusReg 0x000E							// Адрес регистра мощности
+	//#define WR_PowerMeter_DDS238									// Счетчик двунаправленный DDS238-2 ZN/S, иначе PZEM-004T Modbus
+	#define WR_PowerMeter_ModbusReg 0x0003 //0x000E							// Адрес регистра моментальной мощности
 	#define WR_Error_Read_PowerMeter_Max	3						// Количество ошибок подряд для ошибки
 
 	#define WR_Load_pins_Boiler_INDEX		0						// Индекс бойлера в массиве WR_Load_pins
