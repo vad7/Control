@@ -246,19 +246,19 @@ window.onload = function() {
 			<td></td>
 		</tr>
 		<tr>
-			<td>Температура испарителя TEVAIN, ниже которой возможна разморозка [0..10 °C]<sup>1</sup></td>
+			<td>Температура испарителя TEVAIN, ниже которой возможна разморозка, °C</td>
 			<td nowrap><input id="get_ohp-dftl" type="number" step="0.1" value="0"><input type="submit" value=">" onclick="setParam('get_oHP(DFTL)');"></td>
 		</tr>
 		<tr>
-			<td>Разница температур TOUT-TEVAIN больше которой начнется разморозка [0..20 °C]</td>
+			<td>Разница температур TOUT-TEVAIN больше которой начнется разморозка, °C</td>
 			<td nowrap><input id="get_ohp-dfsdt" type="number" step="0.1" value="0"><input type="submit" value=">" onclick="setParam('get_oHP(DFSDT)');"></td>
 		</tr>
 		<tr>
-			<td>Температура улицы (TOUT) ниже которой, размораживаем компрессором, иначе вентилятором [0..10 °C]<sup>2</sup></td>
+			<td>Температура улицы TOUT ниже которой, размораживаем компрессором, иначе вентилятором, °C</td>
 			<td nowrap><input id="get_ohp-dfts" type="number" step="0.1" value="0"><input type="submit" value=">" onclick="setParam('get_oHP(DFTS)');"></td>
 		</tr>
 		<tr>
-			<td>Температура окончания разморозки, у датчика (TEVAIN) [0...15 °C]<sup>3</sup></td>
+			<td>Температура окончания разморозки, у датчика TEVAIN, °C</td>
 			<td nowrap><input id="get_ohp-dfte" type="number" step="0.1" value="0"><input type="submit" value=">" onclick="setParam('get_oHP(DFTE)');"></td>
 		</tr>
 		<tr>
@@ -267,7 +267,7 @@ window.onload = function() {
 		</tr>	
 		<tr>
 			<td>Пауза после разморозки, сек.</td>
-			<td nowrap><input type="number" id="get_ohp-dlnoff"><input type="submit" value=">" onclick="setParam('get_oHP(DLNOFF)');"></td>
+			<td nowrap><input type="number" id="get_ohp-dldoff"><input type="submit" value=">" onclick="setParam('get_oHP(DLDOFF)');"></td>
 		</tr>
 	</tbody>
 	</table><br>

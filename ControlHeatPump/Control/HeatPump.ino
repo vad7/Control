@@ -3532,11 +3532,13 @@ void HeatPump::defrost()
 	}
 	if((is_compressor_on()) && (rtcSAM3X8.unixtime() - startCompressor < DEFROST_START_HP_DELAY * 60)) return; // компрессор работает, но прошло менее х минут - размораживать не надо
 #else
-	if(sTemp[TOUT].get_Temp() > Option.DefrostTempLimit) {
+	if(sTemp[TEVAIN].get_Temp() > Option.DefrostTempLimit || sTemp[TOUT].get_Temp() > DEFROST_TOUT_MAX) {
 		startDefrost = 0;
 		return;
 	}
+#ifndef TEST_BOARD
 	if((is_compressor_on()) && (rtcSAM3X8.unixtime() - startCompressor < DEFROST_START_HP_DELAY * 60)) return; // компрессор работает, но прошло менее х минут - размораживать не надо
+#endif
 	if(sTemp[TOUT].get_Temp() - sTemp[TEVAIN].get_Temp() < Option.DefrostStartDTemp) {
 		startDefrost = 0;
 		return;

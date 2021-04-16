@@ -1613,10 +1613,10 @@ int8_t devSDM::get_readState(uint8_t group)
 		if(group == 0) {
 #ifdef USE_NOT_SDM_METER
 	#ifdef USE_PZEM004T
-			Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
+			_err = Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
 			if(_err == OK) AcPower = tmp / 10; else goto xErr;
 	#else
-			Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp16[0]);
+			_err = Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp16[0]);
 			if(_err == OK) AcPower = tmp16[0]; else goto xErr;
 	#endif
 #else
@@ -1662,6 +1662,7 @@ xErr:
 	}
 	if(_err==OK)
 	{
+		SETBIT0(flags, fSDM_LogErrorOff);
 #ifdef SDM_MAX_VOLTAGE
 		if((settingSDM.maxVoltage>1)&&(settingSDM.maxVoltage< Voltage)) {err=ERR_MAX_VOLTAGE;set_Error(err,name);return err; }       // Контроль входного напряжения
 #endif
@@ -1674,8 +1675,9 @@ xErr:
 #ifdef SDM_BLOCK                     // если стоит флаг блокировки связи
 	SETBIT0(flags,fSDMLink);             // связь со счетчиком потеряна
 #endif
-	if(!err && _err && !GETBIT(HP.Option.flags, fSDMLogErrors)) {
-        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, err); 	// Сообщение об ошибке
+	if(!err && _err && !GETBIT(HP.Option.flags, fSDMLogErrors) && !GETBIT(flags, fSDM_LogErrorOff)) {
+        SETBIT1(flags, fSDM_LogErrorOff);
+        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, _err); 	// Сообщение об ошибке
 	}
 	// set_Error(_err,name);              // генерация ошибки    НЕТ счетчик не критичен
 	return err = _err;

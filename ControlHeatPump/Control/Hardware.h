@@ -415,8 +415,9 @@ const char *noteSDM = {"Электрический счетчик с Modbus"};  
 const char *noteSDM_NONE = {"Отсутствует в конфигурации"};      //
 
 // Флаги Электросчетчика
-#define fSDM           0              // флаг наличие счетчика
-#define fSDMLink       1              // флаг связь установлена
+#define fSDM				0			// флаг наличие счетчика
+#define fSDMLink			1			// флаг связь установлена
+#define fSDM_LogErrorOff	2			// Не логировать ошибку
 
 // Структура для хранения настроек счетчика
 struct type_settingSDM
@@ -529,7 +530,7 @@ class devSDM
   private:
       int8_t  err;                                     // ошибка стесчика (работа)
       uint16_t numErr;                                 // число ошибок чтение по модбасу
-      byte flags;                                      // флаги  0 - наличие счетчика,
+      byte flags;                                      // флаги: fSDM*
        // Управление по 485
       int32_t AcPower;                                 // активная мощность, Вт
       int16_t Voltage;                                 // Напряжение, V
