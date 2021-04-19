@@ -1098,7 +1098,7 @@ int8_t Profile::check_DailySwitch(uint8_t idx, uint32_t hhmm)
 	int8_t wr = -1; // >=0 index WR relay, -1 - not WR relay, -2 - no turn off
 	int8_t pin = DailySwitch[idx].Device < RNUMBER ? HP.dRelay[DailySwitch[idx].Device].get_pinD() : -(DailySwitch[idx].Device - RNUMBER + 1);
 	for(int8_t i = 0; i < WR_NumLoads; i++) {
-		if(pin != WR_Load_pins[i] || !GETBIT(WR.Loads, i)) continue;
+		if(pin != WR_Load_pins[i] /*|| !GETBIT(WR.Loads, i)*/) continue;
 		if(WR_LoadRun[i] == WR.LoadPower[i]) return -1;
 		wr = WR_LoadRun[i] ? -2 : i;
 		break;
