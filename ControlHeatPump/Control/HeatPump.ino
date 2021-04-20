@@ -2910,7 +2910,7 @@ MODE_COMP HeatPump::UpdateCool()
 //    		if((FEED<(targetRealPID*(100+(100-dFC.get_PidStop()))/100)))                                                                    {Status.ret=pCp17; resetPID(); return pCOMP_NONE;}   // Подача ограничение, с учетом погодозависимости Подход сверху
 			if(dFC.get_power() > dFC.get_MaxPower() * dFC.get_PidStop() / 100)                                                                   {Status.ret=pCp18; resetPID(); return pCOMP_NONE;}   // Мощность для ГВС меньшая мощность
 #ifdef FC_MAX_CURRENT
-			if(dFC.get_current()>(FC_MAX_CURRENT*dFC.get_PidStop()/100)))                                                                  {Status.ret=pCp19; resetPID(); return pCOMP_NONE;}   // ТОК для ГВС меньшая мощность
+			if(dFC.get_current()>FC_MAX_CURRENT*dFC.get_PidStop()/100)                                                                  {Status.ret=pCp19; resetPID(); return pCOMP_NONE;}   // ТОК для ГВС меньшая мощность
 #endif
 			if((sTemp[TCOMP].get_Temp()+dFC.get_dtCompTemp()>(get_TempAlarmMax(TCOMP)*dFC.get_PidStop()/100)))                          {Status.ret=pCp20; resetPID(); return pCOMP_NONE;}   // температура компрессора
 			if((sADC[PCON].get_present())&&(sADC[PCON].get_Value()>(sADC[PCON].get_maxValue()-FC_DT_CON_PRESS)*dFC.get_PidStop()/100))     {Status.ret=pCp21; resetPID(); return pCOMP_NONE;}   // давление конденсатора до максимальной минус 0.5 бара
