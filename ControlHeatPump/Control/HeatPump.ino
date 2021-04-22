@@ -802,12 +802,7 @@ void HeatPump::resetSettingHP()
 	Option.delayBoilerOff = DEF_DELAY_BOILER_OFF;
 	Option.numProf = Prof.get_idProfile(); //  Профиль не загружен по дефолту 0 профиль
 	Option.nStart = 3;                   //  Число попыток пуска компрессора
-	Option.tempRHEAT = 1000;             //  Значение температуры для управления RHEAT (по умолчанию режим резерв - 10 градусов в доме)
-	Option.pausePump = 600;              //  Время паузы  насоса при выключенном компрессоре, сек
-	Option.workPump = 15;                //  Время работы  насоса при выключенном компрессоре, сек
 	Option.tChart = 10;                  //  период накопления статистики по умолчанию 60 секунд
-	SETBIT0(Option.flags, fAddHeat);      //  Использование дополнительного тэна при нагреве НЕ ИСПОЛЬЗОВАТЬ
-	SETBIT0(Option.flags, fTypeRHEAT);    //  Использование дополнительного тэна по умолчанию режим резерв
 	SETBIT1(Option.flags, fBeep);         //  Звук
 	SETBIT1(Option.flags, fNextion);      //  дисплей Nextion
 	SETBIT0(Option.flags, fHistory);      //  Сброс статистика на карту
@@ -1040,14 +1035,6 @@ void HeatPump::get_datetime(char *var, char *ret)
 boolean HeatPump::set_optionHP(char *var, float x)   
 {
 	int n = x;
-	if(strcmp(var,option_ADD_HEAT)==0)         {switch (n)  //использование дополнительного нагревателя (значения 1 и 0)
-												   {
-													case 0:  SETBIT0(Option.flags,fAddHeat);                                    return true; break;  // использование запрещено
-													case 1:  SETBIT1(Option.flags,fAddHeat);SETBIT0(Option.flags,fTypeRHEAT);   return true; break;  // резерв
-													case 2:  SETBIT1(Option.flags,fAddHeat);SETBIT1(Option.flags,fTypeRHEAT);   return true; break;  // бивалент
-													default: SETBIT1(Option.flags,fAddHeat);SETBIT0(Option.flags,fTypeRHEAT);   return true; break;  // Исправить по умолчанию
-												   } }else  // бивалент
-	if(strcmp(var,option_TEMP_RHEAT)==0)       {if ((x>=-30)&&(x<=30))  {Option.tempRHEAT=rd(x, 100); return true;} else return false; }else     // температура управления RHEAT (градусы)
 	if(strcmp(var,option_SunRegGeoTemp)==0)    { Option.SunRegGeoTemp = rd(x, 100); return true; }else
 	if(strcmp(var,option_SunRegGeoTempGOff)==0){ Option.SunRegGeoTempGOff = rd(x, 100); return true; }else
 	if(strcmp(var,option_SunTDelta)==0)        { Option.SunTDelta = rd(x, 100); return true; }else
@@ -1056,22 +1043,6 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_SunTempOff)==0)   	   { Option.SunTempOff = rd(x, 100); return true;} else
 	if(strcmp(var,option_SunRegGeo)==0)        { Option.flags = (Option.flags & ~(1<<fSunRegenerateGeo)) | ((n!=0)<<fSunRegenerateGeo); return true; }else
 	if(strcmp(var,option_DailySwitchHysteresis)==0){ Option.DailySwitchHysteresis = rd(x, 10); return true;} else
-	if(strcmp(var,option_PUMP_WORK)==0)        {if ((n>=0)&&(n<=65535)) { // работа насоса конденсатора при выключенном компрессоре
-		Option.workPump = n;
-
-		journal.jprintf(">> %d, %d\n", startPump, pump_in_pause_timer);
-
-		if(n == 0 && startPump == 3) {
-			HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
-			HP.Pump_HeatFloor(false);					// выключить насос ТП
-			startPump = 0;
-		} else if(!startPump && get_State() == pWORK_HP && !is_compressor_on()) {
-			startPump = 1;
-			pump_in_pause_timer = 0;
-		}
-		return true;
-	} else return false; }else
-	if(strcmp(var,option_PUMP_PAUSE)==0)       {if ((n>=0)&&(n<=65535)) {Option.pausePump=n; return true;} else return false;}else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
 	if(strcmp(var,option_ATTEMPT)==0)          { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else                // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       { if(n>0) { if (get_State()==pWORK_HP) clearChart(); Option.tChart = n; return true; } else return false; } else // Сбросить статистистику, начать отсчет заново
 	if(strcmp(var,option_Charts_when_comp_on)==0){ Charts_when_comp_on = n; return true;} else
@@ -1221,12 +1192,6 @@ boolean HeatPump::set_optionHP(char *var, float x)
 // Получить опции ТН, результат добавляется в ret, "get_oHP"
 char* HeatPump::get_optionHP(char *var, char *ret)
 {
-	if(strcmp(var,option_ADD_HEAT)==0)         {if(!GETBIT(Option.flags,fAddHeat))          return strcat(ret,(char*)"none:1;reserve:0;bivalent:0;");       // использование ТЭН запрещено
-											   else if(!GETBIT(Option.flags,fTypeRHEAT))   return strcat(ret,(char*)"none:0;reserve:1;bivalent:0;");       // резерв
-											   else                                        return strcat(ret,(char*)"none:0;reserve:0;bivalent:1;");}else  // бивалент
-	if(strcmp(var,option_TEMP_RHEAT)==0)       {_ftoa(ret,(float)Option.tempRHEAT/100,1); return ret; }else                                         // температура управления RHEAT (градусы)
-	if(strcmp(var,option_PUMP_WORK)==0)        {return _itoa(Option.workPump,ret);}else                                                           // работа насоса конденсатора при выключенном компрессоре МИНУТЫ
-	if(strcmp(var,option_PUMP_PAUSE)==0)       {return _itoa(Option.pausePump,ret);}else                                                          // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
 	if(strcmp(var,option_ATTEMPT)==0)          {return _itoa(Option.nStart,ret);}else                                                             // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       {return _itoa(Option.tChart,ret);} else
 	if(strcmp(var,option_Charts_when_comp_on)==0){return _itoa(Charts_when_comp_on, ret);} else
@@ -2238,7 +2203,7 @@ boolean HeatPump::boilerAddHeat()
 			    flagRBOILER = true;
 				return false;
 			}
-			if(!flagRBOILER || onBoiler) return false; // флажка нет или работет бойлер, но догрев не включаем
+			if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работет бойлер, но догрев не включаем
 			else {
 				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay() || (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))))) {  // Греем тэном
 					return true;
@@ -2381,7 +2346,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		}
 
 		// Отслеживание выключения (с учетом догрева)
-		if(!GETBIT(Prof.Boiler.flags, fTurboBoiler) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
+		if((!GETBIT(Prof.Boiler.flags, fTurboBoiler) || GETBIT(Prof.Boiler.flags, fBoilerTurboLimit)) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
 		{
 			if(T > Boiler_Target_AddHeating()) {
 				Status.ret=pBh22; return pCOMP_OFF; // Температура выше целевой температуры ДОГРЕВА надо выключаться!
@@ -3065,22 +3030,25 @@ MODE_HP HeatPump::get_Work()
 		break;
 	}
 #ifdef RHEAT  // Дополнительный тэн для нагрева отопления
-if(!GETBIT(Option.flags,fBackupPower)){ // Нет питания от резервного источника
-	if (GETBIT(Option.flags,fAddHeat))
-	{
-		if(!GETBIT(Option.flags,fTypeRHEAT)) // резерв
-		{
-			if (((sTemp[TIN].get_Temp()>Option.tempRHEAT)&&(dRelay[RHEAT].get_Relay()))||((ret==pOFF)&&(dRelay[RHEAT].get_Relay()))) {journal.jprintf(" TIN=%.2f, add heatting off . . .\n",sTemp[TIN].get_Temp()/100.0); dRelay[RHEAT].set_OFF();} // Гистерезис 0.2 градуса что бы не щелкало
-			if ((sTemp[TIN].get_Temp()<Option.tempRHEAT-HYSTERESIS_RHEAD)&&(!dRelay[RHEAT].get_Relay())&&(ret!=pOFF)) {journal.jprintf(" TIN=%.2f, add heatting on . . .\n",sTemp[TIN].get_Temp()/100.0); dRelay[RHEAT].set_ON();}
+	if(!GETBIT(Option.flags, fBackupPower)) { // Нет питания от резервного источника
+		if(GETBIT(Prof.Heat.flags, fAddHeat)) {
+			if(!GETBIT(Prof.Heat.flags, fTypeRHEAT)) {	// по дому
+				if(((sTemp[TIN].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ((ret == pOFF) && (dRelay[RHEAT].get_Relay()))) {
+					dRelay[RHEAT].set_OFF();
+				}
+				if((sTemp[TIN].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && (!dRelay[RHEAT].get_Relay()) && (ret != pOFF)) {
+					dRelay[RHEAT].set_ON();
+				}
+			} else {                                	// по улице
+				if(((sTemp[TOUT].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ((ret == pOFF) && (dRelay[RHEAT].get_Relay()))) {
+					dRelay[RHEAT].set_OFF();
+				}
+				if((sTemp[TOUT].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && (!dRelay[RHEAT].get_Relay()) && (ret != pOFF)) {
+					dRelay[RHEAT].set_ON();
+				}
+			}
 		}
-		else                                // бивалент
-		{
-			if ( ((sTemp[TOUT].get_Temp()>Option.tempRHEAT)&&(dRelay[RHEAT].get_Relay()))||((ret==pOFF)&&(dRelay[RHEAT].get_Relay())) ) {journal.jprintf(" TOUT=%.2f, add heatting off . . .\n",sTemp[TOUT].get_Temp()/100.0);dRelay[RHEAT].set_OFF();} // Гистерезис 0.2 градуса что бы не щелкало
-			if ((sTemp[TOUT].get_Temp()<Option.tempRHEAT-HYSTERESIS_RHEAD)&&(!dRelay[RHEAT].get_Relay())&&(ret!=pOFF)) {journal.jprintf(" TOUT=%.2f, add heatting on . . .\n",sTemp[TOUT].get_Temp()/100.0); dRelay[RHEAT].set_ON();}
-		}
-	}
-}	
-else if(dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_OFF();// есть питание от резервного источника - запрет использования электрокотла, если надо выключаем
+	} else if(dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_OFF(); // есть питание от резервного источника - запрет использования электрокотла, если надо выключаем
 #endif
 #ifdef DEBUG_MODWORK
 	journal.printf(" get_Work: %s, ret=%X\n", codeRet[Status.ret], ret);
@@ -3120,9 +3088,6 @@ boolean HeatPump::configHP(MODE_HP conf)
 		#endif
 		#ifdef RBOILER
 		 	 if((GETBIT(Prof.Boiler.flags,fTurboBoiler))&&(dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF(); // Выключить ТЭН бойлера (режим форсированного нагрева)
-		#endif
-		#ifdef RHEAT
-		//if((GETBIT(Option.flags,fAddHeat))&&(dRelay[RHEAT].get_present())) dRelay[RHEAT].set_ON(); else dRelay[RHEAT].set_OFF(); // Если надо включить ТЭН отопления
 		#endif
 	} else if((conf & pCOOL)) {  // Охлаждение
 		if(Switch_R4WAY(true)) return false; 							   // 4-х ходовой на охлаждение

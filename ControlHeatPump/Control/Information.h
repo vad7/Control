@@ -120,6 +120,7 @@ struct type_SaveON {
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
 #define fBoilerHeatElemSchPri 12		// Приоритет нагрева бойлера тэном по расписанию
 #define fBoilerCircSchedule 13		  	// флаг Рециркуляция ГВС по расписанию
+#define fBoilerTurboLimit	14			// Греть компрессором до темпераутры догрева
 
 struct type_boilerHP {
 	uint8_t DischargeDelta;            // Сброс тепла в отопление, если температура подачи/конденсации приблизилась к максимуму/догреву, в десятых градуса
@@ -151,6 +152,8 @@ struct type_boilerHP {
 #define fHeatFloor   			2	 // флаг использования теплого пола
 #define fUseSun      			3	 // флаг использования солнечного коллектора
 #define fP_ContinueAfterBoiler	4    // Продолжить работу по нагреву/охлаждению после нагрева бойлера
+#define fAddHeat1				5    // Использование дополнительного тэна при нагреве (битовое поле)
+#define fAddHeat2				6    // 0 - нет, 1 - по дому, 2 - по улице, 3 - интеллектуально
 
 #define DS_TimeOn_Extended 236
 struct type_DailySwitch {
@@ -183,6 +186,9 @@ struct type_settingHP {
 	int16_t FC_FreqLimit;			// Максимальная скорость инвертора
 	uint8_t FC_FreqLimitHour;		// с 00:00 до этого часа ограничивается скорость инвертора
 	uint8_t _reserved_;
+	int16_t tempRHEAT;				// Значение температуры для управления дополнительным ТЭН для нагрева СО
+	uint16_t pausePump;				// Время паузы  насоса при выключенном компрессоре СЕКУНДЫ
+	uint16_t workPump;				// Время работы насоса при выключенном компрессоре СЕКУНДЫ
 };
 
 #define LEN_PROFILE_NAME        25  // Длина имени профиля
