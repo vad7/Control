@@ -2034,6 +2034,9 @@ xGoWait:
 	// 10. Сохранение состояния  -------------------------------------------------------------------------------
 	if(get_State() != pSTARTING_HP) return;                   // Могли нажать кнопку стоп, выход из процесса запуска
 	setState(pWORK_HP);
+#ifdef RHEAT
+	RHEAT_prev_temp = STARTTEMP;
+#endif
 
 	// 11. Запуск задачи обновления ТН ---------------------------------------------------------------------------
 	if(start) {
@@ -2090,6 +2093,7 @@ void HeatPump::StopWait(boolean stop)
 
   #ifdef RHEAT  // управление  ТЭНом отопления
      dRelay[RHEAT].set_OFF();     // выключить тэн отопления
+     RHEAT_prev_temp = STARTTEMP;
   #endif
 
   #ifdef RPUMPB  // управление  насосом циркуляции ГВС
@@ -2273,7 +2277,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 	if(!GETBIT(Prof.SaveON.flags,fBoilerON) || (!scheduleBoiler() && !GETBIT(Prof.Boiler.flags,fScheduleAddHeat))) // Если запрещено греть бойлер согласно расписания ИЛИ  Бойлер выключен, выходим и можно смотреть отопление
 	{
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
-		if(GETBIT(Prof.Boiler.flags, fAddHeat)) {
+		if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
 			dRelay[RBOILER].set_OFF();
 			flagRBOILER=false; // Выключение
 		}
@@ -2988,13 +2992,22 @@ MODE_HP HeatPump::get_Work()
 	journal.printf(" get_Work-Boiler: %s(%s), ret=%X, onBoiler=%d, flagRBOILER=%d\n", codeRet[Status.ret], codeRet[Status.prev], ret, onBoiler, flagRBOILER);
 #endif
 	if(((get_modeHouse() == pOFF) && (ret == pOFF)) || error) return ret; // режим ДОМА выключен (т.е. запрещено отопление или охлаждение дома) И бойлер надо выключить, то выходим с сигналом pOFF (переводим ТН в паузу)
-	if((ret & pBOILER)) return ret; // работает бойлер больше ничего анализировать не надо выход
+	if((ret & pBOILER)) {
+#ifdef RHEAT
+		RHEAT_prev_temp = STARTTEMP;
+#endif
+		return ret; // работает бойлер больше ничего анализировать не надо выход
+	}
 
 	// 3. Отопление/охлаждение
 	switch((int) get_modeHouse())   // проверка отопления
 	{
 	case pOFF:
 		ret = pOFF;
+#ifdef RHEAT
+		if(dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_OFF();
+		RHEAT_prev_temp = STARTTEMP;
+#endif
 		break;
 	case pHEAT:
 		switch((int) UpdateHeat()) {
@@ -3011,6 +3024,53 @@ MODE_HP HeatPump::get_Work()
 			}
 			break;
 		}
+#ifdef RHEAT  // Дополнительный тэн для нагрева отопления
+		if(!GETBIT(Option.flags, fBackupPower)) { // Нет питания от резервного источника
+			switch((Prof.Heat.flags & ((1<<fAddHeat1) | (1<<fAddHeat2)))>>fAddHeat1) {
+			case 1:	// по дому
+				if(((sTemp[TIN].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ret == pOFF) {
+					if(dRelay[RHEAT].get_Relay()) {
+						dRelay[RHEAT].set_OFF();
+						RHEAT_timer = 0;
+					}
+				} else if((sTemp[TIN].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && ret != pOFF) {
+					if(!dRelay[RHEAT].get_Relay() && RHEAT_timer > RHEAT_SWITCH_PAUSE) dRelay[RHEAT].set_ON();
+				}
+				break;
+			case 2:	// по улице
+				if(((sTemp[TOUT].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ret == pOFF) {
+					if(dRelay[RHEAT].get_Relay()) {
+						dRelay[RHEAT].set_OFF();
+						RHEAT_timer = 0;
+					}
+				} else if((sTemp[TOUT].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && ret != pOFF) {
+					if(!dRelay[RHEAT].get_Relay() && RHEAT_timer > RHEAT_SWITCH_PAUSE) dRelay[RHEAT].set_ON();
+				}
+				break;
+			case 3:	// интеллектуально
+				if(ret == pOFF) {
+					if(dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_OFF();
+					RHEAT_prev_temp = STARTTEMP;
+				} else {
+					int16_t T = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
+					if(RHEAT_prev_temp == STARTTEMP) {
+						RHEAT_prev_temp = T;
+						RHEAT_timer = 0;
+					} else if(RHEAT_timer >= Prof.Heat.timeRHEAT * 60) {
+						if(T - RHEAT_prev_temp < Prof.Heat.tempRHEAT) {
+							if(!dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_ON();
+						}
+						RHEAT_prev_temp = T;
+						RHEAT_timer = 0;
+					}
+				}
+				break;
+			}
+		} else if(dRelay[RHEAT].get_Relay()) {
+			dRelay[RHEAT].set_OFF(); // есть питание от резервного источника - запрет использования электрокотла, если надо выключаем
+			RHEAT_prev_temp = STARTTEMP;
+		}
+#endif
 		break;
 	case pCOOL:
 		switch((int) UpdateCool()) {
@@ -3027,29 +3087,14 @@ MODE_HP HeatPump::get_Work()
 			}
 			break;
 		}
+#ifdef RHEAT
+		RHEAT_prev_temp = STARTTEMP;
+		break;
+	case pDEFROST:
+		RHEAT_prev_temp = STARTTEMP;
+#endif
 		break;
 	}
-#ifdef RHEAT  // Дополнительный тэн для нагрева отопления
-	if(!GETBIT(Option.flags, fBackupPower)) { // Нет питания от резервного источника
-		if(GETBIT(Prof.Heat.flags, fAddHeat)) {
-			if(!GETBIT(Prof.Heat.flags, fTypeRHEAT)) {	// по дому
-				if(((sTemp[TIN].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ((ret == pOFF) && (dRelay[RHEAT].get_Relay()))) {
-					dRelay[RHEAT].set_OFF();
-				}
-				if((sTemp[TIN].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && (!dRelay[RHEAT].get_Relay()) && (ret != pOFF)) {
-					dRelay[RHEAT].set_ON();
-				}
-			} else {                                	// по улице
-				if(((sTemp[TOUT].get_Temp() > Prof.Heat.tempRHEAT) && (dRelay[RHEAT].get_Relay())) || ((ret == pOFF) && (dRelay[RHEAT].get_Relay()))) {
-					dRelay[RHEAT].set_OFF();
-				}
-				if((sTemp[TOUT].get_Temp() < Prof.Heat.tempRHEAT - HYSTERESIS_RHEAD) && (!dRelay[RHEAT].get_Relay()) && (ret != pOFF)) {
-					dRelay[RHEAT].set_ON();
-				}
-			}
-		}
-	} else if(dRelay[RHEAT].get_Relay()) dRelay[RHEAT].set_OFF(); // есть питание от резервного источника - запрет использования электрокотла, если надо выключаем
-#endif
 #ifdef DEBUG_MODWORK
 	journal.printf(" get_Work: %s, ret=%X\n", codeRet[Status.ret], ret);
 #endif

@@ -543,7 +543,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 							  {
 								 case 0: Heat.Rule=pHYSTERESIS; break;
 								 case 1: Heat.Rule=pPID;        break;
-								 case 2: Heat.Rule=pHYBRID;     break;
+//								 case 2: Heat.Rule=pHYBRID;     break; // Пока не поддерживается
 								 default:Heat.Rule=pHYSTERESIS; break;
 							  }
 							  HP.resetPID(); return true; } else
@@ -557,13 +557,13 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_dTempGen)==0){ if((x>=0)&&(x<=30)) { Heat.dTempGen = rd(x, 100); return true; } else return false; }else
 	if(strcmp(var,hp_HP_TIME)==0) { if((x>=10)&&(x<=1000)) {UpdatePIDbyTime(x, Heat.pid_time, Heat.pid); Heat.pid_time=x; return true;} else return false; }else             // Постоянная интегрирования времени в секундах ПИД ТН !
 	if(strcmp(var,hp_HP_PRO)==0) {  if((x>=0)&&(x<=32)) {Heat.pid.Kp=rd(x, 1000); return true;} else return false;   }else             // Пропорциональная составляющая ПИД ТН
-	#ifdef PID_FORMULA2
+#ifdef PID_FORMULA2
 	if(strcmp(var,hp_HP_IN)==0) {   if((x>=0)&&(x<=32))  {x *= Heat.pid_time; if(x>32.7) x=32.7; Heat.pid.Ki=rd(x, 1000); return true;} else return false; }else  // Интегральная составляющая ПИД ТН
 	if(strcmp(var,hp_HP_DIF)==0) {  if((x>=0)&&(x<=32))  {Heat.pid.Kd=rd(x / Heat.pid_time, 1000); return true;} else return false; }else  // Дифференциальная составляющая ПИД ТН
-	#else
+#else
 	if(strcmp(var,hp_HP_IN)==0) {   if((x>=0)&&(x<=32))  {Heat.pid.Ki=rd(x, 1000); return true;} else return false;   }else             // Интегральная составляющая ПИД ТН
 	if(strcmp(var,hp_HP_DIF)==0) {  if((x>=0)&&(x<=32))  {Heat.pid.Kd=rd(x, 1000); return true;} else return false;   }else             // Дифференциальная составляющая ПИД ТН
-	#endif
+#endif
 	if(strcmp(var,hp_TEMP_IN)==0) { if((x>=0)&&(x<=70))  {Heat.tempInLim=rd(x, 100); return true;} else return false;     }else             // температура подачи (минимальная)
 	if(strcmp(var,hp_TEMP_OUT)==0){ if((x>=-10)&&(x<=70)){Heat.tempOutLim=rd(x, 100); return true;} else return false;    }else             // температура обратки (максимальная)
 	if(strcmp(var,hp_D_TEMP)==0) {  if((x>=0)&&(x<=40))  {Heat.dt=rd(x, 100); return true;} else return false;  }else                  // максимальная разность температур конденсатора.
@@ -578,15 +578,10 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_WeatherTargetRange)==0){ Heat.WeatherTargetRange = rd(x, 10); return true; } else
 	if(strcmp(var,hp_CompressorPause)==0){ if(x >= 0) {Heat.CompressorPause = x * 60; return true; } else return false; } else
 	if(strcmp(var,hp_FC_FreqLimit)==0){ Heat.FC_FreqLimit = rd(x, 100); if(Heat.FC_FreqLimit < HP.dFC.get_minFreq()) Heat.FC_FreqLimit = HP.dFC.get_minFreq(); return true; } else
-	if(strcmp(var,option_ADD_HEAT)==0)         {switch (int(x))  //использование дополнительного нагревателя (значения 1 и 0)
-												   {
-													case 0:  SETBIT0(Heat.flags,fAddHeat);                                  return true; break;  // использование запрещено
-													case 1:  SETBIT1(Heat.flags,fAddHeat);SETBIT0(Heat.flags,fTypeRHEAT);   return true; break;  // резерв
-													case 2:  SETBIT1(Heat.flags,fAddHeat);SETBIT1(Heat.flags,fTypeRHEAT);   return true; break;  // бивалент
-													default: SETBIT1(Heat.flags,fAddHeat);SETBIT0(Heat.flags,fTypeRHEAT);   return true; break;  // Исправить по умолчанию
-												   } }else  // бивалент
-	if(strcmp(var,option_TEMP_RHEAT)==0)       { Heat.tempRHEAT=rd(x, 100); return true; }else     // температура управления RHEAT (градусы)
-	if(strcmp(var,option_PUMP_WORK)==0)        { // работа насоса конденсатора при выключенном компрессоре
+	if(strcmp(var,option_ADD_HEAT)==0) { Heat.flags = (Heat.flags & ~((1<<fAddHeat1)|(1<<fAddHeat2))) | ((int(x)<<fAddHeat1)&((1<<fAddHeat1)|(1<<fAddHeat2))); return true; } else
+	if(strcmp(var,hp_timeRHEAT)==0){ Heat.timeRHEAT = x; return true; } else
+	if(strcmp(var,option_TEMP_RHEAT)==0){ Heat.tempRHEAT = rd(x, 100); return true; }else     // температура управления RHEAT (градусы)
+	if(strcmp(var,option_PUMP_WORK)==0) { // работа насоса конденсатора при выключенном компрессоре
 		Heat.workPump = x;
 		if(x == 0 && HP.startPump == 3) {
 			HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
@@ -606,7 +601,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 {
 	if(strcmp(var,hp_RULE)==0)     {if (fc)   // Есть частотник
-									  return web_fill_tag_select(ret, "HYSTERESIS:0;PID:0;HYBRID:0;", Heat.Rule);
+									  return web_fill_tag_select(ret, "HYSTERESIS:0;PID:0;", Heat.Rule); // было "HYSTERESIS:0;PID:0;HYBRID:0;"
 									else { Heat.Rule=pHYSTERESIS;return strcat(ret,(char*)"HYSTERESIS:1;");}} else             // частотника нет единсвенный алгоритм гистрезис
 	if(strcmp(var,hp_TEMP1)==0)    { _dtoa(ret,Heat.Temp1/10,1); return ret;                } else             // целевая температура в доме
 	if(strcmp(var,ADD_DELTA_TEMP)==0) 	{  _dtoa(ret,Heat.add_delta_temp/10, 1); return ret;}else
@@ -614,8 +609,9 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,ADD_DELTA_END_HOUR)==0){  _itoa(Heat.add_delta_end_hour, ret); return ret;    	}else
 	if(strcmp(var,hp_TEMP2)==0)    { _dtoa(ret,Heat.Temp2/10,1); return ret;                } else            // целевая температура обратки
 	if(strcmp(var,hp_TARGET)==0)   { return web_fill_tag_select(ret, "Дом:0;Обратка:0;", GETBIT(Heat.flags,fTarget)); } else
-	if(strcmp(var,option_ADD_HEAT)==0){ return web_fill_tag_select(ret, "---:0;по дому:0;по улице:0;интеллектуально:0;", GETBIT(Heat.flags,fAddHeat) ? GETBIT(Heat.flags,fTypeRHEAT) ? 2 : 1 : 0); } else
-	if(strcmp(var,option_TEMP_RHEAT)==0){_dtoa(ret, Heat.tempRHEAT/10, 1); return ret; }else           // температура управления RHEAT (градусы)
+	if(strcmp(var,option_ADD_HEAT)==0){ return web_fill_tag_select(ret, "нет:0;по дому:0;по улице:0;интеллектуально:0;", (Heat.flags & ((1<<fAddHeat1)|(1<<fAddHeat2)))>>fAddHeat1); } else
+	if(strcmp(var,hp_timeRHEAT)==0) { _itoa(Heat.timeRHEAT, ret); return ret; } else
+	if(strcmp(var,option_TEMP_RHEAT)==0){_dtoa(ret, Heat.tempRHEAT, 2); return ret; }else           // температура управления RHEAT (градусы)
 	if(strcmp(var,option_PUMP_WORK)==0) {return _itoa(Heat.workPump,ret);}else
 	if(strcmp(var,option_PUMP_PAUSE)==0){return _itoa(Heat.pausePump,ret);}else
 	if(strcmp(var,hp_DTEMP)==0)    { _dtoa(ret,Heat.dTemp/10,1); return ret;                } else             // гистерезис целевой температуры

@@ -1978,6 +1978,9 @@ void vServiceHP(void *)
 			}
 			timer_sec = t;
 			if(HP.IsWorkingNow()) {
+#ifdef RHEAT
+				if(HP.RHEAT_timer < USHRT_MAX) HP.RHEAT_timer++;
+#endif
 				if(++task_updstat_chars >= HP.get_tChart()) {
 					task_updstat_chars = 0;
 					if((Charts_when_comp_on && HP.is_compressor_on()) || (!Charts_when_comp_on && HP.get_State() != pOFF_HP)) { // пришло время

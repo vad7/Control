@@ -622,6 +622,10 @@ public:
 	uint16_t fBackupPowerOffDelay;			// задержка выключения флага работы от резервного питания
 	boolean  HeatBoilerUrgently;		  // Срочно нужно ГВС
 	void     set_HeatBoilerUrgently(boolean onoff);
+#ifdef RHEAT
+	uint16_t RHEAT_timer = 0;
+	int16_t  RHEAT_prev_temp = STARTTEMP;
+#endif
 
 private:
 	void    StartResume(boolean start);    // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки

@@ -203,6 +203,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define NO_POWER_ON_DELAY_CNT 		15				// Задержка включения после появления питани, *TIME_READ_SENSOR
 #define RETURN_FROM_GENERATOR_DELAY	60000			// Задержка переключения с резерва на основное питание, ms
 #define HTTP_REQ_TIMEOUT   			2000			// ms
+#define RHEAT_SWITCH_PAUSE			300				// Пауза до следующего включения RHEAT, сек
 // ------------------- I2C ----------------------------------
 // Устройства i2c I2C_EEPROM_64KB и I2C_FRAM_MEMORY   Размер и тип памяти, определен в config.h т.к. он часто меняется
 #define I2C_SPEED         twiClock400kHz // Частота работы шины I2C
@@ -865,6 +866,7 @@ const char *hp_FC_FreqLimit = {"FL"};
 const char *hp_fP_ContinueAfterBoiler = {"CAB"};
 const char *option_ADD_HEAT           = {"H_list"}; // использование дополнительного нагревателя (значения 1 и 0)
 const char *option_TEMP_RHEAT         = {"TRH"};    // температура для управления RHEAT (градусы)
+const char *hp_timeRHEAT		      = {"TMR"};
 const char *option_PUMP_WORK          = {"PW"};     // работа насоса конденсатора при выключенном компрессоре секунды
 const char *option_PUMP_PAUSE         = {"PP"};     // пауза между работой насоса конденсатора при выключенном компрессоре (секунды)
 
@@ -1468,7 +1470,7 @@ enum RULE_HP
 {
     pHYSTERESIS,      // алгоритм гистерезис, интервальный режим
     pPID,             // алгоритм использование ПИД регулятора
-    pHYBRID,          // алгоритм смешаный алгоритм, предложил  Ljutik
+    pHYBRID,          // алгоритм смешаный алгоритм, предложил  Ljutik, пока не поддерживается!
     pEND1             // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
 
