@@ -55,7 +55,7 @@ window.onload = function() {
     <tr><td><b>Управление ЭРВ</b></td><td></td></tr>
     <tr><td>Разница при которой происходит уменьшение ПИД или порог в <sup>(6)</sup>, 0 - выкл. (°C)</td><td><input type="number" id="get_peev-p2d" step="0.01"> <input type="submit" value=">" onclick="setParam('get_pEEV(P2D)');"></td></tr>
     <tr><td>Ограничение за одну итерацию в шагах ЭРВ [1..200]</td><td><input type="number" id="get_peev-pmax"> <input type="submit" value=">" onclick="setParam('get_pEEV(PMAX)');"></td></tr>
-	<tr><td>Минимальная корректировка при переходе с отопление на бойлер<sup>7</sup>, %</td><td nowrap><input id="get_peev-hbm" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_pEEV(HBM)')"></td></tr>
+	<tr><td>Корректировка при переходе с отопление на бойлер и обратно<sup>7</sup>, %</td><td nowrap><input id="get_peev-hbm" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_pEEV(HBM)')"></td></tr>
     <tr name="hide_pid2"><td>Алгоритм ПИД - пропорционально измерению, иначе пропорционально ошибке <input type="submit" value="?" onclick='location.assign("eev-sethelp.html")'> </td><td nowrap><input type="checkbox" id="get_peev-pom" onchange="setParam('get_pEEV(POM)');"></td></tr>
 
     <tr><td><b>Прямой алгоритм управления ЭРВ без ПИД<sup>6</sup></b></td><td nowrap><input type="checkbox" id="get_peev-dir" onchange="setParam('get_pEEV(DIR)');"></td></tr>
@@ -110,7 +110,7 @@ window.onload = function() {
 4. Время от начала раскрутки компрессора до момента начала работы ПИД ЭРВ, должно быть больше 2*. Если 255, то будет использована всегда либо фиксированная позиция либо расчитанная по подаче.<br/>
 5. Если выбрана эта опция, то поиск нуля производится только один раз при первом включении ТН<br/>
 6. Управление без ПИД по двум перегревам. В зависимости от ошибки и ее тренда крутим ЭРВ в нужную сторону. Если есть превышение порога, то по множителю, иначе по одному шагу. Сначала управляется по выбранному алгоритму перегрева, потом, когда он установлен в заданном пределе, по перегреву на входе компрессора TCOMPIN-T[PEVA] (Overheat2).<br/>
-7. Применяется если текущая позиция ЭРВ больше: стартовая позиция бойлера + значение этого поля<br/>
+7. При переходе с отопления на бойлер есть задержка, обратно нет.<br/>
 8. В зависимости от выбранной формулы нужны определенные датчики, иначе возникает ошибка ERR_TYPE_OVERHEAT (-38):<br/>
 &nbsp; &nbsp; TEVAOUT_TEVAIN: нужно TEVAOUT TEVAIN + (TCONIN или TCOMPIN)<br/>
 &nbsp; &nbsp; TCOMPIN_TEVAIN: нужно TCOMPIN TEVAIN<br/>

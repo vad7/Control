@@ -1662,12 +1662,22 @@ boolean HeatPump::switchBoiler(boolean b)
 		}
 	}
 #endif // закрытие Нет трехходового - схема с двумя насосами
-	if(onBoiler && get_State() == pWORK_HP) { // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
-		journal.jprintf(" Pause %ds, Boiler->House\n", Option.delayBoilerSW);
-		_delay(Option.delayBoilerSW * 1000); // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
-	}
 	offBoiler = b ? 0 : rtcSAM3X8.unixtime(); // запомнить время выключения ГВС (нужно для переключения)
-	return onBoiler = b;
+	if(onBoiler && get_State() == pWORK_HP) { // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
+		onBoiler = b;
+		journal.jprintf(" Pause %ds, Boiler->House\n", Option.delayBoilerSW);
+		int16_t newpos = dEEV.get_FromHeatToBoilerMove();
+		if(newpos) {
+			newpos = dEEV.get_EEV() - newpos;
+			if(newpos < HP.dEEV.get_minEEV()) newpos = HP.dEEV.get_minEEV(); else if(newpos > HP.dEEV.get_maxEEV()) newpos = HP.dEEV.get_maxEEV();
+			dEEV.set_EEV(newpos);
+		}
+		if(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm)) {
+			dEEV.pidw.max = dEEV.pidw.trend[trOH_default] = dEEV.pidw.trend[trOH_TCOMP] = 0;
+		}
+		_delay(Option.delayBoilerSW * 1000); // выравниваем температуру в контуре отопления/ГВС, что бы сразу защиты не сработали
+	} else onBoiler = b;
+	return onBoiler;
 }
 // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
 // Если реле нет то ничего не делает возвращает false
@@ -2381,7 +2391,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			Status.ret=pBp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__); return pCOMP_OFF;  // Достижение максимальной температуры подачи
 		}
 		// Отслеживание выключения (с учетом догрева)
-		if(!GETBIT(Prof.Boiler.flags, fTurboBoiler) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
+		if((!GETBIT(Prof.Boiler.flags, fTurboBoiler) || GETBIT(Prof.Boiler.flags, fBoilerTurboLimit)) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
 		{
 			if(T > Boiler_Target_AddHeating()) {
 				Status.ret=pBp22; return pCOMP_OFF;  // Температура выше целевой температуры ДОГРЕВА надо выключаться!
@@ -3161,15 +3171,17 @@ boolean HeatPump::configHP(MODE_HP conf)
 			if(newpos || GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos)) {
 				_delay(EEV_DELAY_BEFORE_SET_BOILER_POS);
 				newpos = dEEV.get_EEV() + newpos;
+				if(newpos < HP.dEEV.get_minEEV()) newpos = HP.dEEV.get_minEEV(); else if(newpos > HP.dEEV.get_maxEEV()) newpos = HP.dEEV.get_maxEEV();
 				//if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) && newpos > dEEV.get_BoilerStartPos()) newpos = dEEV.get_BoilerStartPos();
-				if(dEEV.get_EEV() != newpos && newpos > dEEV.get_minEEV()) {
+				//if(dEEV.get_EEV() != newpos && newpos > dEEV.get_minEEV()) {
 					dEEV.set_EEV(newpos);
+					for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
 #ifdef EEV_PREFER_PERCENT
 					journal.jprintf(" EEV go BoilerPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
 #else
 					journal.jprintf(" EEV go BoilerPos: %d\n", dEEV.get_EEV());
 #endif
-				}
+				//}
 			}
 #ifdef SUPERBOILER
 			dRelay[PUMP_OUT].set_OFF();                                // Евгений добавил
