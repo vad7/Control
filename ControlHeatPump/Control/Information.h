@@ -120,7 +120,6 @@ struct type_SaveON {
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
 #define fBoilerHeatElemSchPri 12		// Приоритет нагрева бойлера тэном по расписанию
 #define fBoilerCircSchedule 13		  	// флаг Рециркуляция ГВС по расписанию
-#define fBoilerTurboLimit	14			// Греть компрессором до темпераутры догрева
 
 struct type_boilerHP {
 	uint8_t DischargeDelta;            // Сброс тепла в отопление, если температура подачи/конденсации приблизилась к максимуму/догреву, в десятых градуса

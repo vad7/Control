@@ -662,7 +662,6 @@ boolean Profile::set_boiler(char *var, char *c)
 											} return true;} else
 	if(strcmp(var,boil_fBoilerPID)==0)	    { if(x) SETBIT1(Boiler.flags,fBoilerPID); else SETBIT0(Boiler.flags,fBoilerPID); return true;} else
 	if(strcmp(var,boil_TURBO_BOILER)==0)	{ if(x) SETBIT1(Boiler.flags,fTurboBoiler); else SETBIT0(Boiler.flags,fTurboBoiler); return true;} else
-	if(strcmp(var,boil_fBoilerTurboLimit)==0){ if(x) SETBIT1(Boiler.flags,fBoilerTurboLimit); else SETBIT0(Boiler.flags,fBoilerTurboLimit); return true;} else
 	if(strcmp(var,boil_SALMONELLA)==0)		{ if(x) SETBIT1(Boiler.flags,fSalmonella); else SETBIT0(Boiler.flags,fSalmonella); return true;} else // Изменение максимальной температуры при включенном режиме сальмонелла
 	if(strcmp(var,boil_CIRCULATION)==0)		{ if(x) SETBIT1(Boiler.flags,fCirculation); else SETBIT0(Boiler.flags,fCirculation); return true;} else
 	if(strcmp(var,boil_fBoilerCircSchedule)==0) { if(x) SETBIT1(Boiler.flags,fBoilerCircSchedule); else SETBIT0(Boiler.flags,fBoilerCircSchedule); return true;} else
@@ -709,7 +708,6 @@ char* Profile::get_boiler(char *var, char *ret)
  if(strcmp(var,boil_TOGETHER_HEAT)==0){ if (GETBIT(Boiler.flags,fBoilerTogetherHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_fBoilerPID)==0){ if (GETBIT(Boiler.flags,fBoilerPID)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fBoilerTurboLimit)==0){ if (GETBIT(Boiler.flags,fBoilerTurboLimit))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_SALMONELLA)==0){      if (GETBIT(Boiler.flags,fSalmonella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_CIRCULATION)==0){     if (GETBIT(Boiler.flags,fCirculation))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
  if(strcmp(var,boil_fBoilerCircSchedule)==0){ if (GETBIT(Boiler.flags,fBoilerCircSchedule))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else

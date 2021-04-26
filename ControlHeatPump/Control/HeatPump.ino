@@ -2204,28 +2204,25 @@ boolean HeatPump::boilerAddHeat()
 
 	// Догрев бойлера
 
-	if(GETBIT(Prof.SaveON.flags, fBoilerON) && scheduleBoiler()) // Если разрешено греть бойлер согласно расписания И Бойлер включен
-	{
-		if(GETBIT(Prof.Boiler.flags, fTurboBoiler))  // Если турбо режим, то повторяем за Тепловым насосом (грет или не греть)
-		{
-			if(T < Prof.Boiler.tempRBOILER) return onBoiler;   // работа параллельно с ТН  если температура МЕНЬШЕ догрева то повторяем работу ТН
-		}
-		if(GETBIT(Prof.Boiler.flags, fAddHeating))  // Включен догрев
-		{
+	if(GETBIT(Prof.SaveON.flags, fBoilerON) && scheduleBoiler()) { // Если разрешено греть бойлер согласно расписания И Бойлер включен
+		if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
 			int16_t b_target = get_boilerTempTarget();
 			if(!flagRBOILER && (T < b_target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
 			    flagRBOILER = true;
 				return false;
 			}
-			if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работет бойлер, но догрев не включаем
+			if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, но догрев не включаем
 			else {
-				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay() || (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))))) {  // Греем тэном
+				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay()
+						|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
 					return true;
 				} else { // бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
 					flagRBOILER = false;
 					return false;
 				}
 			}
+		} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
+			return flagRBOILER = onBoiler;
 		} else { // ТЭН не используется (сняты все флажки)
 			flagRBOILER = false;
 			return false;
@@ -2360,7 +2357,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		}
 
 		// Отслеживание выключения (с учетом догрева)
-		if((!GETBIT(Prof.Boiler.flags, fTurboBoiler) || GETBIT(Prof.Boiler.flags, fBoilerTurboLimit)) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
+		if(GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева
 		{
 			if(T > Boiler_Target_AddHeating()) {
 				Status.ret=pBh22; return pCOMP_OFF; // Температура выше целевой температуры ДОГРЕВА надо выключаться!
@@ -2391,7 +2388,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			Status.ret=pBp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__); return pCOMP_OFF;  // Достижение максимальной температуры подачи
 		}
 		// Отслеживание выключения (с учетом догрева)
-		if((!GETBIT(Prof.Boiler.flags, fTurboBoiler) || GETBIT(Prof.Boiler.flags, fBoilerTurboLimit)) && GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева, не турбо
+		if(GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева
 		{
 			if(T > Boiler_Target_AddHeating()) {
 				Status.ret=pBp22; return pCOMP_OFF;  // Температура выше целевой температуры ДОГРЕВА надо выключаться!
@@ -3119,9 +3116,10 @@ boolean HeatPump::configHP(MODE_HP conf)
 		#ifdef SUPERBOILER                                             // Бойлер греется от предкондесатора
 		 dRelay[RSUPERBOILER].set_OFF();                            // Евгений добавил выключить супербойлер
 		#endif
-		#ifdef RBOILER
-			if((GETBIT(Prof.Boiler.flags,fTurboBoiler))&&(dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF();  // Выключить ТЭН бойлера в режиме турбо (догрев не работате)
-		#endif
+		//Убрано -> Выключается в UpdateBoiler
+		//#ifdef RBOILER
+		//	if((GETBIT(Prof.Boiler.flags,fTurboBoiler))&&(dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF();  // Выключить ТЭН бойлера в режиме турбо (догрев не работате)
+		//#endif
 		#ifdef RHEAT
 			if(dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
 		#endif
@@ -3154,9 +3152,9 @@ boolean HeatPump::configHP(MODE_HP conf)
 			PUMPS_ON;                                                     // включить насосы
 			dFC.set_target(dFC.get_startFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool());   // установить стартовую частоту
 		}
-		#ifdef RBOILER
-			if((GETBIT(Prof.Boiler.flags,fTurboBoiler)) && (dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF(); // Выключить ТЭН бойлера (режим форсированного нагрева)
-		#endif
+		//#ifdef RBOILER
+		//	if((GETBIT(Prof.Boiler.flags,fTurboBoiler)) && (dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF(); // Выключить ТЭН бойлера (режим форсированного нагрева)
+		//#endif
 		#ifdef RHEAT
 		  	  if (dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
 		#endif
