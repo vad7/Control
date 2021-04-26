@@ -701,57 +701,59 @@ boolean Profile::set_boiler(char *var, char *c)
 
 // Получить параметр из строки по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
 char* Profile::get_boiler(char *var, char *ret)
-{ 
- if(strcmp(var,boil_BOILER_ON)==0){       if (GETBIT(SaveON.flags,fBoilerON))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_SCHEDULER_ON)==0){    if (GETBIT(Boiler.flags,fSchedule))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){ if (GETBIT(Boiler.flags,fScheduleAddHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_TOGETHER_HEAT)==0){ if (GETBIT(Boiler.flags,fBoilerTogetherHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fBoilerPID)==0){ if (GETBIT(Boiler.flags,fBoilerPID)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_SALMONELLA)==0){      if (GETBIT(Boiler.flags,fSalmonella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_CIRCULATION)==0){     if (GETBIT(Boiler.flags,fCirculation))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fBoilerCircSchedule)==0){ if (GETBIT(Boiler.flags,fBoilerCircSchedule))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_TEMP_TARGET)==0){     _dtoa(ret,Boiler.TempTarget/10,1); return ret;    }else
- if(strcmp(var,ADD_DELTA_TEMP)==0) 		{ _dtoa(ret,Boiler.add_delta_temp/10, 1); return ret; }else
- if(strcmp(var,ADD_DELTA_HOUR)==0) 		{ _itoa(Boiler.add_delta_hour, ret); return ret;           }else
- if(strcmp(var,ADD_DELTA_END_HOUR)==0) 	{ _itoa(Boiler.add_delta_end_hour, ret); return ret;    	}else
- if(strcmp(var,boil_DTARGET)==0){         _dtoa(ret,Boiler.dTemp/10,1); return ret;        }else
- if(strcmp(var,boil_TEMP_MAX)==0){        _dtoa(ret,Boiler.tempInLim/10,1); return ret;       }else
- if(strcmp(var,boil_SCHEDULER)==0){       return strcat(ret,get_Schedule(Boiler.Schedule));          }else  
- if(strcmp(var,boil_CIRCUL_WORK)==0){     return _itoa(Boiler.Circul_Work/60,ret);                   }else                            // Время  работы насоса ГВС секунды (fCirculation)
- if(strcmp(var,boil_CIRCUL_PAUSE)==0){    return _itoa(Boiler.Circul_Pause/60,ret);                  }else                            // Пауза в работе насоса ГВС  секунды (fCirculation)
- if(strcmp(var,boil_RESET_HEAT)==0){      if (GETBIT(Boiler.flags,fResetHeat))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else       // флаг Сброса лишнего тепла в СО
- if(strcmp(var,boil_RESET_TIME)==0){      return  _itoa(Boiler.Reset_Time,ret);                      }else                            // время сброса излишков тепла в секундах (fResetHeat)
- if(strcmp(var,boil_BOIL_TIME)==0){       return  _itoa(Boiler.pid_time,ret);                        }else                            // Постоянная интегрирования времени в секундах ПИД ГВС
- if(strcmp(var,boil_BOIL_PRO)==0){        _dtoa(ret,Boiler.pid.Kp,3); return ret;        }else                            // Пропорциональная составляющая ПИД ГВС
+{
+	if(strcmp(var,boil_CurrentTarget)==0){   _dtoa(ret, HP.sTemp[TBOILER].get_Temp(), 2); strcat(ret, "° "); goto xTargetTemp; } else
+	if(strcmp(var,boil_BOILER_ON)==0){       if (GETBIT(SaveON.flags,fBoilerON))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_SCHEDULER_ON)==0){    if (GETBIT(Boiler.flags,fSchedule))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){ if (GETBIT(Boiler.flags,fScheduleAddHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_TOGETHER_HEAT)==0){ if (GETBIT(Boiler.flags,fBoilerTogetherHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerPID)==0){ if (GETBIT(Boiler.flags,fBoilerPID)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_SALMONELLA)==0){      if (GETBIT(Boiler.flags,fSalmonella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_CIRCULATION)==0){     if (GETBIT(Boiler.flags,fCirculation))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerCircSchedule)==0){ if (GETBIT(Boiler.flags,fBoilerCircSchedule))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_TEMP_TARGET)==0){     _dtoa(ret,Boiler.TempTarget/10,1); return ret;    }else
+	if(strcmp(var,ADD_DELTA_TEMP)==0) 		{ _dtoa(ret,Boiler.add_delta_temp/10, 1); return ret; }else
+	if(strcmp(var,ADD_DELTA_HOUR)==0) 		{ _itoa(Boiler.add_delta_hour, ret); return ret;           }else
+	if(strcmp(var,ADD_DELTA_END_HOUR)==0) 	{ _itoa(Boiler.add_delta_end_hour, ret); return ret;    	}else
+	if(strcmp(var,boil_DTARGET)==0){         _dtoa(ret,Boiler.dTemp/10,1); return ret;        }else
+	if(strcmp(var,boil_TEMP_MAX)==0){        _dtoa(ret,Boiler.tempInLim/10,1); return ret;       }else
+	if(strcmp(var,boil_SCHEDULER)==0){       return strcat(ret,get_Schedule(Boiler.Schedule));          }else
+	if(strcmp(var,boil_CIRCUL_WORK)==0){     return _itoa(Boiler.Circul_Work/60,ret);                   }else                            // Время  работы насоса ГВС секунды (fCirculation)
+	if(strcmp(var,boil_CIRCUL_PAUSE)==0){    return _itoa(Boiler.Circul_Pause/60,ret);                  }else                            // Пауза в работе насоса ГВС  секунды (fCirculation)
+	if(strcmp(var,boil_RESET_HEAT)==0){      if (GETBIT(Boiler.flags,fResetHeat))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else       // флаг Сброса лишнего тепла в СО
+	if(strcmp(var,boil_RESET_TIME)==0){      return  _itoa(Boiler.Reset_Time,ret);                      }else                            // время сброса излишков тепла в секундах (fResetHeat)
+	if(strcmp(var,boil_BOIL_TIME)==0){       return  _itoa(Boiler.pid_time,ret);                        }else                            // Постоянная интегрирования времени в секундах ПИД ГВС
+	if(strcmp(var,boil_BOIL_PRO)==0){        _dtoa(ret,Boiler.pid.Kp,3); return ret;        }else                            // Пропорциональная составляющая ПИД ГВС
 #ifdef PID_FORMULA2
- if(strcmp(var,boil_BOIL_IN)==0){         _dtoa(ret,Boiler.pid.Ki/Boiler.pid_time,3); return ret;} else             // Интегральная составляющая ПИД ТН
- if(strcmp(var,boil_BOIL_DIF)==0){        _dtoa(ret,Boiler.pid.Kd*Boiler.pid_time,3); return ret;} else             // Дифференциальная составляющая ПИД ТН
+	if(strcmp(var,boil_BOIL_IN)==0){         _dtoa(ret,Boiler.pid.Ki/Boiler.pid_time,3); return ret;} else             // Интегральная составляющая ПИД ТН
+	if(strcmp(var,boil_BOIL_DIF)==0){        _dtoa(ret,Boiler.pid.Kd*Boiler.pid_time,3); return ret;} else             // Дифференциальная составляющая ПИД ТН
 #else
- if(strcmp(var,boil_BOIL_IN)==0){         _dtoa(ret,Boiler.pid.Ki,3); return ret;       }else                            // Интегральная составляющая ПИД ГВС
- if(strcmp(var,boil_BOIL_DIF)==0){        _dtoa(ret,Boiler.pid.Kd,3); return ret;       }else                            // Дифференциальная составляющая ПИД ГВС
+	if(strcmp(var,boil_BOIL_IN)==0){         _dtoa(ret,Boiler.pid.Ki,3); return ret;       }else                            // Интегральная составляющая ПИД ГВС
+	if(strcmp(var,boil_BOIL_DIF)==0){        _dtoa(ret,Boiler.pid.Kd,3); return ret;       }else                            // Дифференциальная составляющая ПИД ГВС
 #endif
- if(strcmp(var,boil_BOIL_TEMP)==0){       _dtoa(ret,Boiler.tempPID/10,1); return ret;       }else                            // Целевая темпеартура ПИД ГВС
- if(strcmp(var,boil_ADD_HEATING)==0){     if(GETBIT(Boiler.flags,fAddHeating)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else   // флаг использования тена для догрева ГВС
- if(strcmp(var,boil_fAddHeatingForce)==0){if(GETBIT(Boiler.flags,fAddHeatingForce)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
- if(strcmp(var,hp_SUN)==0) { if(GETBIT(Boiler.flags,fBoilerUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
- if(strcmp(var,boil_TEMP_RBOILER)==0){    _dtoa(ret,Boiler.tempRBOILER/10,1); return ret;    }else                            // температура включения догрева бойлера
- if(strcmp(var,boil_dAddHeat)==0){        _dtoa(ret,Boiler.dAddHeat/10,1); return ret;       }else
- if(strcmp(var,boil_WF_MinTarget)==0){   _dtoa(ret,Boiler.WF_MinTarget/10,1); return ret;       }else
- if(strcmp(var,boil_WR_Target)==0){      _dtoa(ret,Boiler.WR_Target/10,1); return ret;       }else
- if(strcmp(var,boil_DischargeDelta)==0){  _dtoa(ret, Boiler.DischargeDelta, 1); return ret;       }else
- if(strcmp(var,boil_HeatUrgently)==0){if(HP.HeatBoilerUrgently) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_fBoilerHeatElemSchPri)==0){ if(GETBIT(Boiler.flags, fBoilerHeatElemSchPri)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
- if(strcmp(var,boil_TargetTemp)==0) {
-	 if(!GETBIT(HP.Prof.Boiler.flags, fTurboBoiler) && GETBIT(HP.Prof.Boiler.flags, fAddHeating)) {// режим догрева, не турбо
-		 _dtoa(ret, HP.Boiler_Target_AddHeating() / 10, 1);
-		 strcat(ret, ", ");
+	if(strcmp(var,boil_BOIL_TEMP)==0){       _dtoa(ret,Boiler.tempPID/10,1); return ret;       }else                            // Целевая темпеартура ПИД ГВС
+	if(strcmp(var,boil_ADD_HEATING)==0){     if(GETBIT(Boiler.flags,fAddHeating)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else   // флаг использования тена для догрева ГВС
+	if(strcmp(var,boil_fAddHeatingForce)==0){if(GETBIT(Boiler.flags,fAddHeatingForce)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,hp_SUN)==0) { if(GETBIT(Boiler.flags,fBoilerUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
+	if(strcmp(var,boil_TEMP_RBOILER)==0){    _dtoa(ret,Boiler.tempRBOILER/10,1); return ret;    }else                            // температура включения догрева бойлера
+	if(strcmp(var,boil_dAddHeat)==0){        _dtoa(ret,Boiler.dAddHeat/10,1); return ret;       }else
+	if(strcmp(var,boil_WF_MinTarget)==0){   _dtoa(ret,Boiler.WF_MinTarget/10,1); return ret;       }else
+	if(strcmp(var,boil_WR_Target)==0){      _dtoa(ret,Boiler.WR_Target/10,1); return ret;       }else
+	if(strcmp(var,boil_DischargeDelta)==0){  _dtoa(ret, Boiler.DischargeDelta, 1); return ret;       }else
+	if(strcmp(var,boil_HeatUrgently)==0){if(HP.HeatBoilerUrgently) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerHeatElemSchPri)==0){ if(GETBIT(Boiler.flags, fBoilerHeatElemSchPri)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_TargetTemp)==0) {
+xTargetTemp:
+	 if(GETBIT(HP.Prof.Boiler.flags, fAddHeating)) { // режим догрева
+		 _dtoa(ret, (GETBIT(HP.Prof.Boiler.flags, fTurboBoiler) ? Boiler.tempRBOILER : HP.Boiler_Target_AddHeating()) / 10, 1);
+		 strcat(ret, "/");
 	 }
 	 _dtoa(ret, HP.get_boilerTempTarget() / 10, 1);
 	 return ret;
- } else
- return strcat(ret,(char*)cInvalid);
+	} else
+	return strcat(ret,(char*)cInvalid);
 }
 
 // static uint16_t crc= 0xFFFF;  // рабочее значение

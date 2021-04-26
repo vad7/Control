@@ -645,6 +645,7 @@ const char *boil_SALMONELLA   = {"SLMN"};                // флаг Сальм�
 const char *boil_CIRCULATION  = {"CIRC"};  		         // флаг Управления циркуляционным насосом ГВС
 const char *boil_fBoilerCircSchedule= {"CIRS"};
 const char *boil_TEMP_TARGET  = {"TRG"};                 // Целевая температура бойлера
+const char *boil_CurrentTarget= {"CT"};					// Текущая + цель
 const char *boil_TargetTemp	  = {"TT"};					 // Цель, расчитанная
 const char *boil_WR_Target	  = {"W"};					 // Цель для ваттроутера
 const char *boil_DTARGET      = {"DTRG"};                // гистерезис целевой температуры
