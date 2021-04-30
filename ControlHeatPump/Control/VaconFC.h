@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
  * Частотный преобразователь Vacon 10
  * Автор vad711, vad7@yahoo.com
  *
