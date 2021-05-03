@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
- * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
+ * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -894,7 +894,7 @@ void vWeb0(void *)
 					HP.sADC[IWR].Read();
 					int pnet = HP.sADC[IWR].get_Value() * HP.dSDM.get_voltage();
 #elif WR_PowerMeter_Modbus
-					int pnet = round_div_int32(WR_PowerMeter_Power, 10);
+					int pnet = WR_PowerMeter_Power; //round_div_int32(WR_PowerMeter_Power, 10);
 #else
 					// HTTP power meter
 					active = false;
@@ -945,14 +945,19 @@ void vWeb0(void *)
 #endif
 					{
 						// Если возможна только релейная нагрузка, то отбрасываем пики и усредняем
-						bool need_average = true;
-						if(pnet > _MinNetLoad) {
-							for(int8_t i = 0; i < WR_NumLoads; i++) {
-								if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
-								need_average = false;
-								break;
+						bool need_average;
+						if(pnet < 0) need_average = false;
+						else {
+							need_average = true;
+							if(pnet > _MinNetLoad) {
+								for(int8_t i = 0; i < WR_NumLoads; i++) {
+									if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
+									need_average = false;
+									break;
+								}
 							}
 						}
+#ifdef WR_SKIP_EXTREMUM
 						if(need_average) {
 							if(WR_Pnet != -32768 && /*abs*/(pnet - WR_Pnet) > WR_SKIP_EXTREMUM) {
 								WR_Pnet = -32768;
@@ -960,6 +965,7 @@ void vWeb0(void *)
 								break;
 							}
 						}
+#endif
 #ifdef WR_PNET_AVERAGE
 	#if WR_PNET_AVERAGE == 0
 						// Медианный фильтр
@@ -1085,7 +1091,7 @@ void vWeb0(void *)
 								if(WR_SwitchTime[i] && t - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
 							}
 #ifdef HTTP_MAP_Read_MPPT
-							if(mppt == 255) {
+							if(mppt == 255 && pnet > 0) {
 								active = false;
 								mppt = WR_Check_MPPT();
 								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
@@ -1098,14 +1104,16 @@ void vWeb0(void *)
 								int16_t chg;
 								if(mppt < 3) { 								// Добавляем помаленьку, когда MPPT говорит, что нет энергии
 									if(skip_next_small_increase) break;
-									chg = _MinNetLoad - pnet;
-									if(chg < WR_PWM_POWER_MIN) break;
+									if(pnet > 0) {
+										chg = _MinNetLoad - pnet;
+										if(chg < WR_PWM_POWER_MIN) break;
+									} else chg = pnet + WR_MIN_LOAD_POWER;
 									skip_next_small_increase = 2;
 								} else chg = WR.LoadAdd;
 								WR_Change_Load_PWM(i, WR_Adjust_PWM_delta(i, chg));
 								break;
 							} else {
-								if(mppt < 3) continue;
+								if(mppt < 3 && pnet > 0) continue;
 #ifdef WR_TestAvailablePowerForRelayLoads
 	#if defined(WR_Load_pins_Boiler_INDEX) && WR_TestAvailablePowerForRelayLoads == WR_Load_pins_Boiler_INDEX
 		#ifdef WR_Boiler_Substitution_INDEX
@@ -1364,13 +1372,6 @@ void vReadSensor(void *)
 #else
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
-//#ifdef WR_PowerMeter_Modbus
-//		if(GETBIT(WR.Flags, WR_fActive)) {
-//			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: #%d\n", GetTickCount() - ttime);
-//			i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-//			if(i != OK && GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
-//		}
-//#endif
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 #if (SDM_READ_PERIOD > 0)
 			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
@@ -1386,9 +1387,14 @@ void vReadSensor(void *)
 //			if(tm > WEB0_FREQUENT_JOB_PERIOD / 2) {
 //				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
 				if(GETBIT(HP.Option.flags, fBackupPower)) {
-					WR_PowerMeter_Power = -10;
+					WR_PowerMeter_Power = -1;
 				} else {
+	#ifdef WR_PowerMeter_DDS238
+					i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
+	#else
 					i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
+					WR_PowerMeter_Power /= 10;
+	#endif
 					if(i == OK) {
 						WR_Error_Read_PowerMeter = 0;
 #ifdef PWM_CALC_POWER_ARRAY
@@ -1397,7 +1403,7 @@ void vReadSensor(void *)
 					} else {
 						if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
 						if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
-							WR_PowerMeter_Power = -10;
+							WR_PowerMeter_Power = -1;
 							if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
 						}
 					}
@@ -1972,6 +1978,9 @@ void vServiceHP(void *)
 			}
 			timer_sec = t;
 			if(HP.IsWorkingNow()) {
+#ifdef RHEAT
+				if(HP.RHEAT_timer < USHRT_MAX) HP.RHEAT_timer++;
+#endif
 				if(++task_updstat_chars >= HP.get_tChart()) {
 					task_updstat_chars = 0;
 					if((Charts_when_comp_on && HP.is_compressor_on()) || (!Charts_when_comp_on && HP.get_State() != pOFF_HP)) { // пришло время
@@ -1981,7 +1990,7 @@ void vServiceHP(void *)
 					} else {
 #ifdef WATTROUTER
 #ifdef WR_PowerMeter_Modbus
-						if(ChartsModSetup[0].object == STATS_OBJ_WattRouter_In) HP.Charts[0].add_Point(WR_PowerMeter_Power / 10);
+						if(ChartsModSetup[0].object == STATS_OBJ_WattRouter_In) HP.Charts[0].add_Point(WR_PowerMeter_Power);
 #else
 						if(ChartsModSetup[0].object == STATS_OBJ_WattRouter_In) HP.Charts[0].add_Point(WR_Pnet);
 #endif

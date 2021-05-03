@@ -1,6 +1,6 @@
  /*
- * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
- * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
+ * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  *
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
@@ -180,22 +180,23 @@ int8_t sensorTemp::set_errTemp(int16_t t)
 }
 
 // Получить значение температуры датчика (n.nn) с учетом удаленных датчиков!!! - это то что используется в работе ТН
-int16_t sensorTemp::get_Temp()            
+int16_t sensorTemp::get_Temp()
 {
- #ifdef SENSOR_IP                                       // использутся удаленные датчики
- int16_t t;
- if (!(GETBIT(flags,fPresent))) return 0;               // проводной датчик запрещен в конфигурации ничего не делаем
- if( (devIP->get_fUse())&&(devIP->get_link()>-1))       // Удаленный датчик привязан к данному проводному датчику надо использовать
-   {
-    if (devIP->get_update()>UPDATE_IP)  return Temp;    // Время просрочено, удаленный датчик не используем
-    t=devIP->get_Temp();                                // Получить значение температуры удаленного датчика
-    if ((devIP->get_fRule())) return (t+Temp)/2;          // Усреднение датчиков
-    else return t;                                      // Использование только удаленного датчика
-   }
-  else return Temp;                                     // датчик не привязан
- #else                                                  // При отсутствии удаленныхдатчиков сразу выводим проводной датчик
-   return Temp;
- #endif
+#ifdef SENSOR_IP                                       // использутся удаленные датчики
+	int16_t t;
+	if (!(GETBIT(flags,fPresent))) return 0;               // проводной датчик запрещен в конфигурации ничего не делаем
+	if( (devIP->get_fUse())&&(devIP->get_link()>-1))       // Удаленный датчик привязан к данному проводному датчику надо использовать
+	{
+		if(devIP->get_update()>UPDATE_IP) return Temp;    // Время просрочено, удаленный датчик не используем
+		t = devIP->get_Temp();                                // Получить значение температуры удаленного датчика
+		if((devIP->get_fRule())) t = (t+Temp)/2;          // Усреднение датчиков
+		else t += errTemp;
+		return t;                                         // Использование только удаленного датчика
+	}
+	else return Temp;                                     // датчик не привязан
+#else                                                  // При отсутствии удаленныхдатчиков сразу выводим проводной датчик
+	return Temp;
+#endif
 }
 
 // Получить значение температуры ПРОВОДНОГО датчика

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
- * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
+ * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмное обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -335,11 +335,14 @@ char* NowDateToStr(char *buf)
 
 // (Длительность инервала в строку) Время в формате день day 12:34 используется для рассчета uptime
 // Результат ДОБАВЛЯЕТСЯ в ret
-char* TimeIntervalToStr(uint32_t idt, char *ret, uint8_t fSec = 0)
+char* TimeIntervalToStr(uint32_t idt, char *ret, __attribute__((unused)) uint8_t fSec = 0)
 {
-	uint8_t Hour, Min, Sec;
+	uint8_t Hour, Min;
 	/* decode the interval into days, hours, minutes, seconds */
+#ifndef  SENSOR_IP
+	uint8_t Sec;
 	if(fSec) Sec = idt % 60;
+#endif
 	idt /= 60;
 	Min = idt % 60;
 	idt /= 60;

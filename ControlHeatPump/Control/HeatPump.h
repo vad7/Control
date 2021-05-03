@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016-2020 by Vadim Kulakov vad7@yahoo.com, vad711
- * &                       by Pavel Panfilov <firstlast2007@gmail.com> skype pav2000pav
+ * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
  * различными типами тепловых насосов для отопления и ГВС.
@@ -119,7 +119,11 @@ uint32_t DailySwitch_on = 0;		// bit array
 #define  WR_fTYPE				uint8_t
 int16_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus
-volatile int32_t WR_PowerMeter_Power = 0;
+	#ifdef WR_PowerMeter_DDS238
+volatile int16_t WR_PowerMeter_Power = 0;		// W
+	#else
+volatile int32_t WR_PowerMeter_Power = 0;		// W
+	#endif
 volatile uint8_t WR_Error_Read_PowerMeter = 0;
 #endif
 #if WR_PNET_AVERAGE > 0
@@ -189,12 +193,12 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания
 
 //  Работа с отдельными флагами, type_optionHP.flags:
-#define fAddHeat				0               // флаг Использование дополнительного тена при нагреве
+#define f_reserved_1			0				//
 #define fBeep					1               // флаг Использование звука
 #define fNextion				2               // флаг Использование nextion дисплея
 #define fHistory				3               // флаг записи истории на карту памяти
 #define fSaveON					4               // флаг записи в EEPROM включения ТН
-#define fTypeRHEAT				5               // флаг как используется дополнительный ТЭН для нагрева 0-резерв 1-бивалент
+#define f_reserved_2			5               //
 #define f1Wire1TSngl			6				// На 1-ой шине 1-Wire только один датчик
 #define f1Wire2TSngl			7				// На 2-ой шине 1-Wire(DS2482) только один датчик
 #define f1Wire3TSngl			8				// На 3-ей шине 1-Wire(DS2482) только один датчик
@@ -221,9 +225,6 @@ struct type_optionHP
  uint8_t dim;							// Яркость дисплея %
  uint8_t DailySwitchHysteresis;			// Гистерезис для переключения реле по температуре, десятые градуса
  uint16_t tChart;						// период сбора статистики в секундах!!
- int16_t tempRHEAT;						// Значение температуры для управления дополнительным ТЭН для нагрева СО
- uint16_t pausePump;					// Время паузы  насоса при выключенном компрессоре СЕКУНДЫ
- uint16_t workPump;						// Время работы насоса при выключенном компрессоре СЕКУНДЫ
  uint16_t delayOnPump;					// Задержка включения компрессора после включения насосов (сек).
  uint16_t delayOffPump;					// Задержка выключения насосов после выключения компрессора (сек).
  uint16_t delayStartRes;				// Задержка включения ТН после внезапного сброса контроллера (сек.)
@@ -246,7 +247,7 @@ struct type_optionHP
  uint16_t SunMinWorktime;				// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
  uint16_t SunMinPause;					// Солнечный коллектор - минимальное время паузы после останова СК, сек
 #ifdef DEFROST
- int16_t  DefrostTempLimit;				// температура выше которой разморозка не включается, сотые градуса
+ int16_t  DefrostTempLimit;				// температура TEVAIN выше которой разморозка не включается, сотые градуса
  int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка, сотые градуса
  int16_t  DefrostTempSteam;				// температура ниже которой оттаиваем паром, сотые градуса
  int16_t  DefrostTempEnd;				// температура окончания отттайки, сотые градуса
@@ -464,8 +465,8 @@ public:
 	boolean scheduleBoiler();                               // Проверить расписание бойлера true - нужно греть false - греть не надо
 
 // Опции ТН
-	uint16_t get_pausePump() {return Option.pausePump;};                // Время паузы  насоса при выключенном компрессоре, секунды
-	uint16_t get_workPump() {return Option.workPump;};                  // Время работы  насоса при выключенном компрессоре, секунды
+	uint16_t get_pausePump() {return Prof.Heat.pausePump;};                // Время паузы  насоса при выключенном компрессоре, секунды
+	uint16_t get_workPump() {return Prof.Heat.workPump;};                  // Время работы  насоса при выключенном компрессоре, секунды
 	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);};           // подача звуковых сигналов
 	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}        // получить флаг записи состояния
 	uint8_t  get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске
@@ -621,6 +622,10 @@ public:
 	uint16_t fBackupPowerOffDelay;			// задержка выключения флага работы от резервного питания
 	boolean  HeatBoilerUrgently;		  // Срочно нужно ГВС
 	void     set_HeatBoilerUrgently(boolean onoff);
+#ifdef RHEAT
+	uint16_t RHEAT_timer = 0;
+	int16_t  RHEAT_prev_temp = STARTTEMP;
+#endif
 
 private:
 	void    StartResume(boolean start);    // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки
