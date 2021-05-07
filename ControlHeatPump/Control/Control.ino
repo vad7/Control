@@ -945,26 +945,26 @@ void vWeb0(void *)
 #endif
 					{
 						// Если возможна только релейная нагрузка, то отбрасываем пики и усредняем
-						bool need_average;
-						if(pnet < 0) need_average = false;
-						else {
-							need_average = true;
-							if(pnet > _MinNetLoad) {
-								for(int8_t i = 0; i < WR_NumLoads; i++) {
-									if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
-									need_average = false;
-									break;
-								}
-							}
-						}
+//						bool need_average;
+//						if(pnet < 0) need_average = false;
+//						else {
+//							need_average = true;
+//							if(pnet > _MinNetLoad) {
+//								for(int8_t i = 0; i < WR_NumLoads; i++) {
+//									if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
+//									need_average = false;
+//									break;
+//								}
+//							}
+//						}
 #ifdef WR_SKIP_EXTREMUM
-						if(need_average) {
+//						if(need_average) {
 							if(WR_Pnet != -32768 && /*abs*/(pnet - WR_Pnet) > WR_SKIP_EXTREMUM) {
 								WR_Pnet = -32768;
 								if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf_time("WR: Skip %d\n", pnet);
 								break;
 							}
-						}
+//						}
 #endif
 #ifdef WR_PNET_AVERAGE
 	#if WR_PNET_AVERAGE == 0
@@ -985,7 +985,7 @@ void vWeb0(void *)
 						median1 = median2;
 						median2 = median3;
 						//
-						WR_Pnet = need_average ? pnet : median3;
+						WR_Pnet = pnet; //need_average ? pnet : median3;
 	#else
 						if(WR_Pnet_avg_init) { // first time
 							for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;
@@ -996,8 +996,9 @@ void vWeb0(void *)
 							WR_Pnet_avg[WR_Pnet_avg_idx] = pnet;
 							if(WR_Pnet_avg_idx < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]) - 1) WR_Pnet_avg_idx++; else WR_Pnet_avg_idx = 0;
 						}
-						if(need_average) WR_Pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
-						else WR_Pnet = pnet;
+//						if(need_average)
+							WR_Pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
+//						else WR_Pnet = pnet;
 	#endif
 #endif
 					}
