@@ -253,7 +253,10 @@ void setup() {
 	lcd.print("HeatPump v");
 	lcd.print(VERSION);
 	lcd.setCursor(0, 1);
-	lcd.print("vad7@yahoo.com");
+	lcd.print("(C) vad7@yahoo.com");
+	lcd.setCursor(0, 2);
+	lcd.print("CFG: ");
+	lcd.print(CONFIG_NAME);
 	lcd.setCursor(0, 3);
 	lcd.print("Loading...");
 #endif
@@ -677,7 +680,7 @@ x_I2C_init_std_message:
 	journal.jprintf("Temperature DS2331: %.2d\n",getTemp_RtcI2C());
 	if(Is_otg_vbus_high()) journal.jprintf("USB connected\n");
 	//HP.Stat.generate_TestData(STAT_POINT); // Сгенерировать статистику STAT_POINT точек только тестирование
-	journal.jprintf("Start FreeRTOS scheduler :-))\n");
+	journal.jprintf("Start FreeRTOS\n");
 	journal.jprintf("READY ----------------------\n");
 	eepromI2C.use_RTOS_delay = 1;       //vad711
 	//

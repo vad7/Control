@@ -3976,8 +3976,11 @@ int8_t	 HeatPump::Prepare_Temp(uint8_t bus)
 			}
 		}
 		if(ret) {
-			journal.jprintf_time("Error %d PrepareTemp bus %d\n", i, bus+1);
-			if(ret == 2) set_Error(i, (char*) __FUNCTION__);
+			if(error != i) journal.jprintf_time("Error %d PrepareTemp bus %d\n", i, bus+1);
+			if(ret == 2) {
+				set_Error(i, (char*) __FUNCTION__);
+				error = i;
+			}
 		}
 	}
 	return ret ? (1<<bus) : 0;

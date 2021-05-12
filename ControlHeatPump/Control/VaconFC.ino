@@ -615,7 +615,9 @@ void devVaconFC::get_paramFC(char *var,char *ret)
 #else
                                                 strcat(ret, "|Данные не доступны, управление через ") ;
                                                 if((g_APinDescription[pin].ulPinAttribute & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) strcat(ret, "аналоговый"); else strcat(ret, "ШИМ");
-                                                strcat(ret, " выход|;");
+                                                strcat(ret, " выход D");
+                                                _itoa(PIN_DEVICE_FC, ret);
+                                                strcat(ret, "|;");
 #endif
     	                                        } else
     if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else

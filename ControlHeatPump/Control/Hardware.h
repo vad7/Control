@@ -410,8 +410,8 @@ const char *noteFC_NO   = {" связь по Modbus потеряна, инвер
 const char *noteFC_NONE = {" отсутствует в данной конфигурации" };
 
 
-// Класс Электрический счетчик SDM -----------------------------------------------------------------------------------------------
-const char *noteSDM = {"Электрический счетчик с Modbus"};       // Описание счетчика
+// Класс Электрический счетчик -----------------------------------------------------------------------------------------------
+const char *noteSDM = {"Электрический счетчик"};       // Описание счетчика
 const char *noteSDM_NONE = {"Отсутствует в конфигурации"};      //
 
 // Флаги Электросчетчика
@@ -429,7 +429,7 @@ uint16_t maxPower;                      // максимальная мощнос
 // Input register Function code 04 to read input parameters:
 #ifdef USE_PZEM004T	// Использовать PZEM-004T v3 Modbus (UART)
 	#define USE_NOT_SDM_METER
-	const char *nameSDM = {"PZEM-004"};         // Имя счетчика
+	const char *nameSDM = {"PZEM-004T"};         // Имя счетчика
 	#define SDM_VOLTAGE          0x0000			// int16, 0.1V
 	#define SDM_CURRENT          0x0001			// int32, 0.001A
 	#define SDM_AC_POWER         0x0003			// int32, 0.1W
@@ -445,7 +445,7 @@ uint16_t maxPower;                      // максимальная мощнос
 #endif
 #ifdef USE_DDS238	// Использовать DDS238-2 ZN/S RS485
 	#define USE_NOT_SDM_METER
-	const char *nameSDM = {"DDS238"};         // Имя счетчика
+	const char *nameSDM = {"DDS238-2"};         // Имя счетчика
 	#define SDM_AC_ENERGY        0x0000			// uint32, 0.01kWh
 	// Export Energy 	         0x0008  		// uint32, 0.01kWh
 	// Import Energy 	         0x000A  		// uint32, 0.01kWh

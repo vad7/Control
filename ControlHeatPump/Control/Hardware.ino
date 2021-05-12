@@ -1704,11 +1704,9 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 		_ftoa(ret, Voltage, 2);
 #else
 #ifdef USE_NOT_SDM_METER
-		Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]);
-		_dtoa(ret, tmp16[0], 1);
+		if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]) == OK) _dtoa(ret, tmp16[0], 1); else strcat(ret, "ERR");
 #else
-		Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp);
-		_ftoa(ret, tmp, 2);
+		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 #endif
 		return ret;
@@ -1716,15 +1714,12 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	if(strcmp(var,sdm_CURRENT)==0){ // Ток
 #ifdef USE_NOT_SDM_METER
 	#ifdef USE_PZEM004T
-		Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
-		_dtoa(ret, tmp, 3);
+		if(Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_CURRENT, &tmp) == OK) _dtoa(ret, tmp, 3); else strcat(ret, "ERR");
 	#else
-		Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_CURRENT, &tmp16[0]);
-		_dtoa(ret, tmp * 10, 3);
+		if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_CURRENT, &tmp16[0]) == OK) _dtoa(ret, tmp * 10, 3); else strcat(ret, "ERR");
 	#endif
 #else
-		Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
-		_ftoa(ret, tmp, 3);
+		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
 #endif
 		return ret;
 	}else
@@ -1734,15 +1729,15 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	}else
 	if(strcmp(var,sdm_ACENERGY)==0){ // Суммарная активная энергия
 #ifdef USE_NOT_SDM_METER
-		Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp);
+		if(Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
 	#ifdef USE_PZEM004T
-		_dtoa(ret, tmp, 3);
+			_dtoa(ret, tmp, 3);
 	#else
-		_dtoa(ret, tmp * 10, 3);
+			_dtoa(ret, tmp * 10, 3);
 	#endif
+		else strcat(ret, "ERR");
 #else
-		Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp);
-		_ftoa(ret, tmp, 3);
+		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
 #endif
 		return ret;
 	}else
@@ -1768,34 +1763,33 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	//			   _ftoa(ret, tmp, 2);																			   }else       // Ток
 		   if(strcmp(var,sdm_POW_FACTOR)==0){
 #ifdef USE_NOT_SDM_METER
-			   Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp16[0]);
+			   if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp16[0]) == OK)
 	#ifdef USE_PZEM004T
-			   _dtoa(ret, tmp16[0], 2);
+				   _dtoa(ret, tmp16[0], 2);
 	#else
-			   _dtoa(ret, tmp16[0], 3);
+			   	   _dtoa(ret, tmp16[0], 3);
 	#endif
+			   	else strcat(ret, "ERR");
 #else
-			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp);
-			   _ftoa(ret, tmp, 2);
+			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 		   } else if(strcmp(var,sdm_PHASE)==0){
 #ifdef USE_NOT_SDM_METER
 			   strcat(ret, "-");
 #else
-			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp);
-			   _ftoa(ret, tmp, 2);
+			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp) == OK; else _ftoa(ret, tmp, 2);
 #endif
 		   } else if(strcmp(var,sdm_FREQ)==0){
 #ifdef USE_NOT_SDM_METER
-			   Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp16[0]);
+			   if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp16[0]) == OK)
 	#ifdef USE_PZEM004T
-			   _dtoa(ret, tmp16[0], 1);
+				   _dtoa(ret, tmp16[0], 1);
 	#else
-			   _dtoa(ret, tmp16[0], 2);
+			   	   _dtoa(ret, tmp16[0], 2);
 	#endif
+			   	else strcat(ret, "ERR");
 #else
-			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp);
-			   _ftoa(ret, tmp, 2);
+			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 		   }
 	   }
