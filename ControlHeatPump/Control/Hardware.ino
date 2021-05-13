@@ -1777,7 +1777,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 #ifdef USE_NOT_SDM_METER
 			   strcat(ret, "-");
 #else
-			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp) == OK; else _ftoa(ret, tmp, 2);
+			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp) == OK); else _ftoa(ret, tmp, 2);
 #endif
 		   } else if(strcmp(var,sdm_FREQ)==0){
 #ifdef USE_NOT_SDM_METER
