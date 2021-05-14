@@ -32,8 +32,8 @@
 //#define CONFIG_4		// dobrinia инвертор+ЭРВ + с РТО и датчиком давления испарителя
 //#define CONFIG_5		// pav2000inv  Инвертор BLDC с шаговым ЭРВ и РТО
 //#define CONFIG_6		// NTC      Частотник PWM, 1 фаза, 4 реле, ЭРВ, NTC
-#define CONFIG_B1		// Board1   Базовая для платы v1
-//#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
+//#define CONFIG_B1		// Board1   Базовая для платы v1
+#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
 
 // -----------------------------------------------------------------------------------------------------------------------------------
 // =============================================== C O N F I G   1 ===================================================================
@@ -4873,7 +4873,7 @@ const char *noteTemp[] = {"Температура улицы",
 //	#define WR_CurrentSensor_4_20mA	IWR								// Использовать аналоговый датчик тока с выходом 4-20mA, номер ADC датчика
 	#define WR_PowerMeter_Modbus	3								// Использовать счетчик Modbus для получения мощности, адрес
 	//#define WR_PowerMeter_DDS238									// Счетчик двунаправленный DDS238-2 ZN/S, иначе PZEM-004T Modbus
-	#define WR_PowerMeter_ModbusReg 0x0003 //0x000E							// Адрес регистра моментальной мощности
+	#define WR_PowerMeter_ModbusReg 0x0003 //0x000E					// Адрес регистра моментальной мощности
 	#define WR_Error_Read_PowerMeter_Max	3						// Количество ошибок подряд для ошибки
 
 	#define WR_Load_pins_Boiler_INDEX		0						// Индекс бойлера в массиве WR_Load_pins
@@ -4896,7 +4896,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WR_TestAvailablePowerForRelayLoads WR_Load_pins_Boiler_INDEX// Использовать нагрузку PWM для проверки доступной мощности перед включением релейной нагрузки, индекс
 	#define WR_TestAvailablePowerTime 	2							// Сколько циклов (WEB0_FREQUENT_JOB_PERIOD) ждать проверки нагрузки
 	#define WR_RELAY_LEVEL_ON			1							// Уровень реле ВКЛ
-	#define WR_PNET_AVERAGE				0							// Размер буфера для усреднения, 0 - только медианный фильтр
+	#define WR_PNET_MEDIAN											// Медианный фильтр
+	#define WR_PNET_AVERAGE				1							// Размер буфера для усреднения, 1 - скользящее среднее
 	#define WR_ONE_PERIOD_PWM										// Одно-полупериодный ШИМ, иначе целыми полупериодами
 #ifdef WR_ONE_PERIOD_PWM
 	#define PWM_WRITE_OUT_FREQ_DEFAULT	100							// Частота вывода PWM, Гц, для функции PWM_Write()

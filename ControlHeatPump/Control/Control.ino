@@ -921,7 +921,6 @@ void vWeb0(void *)
 					int pnet = atoi(fld);
 #endif
 					//
-					if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d\n", pnet);
 					if(!GETBIT(WR.Flags, WR_fActive) || nopwr) break;
 
 					int16_t _MinNetLoad = WR.MinNetLoad;
@@ -941,9 +940,14 @@ void vWeb0(void *)
 //									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 //								}
 								WR_Switch_Load(WR_TestLoadIndex, 1);
-							} else WR_LastSwitchTime = rtcSAM3X8.unixtime();
+								if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WRT: OK\n");
+							} else {
+								WR_LastSwitchTime = rtcSAM3X8.unixtime();
+								if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WRT: < %d\n", WR.LoadPower[WR_TestLoadIndex]);
+							}
 						}
 						break;
+						if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d\n", pnet);
 					} else
 #endif
 					{
@@ -969,14 +973,11 @@ void vWeb0(void *)
 							}
 //						}
 #endif
-#ifdef WR_PNET_AVERAGE
-	#if WR_PNET_AVERAGE == 0
+
+	#ifdef WR_PNET_MEDIAN
 						// Медианный фильтр
 						static int median1, median2;
-						if(WR_Pnet_avg_init) {
-							median1 = median2 = pnet;
-							WR_Pnet_avg_init = false;
-						}
+						if(WR_Pnet_avg_init) median1 = median2 = pnet;
 						int median3 = pnet;
 						if(median1 <= median2 && median1 <= median3) {
 							pnet = median2 <= median3 ? median2 : median3;
@@ -987,24 +988,28 @@ void vWeb0(void *)
 						}
 						median1 = median2;
 						median2 = median3;
-						//
-						WR_Pnet = pnet; //need_average ? pnet : median3;
+	#endif
+	#if WR_PNET_AVERAGE == 1
+						if(!WR_Pnet_avg_init) pnet = (WR_Pnet_avg + pnet) / 2;
+						WR_Pnet_avg = pnet;
 	#else
 						if(WR_Pnet_avg_init) { // first time
 							for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;
 							WR_Pnet_avg_sum = pnet * int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
-							WR_Pnet_avg_init = false;
 						} else {
 							WR_Pnet_avg_sum = WR_Pnet_avg_sum - WR_Pnet_avg[WR_Pnet_avg_idx] + pnet;
 							WR_Pnet_avg[WR_Pnet_avg_idx] = pnet;
 							if(WR_Pnet_avg_idx < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]) - 1) WR_Pnet_avg_idx++; else WR_Pnet_avg_idx = 0;
 						}
 //						if(need_average)
-							WR_Pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
+							pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
 //						else WR_Pnet = pnet;
 	#endif
-#endif
+						//
+						if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, pnet);
+						WR_Pnet_avg_init = false;
 					}
+					WR_Pnet = pnet; //need_average ? pnet : median3;
 					// проверка перегрузки
 					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad; // / 2;
