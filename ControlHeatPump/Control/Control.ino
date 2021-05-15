@@ -1099,11 +1099,20 @@ void vWeb0(void *)
 								if(WR_LastSwitchTime && t - WR_LastSwitchTime <= WR.NextSwitchPause) continue;
 								if(WR_SwitchTime[i] && t - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
 							}
+							// Расчет мощности, которую можно взять от менее приритетных нагрузок
+							int8_t availidx = 0;
+							for(int8_t ii = i + 1; ii < WR_NumLoads; ii++) {
+								if(WR_LoadRun[ii] >= WR.LoadPower[i]) {
+									availidx = ii;
+									break;
+								}
+							}
 #ifdef HTTP_MAP_Read_MPPT
 							if(mppt == 255 && pnet > 0) {
 								active = false;
 								mppt = WR_Check_MPPT();
 								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
+								if(mppt <= 1 && availidx == 0) break;
 							}
 #endif
 							if(GETBIT(WR.PWM_Loads, i)) {
@@ -1122,18 +1131,28 @@ void vWeb0(void *)
 								WR_Change_Load_PWM(i, WR_Adjust_PWM_delta(i, chg));
 								break;
 							} else {
-								if(mppt < 3 && pnet > 0) continue;
+								if(mppt <= 1 && availidx) {
+									if(GETBIT(WR.PWM_Loads, availidx)) {
+										WR_Change_Load_PWM(availidx, -WR.LoadPower[i]);
+									} else {
+										if(WR_SwitchTime[i] && rtcSAM3X8.unixtime() - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
+										WR_Switch_Load(i, 0);
+									}
+								} else {
+									if(mppt < 3 && pnet > 0) continue;
+									availidx = 0;
+								}
 #ifdef WR_TestAvailablePowerForRelayLoads
 	#if defined(WR_Load_pins_Boiler_INDEX) && WR_TestAvailablePowerForRelayLoads == WR_Load_pins_Boiler_INDEX
 		#ifdef WR_Boiler_Substitution_INDEX
 								uint8_t idx = digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX;
-								if(GETBIT(WR_Loads, idx) && (idx != WR_Load_pins_Boiler_INDEX || (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[idx] < WR.LoadPower[idx]) {
+								if(availidx == 0 && GETBIT(WR_Loads, idx) && (idx != WR_Load_pins_Boiler_INDEX || (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[idx] < WR.LoadPower[idx]) {
 		#else
-								if(GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[WR_Load_pins_Boiler_INDEX] < WR.LoadPower[WR_Load_pins_Boiler_INDEX]) {
+								if(availidx == 0 && GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[WR_Load_pins_Boiler_INDEX] < WR.LoadPower[WR_Load_pins_Boiler_INDEX]) {
 		#endif
 	#else
 								uint8_t idx = WR_TestAvailablePowerForRelayLoads;
-								if(GETBIT(WR_Loads, WR_TestAvailablePowerForRelayLoads) && WR_LoadRun[WR_TestAvailablePowerForRelayLoads] < WR.LoadPower[WR_TestAvailablePowerForRelayLoads]) {
+								if(availidx == 0 && GETBIT(WR_Loads, WR_TestAvailablePowerForRelayLoads) && WR_LoadRun[WR_TestAvailablePowerForRelayLoads] < WR.LoadPower[WR_TestAvailablePowerForRelayLoads]) {
 	#endif
 									WR_TestLoadIndex = i;
 									WR_TestLoadStatus = 1;
