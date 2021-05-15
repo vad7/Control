@@ -6,7 +6,7 @@
 <script type="text/javascript">
 urlupdate = 2000;
 window.onload = function() {
-	loadParam("get_tblWR,get_oHP(WON),get_oHP(WM),get_oHP(WO),get_oHP(WOM),get_oHP(WH),get_oHP(WA),get_oHP(WD),get_oHP(WDF),get_oHP(NS),get_oHP(WF),get_oHP(WFPT),get_oHP(WFPL),get_oHP(WFH),get_oHP(WSD)");
+	loadParam("get_tblWR,get_oHP(WON),get_oHP(WM),get_oHP(WO),get_oHP(WOM),get_oHP(WH),get_oHP(WA),get_oHP(WD),get_oHP(WDF),get_oHP(NS),get_oHP(WF),get_oHP(WFPT),get_oHP(WFPL),get_oHP(WFH),get_oHP(WSD),get_oHP(WAV)");
 	updateParam("get_WR(0),get_WR(1)");
 }
 var edit_allowed = true;
@@ -81,7 +81,7 @@ function run_pwm_calc() {
 <div class="row1">
 <h2>Настройки</h2>
 <table><thead>
-	<tr><th>Параметр</th><th>Значение</th></tr>
+	<tr><th width="53%">Параметр</th><th width="47%">Значение</th></tr>
 	</thead><tbody>
 	<tr>
 		<td>Ваттроутер включен</td>
@@ -92,6 +92,9 @@ function run_pwm_calc() {
 	</tr><tr>
 		<td>Пропорциональное увеличение мин.мощности, в зависимости от мощности с панелей, +(SunPower / n)</td>
 		<td nowrap><input id="get_ohp-wsd" type="number" step="1"><input type="submit" value=">" onclick="setParam('get_oHP(WSD)')"></td>
+	</tr><tr>
+		<td>Усреднение</td>
+		<td><input type="checkbox" id="get_ohp-wav" onChange="setParam('get_oHP(WAV)')"></td>
 	</tr><tr>
 		<td>Минимальная пауза переключения следующего реле, сек</td>
 		<td nowrap><input id="get_ohp-ns" type="number" step="1"><input type="submit" value=">" onclick="setParam('get_oHP(NS)')"></td>

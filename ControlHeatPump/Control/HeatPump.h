@@ -115,6 +115,7 @@ uint32_t DailySwitch_on = 0;		// bit array
 #define  WR_fActive				1				// Ваттроутер включен
 #define  WR_fLog				2				// Логирование ваттроутера
 #define  WR_fLogFull			3				// Логирование ваттроутера полное
+#define  WR_fAverage			4				// Усреднение
 #define  WR_fLoadMask			((1<<WR_NumLoads)-1)
 #define  WR_fTYPE				uint8_t
 int16_t  WR_Pnet = -32768;

@@ -989,22 +989,26 @@ void vWeb0(void *)
 						median1 = median2;
 						median2 = median3;
 	#endif
+#ifdef WR_PNET_AVERAGE
+						if(GETBIT(WR.Flags, WR_fAverage)) {
 	#if WR_PNET_AVERAGE == 1
-						if(!WR_Pnet_avg_init) pnet = (WR_Pnet_avg + pnet) / 2;
-						WR_Pnet_avg = pnet;
+							if(!WR_Pnet_avg_init) pnet = (WR_Pnet_avg + pnet) / 2;
+							WR_Pnet_avg = pnet;
 	#else
-						if(WR_Pnet_avg_init) { // first time
-							for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;
-							WR_Pnet_avg_sum = pnet * int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
-						} else {
-							WR_Pnet_avg_sum = WR_Pnet_avg_sum - WR_Pnet_avg[WR_Pnet_avg_idx] + pnet;
-							WR_Pnet_avg[WR_Pnet_avg_idx] = pnet;
-							if(WR_Pnet_avg_idx < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]) - 1) WR_Pnet_avg_idx++; else WR_Pnet_avg_idx = 0;
-						}
-//						if(need_average)
-							pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
-//						else WR_Pnet = pnet;
+							if(WR_Pnet_avg_init) { // first time
+								for(uint8_t i = 0; i < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]); i++) WR_Pnet_avg[i] = pnet;
+								WR_Pnet_avg_sum = pnet * int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
+							} else {
+								WR_Pnet_avg_sum = WR_Pnet_avg_sum - WR_Pnet_avg[WR_Pnet_avg_idx] + pnet;
+								WR_Pnet_avg[WR_Pnet_avg_idx] = pnet;
+								if(WR_Pnet_avg_idx < sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]) - 1) WR_Pnet_avg_idx++; else WR_Pnet_avg_idx = 0;
+							}
+//							if(need_average)
+								pnet = WR_Pnet_avg_sum / int32_t(sizeof(WR_Pnet_avg) / sizeof(WR_Pnet_avg[0]));
+//							else WR_Pnet = pnet;
 	#endif
+						}
+#endif
 						//
 						if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, pnet);
 						WR_Pnet_avg_init = false;
@@ -1094,17 +1098,17 @@ void vWeb0(void *)
 #ifdef WR_Load_pins_Boiler_INDEX
 							if(i == WR_Load_pins_Boiler_INDEX && ((HP.sTemp[TBOILER].get_Temp() > HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) || HP.dRelay[RBOILER].get_Relay())) continue;
 #endif
+							int8_t availidx = 0;
 							if(!GETBIT(WR.PWM_Loads, i)) {
 								uint32_t t = rtcSAM3X8.unixtime();
 								if(WR_LastSwitchTime && t - WR_LastSwitchTime <= WR.NextSwitchPause) continue;
 								if(WR_SwitchTime[i] && t - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
-							}
-							// Расчет мощности, которую можно взять от менее приритетных нагрузок
-							int8_t availidx = 0;
-							for(int8_t ii = i + 1; ii < WR_NumLoads; ii++) {
-								if(WR_LoadRun[ii] >= WR.LoadPower[i]) {
-									availidx = ii;
-									break;
+								// Расчет мощности, которую можно взять от менее приритетных нагрузок
+								for(int8_t ii = i + 1; ii < WR_NumLoads; ii++) {
+									if(WR_LoadRun[ii] >= WR.LoadPower[i]) {
+										availidx = ii;
+										break;
+									}
 								}
 							}
 #ifdef HTTP_MAP_Read_MPPT
