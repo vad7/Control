@@ -180,6 +180,11 @@ struct {
 uint8_t WF_BoilerTargetPercent = 100;
 #endif
 #endif
+#ifdef WR_PowerMeter_Modbus
+bool WR_PowerMeter_New = false;
+#else
+unsigned long Web0_FreqTime;
+#endif
 
 type_WebSecurity WebSec_user;				// хеш паролей
 type_WebSecurity WebSec_admin;				// хеш паролей

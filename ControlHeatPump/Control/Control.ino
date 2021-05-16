@@ -740,7 +740,7 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 void vWeb0(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
 	static unsigned long timeResetW5200 = 0;
-	static unsigned long thisTime, FreqTime;
+	static unsigned long thisTime;
 	static unsigned long resW5200 = 0;
 	static unsigned long iniW5200 = 0;
 	static unsigned long pingt = 0;
@@ -770,7 +770,10 @@ void vWeb0(void *)
 	journal.jprintf("WattRouter started\n");
 #endif
 
-	HP.timeNTP = thisTime = FreqTime = xTaskGetTickCount();        // В первый момент не обновляем
+	HP.timeNTP = thisTime = xTaskGetTickCount();        // В первый момент не обновляем
+#ifndef WR_PowerMeter_Modbus
+	Web0_FreqTime = thisTime;
+#endif
 	for(;;)
 	{
 		#define WEB_SERVER_MAIN_TASK() {\
@@ -783,8 +786,13 @@ void vWeb0(void *)
 
 		// СЕРВИС: Этот поток работает на любых настройках, по этому сюда ставим работу с сетью
 		boolean active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
-		if(xTaskGetTickCount() - FreqTime > WEB0_FREQUENT_JOB_PERIOD) {
-			FreqTime = xTaskGetTickCount();
+#ifdef WR_PowerMeter_Modbus		// Синхронизируемся с чтением счетчика - сразу после
+		if(WR_PowerMeter_New) {
+			WR_PowerMeter_New = false;
+#else
+		if(xTaskGetTickCount() - Web0_FreqTime > WEB0_FREQUENT_JOB_PERIOD) {
+			Web0_FreqTime = xTaskGetTickCount();
+#endif
 			active = HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
 #ifdef HTTP_LowConsumeRequest
 			if(active) {
@@ -1420,6 +1428,7 @@ void vReadSensor(void *)
 //				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
 				if(GETBIT(HP.Option.flags, fBackupPower)) {
 					WR_PowerMeter_Power = -1;
+					WR_PowerMeter_New = true;
 				} else {
 	#ifdef WR_PowerMeter_DDS238
 					i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
@@ -1439,9 +1448,10 @@ void vReadSensor(void *)
 							if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
 						}
 					}
+					WR_PowerMeter_New = true;
 				}
 //			}
-		}
+		} else WR_PowerMeter_New = true;
 #else
 #if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
 		WR_Calc_Power_Array_NewMeter(0);

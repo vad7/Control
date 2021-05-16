@@ -183,9 +183,9 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
     
 // ------------------- TIME & DELAY ----------------------------------
 // Времена и задержки
-#define cDELAY_DS1820     			750             // мсек. Задержка для чтения DS1820 (время преобразования)
+#define cDELAY_DS1820     			750UL           // мсек. Задержка для чтения DS1820 (время преобразования)
 #ifndef TIME_READ_SENSOR 
-#define TIME_READ_SENSOR  			4000		    // мсек. Период опроса датчиков
+#define TIME_READ_SENSOR  			4000UL		    // мсек. Период опроса датчиков
 #endif
 #define TIME_WEB_SERVER   			2               // мсек. Период опроса web servera было 5
 #define TIME_CONTROL      			(10*1000)       // мсек. Период управления тепловым насосом (цикл управления в режиме Гистерезис)
