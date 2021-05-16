@@ -955,11 +955,10 @@ void vWeb0(void *)
 							}
 						}
 						break;
-						if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d\n", pnet);
 					} else
 #endif
 					{
-						// Если возможна только релейная нагрузка, то отбрасываем пики и усредняем
+						// Если есть нагрузка, то фильтруем
 //						bool need_average;
 //						if(pnet < 0) need_average = false;
 //						else {
@@ -983,16 +982,18 @@ void vWeb0(void *)
 #endif
 
 	#ifdef WR_PNET_MEDIAN
-						// Медианный фильтр
+						// Медианный фильтр на увеличение
 						static int median1, median2;
 						if(WR_Pnet_avg_init) median1 = median2 = pnet;
 						int median3 = pnet;
-						if(median1 <= median2 && median1 <= median3) {
-							pnet = median2 <= median3 ? median2 : median3;
-						} else if(median2 <= median1 && median2 <= median3) {
-							pnet = median1 <= median3 ? median1 : median3;
-						} else {
-							pnet = median1 <= median2 ? median1 : median2;
+						if(median3 > median2) { // предыдущее меньше
+							if(median1 <= median2 && median1 <= median3) {
+								pnet = median2 <= median3 ? median2 : median3;
+							} else if(median2 <= median1 && median2 <= median3) {
+								pnet = median1 <= median3 ? median1 : median3;
+							} else {
+								pnet = median1 <= median2 ? median1 : median2;
+							}
 						}
 						median1 = median2;
 						median2 = median3;
@@ -1017,11 +1018,10 @@ void vWeb0(void *)
 	#endif
 						}
 #endif
-						//
-						if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, pnet);
 						WR_Pnet_avg_init = false;
 					}
 					WR_Pnet = pnet; //need_average ? pnet : median3;
+					if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
 					// проверка перегрузки
 					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad; // / 2;
