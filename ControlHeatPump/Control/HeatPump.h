@@ -475,6 +475,7 @@ public:
 // Опции ТН
 	uint16_t get_pausePump() {return Prof.Heat.pausePump;};                // Время паузы  насоса при выключенном компрессоре, секунды
 	uint16_t get_workPump() {return Prof.Heat.workPump;};                  // Время работы  насоса при выключенном компрессоре, секунды
+	void     pump_in_pause_set(bool ONOFF);								// Переключение насосов при выключенном компрессоре
 	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);};           // подача звуковых сигналов
 	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}        // получить флаг записи состояния
 	uint8_t  get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске

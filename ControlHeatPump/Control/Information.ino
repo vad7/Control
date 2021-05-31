@@ -584,8 +584,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,option_PUMP_WORK)==0) { // работа насоса конденсатора при выключенном компрессоре
 		Heat.workPump = x;
 		if(x == 0 && HP.startPump == 3) {
-			HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
-			HP.Pump_HeatFloor(false);					// выключить насос ТП
+			HP.pump_in_pause_set(false);				// выключить насосы "в паузе"
 			HP.startPump = 0;
 		} else if(!HP.startPump && HP.get_State() == pWORK_HP && !HP.is_compressor_on()) {
 			HP.startPump = 1;

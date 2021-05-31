@@ -2084,13 +2084,11 @@ void vServiceHP(void *)
 				if(HP.get_workPump()) {
 					if(HP.pump_in_pause_timer <= 1) {
 						if(HP.startPump <= 2) { 						// включить
+							HP.pump_in_pause_set(true);
 							HP.pump_in_pause_timer = HP.get_workPump();
-							HP.dRelay[PUMP_OUT].set_ON();               // включить насос отопления
-							HP.Pump_HeatFloor(true);					// включить насос ТП
 							HP.startPump = 3;
 						} else if(HP.get_pausePump()) { 				// выключить
-							HP.dRelay[PUMP_OUT].set_OFF();              // выключить насос отопления
-							HP.Pump_HeatFloor(false);					// выключить насос ТП
+							HP.pump_in_pause_set(false);
 							HP.pump_in_pause_timer = HP.get_pausePump();
 							HP.startPump = 2;
 						}

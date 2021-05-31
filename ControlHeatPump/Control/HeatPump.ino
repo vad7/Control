@@ -2094,8 +2094,7 @@ void HeatPump::StopWait(boolean stop)
   }
     
   startPump = 0;                                    // Задача насосов в паузе выключена
-  dRelay[PUMP_OUT].set_OFF();						// выключить насос отопления
-  Pump_HeatFloor(false);							// выключить насос ТП
+  HP.pump_in_pause_set(false);
   if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s\n",(char*)__FUNCTION__, "OFF");
 
   // Принудительное выключение отдельных узлов ТН если они есть в конфиге
@@ -2951,15 +2950,19 @@ void HeatPump::vUpdate()
 			configHP(Status.modWork);
 			command_completed = rtcSAM3X8.unixtime();  // поменялся режим
 		}
-		if(!startPump && get_modeHouse() != pOFF) {    // Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
+		if(get_modeHouse() == pOFF) {    				// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
+			HP.pump_in_pause_set(false);
+			pump_in_pause_timer = 0;
+			startPump = 0;
+		} else if(!startPump) {
 			pump_in_pause_timer = get_pausePump();
-			startPump = 1;                             // Поставить признак запуска задачи насос
+			startPump = 1;								// Поставить признак запуска задачи насос
 		}
 	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
 		if(!check_compressor_pause()) {
 			if(startPump) {                                // Остановить задачу насос
-				startPump = 0;                             // Поставить признак останова задачи насос
 			    command_completed = rtcSAM3X8.unixtime();  // поменялся режим
+				startPump = 0;                             // Поставить признак останова задачи насос
 			}
 			if(configHP(Status.modWork)) {                   // Конфигурируем насосы
 				compressorON();                              // Включаем компрессор
@@ -3782,6 +3785,13 @@ xWait:
 uint8_t HeatPump::is_pause()
 {
 	return ((get_State() == pWORK_HP && (get_modWork() == pOFF || !is_compressor_on())) || get_State() == pWAIT_HP);
+}
+
+// Переключить насосы, работающие в паузе ТН
+void HeatPump::pump_in_pause_set(bool ONOFF)
+{
+	dRelay[PUMP_OUT].set_Relay(ONOFF);      // насос отопления
+	Pump_HeatFloor(ONOFF);					// насос ТП
 }
 
 // --------------------------Строковые функции ----------------------------
