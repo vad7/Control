@@ -441,7 +441,7 @@ void Profile::initProfile()
  // Бойлер
   SETBIT1(Boiler.flags,fSchedule);      // !save! флаг Использование расписания выключено
   SETBIT0(Boiler.flags,fTurboBoiler);    // !save! флаг использование ТЭН для нагрева  выключено
-  SETBIT0(Boiler.flags,fSalmonella);    // !save! флаг Сальмонела раз внеделю греть бойлер  выключено
+  SETBIT0(Boiler.flags,fLegionella);    // !save! флаг легионелла раз внеделю греть бойлер  выключено
   SETBIT0(Boiler.flags,fCirculation);   // !save! флагУправления циркуляционным насосом ГВС  выключено
   SETBIT1(Boiler.flags,fAddHeating);    // флаг флаг догрева ГВС ТЭНом
   SETBIT1(Boiler.flags,fScheduleAddHeat);
@@ -661,7 +661,7 @@ boolean Profile::set_boiler(char *var, char *c)
 											} return true;} else
 	if(strcmp(var,boil_fBoilerPID)==0)	    { if(x) SETBIT1(Boiler.flags,fBoilerPID); else SETBIT0(Boiler.flags,fBoilerPID); return true;} else
 	if(strcmp(var,boil_TURBO_BOILER)==0)	{ if(x) SETBIT1(Boiler.flags,fTurboBoiler); else SETBIT0(Boiler.flags,fTurboBoiler); return true;} else
-	if(strcmp(var,boil_SALMONELLA)==0)		{ if(x) SETBIT1(Boiler.flags,fSalmonella); else SETBIT0(Boiler.flags,fSalmonella); return true;} else // Изменение максимальной температуры при включенном режиме сальмонелла
+	if(strcmp(var,boil_LEGIONELLA)==0)		{ if(x) SETBIT1(Boiler.flags,fLegionella); else SETBIT0(Boiler.flags,fLegionella); return true;} else // Изменение максимальной температуры при включенном режиме легионелла
 	if(strcmp(var,boil_CIRCULATION)==0)		{ if(x) SETBIT1(Boiler.flags,fCirculation); else SETBIT0(Boiler.flags,fCirculation); return true;} else
 	if(strcmp(var,boil_fBoilerCircSchedule)==0) { if(x) SETBIT1(Boiler.flags,fBoilerCircSchedule); else SETBIT0(Boiler.flags,fBoilerCircSchedule); return true;} else
 	if(strcmp(var,boil_TEMP_TARGET)==0)		{ if((x>=5)&&(x<=95)) {Boiler.TempTarget=rd(x, 100); return true;} else return false; } else  // Целевая температура бойлера
@@ -708,7 +708,7 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_TOGETHER_HEAT)==0){ if (GETBIT(Boiler.flags,fBoilerTogetherHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_fBoilerPID)==0){ if (GETBIT(Boiler.flags,fBoilerPID)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
-	if(strcmp(var,boil_SALMONELLA)==0){      if (GETBIT(Boiler.flags,fSalmonella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_LEGIONELLA)==0){      if (GETBIT(Boiler.flags,fLegionella)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_CIRCULATION)==0){     if (GETBIT(Boiler.flags,fCirculation))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_fBoilerCircSchedule)==0){ if (GETBIT(Boiler.flags,fBoilerCircSchedule))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TEMP_TARGET)==0){     _dtoa(ret,Boiler.TempTarget/10,1); return ret;    }else
@@ -970,8 +970,8 @@ int32_t Profile::load(int8_t num)
   #endif
   update_list(num); 
    
-//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
-//  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n", HP.sTemp[TBOILER].get_maxTemp());}
+//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме легионелла
+//  if (GETBIT(HP.Prof.Boiler.flags,fLegionella)) {HP.sTemp[TBOILER].set_maxTemp(LEGIONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for legionella\n", HP.sTemp[TBOILER].get_maxTemp());}
 //  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
 //  #endif
 
@@ -1023,8 +1023,8 @@ int8_t Profile::loadFromBuf(int32_t adr,byte *buf)
     journal.jprintf(" Load setting from file OK, read: %d bytes VERIFICATION OFF!\n",adr-aStart);
   #endif
   
-//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме сальмонелла
-//  if (GETBIT(HP.Prof.Boiler.flags,fSalmonella)) {HP.sTemp[TBOILER].set_maxTemp(SALMONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for salmonella\n",HP.sTemp[TBOILER].get_maxTemp());}
+//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме легионелла
+//  if (GETBIT(HP.Prof.Boiler.flags,fLegionella)) {HP.sTemp[TBOILER].set_maxTemp(LEGIONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for legionella\n",HP.sTemp[TBOILER].get_maxTemp());}
 //  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
 //  #endif
 

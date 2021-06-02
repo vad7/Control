@@ -821,12 +821,57 @@ void vWeb0(void *)
 					if(GETBIT(PWM_CalcFlags, PWM_fCalcNow)) break;
 #endif
 					// Выключить все
-					boolean nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
+					uint8_t nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
 #ifdef WR_PowerMeter_Modbus
 									|| WR_Error_Read_PowerMeter > WR_Error_Read_PowerMeter_Max
 #endif
 									 );
-					if(nopwr) WR_Refresh |= WR_Loads;
+					if(nopwr) {
+						WR_Refresh |= WR_Loads;
+						// При отсутствии питания мониторим напряжение на АКБ (не должно быть ниже буферного - дельта)
+						// Read MAP
+#ifdef HTTP_MAP_Read_MAP
+						if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) { // Нужно греть бойлер
+							active = false;
+							int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
+							if(err) {
+								if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+									SETBIT1(Logflags, fLog_HTTP_RelayError);
+									journal.jprintf("WR: HTTP request Error %d\n", err);
+								}
+							} else {
+								SETBIT0(Logflags, fLog_HTTP_RelayError);
+								char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Uacc);
+								if(!fld) {
+									if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
+								} else {
+									char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Uacc) + 1, '"');
+									if(fld2) {
+										int Vd = atoi(fld) * 10;
+										Vd += *(fld2 - 1) - '0';
+										char *fld = strstr(fld2, HTTP_MAP_JSON_Ubuf);
+										if(!fld) {
+											if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
+										} else {
+											char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Ubuf) + 1, '"');
+											if(fld2) {
+												int Vbuf = atoi(fld) * 10;
+												Vbuf += *(fld2 - 1) - '0';
+												Vd -= Vbuf;
+												if(Vd >= WR_NO_POWER_MIN_DELTA_Uacc) { // Можно нагружать
+													if(Vd >= WR_NO_POWER_WORK_DELTA_Uacc) { // Можно увеличивать нагрузку
+														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
+														else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
+													} else break; // ни чего не делаем
+												} // отключаем нагрузку
+											}
+										}
+									}
+								}
+							}
+						}
+#endif
+					}
 					if(WR_Refresh || WR.PWM_FullPowerTime) {
 						for(uint8_t i = 0; i < WR_NumLoads; i++) {
 							//if(!GETBIT(WR_Loads, i)) continue;
@@ -864,7 +909,7 @@ void vWeb0(void *)
 							int16_t curr = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
 							if(curr > 0) {
 								if(WR_TestLoadStatus) {
-									if(HP.sTemp[TBOILER].get_Temp() > SALMONELLA_TEMP) { // Перегрели
+									if(HP.sTemp[TBOILER].get_Temp() > WR_BOILER_MAX_TEMP) { // Перегрели
 										if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
 										else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
 									}
@@ -909,7 +954,7 @@ void vWeb0(void *)
 #else
 					// HTTP power meter
 					active = false;
-					int err = Send_HTTP_Request(HTTP_MAP_Server, HTTP_MAP_Read_MAP, 1);
+					int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
 					if(err) {
 						if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
 							SETBIT1(Logflags, fLog_HTTP_RelayError);
@@ -1158,9 +1203,9 @@ void vWeb0(void *)
 	#if defined(WR_Load_pins_Boiler_INDEX) && WR_TestAvailablePowerForRelayLoads == WR_Load_pins_Boiler_INDEX
 		#ifdef WR_Boiler_Substitution_INDEX
 								uint8_t idx = digitalReadDirect(PIN_WR_Boiler_Substitution) ? WR_Boiler_Substitution_INDEX : WR_Load_pins_Boiler_INDEX;
-								if(availidx == 0 && GETBIT(WR_Loads, idx) && (idx != WR_Load_pins_Boiler_INDEX || (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[idx] < WR.LoadPower[idx]) {
+								if(availidx == 0 && GETBIT(WR_Loads, idx) && (idx != WR_Load_pins_Boiler_INDEX || (HP.sTemp[TBOILER].get_Temp() < WR_BOILER_MAX_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[idx] < WR.LoadPower[idx]) {
 		#else
-								if(availidx == 0 && GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && (HP.sTemp[TBOILER].get_Temp() < SALMONELLA_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[WR_Load_pins_Boiler_INDEX] < WR.LoadPower[WR_Load_pins_Boiler_INDEX]) {
+								if(availidx == 0 && GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && (HP.sTemp[TBOILER].get_Temp() < WR_BOILER_MAX_TEMP && !HP.dRelay[RBOILER].get_Relay())) && WR_LoadRun[WR_Load_pins_Boiler_INDEX] < WR.LoadPower[WR_Load_pins_Boiler_INDEX]) {
 		#endif
 	#else
 								uint8_t idx = WR_TestAvailablePowerForRelayLoads;

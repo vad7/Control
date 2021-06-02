@@ -687,7 +687,7 @@ void HeatPump::updateDateTime(int32_t dTime)
 		if(countNTP > 0) countNTP = countNTP + dTime;                           // число секунд с последнего обновления по NTP
 		if(offBoiler > 0) offBoiler = offBoiler + dTime;                         // время выключения нагрева ГВС ТН (необходимо для переключения на другие режимы на ходу)
 		if(startDefrost > 0) startDefrost = startDefrost + dTime;                   // время срабатывания датчика разморозки
-		if(startSalmonella > 0) startSalmonella = startSalmonella + dTime;             // время начала обеззараживания
+		if(startLegionella > 0) startLegionella = startLegionella + dTime;             // время начала обеззараживания
 #ifdef WATTROUTER
 		if(WR_LastSwitchTime) WR_LastSwitchTime += dTime;
 		for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -727,7 +727,7 @@ void HeatPump::resetSettingHP()
 
 	startWait = false;                              // Начало работы с ожидания
 	onBoiler = false;                               // Если true то идет нагрев бойлера
-	onSalmonella = false;                           // Если true то идет Обеззараживание
+	onLegionella = false;                           // Если true то идет Обеззараживание
 	command = pEMPTY;                               // Команд на выполнение нет
 	next_command = pEMPTY;
 	PauseStart = 0;                                 // начать отсчет задержки пред стартом с начала
@@ -752,7 +752,7 @@ void HeatPump::resetSettingHP()
 	offBoiler = 0;                                  // время выключения нагрева ГВС ТН (необходимо для переключения на другие режимы на ходу)
 	startDefrost = 0;                               // время срабатывания датчика разморозки
 	timeNTP = 0;                                    // Время обновления по NTP в тиках (0-сразу обновляемся)
-	startSalmonella = 0;                            // время начала обеззараживания
+	startLegionella = 0;                            // время начала обеззараживания
 	command_completed = 0;
 	time_Sun = 0;
 	compressor_in_pause = false;
@@ -1927,7 +1927,7 @@ xGoWait:
 	Status.ret = pNone;                                    // Состояние алгоритма
 	lastEEV = -1;                                          // -1 это признак того что слежение eev еще не рабоатет (выключения компрессора  небыло)
 	offBoiler = 0;                                         // Бойлер никогда не выключался
-	onSalmonella = false;                                  // Если true то идет Обеззараживание
+	onLegionella = false;                                  // Если true то идет Обеззараживание
 	onBoiler = false;                                      // Если true то идет нагрев бойлера
 	SETBIT0(flags, fHP_BoilerTogetherHeat);
 
@@ -2171,36 +2171,36 @@ boolean HeatPump::boilerAddHeat()
 		return false;
 	}
 	int16_t T = sTemp[TBOILER].get_Temp();
-	if((GETBIT(Prof.SaveON.flags, fBoilerON)) && (GETBIT(Prof.Boiler.flags, fSalmonella)) && (!GETBIT(Option.flags, fBackupPower))) // Сальмонелла не взирая на расписание если включен бойлер и не питание от резервного источника
+	if((GETBIT(Prof.SaveON.flags, fBoilerON)) && (GETBIT(Prof.Boiler.flags, fLegionella)) && (!GETBIT(Option.flags, fBackupPower))) // легионелла не взирая на расписание если включен бойлер и не питание от резервного источника
 	{
-		if((rtcSAM3X8.get_day_of_week() == SALMONELLA_DAY) && (rtcSAM3X8.get_hours() == SALMONELLA_HOUR) && (rtcSAM3X8.get_minutes() <= 2) && (!onSalmonella)) { // Надо начитать процесс обеззараживания
-			startSalmonella = rtcSAM3X8.unixtime();
-			onSalmonella = true;
-			journal.jprintf(" Cycle start salmonella, %.2dC°\n", sTemp[TBOILER].get_Temp());
+		if((rtcSAM3X8.get_day_of_week() == LEGIONELLA_DAY) && (rtcSAM3X8.get_hours() == LEGIONELLA_HOUR) && (rtcSAM3X8.get_minutes() <= 2) && (!onLegionella)) { // Надо начитать процесс обеззараживания
+			startLegionella = rtcSAM3X8.unixtime();
+			onLegionella = true;
+			journal.jprintf(" Cycle start legionella, %.2dC°\n", sTemp[TBOILER].get_Temp());
 		}
-		if(onSalmonella) {   // Обеззараживание нужно
-			if(startSalmonella + SALMONELLA_TIME > rtcSAM3X8.unixtime()) { // Время цикла еще не исчерпано
-				if(T < SALMONELLA_TEMP) return true; // Включить обеззараживание
-#ifdef SALMONELLA_HARD
-				else if (T > SALMONELLA_TEMP+50) return false; else return dRelay[RBOILER].get_Relay(); // Вариант работы - Стабилизация температуры обеззараживания, гистерезис 0.5 градуса
+		if(onLegionella) {   // Обеззараживание нужно
+			if(startLegionella + LEGIONELLA_TIME > rtcSAM3X8.unixtime()) { // Время цикла еще не исчерпано
+				if(T < LEGIONELLA_TEMP) return true; // Включить обеззараживание
+#ifdef LEGIONELLA_HARD
+				else if (T > LEGIONELLA_TEMP+50) return false; else return dRelay[RBOILER].get_Relay(); // Вариант работы - Стабилизация температуры обеззараживания, гистерезис 0.5 градуса
 #else
 				else {  // Вариант работы только до достижение темперaтуpы и сразу выключение
-					onSalmonella = false;
-					startSalmonella = 0;
-					journal.jprintf(" Salmonella cycle finished, %.2dC°\n", sTemp[TBOILER].get_Temp());
+					onLegionella = false;
+					startLegionella = 0;
+					journal.jprintf(" Legionella cycle finished, %.2dC°\n", sTemp[TBOILER].get_Temp());
 					return false;
 				}
 #endif
 			} else {  // Время вышло, выключаем, и идем дальше по алгоритму
-				onSalmonella = false;
-				startSalmonella = 0;
-				journal.jprintf(" Salmonella cycle end, %.2dC°\n", sTemp[TBOILER].get_Temp());
+				onLegionella = false;
+				startLegionella = 0;
+				journal.jprintf(" Legionella cycle end, %.2dC°\n", sTemp[TBOILER].get_Temp());
 			}
 		}
-	} else if(onSalmonella) { // если сальмонеллу отключили на ходу выключаем и идем дальше по алгоритму
-		onSalmonella = false;
-		startSalmonella = 0;
-		journal.jprintf(" Off salmonella\n");
+	} else if(onLegionella) { // если сальмонеллу отключили на ходу выключаем и идем дальше по алгоритму
+		onLegionella = false;
+		startLegionella = 0;
+		journal.jprintf(" Off legionella\n");
 	}
 
 	// Догрев бойлера

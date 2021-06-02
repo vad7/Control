@@ -108,7 +108,7 @@ struct type_SaveON {
 //  Определение флагов в type_boilerHP
 #define fScheduleAddHeat 	0           // флаг Расписание только для ТЭНа
 #define fSchedule        	1           // флаг Использование расписания
-#define fSalmonella      	2           // флаг Сальмонела раз внеделю греть бойлер
+#define fLegionella      	2           // флаг легионелла раз внеделю греть бойлер
 #define fCirculation     	3           // флаг Управления циркуляционным насосом ГВС
 #define fResetHeat       	4           // флаг Сброса лишнего тепла в СО
 #define fTurboBoiler     	5           // флаг Ускоренный нагрев бойлера (ТН + ТЭН)
