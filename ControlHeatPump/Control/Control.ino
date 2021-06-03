@@ -862,7 +862,8 @@ void vWeb0(void *)
 													if(Vd >= WR_NO_POWER_WORK_DELTA_Uacc) { // Можно увеличивать нагрузку
 														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
 														else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
-													} else break; // ни чего не делаем
+													}
+													break; // больше ни чего не делаем
 												} // отключаем нагрузку
 											}
 										}
