@@ -829,63 +829,61 @@ void vWeb0(void *)
 					if(nopwr) {
 						WR_Refresh |= WR_Loads;
 						// При отсутствии питания мониторим напряжение на АКБ (не должно быть ниже буферного - дельта)
-						// Read MAP
 #ifdef HTTP_MAP_Read_MAP
-						if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) { // Нужно греть бойлер
-							active = false;
-							int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
-							if(err) {
-								if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
-									SETBIT1(Logflags, fLog_HTTP_RelayError);
-									journal.jprintf("WR: HTTP request Error %d\n", err);
-								}
+						active = false;
+						// Read MAP
+						int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
+						if(err) {
+							if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+								SETBIT1(Logflags, fLog_HTTP_RelayError);
+								journal.jprintf("WR: HTTP request Error %d\n", err);
+							}
+						} else {
+							SETBIT0(Logflags, fLog_HTTP_RelayError);
+							char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Uacc);
+							if(!fld) {
+								if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
 							} else {
-								SETBIT0(Logflags, fLog_HTTP_RelayError);
-								char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Uacc);
-								if(!fld) {
-									if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
-								} else {
-									char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Uacc) + 1, '"');
-									if(fld2) {
-										int Vd = atoi(fld) * 10;
-										Vd += *(fld2 - 1) - '0';
-										char *fld = strstr(fld2, HTTP_MAP_JSON_Ubuf);
-										if(!fld) {
-											if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
-										} else {
-											char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Ubuf) + 1, '"');
-											if(fld2) {
-												int Vbuf = atoi(fld) * 10;
-												Vbuf += *(fld2 - 1) - '0';
-												Vd -= Vbuf;
-												if(Vd >= WR_NO_POWER_MIN_DELTA_Uacc) { // Можно нагружать
-													if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target) { // Нужно греть бойлер
-														if(Vd >= 0) { // Можно увеличивать нагрузку
-															if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
-																if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
-																else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
-															}
-														} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
-															if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -WR.LoadAdd);
+								char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Uacc) + 1, '"');
+								if(fld2) {
+									int Vd = atoi(fld) * 10;
+									Vd += *(fld2 - 1) - '0';
+									char *fld = strstr(fld2, HTTP_MAP_JSON_Ubuf);
+									if(!fld) {
+										if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
+									} else {
+										char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Ubuf) + 1, '"');
+										if(fld2) {
+											int Vbuf = atoi(fld) * 10;
+											Vbuf += *(fld2 - 1) - '0';
+											Vd -= Vbuf;
+											if(Vd >= WR_NO_POWER_MIN_DELTA_Uacc) { // Можно нагружать
+												if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target) { // Нужно греть бойлер
+													if(Vd >= 0) { // Можно увеличивать нагрузку
+														if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
+															if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
+															else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
 														}
-													} else { // Другая нагрузка
-														if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
-															if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
-															else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
-														}
-														for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
-															if(i == WR_Load_pins_Boiler_INDEX) continue;
-															if(Vd >= 0) { // Можно увеличивать нагрузку
-																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
-															} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
-																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
-															}
-															break;
-														}
+													} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
+														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -WR.LoadAdd);
 													}
-													break; // больше ни чего не делаем
-												} // отключаем нагрузку
-											}
+												} else { // Другая нагрузка
+													if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
+														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
+														else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
+													}
+													for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
+														if(i == WR_Load_pins_Boiler_INDEX) continue;
+														if(Vd >= 0) { // Можно увеличивать нагрузку
+															if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
+														} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
+															if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
+														}
+														break;
+													}
+												}
+												break; // больше ни чего не делаем
+											} // отключаем нагрузку
 										}
 									}
 								}
