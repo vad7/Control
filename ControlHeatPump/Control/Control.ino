@@ -863,7 +863,9 @@ void vWeb0(void *)
 														if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0 || HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
 															if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
 															else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
-														} else goto xNOPWR_OtherLoad;
+															Vd = WR_NO_POWER_WORK_DELTA_Uacc - 1; // Выключить остальные нагрузки
+														}
+														goto xNOPWR_OtherLoad;
 													} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
 														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -WR.LoadAdd);
 													}
@@ -875,9 +877,13 @@ void vWeb0(void *)
 xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
 														if(i == WR_Load_pins_Boiler_INDEX) continue;
 														if(Vd >= 0) { // Можно увеличивать нагрузку
-															if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
+															if(WR_LoadRun[i] < WR.LoadPower[i]) {
+																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
+															}
 														} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
-															if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
+															if(WR_LoadRun[i] > 0) {
+																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
+															}
 														}
 														break;
 													}
