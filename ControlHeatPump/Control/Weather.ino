@@ -82,7 +82,7 @@ int WF_ProcessForecast(char *json)
 			}
 			avg_cl += WF_SunByMonth[rtcSAM3X8.get_months()-1];
 			if(avg_cl > 100) avg_cl = 100;
-			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%\n", avg_cl);
+			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%, BoilerTrg=%.2d\n", avg_cl, HP.get_boilerTempTarget());
 			WF_BoilerTargetPercent = avg_cl;
 		} else {
 			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: 100%, FeelTemp low: %d\n", avg_t);
