@@ -405,6 +405,7 @@ void Profile::initProfile()
   Cool.pid.Ki=0;                       // Интегральная составляющая ПИД ТН
   Cool.pid.Kd=3;                       // Дифференциальная составляющая ПИД ТН
   Cool.tempPID=2200;                // Целевая температура ПИД
+  Cool.delayOffPump = DEF_DELAY_OFF_PUMP;
  
  // Защиты
   Cool.tempInLim=1000;                    // Tемпература подачи (минимальная)
@@ -435,6 +436,7 @@ void Profile::initProfile()
   Heat.kWeatherPID=0;                    // Коэффициент погодозависимости в СОТЫХ градуса на градус
   Heat.WeatherBase = 0;
   Heat.WeatherTargetRange = 0;
+  Heat.delayOffPump = DEF_DELAY_OFF_PUMP;
   
  // Heat.P1=0;
  
@@ -500,6 +502,7 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_WEATHER)==0) { Cool.flags = (Cool.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else     // Использование погодозависимости
  if(strcmp(var,hp_HEAT_FLOOR)==0) { Cool.flags = (Cool.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
  if(strcmp(var,hp_SUN)==0) { Cool.flags = (Cool.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
+ if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Cool.delayOffPump = x; return true; } else
  if(strcmp(var,hp_K_WEATHER)==0){ Cool.kWeatherPID=rd(x, 1000); return true; }             // Коэффициент погодозависимости
  return false; 
 }
@@ -532,6 +535,7 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Cool.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Cool.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID(Cool),2); return ret;      } else
+   if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Cool.delayOffPump, ret); } else
    if(strcmp(var,hp_K_WEATHER)==0){_dtoa(ret,Cool.kWeatherPID,3); return ret;            }                 // Коэффициент погодозависимости
  return  strcat(ret,(char*)cInvalid);   
 }
@@ -592,7 +596,8 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 		}
 		return true;
 	}else
-	if(strcmp(var,option_PUMP_PAUSE)==0)       { Heat.pausePump=x; return true; }else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
+	if(strcmp(var,option_PUMP_PAUSE)==0)    { Heat.pausePump=x; return true; }else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
+	if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Heat.delayOffPump = x; return true; } else
 	return false;
 }
 
@@ -639,6 +644,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,hp_WeatherTargetRange)==0){ _dtoa(ret,Heat.WeatherTargetRange,1); return ret;    } else
 	if(strcmp(var,hp_CompressorPause)==0) { _itoa(Heat.CompressorPause / 60, ret); return ret; } else
 	if(strcmp(var,hp_FC_FreqLimit)==0) { _dtoa(ret, Heat.FC_FreqLimit, 2); return ret; } else
+	if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Heat.delayOffPump, ret); } else
 	if(strcmp(var,hp_FC_FreqLimitHour)==0) { strcat_time(ret, Heat.FC_FreqLimitHour * 10); return ret; } else
 	return  strcat(ret,(char*)cInvalid);
 }
@@ -854,10 +860,21 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
 			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
-//		} else if(HP.Option.ver <= 154) {
+		} else if(HP.Option.ver <= 154) {
+			CNVPROF_SIZE_dataProfile	=	120;
+			CNVPROF_SIZE_SaveON			= 	12;
+			CNVPROF_SIZE_HeatCool		=	48;
+			CNVPROF_SIZE_Boiler			=	68;
+#ifdef I2C_EEPROM_64KB
+			CNVPROF_SIZE_DailySwitch	=	30;
+#else
+			CNVPROF_SIZE_DailySwitch	=	15;
+#endif
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+//		} else if(HP.Option.ver <= 155) {
 //			CNVPROF_SIZE_dataProfile	=	120;
 //			CNVPROF_SIZE_SaveON			= 	12;
-//			CNVPROF_SIZE_HeatCool		=	48;
+//			CNVPROF_SIZE_HeatCool		=	50;
 //			CNVPROF_SIZE_Boiler			=	68;
 //#ifdef I2C_EEPROM_64KB
 //			CNVPROF_SIZE_DailySwitch	=	30;

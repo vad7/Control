@@ -24,8 +24,8 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.148"				// Версия прошивки
-#define VER_SAVE		154					// Версия формата сохраняемых данных в I2C память
+#define VERSION			"1.149"				// Версия прошивки
+#define VER_SAVE		155					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
 #endif
@@ -780,7 +780,6 @@ const char *option_NEXT_SLEEP         = {"NXTS"};               // Время з
 const char *option_NEXT_DIM           = {"NXTD"};               // Якрость % NEXTION
 const char option_SGL1W[]             = "SGL1W_";			    // SGLOW_n, На шине n (1-Wire, DS2482) только один датчик
 const char *option_DELAY_ON_PUMP      = {"DLONP"};      		// Задержка включения компрессора после включения насосов (сек).
-const char *option_DELAY_OFF_PUMP     = {"DLOFP"};     			// Задержка выключения насосов после выключения компрессора (сек).
 const char *option_DELAY_START_RES    = {"DLSR"};    			// Задержка включения ТН после внезапного сброса контроллера (сек.)
 const char *option_DELAY_REPEAD_START = {"DLRS"};				// Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
 const char *option_DELAY_DEFROST_ON   = {"DLDON"};  			// ДЛЯ ВОЗДУШНОГО ТН Задержка после срабатывания датчика перед включением разморозки (секунды)
@@ -872,6 +871,7 @@ const char *option_TEMP_RHEAT         = {"TRH"};    // температура д
 const char *hp_timeRHEAT		      = {"TMR"};
 const char *option_PUMP_WORK          = {"PW"};     // работа насоса конденсатора при выключенном компрессоре секунды
 const char *option_PUMP_PAUSE         = {"PP"};     // пауза между работой насоса конденсатора при выключенном компрессоре (секунды)
+const char *option_DELAY_OFF_PUMP     = {"DLOFP"};	// Задержка выключения насосов после выключения компрессора (сек).
 
 // Действуют для отопления и ГВС
 const char *ADD_DELTA_TEMP     = {"ADT"};		// Добавка температуры к установке, в градусах

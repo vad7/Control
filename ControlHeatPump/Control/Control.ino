@@ -1854,7 +1854,7 @@ void vReadSensor_delay1ms(int32_t ms)
 							uint8_t frestart = _mode != pOFF && currmode != pOFF && (currmode & (pHEAT | pCOOL)) && (currmode & (pHEAT | pCOOL)) != (_mode & (pHEAT | pCOOL)); // Если направление работы ТН разное
 							if(frestart) {
 								HP.sendCommand(pWAIT);
-								uint8_t i = DELAY_BEFORE_STOP_IN_PUMP + HP.Option.delayOffPump + 1;
+								uint8_t i = DELAY_BEFORE_STOP_IN_PUMP + (HP.get_modeHouse() == pCOOL ? HP.Prof.Cool.delayOffPump : HP.Prof.Heat.delayOffPump) + 1;
 								while(HP.isCommand()) {	_delay(1000); if(!--i) break; } // ждем отработки команды
 								if(!HP.Task_vUpdate_run) continue;
 							}

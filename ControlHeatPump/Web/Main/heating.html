@@ -7,7 +7,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
-	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list)");
+	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Cool(KW),get_Heat(KW),get_Cool(W),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL),get_Heat(TRH),get_Heat(PW),get_Heat(PP),get_Heat(TMR)");
 	loadParam("get_listDSR,get_tblPDS");
 };
@@ -173,6 +173,11 @@ function loadParam_after(paramid) {
 		<td nowrap><input id="get_heat-tmr" type="number" step="1"> <input type="submit" value=">" onclick="setParam('get_Heat(TMR)');"></td>
 		<td></td>
 	</tr>
+	<tr>
+		<td>Задержка выключения насоса отопления после выключения компрессора, сек.</td>
+		<td nowrap><input type="number" id="get_heat-dlofp"> <input type="submit" value=">" onclick="setParam('get_Heat(DLOFP)');"></td>
+		<td nowrap><input type="number" id="get_cool-dlofp"> <input type="submit" value=">" onclick="setParam('get_Cool(DLOFP)');"></td>
+	</tr>	
 	<tr>
 		<td>Работа насосов отопления, когда ТН в паузе (сек.) [0..65535] <sup>9</sup></td>
 		<td nowrap><input id="get_heat-pw" type="number" min="0" step="1"> <input type="submit" value=">" onclick="setParam('get_Heat(PW)');"></td>
