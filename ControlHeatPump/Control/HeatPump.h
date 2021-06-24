@@ -320,6 +320,9 @@ struct type_statusHP
  uint32_t pumpCO_OFF;                     // Время выключения насоса системы отопления
 };
 
+#define PUMPS_ON          Pumps(true, DELAY_AFTER_SWITCH_RELAY)               // Включить насосы
+#define PUMPS_OFF         Pumps(false, DELAY_AFTER_SWITCH_RELAY)              // Выключить насосы
+
 // ------------------------- ОСНОВНОЙ КЛАСС --------------------------------------
 class HeatPump
 {
@@ -554,7 +557,7 @@ public:
 
 	uint8_t PauseStart;                                    // 1 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
 
-	uint8_t startPump;                                     // Признак запуска задачи насос 0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл)
+	uint8_t startPump;  // Признак запуска задачи насос 0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл), 4 - отработка после останова компрессора (вкл)
 	boolean safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)
 
 
@@ -624,7 +627,7 @@ public:
 // Настройки опций
 	type_optionHP Option;                  // Опции теплового насоса
 
-	uint16_t pump_in_pause_timer;
+	uint16_t pump_in_pause_timer;			// sec
 	uint32_t time_Sun;                    // тики солнечного коллектора
 	uint8_t  NO_Power;					  // Нет питания основных узлов, 2 - нужно запустить после восстановления
 	uint8_t  NO_Power_delay;

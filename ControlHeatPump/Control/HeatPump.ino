@@ -26,8 +26,6 @@ const boolean _wait =  false;  // Команда перевода в режим 
 const boolean _start = true;   // Команда запуска ТН
 const boolean _resume = false;  // Команда возобновления работы ТН
 
-#define PUMPS_ON          Pumps(true, DELAY_AFTER_SWITCH_RELAY)               // Включить насосы
-#define PUMPS_OFF         Pumps(false, DELAY_AFTER_SWITCH_RELAY)              // Выключить насосы
 // Макросы по работе с компрессором в зависимости от наличия инвертора
 #define COMPRESSOR_ON   { if(dFC.get_present()) dFC.start_FC(); else dRelay[RCOMP].set_ON(); startCompressor = rtcSAM3X8.unixtime(); }  // Включить компрессор в зависимости от наличия инвертора
 #define COMPRESSOR_OFF  { if(dFC.get_present()) dFC.stop_FC(); else dRelay[RCOMP].set_OFF(); stopCompressor = rtcSAM3X8.unixtime(); } // Выключить компрессор в зависимости от наличия инвертора
@@ -1736,8 +1734,6 @@ if(b && (get_modWork() & pBOILER)){
 		offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
 	}
 #endif
-
-
 	if(!b && GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain)) {
 		journal.jprintf(" Delay: stop IN pump.\n");
 		for(uint16_t i = 0; i < DELAY_BEFORE_STOP_IN_PUMP; i++) {
@@ -1753,12 +1749,13 @@ if(b && (get_modWork() & pBOILER)){
 			|| GETBIT(dRelay[RPUMPBH].flags, fR_StatusMain)
 #endif
 	)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
-		if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
+		if(startPump == 4) {
+			startPump = HP.get_workPump() != 0;
+		} else if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
 			journal.jprintf(" Delay: stop OUT pump.\n");
-			for(uint16_t i = get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump; i != 0; i--) {
-				_delay(1000); // задержка перед выключение насосов после выключения компрессора (облегчение останова)
-				if(is_next_command_stop()) break;
-			}
+			startPump = 4;
+			pump_in_pause_timer = get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump;
+			return;
 		}
 	} else {
 		_delay(d);                                // Задержка на d мсек
@@ -1789,9 +1786,11 @@ if(b && (get_modWork() & pBOILER)){
    		}
    		_delay(d);									// Задержка на d мсек
    	} else {
-   		dRelay[RPUMPBH].set_OFF();					// насос бойлера
-		onBoiler = false;
-		offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+   		if(dRelay[RPUMPBH].get_Relay()) {
+   			dRelay[RPUMPBH].set_OFF();					// насос бойлера
+   			onBoiler = false;
+   			offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+   		}
 		if(!get_workPump() || get_pausePump() || get_modeHouse() == pOFF) {
 			dRelay[RPUMPO].set_OFF(); 				// насос отопления
 		}
@@ -2090,9 +2089,13 @@ void HeatPump::StopWait(boolean stop)
 #endif
   }
     
-  startPump = 0;                                    // Задача насосов в паузе выключена
-  HP.pump_in_pause_set(false);
-  if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s\n",(char*)__FUNCTION__, "OFF");
+  if(startPump == 4) {
+	  if(stop && pump_in_pause_timer > DEF_DELAY_OFF_PUMP) pump_in_pause_timer = DEF_DELAY_OFF_PUMP;
+  } else {
+	  startPump = 0;                                    // Задача насосов в паузе выключена
+	  pump_in_pause_set(false);
+	  if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s\n",(char*)__FUNCTION__, "OFF");
+  }
 
   // Принудительное выключение отдельных узлов ТН если они есть в конфиге
   #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
@@ -2948,9 +2951,11 @@ void HeatPump::vUpdate()
 			command_completed = rtcSAM3X8.unixtime();  // поменялся режим
 		}
 		if(get_modeHouse() == pOFF) {    				// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
-			HP.pump_in_pause_set(false);
-			pump_in_pause_timer = 0;
-			startPump = 0;
+			if(startPump != 4) {
+				HP.pump_in_pause_set(false);
+				pump_in_pause_timer = 0;
+				startPump = 0;
+			}
 		} else if(!startPump) {
 			pump_in_pause_timer = get_pausePump();
 			startPump = 1;								// Поставить признак запуска задачи насос
