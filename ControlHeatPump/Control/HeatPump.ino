@@ -1750,6 +1750,7 @@ if(b && (get_modWork() & pBOILER)){
 #endif
 	)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
 		if(startPump == 4) {
+			if(pump_in_pause_timer) return; // время не пришло
 			startPump = HP.get_workPump() != 0;
 		} else if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
 			journal.jprintf(" Delay: stop OUT pump.\n");
@@ -2095,6 +2096,9 @@ void HeatPump::StopWait(boolean stop)
 	  startPump = 0;                                    // Задача насосов в паузе выключена
 	  pump_in_pause_set(false);
 	  if(get_workPump()) journal.jprintf(" %s: Pumps in pause %s\n",(char*)__FUNCTION__, "OFF");
+#ifdef RPUMPBH  // управление  насосом нагрева ГВС
+	  dRelay[RPUMPBH].set_OFF();
+#endif
   }
 
   // Принудительное выключение отдельных узлов ТН если они есть в конфиге
@@ -2111,16 +2115,8 @@ void HeatPump::StopWait(boolean stop)
      dRelay[RPUMPB].set_OFF();     // выключить насос циркуляции ГВС
   #endif
 
-  #ifdef RPUMPBH  // управление  насосом нагрева ГВС
-     dRelay[RPUMPBH].set_OFF();
-  #endif
   SETBIT0(flags, fHP_BoilerTogetherHeat);
 
-
-  #ifdef CONFIG_5  // случаи бывают разные - должно работать без костылей.- но лучше перебдеть -))
-   relayAllOFF(); // Все выключить, все (на всякий случай), * внимание - выключатся реле по расписанию!
-  #endif 
- 
   if(stop)
   {
      //journal.jprintf(" statChart stop\n");
