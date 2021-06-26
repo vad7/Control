@@ -1614,9 +1614,9 @@ void HeatPump::getTargetTempStr2(char *rstr)
 // Все реле выключить
 void HeatPump::relayAllOFF()
 {
-  uint8_t i;
-  journal.jprintf(" All relay off\n");
-  for(i=0;i<RNUMBER;i++)  dRelay[i].set_OFF();         // Выключить все реле;
+	uint8_t i;
+	//journal.jprintf(" All relay off\n");
+	for(i=0;i<RNUMBER;i++) dRelay[i].set_OFF();         // Выключить все реле;
 }                               
 
 // Переключение на бойлер или обратно (true-бойлер false-отопление/охлаждение) возврат onBoiler
@@ -1741,8 +1741,16 @@ if(b && (get_modWork() & pBOILER)){
 			if(is_next_command_stop()) break;
 		}
 	}
-	
 	dRelay[PUMP_IN].set_Relay(b);             // Реле включения насоса входного контура  (геоконтур)
+#ifdef  TWO_PUMP_IN                                                // второй насос для воздушника если есть
+	if (!b) dRelay[PUMP_IN1].set_OFF();    // если насососы выключаем то второй вентилятор ВСЕГДА выключается!!
+	else// а если насос включается то смотрим на условия
+	{
+		if(sTemp[TEVAOUT].get_Temp()<2500) {dRelay[PUMP_IN1].set_ON();} // Реле включения второго насоса входного контура для  воздушника
+		else {dRelay[PUMP_IN1].set_OFF();}
+	}
+	_delay(d);                                 // Задержка на d мсек
+#endif
 	
 	if(!b && (GETBIT(dRelay[RPUMPO].flags, fR_StatusMain) // пауза перед выключением насосов контуров, если нужно
 #ifdef RPUMPBH
@@ -1761,46 +1769,48 @@ if(b && (get_modWork() & pBOILER)){
 	} else {
 		_delay(d);                                // Задержка на d мсек
 	}
-#ifdef  TWO_PUMP_IN                                                // второй насос для воздушника если есть
-	if (!b) dRelay[PUMP_IN1].set_OFF();    // если насососы выключаем то второй вентилятор ВСЕГДА выключается!!
-	else// а если насос включается то смотрим на условия
-	{
-		if(sTemp[TEVAOUT].get_Temp()<2500) {dRelay[PUMP_IN1].set_ON();} // Реле включения второго насоса входного контура для  воздушника
-		else {dRelay[PUMP_IN1].set_OFF();}
-	}
-	_delay(d);                                 // Задержка на d мсек
-#endif
 
 #ifdef R3WAY  
 	dRelay[PUMP_OUT].set_Relay(b);                 // Реле включения насоса выходного контура  (отопление и ГВС)
 	_delay(d);                                     // Задержка на d мсек
+   	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) Pump_HeatFloor(b); // насос ТП
 #else
   #ifdef RPUMPBH									// насос бойлера
    	if(b) {
    		if((get_modWork() & pBOILER)) {
+   		   	dRelay[RPUMPO].set_OFF();             	// насос отопления
+		   	Pump_HeatFloor(0); 						// насос ТП
+	   		_delay(d);								// Задержка на d мсек
    			dRelay[RPUMPBH].set_ON();
-   			onBoiler = true;
    			offBoiler = 0;
+   			onBoiler = true;
    		} else {
    		   	dRelay[RPUMPO].set_ON();               	// насос отопления
+		   	Pump_HeatFloor(1); 						// насос ТП
+	   		_delay(d);								// Задержка на d мсек
+   			dRelay[RPUMPBH].set_OFF();
    		   	onBoiler = false;
    		}
    		_delay(d);									// Задержка на d мсек
    	} else {
    		if(dRelay[RPUMPBH].get_Relay()) {
    			dRelay[RPUMPBH].set_OFF();					// насос бойлера
-   			onBoiler = false;
    			offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+   			onBoiler = false;
    		}
 		if(!get_workPump() || get_pausePump() || get_modeHouse() == pOFF) {
 			dRelay[RPUMPO].set_OFF(); 				// насос отопления
+	   		_delay(d);								// Задержка на d мсек
+		   	Pump_HeatFloor(0); 						// насос ТП
 		}
    		_delay(d);									// Задержка на d мсек
    	}
   #else
    	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) {
    		dRelay[RPUMPO].set_Relay(b);                // насос отопления
-   	}
+   	   	_delay(d);									// Задержка на d мсек
+   	   	Pump_HeatFloor(b); // насос ТП
+ 	}
    	_delay(d);									// Задержка на d мсек
   #endif
 #endif // R3WAY
@@ -1810,9 +1820,8 @@ if(b && (get_modWork() & pBOILER)){
    		dRelay[RSUPERBOILER].set_OFF();
 #endif
    	}
-   	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) Pump_HeatFloor(b); // насос ТП
-
 }
+
 // Сброс инвертора если он стоит в ошибке, проверяется наличие инвертора и проверка ошибки после сброса
 // Проводится различный сброс в зависимости от конфигурации
 int8_t HeatPump::ResetFC()
@@ -2091,7 +2100,11 @@ void HeatPump::StopWait(boolean stop)
   }
     
   if(startPump == 4) {
-	  if(stop && pump_in_pause_timer > DEF_DELAY_OFF_PUMP) pump_in_pause_timer = DEF_DELAY_OFF_PUMP;
+	  if(stop) {
+		  if(pump_in_pause_timer > DEF_DELAY_OFF_PUMP) pump_in_pause_timer = DEF_DELAY_OFF_PUMP;
+		  while(startPump == 4 || pump_in_pause_timer) _delay(1000);	// ждем пока нососы остановятся
+		  relayAllOFF();
+	  }
   } else {
 	  startPump = 0;                                    // Задача насосов в паузе выключена
 	  pump_in_pause_set(false);

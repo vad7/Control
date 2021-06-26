@@ -1743,6 +1743,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E09");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
 				{
+					if(testMode != TEST_MODE(pm)) HP.relayAllOFF();
 					testMode = TEST_MODE(pm);             // Установить режим работы тестирования
 					for(i=0;i<=HARD_TEST;i++)                    // Формирование списка
 					{ strcat(strReturn,noteTestMode[i]); strcat(strReturn,":"); if(i==testMode) strcat(strReturn,cOne); else strcat(strReturn,cZero); strcat(strReturn,";");  }

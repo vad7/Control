@@ -367,6 +367,7 @@ public:
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
+	void relayAllOFF();                   // Все реле выключить
 
 // Строковые функции
 	char *StateToStr();                 // Получить состояние ТН в виде строки
@@ -651,7 +652,6 @@ private:
 	void    defrost();                    // Все что касается разморозки воздушника
 
 	void resetSettingHP();                // Функция сброса настроек охлаждения и отопления
-	void relayAllOFF();                   // Все реле выключить
 	boolean boilerAddHeat();              // Проверка на необходимость греть бойлер дополнительным теном (true - надо греть)
 	boolean switchBoiler(boolean b);      // Переключение на нагрев бойлера ТН true-бойлер false-отопление/охлаждение
 	boolean checkEVI();                   // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
