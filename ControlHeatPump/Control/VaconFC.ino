@@ -217,8 +217,15 @@ int8_t devVaconFC::get_readState()
 				err = ERR_FC_FAULT;
 				if(HP.NO_Power) return err;
 				if(GETBIT(HP.Option.flags, fBackupPower)) {
-					HP.sendCommand(pWAIT);
-					SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+//					HP.sendCommand(pWAIT);
+//					SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+//					return err;
+					// Нужно перезапустить
+					if(HP.is_compressor_on()) {
+						if(get_present()) stop_FC(); else HP.dRelay[RCOMP].set_OFF();
+						HP.set_stopCompressor();
+					}
+					HP.sendCommand(pREPEAT_FAST);
 					return err;
 				}
 			} else if(get_startTime() && rtcSAM3X8.unixtime() - get_startTime() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {

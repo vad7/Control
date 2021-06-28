@@ -4185,8 +4185,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define SDM_VOLTAGE      4		// Ячейка напряжения
 	#define ADD_FC_POWER_WHEN_GENERATOR // Прибавлять расчитанную мощность частотника к показаниям счетчика, когда работа через генератор
 	#define USE_UPS					// Используется ИБП на контроллер, проверка через вход SPOWER
-	#define AUTO_START_GENERATOR 60 // Автозапуск генератора (реле RGEN), ждать секунд (для прогрева)
-	#define AUTO_START_GEN_TIMEOUT 200 // Таймаут ожидания старта генератора, сек
+	#define AUTO_START_GENERATOR 	// Автозапуск генератора (реле RGEN), ждать для прогрева - Option.Generator_Start_Time
+	#define AUTO_START_GEN_TIMEOUT_MUL 2 // Множитель Generator_Start_Time - таймаут ожидания старта генератора
 	#define STATS_USE_BUFFER_FOR_SAVING // Сохранять статистику только когда буфер (512 байт) заполнен, иначе каждый день
 	#define MIN_RAM_CHARTS
 
@@ -4850,6 +4850,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define DEF_DELAY_BOILER_OFF 		30             // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
 	#define DELAY_AFTER_SWITCH_RELAY    100            // Задержка после переключения реле, для сглаживания потребления и уменьшения помех(мс)
 	#define DELAY_BEFORE_STOP_IN_PUMP	15			   // Задержка перед выключением насоса геоконтура, насос отопления отключается позже (сек)
+
+	#define DELAY_REPEAT_FAST 			120		        // Задержка перед повторным быстрым включением ТН, сек
 
 	//#define NOT_RESTART_ON_CRITICAL_ERRORS			// Не пытаться перезапустить ТН после этих ошибок
 

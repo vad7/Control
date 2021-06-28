@@ -813,6 +813,7 @@ const char option_Microart_login[]    = "ML";
 const char option_Microart_pass[]     = "MP";
 const char *option_DailySwitchHysteresis={"DSH"};
 const char *option_PWM2               = {"PWM2"};
+const char *option_Generator_Start_Time= {"GST"};
 #ifdef DEFROST
 const char *option_DefrostTempLimit	  = {"DFTL"};
 const char *option_DefrostStartDTemp  = {"DFSDT"};
@@ -1386,10 +1387,11 @@ enum TYPE_COMMAND
   pWAIT,                         // 11 перевод в режим ожидания ТН (пустое расписание)
   pRESUME,                       // 12 Восстановление работы из режима ожидания
   pPROG_FC,                      // 13 Первоначальное программирование частотного преобразователя
+  pREPEAT_FAST,					 // 14 Повторный пуск ТН через короткое время
   pEND14                         // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
 
-const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "UNKNOWN"};
+const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "REP_FAST", "UNKNOWN"};
 
 //  Перечисляемый тип -ТИПЫ уведомлений
 enum MESSAGE          

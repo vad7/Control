@@ -816,6 +816,7 @@ void HeatPump::resetSettingHP()
 #endif
     SETBIT0(Option.flags, fBackupPower); // Использование резервного питания от генератора (ограничение мощности)
 	Option.maxBackupPower=3000;          // Максимальная мощность при питании от генератора (Вт)
+	Option.Generator_Start_Time = 60;
 #ifdef WATTROUTER
 	WR.MinNetLoad = 50;
 	WR.NextSwitchPause = 10;
@@ -1082,6 +1083,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_PAUSE)==0)			   { if ((n>=0)&&(n<=999)) {Option.pause=n*60; return true;} else return false; }else             // минимальное время простоя компрессора с переводом в минуты но хранится в секундах!!!!!
 	if(strcmp(var,option_MinCompressorOn)==0)  { Option.MinCompressorOn = n; return true; }else
 	if(strcmp(var,option_DELAY_ON_PUMP)==0)    {if ((n>=0)&&(n<=900)) {Option.delayOnPump=n; return true;} else return false;}else        // Задержка включения компрессора после включения насосов (сек).
+	if(strcmp(var,option_DELAY_OFF_PUMP)==0)   { Option.delayOffPump = n; return true; } else
 	if(strcmp(var,option_DELAY_START_RES)==0)  {if ((n>=0)&&(n<=6000)) {Option.delayStartRes=n; return true;} else return false;}else     // Задержка включения ТН после внезапного сброса контроллера (сек.)
 	if(strcmp(var,option_DELAY_REPEAD_START)==0){if ((n>=0)&&(n<=6000)) {Option.delayRepeadStart=n; return true;} else return false;}else // Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
 	if(strcmp(var,option_DELAY_DEFROST_ON)==0) {if ((n>=0)&&(n<=600)) {Option.delayDefrostOn=n; return true;} else return false;}else     // ДЛЯ ВОЗДУШНОГО ТН Задержка после срабатывания датчика перед включением разморозки (секунды)
@@ -1096,6 +1098,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var, option_DefrostTempSteam)==0) { Option.DefrostTempSteam = rd(x, 100); return true; }
 #endif
 	else if(strcmp(var, option_fBackupPower)==0)  {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
+	else if(strcmp(var,option_Generator_Start_Time)==0){ Option.Generator_Start_Time = n; return true; }
 	else if(strcmp(var, option_f2BackupPowerAuto) == 0) {
 	#ifdef SGENERATOR
 		if(n == 0) { SETBIT0(Option.flags2, f2BackupPowerAuto);	return true;
@@ -1219,6 +1222,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_PAUSE)==0)            {return _itoa(Option.pause/60,ret); } else        // минимальное время простоя компрессора с переводом в минуты но хранится в секундах!!!!!
 	if(strcmp(var,option_MinCompressorOn)==0)  {return _itoa(Option.MinCompressorOn, ret); } else
 	if(strcmp(var,option_DELAY_ON_PUMP)==0)    {return _itoa(Option.delayOnPump,ret);}else       // Задержка включения компрессора после включения насосов (сек).
+	if(strcmp(var,option_DELAY_OFF_PUMP)==0)   {return _itoa(Option.delayOffPump,ret);}else
 	if(strcmp(var,option_DELAY_START_RES)==0)  {return _itoa(Option.delayStartRes,ret);}else     // Задержка включения ТН после внезапного сброса контроллера (сек.)
 	if(strcmp(var,option_DELAY_REPEAD_START)==0){return _itoa(Option.delayRepeadStart,ret);}else // Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
 	if(strcmp(var,option_DELAY_DEFROST_ON)==0) {return _itoa(Option.delayDefrostOn,ret);}else    // ДЛЯ ВОЗДУШНОГО ТН Задержка после срабатывания датчика перед включением разморозки (секунды)
@@ -1227,6 +1231,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_DELAY_BOILER_SW)==0)  {return _itoa(Option.delayBoilerSW,ret);}else     // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);}        // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
 	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags,fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
+	if(strcmp(var, option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
 	if(strcmp(var,option_fBackupPowerInfo)==0) { // Работа от генератора
 	   if(GETBIT(Option.flags,fBackupPower)
 	#ifdef USE_UPS
@@ -1727,11 +1732,9 @@ if(b && (get_modWork() & pBOILER)){
 	} else {
 		dRelay[R3WAY].set_Relay(false);            // скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС     
 	    if(onBoiler && get_State() == pWORK_HP) {  // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
-		 journal.jprintf(" Pause %ds, Boiler->Pause\n", Option.delayBoilerSW);
-		_delay(Option.delayBoilerSW * 1000);    // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
-	      }
-    	onBoiler = false;
-		offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+	    	journal.jprintf(" Pause %ds, Boiler->Pause\n", Option.delayBoilerSW);
+	    	_delay(Option.delayBoilerSW * 1000);    // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
+	    }
 	}
 #endif
 	if(!b && GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain)) {
@@ -1763,7 +1766,7 @@ if(b && (get_modWork() & pBOILER)){
 		} else if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
 			journal.jprintf(" Delay: stop OUT pump.\n");
 			startPump = 4;
-			pump_in_pause_timer = get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump;
+			pump_in_pause_timer = onBoiler || error ? Option.delayOffPump : get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump : get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump;
 			return;
 		}
 	} else {
@@ -1774,6 +1777,10 @@ if(b && (get_modWork() & pBOILER)){
 	dRelay[PUMP_OUT].set_Relay(b);                 // Реле включения насоса выходного контура  (отопление и ГВС)
 	_delay(d);                                     // Задержка на d мсек
    	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) Pump_HeatFloor(b); // насос ТП
+   	if(!b) {
+   		onBoiler = false;
+   		offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+   	}
 #else
   #ifdef RPUMPBH									// насос бойлера
    	if(b) {
@@ -2781,7 +2788,7 @@ MODE_COMP HeatPump::UpdateCool()
 	{
 	case pHYSTERESIS:  // Гистерезис охлаждение.
 		if(t1<target)             {Status.ret=pCh3;   return pCOMP_OFF;}                            // Достигнута целевая температура  ВЫКЛ
-		else if(t1>target+Prof.Cool.dTemp && !is_compressor_on())  {Status.ret=pCh2;   return pCOMP_ON; }                       // Достигнут гистерезис ВКЛ
+		else if(t1 > target + (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp) && !is_compressor_on()) { Status.ret=pCh2;   return pCOMP_ON; }                       // Достигнут гистерезис ВКЛ
 		else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED<Prof.Cool.tempInLim)){Status.ret=pCh1;return pCOMP_OFF;}// Достигнута минимальная температура подачи ВЫКЛ
 		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и охлаждение не нужно
 		else if(RET>Prof.Cool.tempOutLim)      {Status.ret=pCh13;  return pCOMP_ON; }                       // Достигнут Максимальная темература обратки ВКЛ
@@ -2791,7 +2798,7 @@ MODE_COMP HeatPump::UpdateCool()
 		// отработка гистререзиса целевой функции (дом/обратка)
 
 		if(t1<target)     { Status.ret=pCp3; return pCOMP_OFF;}    // Достигнута целевая температура  ВЫКЛ
-		else if ((t1>target+Prof.Cool.dTemp)&& !is_compressor_on())  {Status.ret=pCp2; return pCOMP_ON; }                          // Достигнут гистерезис (компрессор не рабоатет) ВКЛ
+		else if(t1 > target + (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp) && !is_compressor_on()) { Status.ret=pCh2;   return pCOMP_ON; }                       // Достигнут гистерезис ВКЛ
 		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и охлаждение не нужно
 		else if ((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED<Prof.Cool.tempInLim)) {Status.ret=pCp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__);return pCOMP_OFF;}         // Достижение минимальной температуры подачи - это ошибка ПИД не рабоатет
 
@@ -3285,8 +3292,8 @@ xNextStop:
 	if(GETBIT(Option.flags, fBackupPower)) {
 		dRelay[RGEN].set_ON(); // Включаем или не даем выключиться
 		if(dFC.get_state() == ERR_LINK_FC) {
-			_delay(AUTO_START_GENERATOR * 1000); // Задержка на запуск, в том числе и для прогрева генератора
-			for(uint16_t i = AUTO_START_GEN_TIMEOUT / (FC_TIME_READ / 1000); i > 0; i--) {
+			_delay(Option.Generator_Start_Time * 1000); // Задержка на запуск, в том числе и для прогрева генератора
+			for(uint16_t i = Option.Generator_Start_Time * AUTO_START_GEN_TIMEOUT_MUL / (FC_TIME_READ / 1000); i > 0; i--) {
 				if(NO_Power) return;
 				if(is_next_command_stop()) goto xNextStop;
 				if(dFC.get_err() == OK) break;
@@ -3723,6 +3730,16 @@ int8_t HeatPump::runCommand()
 			num_repeat++;                               // увеличить счетчик повторов пуска ТН
 			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
 			PauseStart = 1;   							// Запустить выполнение отложенного старта
+			break;
+		case pREPEAT_FAST:
+			if(NO_Power) { // Нет питания - ожидание
+				NO_Power = 2;
+				goto xWait;
+			}
+			StopWait(_stop);                            // Попытка запустит ТН (по числу пусков)
+			num_repeat++;                               // увеличить счетчик повторов пуска ТН
+			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
+			PauseStart = 2;   							// Запустить выполнение отложенного старта
 			break;
 		case pRESTART:
 			// Stop();                                          // пуск Тн после сброса - есть задержка

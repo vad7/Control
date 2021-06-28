@@ -486,6 +486,7 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_TEMP2)==0) {   if ((x>=10)&&(x<=50))  {Cool.Temp2=rd(x, 100); return true;} else return false;  }else             // целевая температура обратки
  if(strcmp(var,hp_TARGET)==0) {  if (x==0) {SETBIT0(Cool.flags,fTarget); return true;} else if (x==1.0) {SETBIT1(Cool.flags,fTarget); return true;} else return false; }else // что является целью значения  0 (температура в доме), 1 (температура обратки).
  if(strcmp(var,hp_DTEMP)==0) {   if ((x>=0)&&(x<=30))  {Cool.dTemp=rd(x, 100); return true;} else return false;   }else             // гистерезис целевой температуры
+ if(strcmp(var,hp_dTempGen)==0){ Cool.dTempGen = rd(x, 100); return true; }else
  if(strcmp(var,hp_HP_TIME)==0) { if ((x>=10)&&(x<=1000)) {UpdatePIDbyTime(x, Cool.pid_time, Cool.pid); Cool.pid_time=x; return true;} else return false;                                             }else             // Постоянная интегрирования времени в секундах ПИД ТН !
  if(strcmp(var,hp_HP_PRO)==0) {  if ((x>=0)&&(x<=32)) {Cool.pid.Kp=rd(x, 1000); return true;} else return false;    }else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2
@@ -518,6 +519,7 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_TARGET)==0)   {if (!(GETBIT(Cool.flags,fTarget))) return strcat(ret,(char*)"Дом:1;Обратка:0;");
                                   else return strcat(ret,(char*)"Дом:0;Обратка:1;");           } else             // что является целью значения  0 (температура в доме), 1 (температура обратки).
    if(strcmp(var,hp_DTEMP)==0)    {_dtoa(ret,Cool.dTemp/10,1); return ret;               } else             // гистерезис целевой температуры
+   if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Cool.dTempGen / 10, 1); return ret; } else
    if(strcmp(var,hp_HP_TIME)==0)  {return  _itoa(Cool.pid_time,ret);                               } else             // Постоянная интегрирования времени в секундах ПИД ТН
    if(strcmp(var,hp_HP_PRO)==0)   {_dtoa(ret,Cool.pid.Kp,3); return ret;              } else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2
@@ -558,7 +560,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_TEMP2)==0) {   if((x>=10)&&(x<=50)){ Heat.Temp2=rd(x, 100); return true;} else return false;  }else             // целевая температура обратки
 	if(strcmp(var,hp_TARGET)==0) {  if(x==0) {SETBIT0(Heat.flags,fTarget); return true;} else if (x==1.0) {SETBIT1(Heat.flags,fTarget); return true;} else return false; }else // что является целью значения  0 (температура в доме), 1 (температура обратки).
 	if(strcmp(var,hp_DTEMP)==0) {   if((x>=0)&&(x<=30)) { Heat.dTemp=rd(x, 100); return true;} else return false;   }else             // гистерезис целевой температуры
-	if(strcmp(var,hp_dTempGen)==0){ if((x>=0)&&(x<=30)) { Heat.dTempGen = rd(x, 100); return true; } else return false; }else
+	if(strcmp(var,hp_dTempGen)==0){ Heat.dTempGen = rd(x, 100); return true; }else
 	if(strcmp(var,hp_HP_TIME)==0) { if((x>=10)&&(x<=1000)) {UpdatePIDbyTime(x, Heat.pid_time, Heat.pid); Heat.pid_time=x; return true;} else return false; }else             // Постоянная интегрирования времени в секундах ПИД ТН !
 	if(strcmp(var,hp_HP_PRO)==0) {  if((x>=0)&&(x<=32)) {Heat.pid.Kp=rd(x, 1000); return true;} else return false;   }else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2

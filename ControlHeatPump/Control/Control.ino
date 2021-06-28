@@ -2143,8 +2143,12 @@ void vServiceHP(void *)
 			if(HP.PauseStart) {
 				if(HP.PauseStart == 1) {
 					restart_cnt = HP.isCommand() == pRESTART ? HP.Option.delayStartRes : HP.Option.delayRepeadStart;  // Определение времени задержки
-					journal.jprintf((const char*) "Start over %d sec . . .\n", restart_cnt);
-					HP.PauseStart = 2;
+					HP.PauseStart = 3;
+					journal.jprintf("Start over %d sec . . .\n", restart_cnt);
+				} else if(HP.PauseStart == 2) { // Быстрый рестарт
+					restart_cnt = DELAY_REPEAT_FAST;
+					HP.PauseStart = 3;
+					journal.jprintf("Start over %d sec . . .\n", restart_cnt);
 				} else if(restart_cnt-- == 0) {
 					HP.PauseStart = 0;
 					HP.sendCommand(pAUTOSTART);
