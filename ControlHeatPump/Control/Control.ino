@@ -1199,7 +1199,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								active = false;
 								mppt = WR_Check_MPPT();
 								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
-								if(mppt <= 1 && availidx == 0) break;
+								if(mppt == 1 && availidx == 0) break;
 							}
 #endif
 							if(GETBIT(WR.PWM_Loads, i)) {
