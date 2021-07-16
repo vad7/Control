@@ -104,12 +104,22 @@ int8_t sensorTemp::Read()
 #endif
 #ifdef TNTC
 			if(*address == tADC) {
-				lastTemp = Read_NTC(TNTC_Value[address[1] - '0']);
+				int16_t ttemp = Read_NTC(TNTC_Value[address[1] - '0']);
+				if(lastTemp == STARTTEMP || (abs(lastTemp - ttemp) < GAP_TEMP_VAL)) {
+					lastTemp = ttemp;
+					nGap = 0;
+				} else { // Данные сильно отличаются от предыдущих
+					if(++nGap > GAP_NUMBER) nGap = 0;
+				   if(nGap == 0 || !get_setup_flag(fTEMP_dont_log_errors)) {
+					   journal.jprintf_time("GAP %s t=%.2d(%.2d), %s\n", name, ttemp, lastTemp, nGap == 0 ? "accept" : "skip");
+					   if(nGap == 0) lastTemp = ttemp;
+				   }
+				}
 			} else
 #endif
 #ifdef TNTC_EXT
 			if(*address == tADS1115) {
-				//...
+				// to do...
 			} else
 #endif
 			{
@@ -153,7 +163,7 @@ int8_t sensorTemp::Read()
 				}
 			}
 		}
-#endif
+#endif // DEMO
 	}
 
 	// Усреднение значений

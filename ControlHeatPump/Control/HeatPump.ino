@@ -1115,6 +1115,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	#else
 		return true;
 	#endif
+	} else if(strcmp(var, option_f2AutoStartGenerator) == 0) {
+		if(n == 0) { SETBIT0(Option.flags2, f2AutoStartGenerator);	return true; } else if(n == 1) { SETBIT1(Option.flags2, f2AutoStartGenerator); return true; } else return false;
 	} else if(strcmp(var,option_maxBackupPower)==0) {if ((n>=0)&&(n<=10000)) {Option.maxBackupPower=n; return true;} else return false;}       // Максимальная мощность при питании от генератора
 #ifdef WEATHER_FORECAST
 	else if(strcmp(var, option_WF_MinTemp)==0)   { Option.WF_MinTemp = n; return true; }
@@ -1185,6 +1187,15 @@ boolean HeatPump::set_optionHP(char *var, float x)
         PWM_Write(2, n);
 		journal.jprintf("PWM#2=%d\n", n);
 		return true;
+	} else if(strcmp(var,option_fHP_BackupNoPwrWAIT)==0) { // set_oHP(FBNPW={0/1})
+		if(n == 1) {
+			HP.sendCommand(pWAIT);
+			SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+		} else if(n == 0) {
+			SETBIT0(HP.flags, fHP_BackupNoPwrWAIT);
+		} else return false;
+		journal.jprintf("SET fHP_BackupNoPwrWAIT=%d\n", GETBIT(HP.flags, fHP_BackupNoPwrWAIT));
+		return true;
 	}
 	return false;
 }
@@ -1253,6 +1264,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	   return strcat(ret, (char*) cZero);
 	#endif
 	} else
+	if(strcmp(var, option_f2AutoStartGenerator) == 0) { if(GETBIT(Option.flags2, f2AutoStartGenerator)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); } else
 	if(strcmp(var,option_maxBackupPower)==0)   { return _itoa(Option.maxBackupPower,ret); } else    // Максимальная мощность при питании от генератора
 	if(strcmp(var,option_SunTempOn)==0)        { _dtoa(ret,Option.SunTempOn/10, 1); return ret; } else
 	if(strcmp(var,option_SunTempOff)==0)       { _dtoa(ret,Option.SunTempOff/10, 1); return ret; }
@@ -2147,7 +2159,7 @@ void HeatPump::StopWait(boolean stop)
      journal.jprintf_time("%s WAIT . . .\n",(char*)nameHeatPump);
   }
 #ifdef AUTO_START_GENERATOR
-  dRelay[RGEN].set_OFF();
+  if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
 #endif
   return;
 }
@@ -3287,9 +3299,10 @@ xNextStop:
 		journal.jprintf(" Next command stop(%d), skip start", next_command);
 		return;
 	}
+	if(compressor_in_pause) return;  // Обеспечение минимальной паузы компрессора
 
 #ifdef AUTO_START_GENERATOR
-	if(GETBIT(Option.flags, fBackupPower)) {
+	if(GETBIT(Option.flags2, f2AutoStartGenerator) && (GETBIT(flags, fHP_BackupNoPwrWAIT) || GETBIT(Option.flags, fBackupPower))) {
 		dRelay[RGEN].set_ON(); // Включаем или не даем выключиться
 		if(dFC.get_state() == ERR_LINK_FC) {
 			_delay(Option.Generator_Start_Time * 1000); // Задержка на запуск, в том числе и для прогрева генератора
@@ -3311,14 +3324,12 @@ xNextStop:
 		return;
 	}
 
-	// 1. Обеспечение минимальной паузы компрессора
 #ifdef EEV_DEF
-	if(lastEEV != -1 && get_modWork() != pDEFROST) {         // Не первое включение компрессора после старта ТН
-		if(compressor_in_pause) return;
+	//if(lastEEV != -1 && get_modWork() != pDEFROST) {         // Не первое включение компрессора после старта ТН
 #ifdef DEBUG_MODWORK
 		journal.jprintf_time("compressorON > modWork:%X[%s], now %s\n",get_modWork(),codeRet[Status.ret], is_compressor_on() ? "ON" : "OFF");
 #endif
-	}//get_fEEVStartPosByTemp()
+	//}
 
 	// 2. Задержка перед включением компрессора
 #ifdef DEFROST
@@ -3369,7 +3380,7 @@ xNextStop:
 	if(lastEEV != -1 && dEEV.get_EevClose()) {        // Если закрывали то пауза для выравнивания давлений
 		_delay(dEEV.get_delayOn());  // Задержка на delayOn сек  для выравнивания давлений
 	}
-#endif
+#endif // EEV_DEF
 
 	// 4. Управление компрессором
 	if (get_errcode()==OK)                                 // Компрессор включить если нет ошибок
@@ -3544,9 +3555,10 @@ void HeatPump::compressorOFF()
 
 	PUMPS_OFF;                                                          // выключить насосы + задержка
 
-	onBoiler = false;
-	offBoiler = rtcSAM3X8.unixtime();
-
+	if(onBoiler) {
+		onBoiler = false;
+		offBoiler = rtcSAM3X8.unixtime();
+	}
 
 #if defined(EEV_DEF) && !defined(EEV_CLOSE_IMMEDIATELY)
 	if(dEEV.get_EevClose())                                 // Hазбираемся с ЭРВ
@@ -3555,6 +3567,18 @@ void HeatPump::compressorOFF()
 		_delay(dEEV.get_delayOff() * 1000);                              // пауза перед закрытием ЭРВ
 		dEEV.set_EEV(EEV_CLOSE_STEP);                                    // Если нужно, то закрыть ЭРВ
 		journal.jprintf(" EEV closed\n");
+	}
+#endif
+
+#ifdef AUTO_START_GENERATOR
+	if(GETBIT(Option.flags2, f2AutoStartGenerator) && dRelay[RGEN].get_Relay()) {
+		uint32_t t = rtcSAM3X8.unixtime() - stopCompressor;
+		if(t < GENERATOR_OFF_DELAY) {
+			t = GENERATOR_OFF_DELAY - t;
+			journal.jprintf(" Delay %ds before RGEN off . . .\n", t);
+			_delay(t * 1000);
+			dRelay[RGEN].set_OFF();
+		}
 	}
 #endif
 	//journal.jprintf_time("%s PAUSE . . .\n",(char*)nameHeatPump);    // Сообщение о паузе

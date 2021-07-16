@@ -300,7 +300,8 @@ xRewriteHeader:
 #ifdef TEST_BOARD
 	journal.jprintf("\n---> TEST BOARD!!!\n\n");
 #endif
-	journal.jprintf("Firmware version: %s\n",VERSION);
+	journal.jprintf("Config: %s\n", CONFIG_NAME);
+	journal.jprintf("Firmware version: %s\n", VERSION);
 	showID();                                                                  // информация о чипе
 	getIDchip((char*)Socket[0].inBuf);
 	journal.jprintf("Chip ID SAM3X8E: %s\n", Socket[0].inBuf);// информация об серийном номере чипа
@@ -425,6 +426,10 @@ x_I2C_init_std_message:
 				case I2C_ADR_EEPROM+1:	journal.jprintf(" - EEPROM second 64k page\n"); break;
 #endif
 #endif
+#ifdef TNTC_EXT
+				case I2C_ADR_ADS1115:
+				case I2C_ADR_ADS1115_2:		journal.jprintf(" - ADC ADS1115\n"); break;
+#endif
 				case I2C_ADR_RTC   :		journal.jprintf(" - RTC DS3231\n"); break; // 0x68
 				default            :		journal.jprintf(" - Unknow\n"); break; // не определенный тип
 				}
@@ -492,10 +497,10 @@ x_I2C_init_std_message:
 	calc_WebSec_hash(&WebSec_admin, (char*)NAME_ADMIN, HP.get_passAdmin(), Socket[0].outBuf);
 #ifdef HTTP_MAP_Server
 	journal.jprintf(" Microart Malina server: %s", HTTP_MAP_Server);
-#ifdef HTTP_MAP_Server_Login
+ #ifdef HTTP_MAP_Server_Login
 	WebSec_Microart.hash = NULL;
 	calc_WebSec_hash(&WebSec_Microart, (char*)HTTP_MAP_Server_Login, HP.Option.Microart_pass, Socket[0].outBuf);
-#endif
+ #endif
 #endif
 
 	// 7. Инициализация СД карты и запоминание результата 3 попытки
@@ -764,9 +769,9 @@ void vWeb0(void *)
 	for(uint8_t i = 0; i < WR_NumLoads; i++) {
 		if(WR_Load_pins[i] > 0) pinMode(WR_Load_pins[i], OUTPUT);
 	}
-#ifdef PIN_WR_Boiler_Substitution
+ #ifdef PIN_WR_Boiler_Substitution
 	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
-#endif
+ #endif
 	journal.jprintf("WattRouter started\n");
 #endif
 
@@ -895,7 +900,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								}
 							}
 						}
-#endif
+#endif //HTTP_MAP_Read_MAP
 					}
 					if(WR_Refresh || WR.PWM_FullPowerTime) {
 						for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -1251,7 +1256,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					break;
 				}
 			}
-#endif
+#endif // WATTROUTER
 		}
 		if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)
 		{
@@ -1449,7 +1454,7 @@ void vReadSensor(void *)
 #endif
 #endif
 	static uint32_t ttime;
-	static uint8_t  prtemp = 0;
+	static uint8_t  prtemp;
 	
 	for(;;) {
 		int8_t i;
@@ -1457,10 +1462,13 @@ void vReadSensor(void *)
 		ttime = GetTickCount();
 #ifdef RADIO_SENSORS		
 		radio_timecnt++;
+		prtemp = (1<<tRadio_Bus);
+#else
+		prtemp = 0;
 #endif		
 		if(OW_scan_flags == 0) {
 #ifndef DEMO  // Если не демо
-			prtemp = HP.Prepare_Temp(0);
+			prtemp |= HP.Prepare_Temp(0);
 #ifdef ONEWIRE_DS2482_SECOND
 			prtemp |= HP.Prepare_Temp(1);
 #endif
@@ -1469,6 +1477,12 @@ void vReadSensor(void *)
 #endif
 #ifdef ONEWIRE_DS2482_FOURTH
 			prtemp |= HP.Prepare_Temp(3);
+#endif
+#ifdef TNTC
+			prtemp |= tADC_Bus;
+#endif
+#ifdef TNTC_EXT
+			prtemp |= tADS1115_Bus;
 #endif
 #endif     // не DEMO
 		}
@@ -1526,7 +1540,7 @@ void vReadSensor(void *)
 #if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
 		WR_Calc_Power_Array_NewMeter(0);
 #endif
-#endif
+#endif // defined(WR_PowerMeter_Modbus)
 
 		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
 
@@ -1579,9 +1593,6 @@ void vReadSensor(void *)
 		Stats.Update();
 
 		vReadSensor_delay1ms((TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
-
-#ifdef USE_UPS
-#endif
 
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
@@ -1651,7 +1662,7 @@ void vReadSensor(void *)
 // Вызывается во время задержек в задаче чтения датчиков
 void vReadSensor_delay1ms(int32_t ms)
 {
-	if(ms <= 0) return;
+	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) return;
 	uint32_t tm = GetTickCount();
 	do {
 #ifdef  KEY_ON_OFF // Если надо проверяем кнопку включения ТН
@@ -1704,10 +1715,12 @@ void vReadSensor_delay1ms(int32_t ms)
 				}
 			} else HP.Option.flags &= ~(1<<fBackupPower);
 		}
+#endif
 		if(GETBIT(HP.Option.flags, fBackupPower)) {
 			if(!HP.fBackupPowerOffDelay) {			// Нужно уменьшить нагрузку
 #ifdef RBOILER
 				HP.dRelay[RBOILER].set_OFF();		// выключить тэн бойлера
+#endif
 #ifdef WATTROUTER
 				for(uint8_t i = 0; i < WR_NumLoads; i++) {
 					if(!GETBIT(WR_Loads, i) || WR_LoadRun[i] == 0) continue;
@@ -1725,8 +1738,6 @@ void vReadSensor_delay1ms(int32_t ms)
 				HP.fBackupPowerOffDelay = RETURN_FROM_GENERATOR_DELAY / 10;
 			}
 		}
-#endif
-#endif
 #ifdef RADIO_SENSORS
 		if(ms - (GetTickCount() - tm) >= 20) check_radio_sensors();
 #endif
@@ -1899,6 +1910,19 @@ delayTask:	// чтобы задача отдавала часть времени
 			}
 			break;
 		case pWAIT_HP:                          // 4 Ожидание ТН (расписание - пустое место)   проверям раз в 5 сек
+			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
+				if(HP.get_modeHouse() == pHEAT) {
+					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
+						HP.sendCommand(pRESUME);
+					}
+				} else if(HP.get_modeHouse() == pCOOL) {
+					if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
+						HP.sendCommand(pRESUME);
+					}
+				}
+			}
+			_delay(UPDATE_HP_WAIT_PERIOD);
+			break;
 		case pERROR_HP: 						// 5 Ошибка ТН
 			_delay(UPDATE_HP_WAIT_PERIOD);
 			break;

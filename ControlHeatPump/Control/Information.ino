@@ -825,6 +825,7 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_SaveON			= 	12;
 			CNVPROF_SIZE_HeatCool		=	50;
 			CNVPROF_SIZE_Boiler			=	80;
+			CNVPROF_SIZE_DailySwitch    =   0;
 			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler);
 		} else if(HP.Option.ver <= 143) {
 			CNVPROF_SIZE_dataProfile	=	120;
@@ -845,7 +846,7 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_SaveON			= 	12;
 			CNVPROF_SIZE_HeatCool		=	38;
 			CNVPROF_SIZE_Boiler			=	68;
-#ifdef I2C_EEPROM_64KB
+#if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
@@ -856,7 +857,7 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_SaveON			= 	12;
 			CNVPROF_SIZE_HeatCool		=	42;
 			CNVPROF_SIZE_Boiler			=	68;
-#ifdef I2C_EEPROM_64KB
+#if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
@@ -867,7 +868,7 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_SaveON			= 	12;
 			CNVPROF_SIZE_HeatCool		=	48;
 			CNVPROF_SIZE_Boiler			=	68;
-#ifdef I2C_EEPROM_64KB
+#if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
@@ -878,7 +879,7 @@ int8_t  Profile::convert_to_new_version(void)
 //			CNVPROF_SIZE_SaveON			= 	12;
 //			CNVPROF_SIZE_HeatCool		=	50;
 //			CNVPROF_SIZE_Boiler			=	68;
-//#ifdef I2C_EEPROM_64KB
+//#if I2C_SIZE_EEPROM >= 64
 //			CNVPROF_SIZE_DailySwitch	=	30;
 //#else
 //			CNVPROF_SIZE_DailySwitch	=	15;

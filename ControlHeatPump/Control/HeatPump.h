@@ -198,7 +198,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_SunSwitching		2			// Солнечный коллектор переключается
 #define fHP_SunReady			3			// Солнечный коллектор открыт
 #define fHP_SunWork 			4			// Солнечный коллектор работает
-#define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания
+#define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания, если SGENERATOR == ALARM
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define f_reserved_1			0				//
@@ -220,7 +220,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 //  type_optionHP.flags2:
 #define f2BackupPowerAuto		0               // Автоматически определять работу от генератора (через датчик SGENERATOR)
 #define f2NextionGenFlashing	1				// Моргать картинкой на дисплее, если работаем от генератора
-
+#define f2AutoStartGenerator	2				// Автозапуск генератора по специальному гистерезису генератора
 
 // Структура для хранения опций теплового насоса.
 struct type_optionHP
@@ -265,8 +265,8 @@ struct type_optionHP
  int8_t   WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
  char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
  char     WF_ReqText[128];				// Тело GET запроса
- uint16_t Generator_Start_Time;			// Время запуска генератора
 #endif
+ uint16_t Generator_Start_Time;			// Время запуска генератора
 };// __attribute__((packed));
 
 

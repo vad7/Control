@@ -1738,7 +1738,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				ADD_WEBDELIM(strReturn) ; continue;
 			}
 			// ------------------------------------------------------------------------
-			if (strcmp(str,"set_testMode")==0)  // Функция set_testMode  - Установить режим работы бойлера
+			if (strcmp(str,"set_testMode")==0)  // Функция set_testMode
 			{
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E09");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
