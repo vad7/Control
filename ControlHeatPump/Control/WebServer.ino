@@ -901,13 +901,13 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"D"); _itoa((int)(PIN_ONE_WIRE_BUS),strReturn);
 #endif // ONEWIRE_DS2482
 #ifdef RADIO_SENSORS
-			strcat(strReturn,", Radio");
+			strcat(strReturn,", Radio(5)");
 #endif
 #ifdef TNTC
-			strcat(strReturn,", NTC");
+			strcat(strReturn,", NTC(6)");
 #endif
 #ifdef TNTC_EXT
-			strcat(strReturn,", I2C-ADS1115");
+			strcat(strReturn,", I2C-ADS1115(7)");
 #endif
 			ADD_WEBDELIM(strReturn); continue;
 		}
