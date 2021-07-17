@@ -1479,10 +1479,10 @@ void vReadSensor(void *)
 			prtemp |= HP.Prepare_Temp(3);
 #endif
 #ifdef TNTC
-			prtemp |= tADC_Bus;
+			prtemp |= (1<<tADC_Bus);
 #endif
 #ifdef TNTC_EXT
-			prtemp |= tADS1115_Bus;
+			prtemp |= (1<<tADS1115_Bus);
 #endif
 #endif     // не DEMO
 		}

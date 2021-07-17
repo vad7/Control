@@ -1598,6 +1598,7 @@ int8_t devSDM::get_readState(uint8_t group)
 #else
 	float tmp;
 #endif
+	if(testMode != NORMAL) return OK;
 	if(!GETBIT(flags,fSDM) || !GETBIT(flags,fSDMLink)
 #ifdef USE_UPS
 		|| HP.NO_Power
@@ -1703,7 +1704,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	if(strcmp(var,sdm_MAX_POWER)==0){    return _itoa(settingSDM.maxPower,ret);                                  }else      // максимальаня мощность контроля мощности
 	if(strcmp(var,sdm_VOLTAGE)==0){ // Напряжение
 #if defined(SDM_MAX_VOLTAGE) || defined(SDM_MIN_VOLTAGE) || (SDM_READ_PERIOD > 0)
-		_ftoa(ret, Voltage, 2);
+		_itoa(Voltage, ret);
 #else
 #ifdef USE_NOT_SDM_METER
 		if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]) == OK) _dtoa(ret, tmp16[0], 1); else strcat(ret, "ERR");
@@ -1726,7 +1727,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 		return ret;
 	}else
 	if(strcmp(var,sdm_ACPOWER)==0){// Активная мощность
-		_ftoa(ret,(float)AcPower, 2);
+		_itoa(AcPower, ret);
 		return ret;
 	}else
 	if(strcmp(var,sdm_ACENERGY)==0){ // Суммарная активная энергия
@@ -1811,7 +1812,12 @@ boolean devSDM::set_paramSDM(char *var, char *c)
 			settingSDM.maxPower = (uint16_t) x;
 			return true;
 		} else return false;
-	} else return false;
+	} else if(strcmp(var, sdm_ACPOWER) == 0) {  // set_SDM(ACPOWER=x) - установка мощности в режиме тест
+		if(testMode != NORMAL) { AcPower = x; return true; }
+	} else if(strcmp(var, sdm_VOLTAGE) == 0) {  // set_SDM(VOLT=x) - установка напряжения в режиме тест
+		if(testMode != NORMAL) { Voltage = x; return true; }
+	}
+	return false;
 }
 
 // МОДБАС Устройство ----------------------------------------------------------

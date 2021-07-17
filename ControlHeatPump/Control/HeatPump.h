@@ -56,7 +56,7 @@ struct type_status
 #define fMH_ON    	0       // флаг Включения ТН (пишется внутрь счетчиков flags)
 
 #ifndef TEST_BOARD
-	#ifdef I2C_EEPROM_64KB
+	#if I2C_SIZE_EEPROM >= 64
 		#define I2C_COUNT_EEPROM_HEADER 0xAA
 	#else
 		#define I2C_COUNT_EEPROM_HEADER 0xAB

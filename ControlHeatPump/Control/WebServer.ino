@@ -884,8 +884,9 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		}
 		if (strcmp(str,"get_OneWirePin")==0)  // Функция get_OneWirePin
 		{
+			strcat(strReturn, "1-Wire ");
 #ifdef ONEWIRE_DS2482
-			strcat(strReturn, "I2C, DS2482(1");
+			strcat(strReturn, "I2C-DS2482(1");
 #ifdef ONEWIRE_DS2482_SECOND
 			strcat(strReturn, ",2");
 #endif
@@ -895,11 +896,20 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #ifdef ONEWIRE_DS2482_FOURTH
 			strcat(strReturn, ",4");
 #endif
-			strcat(strReturn, ")" WEBDELIM);
+			strcat(strReturn, ")");
 #else
-			strcat(strReturn,"D"); _itoa((int)(PIN_ONE_WIRE_BUS),strReturn); ADD_WEBDELIM(strReturn);
+			strcat(strReturn,"D"); _itoa((int)(PIN_ONE_WIRE_BUS),strReturn);
+#endif // ONEWIRE_DS2482
+#ifdef RADIO_SENSORS
+			strcat(strReturn,", Radio");
 #endif
-			continue;
+#ifdef TNTC
+			strcat(strReturn,", NTC");
+#endif
+#ifdef TNTC_EXT
+			strcat(strReturn,", I2C-ADS1115");
+#endif
+			ADD_WEBDELIM(strReturn); continue;
 		}
 		if (strcmp(str,"scan_OneWire")==0)  // Функция scan_OneWire  - сканирование датчикиков
 		{
@@ -1492,7 +1502,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		if (strcmp(str,"settingSDM")==0)     // Функция settingSDM  Запрограммировать параметры связи счетчика
 		{
 			if (!HP.dSDM.get_present()) {
-				strcat(strReturn,"Счетчик отсутвует");
+				strcat(strReturn,"Счетчик не установлен");
 			} else {
 				HP.dSDM.progConnect();
 				strcat(strReturn,"Счетчик запрограммирован, необходимо сбросить счетчик!!");
@@ -1502,7 +1512,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		if (strcmp(str,"uplinkSDM")==0)     // Функция settingSDM  Попытаться возобновить связь со счетчиком при ее потери
 		{
 			if (!HP.dSDM.get_present()) {
-				strcat(strReturn,"Счетчик отсутвует");
+				strcat(strReturn,"Счетчик не установлен");
 			} else {
 				HP.dSDM.uplinkSDM();
 				strcat(strReturn,"Проверка связи со счетчиком");
@@ -2035,7 +2045,7 @@ xGetOptionHP:
 					HP.get_optionHP(x, strReturn);
 				ADD_WEBDELIM(strReturn);
 				continue;
-			} else if(strcmp(str, "set_oHP") == 0)           // Функция set_optionHP - установить значение паремтра  опций
+			} else if(strcmp(str, "set_oHP") == 0)           // Функция set_optionHP - установить значение параметра опций
 			{
 				if(pm != ATOF_ERROR && *z != '\0') {   // нет ошибки преобразования и не пусто
 					if(HP.set_optionHP(x, pm)) HP.get_optionHP(x, strReturn);  // преобразование удачно,
