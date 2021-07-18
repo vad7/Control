@@ -1462,10 +1462,8 @@ void vReadSensor(void *)
 		ttime = GetTickCount();
 #ifdef RADIO_SENSORS		
 		radio_timecnt++;
-		prtemp = (1<<tRadio_Bus);
-#else
-		prtemp = 0;
-#endif		
+#endif
+		prtemp = 0;	// Очистка ошибок по шинам
 		if(OW_scan_flags == 0) {
 #ifndef DEMO  // Если не демо
 			prtemp |= HP.Prepare_Temp(0);
@@ -1477,12 +1475,6 @@ void vReadSensor(void *)
 #endif
 #ifdef ONEWIRE_DS2482_FOURTH
 			prtemp |= HP.Prepare_Temp(3);
-#endif
-#ifdef TNTC
-			prtemp |= (1<<tADC_Bus);
-#endif
-#ifdef TNTC_EXT
-			prtemp |= (1<<tADS1115_Bus);
 #endif
 #endif     // не DEMO
 		}

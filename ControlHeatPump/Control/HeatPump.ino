@@ -265,7 +265,7 @@ void HeatPump::scan_OneWire(char *result_str)
 		journal.jprintf("\n");
 #endif
 #ifdef TNTC_EXT
-
+		// to do...
 #endif
 		OW_scan_flags = 0;
 	}
@@ -4011,7 +4011,7 @@ int16_t HeatPump::get_temp_evaporating(void)
 #endif
 }
 
-// Возвращает 0 - Нет ошибок или ни одного активного датчика, 1 - ошибка, 2 - превышен предел ошибок
+// Возвращает 0 - Нет ошибок или ни одного активного датчика, (1<<bus) - ошибка
 int8_t	 HeatPump::Prepare_Temp(uint8_t bus)
 {
 	int8_t i, ret = 0;
