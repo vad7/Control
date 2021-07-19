@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.151"				// Версия прошивки
+#define VERSION			"1.152"				// Версия прошивки
 #define VER_SAVE		155					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -618,9 +618,9 @@ const char *prof_ENABLE_PROFILE = {"ENABLE"};     // разрешение исп
 const char *prof_ID_PROFILE     = {"ID"};         // номер профиля, нумерация c 1
 const char *prof_NOTE_PROFILE   = {"NOTE"};       // описание профиля
 const char *prof_DATE_PROFILE   = {"DATE"};       // дата профиля
-const char *prof_CRC16_PROFILE  = {"CRC16"};      // контрольная сумма профиля
 const char *prof_NUM_PROFILE    = {"NUM"};        // максимальное число профилей
 const char *prof_SEL_PROFILE    = {"SEL"};        // список профилей (пока не используется)
+const char *prof_fAutoSwitchProf_mode={"ASM"};
 const char prof_DailySwitch[] 	= "DS";
 const char prof_DailySwitchDevice = 'D';		// DSD
 const char prof_DailySwitchOn  	= 'S';			// DSS

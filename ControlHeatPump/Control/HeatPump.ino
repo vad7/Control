@@ -1493,9 +1493,9 @@ void HeatPump::set_nextMode()
 {
    switch ((MODE_HP)get_modeHouse() )
     {
-      case  pOFF:   Prof.SaveON.mode=pHEAT;  break;
-      case  pHEAT:  Prof.SaveON.mode=pCOOL;  break;
-      case  pCOOL:  Prof.SaveON.mode=pOFF;   break;
+      case  pOFF:   set_mode(pHEAT);  break;
+      case  pHEAT:  set_mode(pCOOL);  break;
+      case  pCOOL:  set_mode(pOFF);   break;
       default: break;
     }
 }
@@ -1882,7 +1882,7 @@ int8_t HeatPump::ResetFC()
 // проверить, Если есть ли работа для ТН - true.
 boolean HeatPump::CheckAvailableWork()
 {
-	return Prof.SaveON.mode != pOFF || GETBIT(Prof.SaveON.flags, fBoilerON) || GETBIT(Option.flags, fSunRegenerateGeo) || Schdlr.IsShedulerOn();
+	return get_modeHouse() != pOFF || GETBIT(Prof.SaveON.flags, fBoilerON) || GETBIT(Option.flags, fSunRegenerateGeo) || Schdlr.IsShedulerOn();
 }
 
 // START/RESUME -----------------------------------------
@@ -2966,7 +2966,18 @@ void HeatPump::vUpdate()
 	defrost();                                                          // Разморозка только для воздушных ТН
 #endif
 
-	Status.modWork = get_Work();                                         // определяем что делаем
+	// Автопереключение Отопление/Охлаждение
+	if(GETBIT(Prof.SaveON.flags, fAutoSwitchProf_mode) && !is_compressor_on() && get_modeHouse() != pOFF && !GETBIT(Prof.Heat.flags, fTarget) && !GETBIT(Prof.Cool.flags, fTarget)) {
+		if(get_modeHouse() == pHEAT && sTemp[TIN].get_Temp() > get_targetTempCool() + Prof.Cool.dTemp) {
+			set_mode(pCOOL);
+			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+		} else if(get_modeHouse() == pCOOL && sTemp[TIN].get_Temp() < get_targetTempHeat() - Prof.Heat.dTemp) {
+			set_mode(pHEAT);
+			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+		}
+	}
+
+	Status.modWork = get_Work();                                       // определяем что делаем
 #ifdef DEBUG_MODWORK
 	save_DumpJournal(false);                                           // Вывод строки состояния
 #endif
@@ -3847,8 +3858,6 @@ void HeatPump::pump_in_pause_set(bool ONOFF)
 }
 
 // --------------------------Строковые функции ----------------------------
-const char *strRusPause={"Пауза"};
-const char *strEngPause={"Pause"};
 // Получить строку состояния ТН в виде строки
 char *HeatPump::StateToStr()
 {
@@ -3859,12 +3868,12 @@ char *HeatPump::StateToStr()
 	case pSTOPING_HP: return (char*)"Останов...";break;         // 2 Останавливается
 	case pWORK_HP:                                              // 3 Работает
 		if(!is_compressor_on()) {
-			if(get_modWork() == pHEAT) return (char*)"Ожид. Нагр.";         // Включить отопление
-			if(get_modWork() == pCOOL) return (char*)"Ожид. Охл.";          // Включить охлаждение
+			if(get_modWork() == pHEAT)   return (char*)"Ожид. Нагр.";       // Включить отопление
+			if(get_modWork() == pCOOL)   return (char*)"Ожид. Охл.";        // Включить охлаждение
 			if(get_modWork() == pBOILER) return (char*)"Ожид. ГВС";         // Включить бойлер
-			return (char*)strRusPause;
+			return (char*)"Пауза";
 		} else {
-			if(get_modWork() == pOFF) return (char*)strRusPause;
+			if(get_modWork() == pOFF)    return (char*)"Пауза";
 			if(get_modWork() & pHEAT)    return (char*)"Отопление";
 			if(get_modWork() & pCOOL)    return (char*)"Охлаждение";
 			if(get_modWork() & pBOILER)  return (char*)"ГВС";
@@ -3874,7 +3883,7 @@ char *HeatPump::StateToStr()
 	case pWAIT_HP:    return (char*)"Ожидание";         	// 4 Ожидание
 	case pERROR_HP:   return (char*)"Ошибка";  				// 5 Ошибка ТН
 	}
-	return (char*)"...."; 							        // 6 - Эта ошибка возникать не должна!
+	return (char*)"?"; 							        // 6 - Эта ошибка возникать не должна!
 }
 
 // Получить строку состояния ТН в виде строки АНГЛИСКИЕ буквы
@@ -3890,9 +3899,9 @@ char *HeatPump::StateToStrEN()
 			if(get_modWork() == pHEAT)   return (char*)"Wait Heat";         // Включить отопление
 			if(get_modWork() == pCOOL)   return (char*)"Wait Cool";         // Включить охлаждение
 			if(get_modWork() == pBOILER) return (char*)"Wait Boiler";       // Включить бойлер
-			return (char*)strEngPause;
+			return (char*)"Pause";
 		} else {
-			if(get_modWork() == pOFF)    return (char*)strEngPause;
+			if(get_modWork() == pOFF)    return (char*)"Pause";
 			if(get_modWork() & pHEAT)    return (char*)"Heating";
 			if(get_modWork() & pCOOL)    return (char*)"Cooling";
 			if(get_modWork() & pBOILER)  return (char*)"Boiler";

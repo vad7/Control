@@ -159,7 +159,7 @@ body.test #get_tblrelay span{display:none}
     font-size: 14px;
     width: 30%; /* устанавливаем необходимую фиксированную ширину, слова будут переноситься */
     min-width:400px;
-    right: 0;
+    right: -100px;
     padding: 10px;
     position: absolute;/* обязательно позиционирум абсолютно */
     text-shadow: 0 1px 1px hsla(0,0%,0%,1);/* тень для текста */
