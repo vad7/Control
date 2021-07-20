@@ -335,7 +335,6 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Имя профиля: "); HP.Prof.get_paramProfile((char*)prof_NAME_PROFILE,Socket[thread].outBuf);STR_END; 
      strcat(Socket[thread].outBuf,"Описание профиля: "); HP.Prof.get_paramProfile((char*)prof_NOTE_PROFILE,Socket[thread].outBuf);STR_END; 
      strcat(Socket[thread].outBuf,"Дата изменения профиля: "); HP.Prof.get_paramProfile((char*)prof_DATE_PROFILE,Socket[thread].outBuf);STR_END; 
-     strcat(Socket[thread].outBuf,"CRC16 профиля: "); HP.Prof.get_paramProfile((char*)prof_CRC16_PROFILE,Socket[thread].outBuf);STR_END; 
      sendBufferRTOS(thread,(byte*)Socket[thread].outBuf,strlen(Socket[thread].outBuf));  
      
      strcpy(Socket[thread].outBuf,"\n  1.5 Опции ТН\r\n");

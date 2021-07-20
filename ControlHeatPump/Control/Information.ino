@@ -379,8 +379,6 @@ void Journal::_write(char *dataPtr)
 void Profile::initProfile()
 {
   err=OK;
-  magic=0xaa;
-  crc16=0;
   strcpy(dataProfile.name,"unknow");
   strcpy(dataProfile.note,"default profile");
   dataProfile.flags=0x00;
@@ -818,6 +816,8 @@ int8_t  Profile::convert_to_new_version(void)
 	  char checkSizeOfInt4[sizeof(Boiler)]={checker(&checkSizeOfInt4)};
 	  char checkSizeOfInt5[sizeof(DailySwitch)]={checker(&checkSizeOfInt5)};
 	//*/
+	typeof(uint8_t) magic;
+	typeof(uint16_t) crc16;
 	uint16_t CNVPROF_SIZE_dataProfile, CNVPROF_SIZE_SaveON, CNVPROF_SIZE_HeatCool, CNVPROF_SIZE_Boiler, CNVPROF_SIZE_DailySwitch, CNVPROF_SIZE_ALL;
 	if(HP.Option.ver < VER_SAVE) {
 		if(HP.Option.ver <= 135) {

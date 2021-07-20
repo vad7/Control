@@ -2970,10 +2970,14 @@ void HeatPump::vUpdate()
 	if(GETBIT(Prof.SaveON.flags, fAutoSwitchProf_mode) && !is_compressor_on() && get_modeHouse() != pOFF && !GETBIT(Prof.Heat.flags, fTarget) && !GETBIT(Prof.Cool.flags, fTarget)) {
 		if(get_modeHouse() == pHEAT && sTemp[TIN].get_Temp() > get_targetTempCool() + Prof.Cool.dTemp) {
 			set_mode(pCOOL);
+#ifdef DEBUG_MODWORK
 			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+#endif
 		} else if(get_modeHouse() == pCOOL && sTemp[TIN].get_Temp() < get_targetTempHeat() - Prof.Heat.dTemp) {
 			set_mode(pHEAT);
+#ifdef DEBUG_MODWORK
 			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+#endif
 		}
 	}
 
