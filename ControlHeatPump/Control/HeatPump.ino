@@ -1509,19 +1509,19 @@ int16_t HeatPump::setTargetTemp(int16_t dt)
 	case pOFF:
 		break;
 	case pHEAT:
-		if(GETBIT(Prof.Heat.flags,fTarget) == 0 || get_ruleHeat() == pHYBRID) {
+		if(GETBIT(Prof.Heat.flags,fTarget) == 0 || get_ruleHeat() == pHYBRID) { // Дом
 			if((Prof.Heat.Temp1 + dt >= 0) && (Prof.Heat.Temp1 + dt <= 4000)) Prof.Heat.Temp1 = Prof.Heat.Temp1 + dt;
 			return Prof.Heat.Temp1;
-		} else {
+		} else {	// Обратка СО
 			if((Prof.Heat.Temp2 + dt >= 1000) && (Prof.Heat.Temp2 + dt <= 5000)) Prof.Heat.Temp2 = Prof.Heat.Temp2 + dt;
 			return Prof.Heat.Temp2;
 		}
 		break;
 	case pCOOL:
-		if(GETBIT(Prof.Cool.flags, fTarget) || get_ruleCool() == pHYBRID) {
-			if((Prof.Cool.Temp1 + dt >= 0) && (Prof.Cool.Temp1 + dt <= 3000)) Prof.Cool.Temp1 = Prof.Cool.Temp1 + dt;
+		if(GETBIT(Prof.Cool.flags, fTarget) == 0 || get_ruleCool() == pHYBRID) { // Дом
+			if((Prof.Cool.Temp1 + dt >= 0) && (Prof.Cool.Temp1 + dt <= 4000)) Prof.Cool.Temp1 = Prof.Cool.Temp1 + dt;
 			return Prof.Cool.Temp1;
-		} else {
+		} else {	// Обратка СО
 			if((Prof.Cool.Temp2 + dt >= 0) && (Prof.Cool.Temp2 + dt <= 5000)) Prof.Cool.Temp2 = Prof.Cool.Temp2 + dt;
 			return Prof.Cool.Temp2;
 		}

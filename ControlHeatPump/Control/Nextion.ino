@@ -51,7 +51,7 @@ const char comm_end[3] = { COMM_END_B, COMM_END_B, COMM_END_B };
 #define NXTID_MODE_AUTO_OFF	0x80
 #define NXTID_MODE_AUTO_ON	0x81
 // Page Boiler
-#define NXTID_BOILER_ONOFF	17
+#define NXTID_BOILER_ONOFF	16
 #define NXTID_BOILER_PLUS	10
 #define NXTID_BOILER_MINUS	11
 // Page Profile
@@ -332,7 +332,8 @@ void Nextion::readCommand()
 					if(cmd2 == NXTID_BOILER_ONOFF) {                       // событие нажатие кнопки вкл/выкл ГВС
 						if(HP.get_BoilerON()) HP.set_BoilerOFF(); else HP.set_BoilerON();
 					} else if(cmd2 == NXTID_BOILER_PLUS || cmd2 == NXTID_BOILER_MINUS) {  // Изменение целевой температуры ГВС шаг изменения сотые градуса
-						setComponentText("tustgvs", dptoa(ntemp, HP.setTempTargetBoiler(cmd2 == NXTID_BOILER_PLUS ? 100 : -100) / 10, 1));
+						dptoa(ntemp, HP.setTempTargetBoiler(cmd2 == NXTID_BOILER_PLUS ? 100 : -100) / 10, 1);
+						setComponentText("t", ntemp);
 					}
 				} else if(cmd1 == NXTID_PAGE_PROFILE) {
 					if(cmd2 == NXTID_SCHEDULER_OFF) {
@@ -599,7 +600,7 @@ void Nextion::Update()
 			sendCommand("vis c0,1");
 			sendCommand("vis o1,0");
 			sendCommand("vis o0,1");
-			switch((RULE_HP) HP.get_ruleHeat()) {
+			switch((int)HP.get_ruleHeat()) {
 			case pHYSTERESIS:
 			case pPID:
 				if(HP.get_TargetHeat()) {	// цель обратка
@@ -623,7 +624,7 @@ void Nextion::Update()
 			sendCommand("vis c0,0");
 			sendCommand("vis o1,0");
 			sendCommand("vis o0,1");
-			switch((RULE_HP) HP.get_ruleCool()) {
+			switch((int)HP.get_ruleCool()) {
 			case pHYSTERESIS:
 			case pPID:
 				if(HP.get_TargetCool()) {
@@ -645,15 +646,15 @@ void Nextion::Update()
 	} else if(PageID == NXTID_PAGE_BOILER)  // Обновление данных 6 страницы "ГВС"
 	{
 		strcat(dptoa(ntemp, HP.sTemp[TBOILER].get_Temp() / 10, 1), NEXTION_xB0);
-		setComponentText("tboiler", ntemp);
+		setComponentText("tb", ntemp);
 		strcat(dptoa(ntemp, HP.sTemp[TCONOUTG].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("tconoutg", ntemp);
 		strcat(dptoa(ntemp, HP.sTemp[TCONING].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("tconing", ntemp);
-		strcat(dptoa(ntemp, HP.get_boilerTempTarget() / 10, 1), "");
-		setComponentText("tustgvs", ntemp);
-		if(HP.get_BoilerON()) sendCommand("gvson.val=1");    // Кнопка включения ГВС в положение ВКЛ
-		else sendCommand("gvson.val=0");                     // Кнопка включения ГВС в положение ВЫКЛ
+		dptoa(ntemp, HP.get_boilerTempTarget() / 10, 1);
+		setComponentText("t", ntemp);
+		if(HP.get_BoilerON()) sendCommand("o.val=1");    // Кнопка включения ГВС в положение ВКЛ
+		else sendCommand("o.val=0");                     // Кнопка включения ГВС в положение ВЫКЛ
 
 	} else if(PageID == NXTID_PAGE_INFO) { // Обновление данных 7 страницы "О контролллере"
 		if(fUpdate == 2) {

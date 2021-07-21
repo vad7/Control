@@ -584,15 +584,15 @@ x_I2C_init_std_message:
 	} else {
 		journal.jprintf(" Disabled\n");
 	}
-	char enstr1[] = "Включен режим тестирования: ";
-	myNextion.Encode_UTF8_to_ISO8859_5((char*)Socket[0].inBuf, enstr1, 100);
-	journal.jprintf("%s=", enstr1);
-	for(uint8_t i = 0; i < strlen((char*)Socket[0].inBuf); i++) journal.jprintf("\\x%02X", Socket[0].inBuf[i]);
-	char enstr2[] = "Режим только:";
-	journal.jprintf("\n%s=", enstr2);
-	myNextion.Encode_UTF8_to_ISO8859_5((char*)Socket[0].inBuf, enstr2, 100);
-	for(uint8_t i = 0; i < strlen((char*)Socket[0].inBuf); i++) journal.jprintf("\\x%02X", Socket[0].inBuf[i]);
-	journal.jprintf("\n");
+//	char enstr1[] = "...";
+//	myNextion.Encode_UTF8_to_ISO8859_5((char*)Socket[0].inBuf, enstr1, 100);
+//	journal.jprintf("%s=", enstr1);
+//	for(uint8_t i = 0; i < strlen((char*)Socket[0].inBuf); i++) journal.jprintf("\\x%02X", Socket[0].inBuf[i]);
+//	char enstr2[] = "...";
+//	journal.jprintf("\n%s=", enstr2);
+//	myNextion.Encode_UTF8_to_ISO8859_5((char*)Socket[0].inBuf, enstr2, 100);
+//	for(uint8_t i = 0; i < strlen((char*)Socket[0].inBuf); i++) journal.jprintf("\\x%02X", Socket[0].inBuf[i]);
+//	journal.jprintf("\n");
 #else
 	journal.jprintf("14. Nextion display is absent in config\n");
 #endif
