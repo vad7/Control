@@ -73,9 +73,9 @@ div.remtemp table table th {height:45px!important;}
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch { right: 0px; background-color: #81D14E; }
 .InpHide { background-color:transparent; }
 .InpHide0 { background-color:transparent }
-table { width: 100%; border-collapse: collapse; margin:5px 0 0 0;} 
+table { width:100%;border-collapse:collapse;margin:5px 0 0 0;border-color:#D6DBDF } 
 th { background: #F7F7F7; font-weight:100; }
-td, th { font-size: 0.9em; padding: 5px; border: 0; text-align: center; /*max-width: 260px; min-width: 80px;*/}
+td, th { font-size: 0.9em; padding: 5px; border: 1; text-align: center; /*max-width: 260px; min-width: 80px;*/}
 body.actuators td, th { max-width: 360px;}
 th:nth-child(-n+2), td:nth-child(-n+2){text-align: left; }
 tr.inactive{display:none;}
