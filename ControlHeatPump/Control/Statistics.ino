@@ -580,7 +580,7 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 		break;
 	case STATS_OBJ_WattRouter_Out:
 		if(flag) strcat(ret, "W"); // ось мощность
-		strcat(ret, "Ваттроутер, кВт/ч"); // хранится в Вт, НЕ кВт*ч!
+		strcat(ret, "Ваттроутер, кВтч");
 		break;
 	case STATS_OBJ_COP_Full:
 		if(flag) strcat(ret, "C"); // ось COP
