@@ -110,7 +110,7 @@ body.test #get_tblrelay span{display:none}
 .visualization span.red{border-color:#BF1E2D;color:#000;}
 .visualization span.blue{border-color:#0F75BC;color:#000;}
 .visualization span.orange{border-color:#F36F29;color:#000;}
-.visualization span.charsw{background:transparent;border-color:transparent;color:red;font-size:25px!important}
+.visualization span.charsw{background:transparent;border-color:transparent;color:red;font-size:22px!important}
 .visualization span:after{content:"°"}
 .visualization span#get_press-pcon:after,.visualization span#get_press-peva:after {content:""}
 .visualization #get_temp-tevain		{margin-top:335px;margin-left:260px}

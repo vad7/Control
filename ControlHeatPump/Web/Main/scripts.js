@@ -1,11 +1,11 @@
 // Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
 // &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
-var VER_WEB = "1.153";
+var VER_WEB = "1.154";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
 //var urlcontrol = 'http://192.168.0.7';
-//var urlcontrol = 'http://';
+//var urlcontrol = '';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения, но не более времени обновления параметров.
 var urlupdate = 4000; // время обновления параметров в миллисекундах
 

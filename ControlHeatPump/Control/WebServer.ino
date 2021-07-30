@@ -2526,8 +2526,24 @@ xget_WR:
 							str += 4;
 							if(strncmp(str, "Relay", 5)==0)           // Функция get_Relay
 							{
-								if (HP.dRelay[p].get_Relay()==true)  strcat(strReturn,cOne); else  strcat(strReturn,cZero);
-								ADD_WEBDELIM(strReturn) ;    continue;
+#if defined(RBOILER) && defined(WATTROUTER) && defined(WR_Load_pins_Boiler_INDEX)
+								if(p == RBOILER) {
+									if(HP.dRelay[p].get_Relay()) {
+										strcat(strReturn, "1"); ADD_WEBDELIM(strReturn); continue;
+									}
+	#ifdef WR_Boiler_Substitution_INDEX
+									if(!digitalReadDirect(PIN_WR_Boiler_Substitution) && WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
+	#else
+									if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
+	#endif
+										strcat(strReturn, "2"); ADD_WEBDELIM(strReturn); continue;
+									}
+										strcat(strReturn, "0"); ADD_WEBDELIM(strReturn); continue;
+								}
+#else
+								if(HP.dRelay[p].get_Relay()) strcat(strReturn, cOne); else strcat(strReturn, cZero);
+								ADD_WEBDELIM(strReturn); continue;
+#endif
 							}
 							if(strncmp(str, "is", 2)==0)           // Функция get_isRelay
 							{
