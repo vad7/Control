@@ -2540,10 +2540,9 @@ xget_WR:
 									}
 										strcat(strReturn, "0"); ADD_WEBDELIM(strReturn); continue;
 								}
-#else
+#endif
 								if(HP.dRelay[p].get_Relay()) strcat(strReturn, cOne); else strcat(strReturn, cZero);
 								ADD_WEBDELIM(strReturn); continue;
-#endif
 							}
 							if(strncmp(str, "is", 2)==0)           // Функция get_isRelay
 							{
