@@ -45,30 +45,16 @@ function show_all() {
 	<h3>Внимание! Необдуманные действия при ручном управлении могут повредить оборудование.</h3>
 	<h3>Снятие блокировки: <input type="checkbox" id="manual_override" onchange="if(this.checked) show_all(this);"></h3>
 	<div id="testmode1" >
-	<h2>Реле</h2>
-	<table>
-	<thead><tr>
-			<th>Имя</th>
-			<th>Описание</th>
-			<th>Pin</th>
-			<th>Управление</th>
-	</tr></thead>
-	<tbody id="get_tblrelay">
-	</tbody>
-	</table>		
+		<h2>Реле</h2>
+		<table border="1" rules="rows">
+		<thead><tr><th>Имя</th><th>Описание</th><th>Pin</th><th>Управление</th></tr></thead>
+		<tbody id="get_tblrelay"></tbody>
+		</table>
 	</div>
 	<div id="testmode2">
 		<h2>ЭРВ [pins: <span id="get_peev-pins"></span>] <button id="set_zeroEEV" onclick='loadParam("set_zeroEEV");'>Установка в 0</button></h2>
 		<table>
-		<thead>
-		<tr>
-			<th>Имя</th>
-			<th>Описание</th>
-			<th>Текущее положение ЭРВ</th>
-			<th>Задать, шаги</th>
-			<th>Задать, %</th>
-		</tr>
-		</thead>
+		<thead><tr><th>Имя</th><th>Описание</th><th>Текущее положение ЭРВ</th><th>Задать, шаги</th><th>Задать, %</th></tr></thead>
 		<tbody>
 		<tr>
 			<td id="get_peev-name">-</td>
@@ -84,23 +70,16 @@ function show_all() {
 	<div id="testmode3">
 		<h2>Инвертор <span id="get_pfc-name"></span> <span id="get_pfc-note"></span> <input type="submit" value="Сброс инвертора"  onclick='loadParam("RESET_FC")'  style="float:right;"> </h2>
 		<table>
-		<thead>
-		<tr>
-			<th>Включение</th>
-			<th id="str1">Цель</th>
-			<th id="str2">Текущая скорость</th>
-			<th id="str3">Частота</th>
-		</tr>
+		<thead><th>Включение</th><th id="str1">Цель</th><th id="str2">Текущая скорость</th><th id="str3">Частота</th></thead>
+		<tbody>
 		<tr>
 			<td><input type="checkbox" id="get_pfc-on_off" onchange="setParam('get_pFC(ON_OFF))');"></td>
 			<td><input id="get_pfc-fc" type="number" step="1" value="0"><input type="submit" value=">" onclick="setParam('get_pFC(FC)');"></td>
 			<td id="get_pfc-cfc"></td>
 			<td id="get_pfc-info1"></td>
 		</tr>			
-		</thead>
-		<tbody>
-	</tbody>
-	</table>						
+		</tbody>
+		</table>						
 	</div>	
 	<div id="testmode4">
 		<h2>Электрический счётчик <span id="get_sdm-name"></span></h2>
