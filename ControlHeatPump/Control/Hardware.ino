@@ -755,8 +755,13 @@ int8_t devEEV::set_EEV(int16_t x)
 // Стартовая позиция ЭРВ
 uint16_t devEEV::get_StartPos()
 {
-	if(GETBIT(_data.flags, fEEV_StartPosByTemp)) {
-		int16_t t = HP.sTemp[HP.is_heating() ? TCONOUTG : TEVAOUTG].get_Temp();
+	if(GETBIT(_data.flags, fEEV_StartPosByTemp)) { // По температурам подачи и геоконтура
+		int16_t t;
+		if(HP.is_heating()) {
+			t = HP.sTemp[TCONOUTG].get_Temp() - HP.sTemp[TEVAING].get_Temp();
+		} else {
+			t = HP.sTemp[TEVAOUTG].get_Temp() - HP.sTemp[TCONING].get_Temp();
+		}
 		if(t <= EEV_START_POS_LOW_TEMP) return _data.StartPos;
 		else if(t >= EEV_START_POS_HIGH_TEMP) return _data.PosAtHighTemp;
 		return (int32_t)_data.StartPos - (t - EEV_START_POS_LOW_TEMP) * (_data.StartPos - _data.PosAtHighTemp) / (EEV_START_POS_HIGH_TEMP - EEV_START_POS_LOW_TEMP);
@@ -925,7 +930,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 #endif
 		if(GETBIT(_data.flags, fEEV_DirectAlgorithm)) {
 #if defined(TCOMPIN)
-			int16_t diff = _data.tOverheat - Overheat;
+			int16_t diff = _data.tOverheat - Overheat;	// >0 - overheat low, <0 - overheat high
 			pidw.trend[trOH_default] += signm(pidw.pre_err - diff, _data.trend_mul_threshold); //sign_dif(pidw.pre_err - diff, pidw.trend[trOH_default]); // +1 - растет, -1 - падает
 			pidw.pre_err = diff;
 			if(pidw.trend[trOH_default] > _data.trend_threshold * 2) {
@@ -994,8 +999,8 @@ xSecond:			if(diff < -_data.tOverheatTCOMP_delta) { // Перегрев боль
 								if(DebugToLog) journal.jprintf(";#6");
 //								newEEV = diff * _data.pid.Kp / (100*1000);
 //								pidw.max = 2;
-								newEEV = diff - pidw.pre_err2[0];
-								if(newEEV >= 0) { //newEEV > _data.tOverheat2_low_hyst) {
+								newEEV = diff - pidw.pre_err2[0];	// >0 - growing, <0 - falling
+								if(newEEV >= 0 || OverheatTCOMP <= (int16_t)_data.tOverheat2_critical / 3) { //newEEV > _data.tOverheat2_low_hyst) {
 									if(DebugToLog) journal.jprintf(";#7");
 									newEEV = diff * _data.pid2.Kp / (100*1000);
 									pidw.max = 1;
