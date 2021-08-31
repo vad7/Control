@@ -495,7 +495,7 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_HP_DIF)==0) {  if ((x>=0)&&(x<=32))  {Cool.pid.Kd=rd(x, 1000); return true;} else return false;   }else             // Дифференциальная составляющая ПИД ТН
 #endif
  if(strcmp(var,hp_TEMP_IN)==0) { if ((x>=0)&&(x<=30))  {Cool.tempInLim=rd(x, 100); return true;} else return false;  }else             // температура подачи (минимальная)
- if(strcmp(var,hp_TEMP_OUT)==0){ if ((x>=0)&&(x<=35))  {Cool.tempOutLim=rd(x, 100); return true;} else return false; }else             // температура обратки (максимальная)
+ if(strcmp(var,hp_TEMP_OUT)==0){ if ((x>=0)&&(x<=40))  {Cool.tempOutLim=rd(x, 100); return true;} else return false; }else             // температура обратки (максимальная)
  if(strcmp(var,hp_D_TEMP)==0) {  if ((x>=0)&&(x<=40))  {Cool.dt=rd(x, 100); return true;} else return false;      }else             // максимальная разность температур конденсатора.
  if(strcmp(var,hp_TEMP_PID)==0){ if ((x>=0)&&(x<=30))  {Cool.tempPID=rd(x, 100); return true;} else return false; }else             // Целевая темпеартура ПИД
  if(strcmp(var,hp_WEATHER)==0) { Cool.flags = (Cool.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else     // Использование погодозависимости

@@ -1,6 +1,6 @@
 // Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
 // &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
-var VER_WEB = "1.156";
+var VER_WEB = "1.157";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
@@ -333,6 +333,7 @@ function loadParam(paramid, noretry, resultdiv) {
 															document.getElementById("get_cool-w").disabled = onoff;
 															document.getElementById("get_cool-kw").disabled = onoff;
 															document.getElementById("get_cool-hp_time").disabled = onoff;
+															document.getElementById("get_cool-temp_out").disabled = !onoff;
 														} else if(idsel == "get_heat-rule") {
 															var onoff = k == 0;
 															document.getElementById("get_heat-target").disabled = k == 2;
@@ -344,6 +345,7 @@ function loadParam(paramid, noretry, resultdiv) {
 															document.getElementById("get_heat-w").disabled = onoff;
 															document.getElementById("get_heat-kw").disabled = onoff;
 															document.getElementById("get_heat-hp_time").disabled = onoff;
+															document.getElementById("get_heat-temp_out").disabled = !onoff;
 														} else if(idsel == "get_cool-target") {
 															document.getElementById("get_cool-temp2").disabled = k == 0;
 															document.getElementById("get_cool-temp1").disabled = k != 0;
