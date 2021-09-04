@@ -387,6 +387,7 @@ private:
 		uint16_t trend_mul_threshold;			// Порог для *2, сотые градуса
 		int16_t  tOverheat2_low;				// Нижняя граница перегрева 2 для быстрого закрытия ЭРВ
 		int16_t  tOverheat2_low_hyst;			// Гистерезис для tOverheat2_low
+		uint8_t  mul_fast;						// Множитель при быстром изменении перегрева, десятые
 #ifdef DEFROST
 		uint16_t defrostPos;					// Позиция при разморозке
 #endif

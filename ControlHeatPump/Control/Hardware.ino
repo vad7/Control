@@ -939,7 +939,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 				pidw.trend[trOH_default] = -_data.trend_threshold * 2;
 			}
 			diff = _data.tOverheatTCOMP - OverheatTCOMP;
-			int8_t fast = signm(pidw.pre_err2[0] - diff, _data.trend_mul_threshold); // 0, +-1, +-2
+			int8_t fast = signm(pidw.pre_err2[0] - diff, _data.trend_mul_threshold); // 0, +-1, +-2. падает (-), растет (+)
 			pidw.trend[trOH_TCOMP] += fast;
 			if(pidw.trend[trOH_TCOMP] > _data.trend_threshold * 2) {
 				pidw.trend[trOH_TCOMP] = _data.trend_threshold * 2;
@@ -956,9 +956,14 @@ int8_t devEEV::Update(void) //boolean fHeating)
 			if(pidw.max) {
 				if(DebugToLog) journal.jprintf(",skip:%d\n", pidw.max);
 				pidw.max--;
-			} else {	// Основной перегрев
+			} else {
 				newEEV = 0;
-				if(pidw.pre_err < -_data.pid2_delta) { // Перегрев больше, проверка порога - открыть ЭРВ
+				if((fast > 3 && pidw.trend[trOH_TCOMP] > 0) || (fast < -3 && pidw.trend[trOH_TCOMP] < 0)) { // слишком быстро
+					newEEV = fast * _data.mul_fast / 10;
+					pidw.trend[trOH_default] = 0;
+					pidw.trend[trOH_TCOMP] = 0;
+				// Основной перегрев
+				} else if(pidw.pre_err < -_data.pid2_delta) { // Перегрев больше, проверка порога - открыть ЭРВ
 					if(pidw.trend[trOH_default] >= _data.trend_threshold) {
 						if(DebugToLog) journal.jprintf(";#1");
 						newEEV = pidw.pre_err * _data.pid.Kp / (100*1000);
@@ -1264,6 +1269,7 @@ void devEEV::get_paramEEV(char *var, char *ret)
 	} else if(strcmp(var, eev_BoilerStartPos)==0){	_itoa(_data.BoilerStartPos, ret);
 	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_dtoa(ret, _data.FromHeatToBoilerMove, 1);
 	} else if(strcmp(var, eev_fEEV_BoilerStartPos)==0) { strcat(ret, (char*)(GETBIT(_data.flags, fEEV_BoilerStartPos) ? cOne : cZero));
+	} else if(strcmp(var, eev_mul_fast)==0)	{		_dtoa(ret, _data.mul_fast, 1);
 	} else if(strcmp(var, eev_DebugToLog)==0) { strcat(ret, (char*)(DebugToLog ? cOne : cZero));
 	} else strcat(ret,"E10");
 }
@@ -1430,6 +1436,7 @@ boolean devEEV::set_paramEEV(char *var,float x)
 	} else if(strcmp(var, eev_tOverheat2_critical)==0){	_data.tOverheat2_critical = rd(x, 100); return true;
 	} else if(strcmp(var, eev_BoilerStartPos)==0){ 		_data.BoilerStartPos = x; return true;
 	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_data.FromHeatToBoilerMove = rd(x, 10); return true;
+	} else if(strcmp(var, eev_mul_fast)==0){			_data.mul_fast = rd(x, 10); return true;
 	} else if(strcmp(var, eev_DebugToLog)==0){ DebugToLog = x; return true;
 	} else return false; // ошибочное имя параметра
 
