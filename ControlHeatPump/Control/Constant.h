@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.157"				// Версия прошивки
+#define VERSION			"1.158"				// Версия прошивки
 #define VER_SAVE		155					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -569,6 +569,7 @@ const char *eev_fEEV_BoilerStartPos={"BF"};
 const char *eev_BoilerStartPos={"BS"};
 const char *eev_FromHeatToBoilerMove={"HBM"};
 const char *eev_defrostPos    = {"DFP"};
+const char *eev_mul_fast      = {"MF"};
 
 // Описание имен параметров MQTT для функций get_paramMQTT set_paramMQTT
 const char *mqtt_USE_TS           =  {"USE_TS"};         // флаг использования ThingSpeak - формат передачи для клиента
