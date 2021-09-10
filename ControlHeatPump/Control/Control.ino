@@ -769,7 +769,7 @@ void vWeb0(void *)
 #ifdef WEATHER_FORECAST
 	static uint8_t WF_Day = 0;
 #endif
-#ifdef HTTP_MAP_RELAY_MAX
+#if defined(HTTP_MAP_RELAY_MAX) && defined(HTTP_MAP_Server)
 	static uint32_t daily_http_time = 0;
 #endif
 #ifdef WATTROUTER
@@ -1382,7 +1382,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 				}
 			}
 #endif
-#ifdef HTTP_MAP_RELAY_MAX
+#if defined(HTTP_MAP_RELAY_MAX) && defined(HTTP_MAP_Server)
 			if(HP.IsWorkingNow()) {
 				uint32_t t = rtcSAM3X8.unixtime();
 				if(t - daily_http_time > 600UL) { // дискретность 10 минут
