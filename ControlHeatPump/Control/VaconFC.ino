@@ -369,13 +369,13 @@ int8_t devVaconFC::set_target(int16_t x, boolean show, int16_t _min, int16_t _ma
 #else // Аналоговое управление
 	Adjust_EEV(x - FC_target);
 	FC_target = x;
-#ifdef FC_ANALOG_OFF_SET_0
-	if(!GETBIT(flags, fOnOff)) return err;
-#endif
 	dac = (int32_t)FC_target * (_data.level100 - _data.level0) / (100*100) + _data.level0;
 	switch (testMode) // РЕАЛЬНЫЕ Действия в зависимости от режима
 	{
 	case NORMAL:
+#ifdef FC_ANALOG_OFF_SET_0
+		if(!GETBIT(flags, fOnOff)) return err;
+#endif
 	case HARD_TEST:
 		analogWrite(pin, dac); //  все включаем
 		break;
@@ -700,7 +700,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
 boolean devVaconFC::set_paramFC(char *var, float f)
 {
 	int16_t x = f;
-    if(strcmp(var,fc_ON_OFF)==0)                { if (x==0) stop_FC();else start_FC();return true;  } else 
+    if(strcmp(var,fc_ON_OFF)==0)                { if(x == 0) stop_FC(); else start_FC(); return true; } else
     if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      { _data.setup_flags = (_data.setup_flags & ~(1<<fAutoResetFault)) | ((x!=0)<<fAutoResetFault); return true;  } else
     if(strcmp(var,fc_LogWork)==0)               { _data.setup_flags = (_data.setup_flags & ~(1<<fLogWork)) | ((x!=0)<<fLogWork); return true;  } else
     if(strcmp(var,fc_fFC_RetOil)==0)            { _data.setup_flags = (_data.setup_flags & ~(1<<fFC_RetOil)) | ((x!=0)<<fFC_RetOil); return true;  } else
