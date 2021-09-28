@@ -33,8 +33,8 @@
 //#define CONFIG_5		// pav2000inv  Инвертор BLDC с шаговым ЭРВ и РТО
 //#define CONFIG_6		// NTC      Частотник PWM, 1 фаза, 4 реле, ЭРВ, NTC
 //#define CONFIG_B1		// Board1   Базовая для платы v1
-#define CONFIG_B2		// Board1   для платы v1, Гео, 1 фаза, 2 реде, ЭРВ, Аналоговое управление частотником
-//#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
+//#define CONFIG_B2		// Board1   для платы v1, Гео, 1 фаза, 2 реде, ЭРВ, Аналоговое управление частотником
+#define CONFIG_7		// vad7     Частотник Vacon, 3 фазы, ЭРВ, 2 датчика давления, РТО, СК, ВаттРоутер
 
 // -----------------------------------------------------------------------------------------------------------------------------------
 // =============================================== C O N F I G   1 ===================================================================
@@ -3475,8 +3475,8 @@ const char *noteTemp[] = {"Температура улицы",
   		#define SD_CLOCK				28	// частота SPI для SD карты в МГц
   		// СЕТЕВЫЕ НАСТРОЙКИ --------------------------------------------------------------
   		uint8_t SPI_RATE 			  = 2;	// делитель для SPI шины, 2=42MHz, 3=28MHz, 4=21MHz, 6=14MHz
-  		const boolean   defaultDHCP	=	false;
-  		const IPAddress defaultIP		(192, 168, 0, 7);
+  		const boolean   defaultDHCP	=	true;
+  		const IPAddress defaultIP		(192, 168, 0, 199);
   		const IPAddress defaultGateway	(192, 168, 0, 1);
   		const IPAddress defaultSDNS		(8, 8, 8, 8);
   	#endif
@@ -3947,7 +3947,8 @@ const char *noteTemp[] = {"Температура улицы",
   	#define FC_USE_RCOMP                            // Использовать для разрешения работы инвертора отдельный выход RCOMP (Vacon FB 172=0)
   													// Используется дискретный вход частотника (0..30V), прописанный в ячейке P5.7 "Работа разрешена" (modbus #407)
   	#define FC_ANALOG_CONTROL						// Использование аналогового управления частотником, Для использования 485 закоментировать эту строку
-  	#define PIN_DEVICE_FC			 5  			// PWMO1, Выход PWM или DACx
+  	#define PIN_DEVICE_FC			 2  			// OUTA1, 0-10V, Выход PWM или DACx
+  	//#define PIN_DEVICE_FC			 5  			// PWMO1, Выход PWM или DACx
   	//#define FC_ANALOG_OFF_SET_0					// Устанавливать выход PIN_DEVICE_FC в 0 при останове компрессора
   	//#define FC_ANALOG_RESOLUTION     8				// Bit (8..12), по умолчанию 8
   	// Значения по умолчанию (начало DEF_) не Константы
