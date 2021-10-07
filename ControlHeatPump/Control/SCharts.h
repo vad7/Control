@@ -56,7 +56,8 @@ enum {
 	STATS_OBJ_Sun,			//= 19,
 	STATS_OBJ_Relay,		//= 20,
 	STATS_OBJ_WattRouter_In,//= 21,
-	STATS_OBJ_WattRouter_Out//= 22
+	STATS_OBJ_WattRouter_Out,//= 22
+	STATS_OBJ_Power_BOILER	// кВт*ч, потрачено на нагрев ГВС всего, включая ваттроутер
 };
 
 const char *STATS_OBJ_names[] = {
@@ -76,13 +77,14 @@ const char *STATS_OBJ_names[] = {
 	"Power_FC",
 	"Power_GEO",
 	"Power_OUT",
-	"Current_FC",
+	"Power_RBOILER",
 	"Compressor",
 	"COP_Full",
 	"Sun",
 	"Relay",
 	"WattRouter_In",
 	"WattRouter_Out",
+	"Power_BOILER",
 	NULL
 };
 

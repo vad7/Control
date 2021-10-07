@@ -243,6 +243,7 @@ void Statistics::Init(uint8_t newyear)
 									case STATS_OBJ_Power:
 									case STATS_OBJ_Power_OUT:
 									case STATS_OBJ_Power_RBOILER:
+									case STATS_OBJ_Power_BOILER:
 									case STATS_OBJ_Power_GEO:
 										switch(Stats_data[i].type) {
 										case STATS_TYPE_SUM:
@@ -429,6 +430,14 @@ void Statistics::Update()
 			}
 			break;
 		}
+		case STATS_OBJ_Power_BOILER: {
+			newval = HP.power_BOILER; // Вт
+			switch(Stats_data[i].type) {
+			case STATS_TYPE_SUM:
+				newval = newval * tm / 3600; // в мВтч
+			}
+			break;
+		}
 #ifdef WATTROUTER
 		case STATS_OBJ_WattRouter_Out: {
 			newval = 0;
@@ -510,6 +519,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 			case STATS_OBJ_Power_GEO:
 			case STATS_OBJ_Power_FC:
 			case STATS_OBJ_Power_RBOILER:
+			case STATS_OBJ_Power_BOILER:
 			case STATS_OBJ_WattRouter_Out:
 				strcat(ret, "W");		// ось мощность
 				break;
@@ -577,6 +587,10 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 	case STATS_OBJ_Power_RBOILER:
 		if(flag) strcat(ret, "W"); // ось мощность
 		strcat(ret, "Бойлер(тэн), кВтч"); // хранится в Вт
+		break;
+	case STATS_OBJ_Power_BOILER:
+		if(flag) strcat(ret, "W"); // ось мощность
+		strcat(ret, "ГВС, кВтч"); // хранится в Вт
 		break;
 	case STATS_OBJ_WattRouter_Out:
 		if(flag) strcat(ret, "W"); // ось мощность
@@ -647,6 +661,7 @@ xSkipEmpty:
 	case STATS_OBJ_Power:					// кВт*ч
 	case STATS_OBJ_Power_OUT:
 	case STATS_OBJ_Power_RBOILER:
+	case STATS_OBJ_Power_BOILER:
 	case STATS_OBJ_Power_GEO:
 		switch(Stats_data[i].type) {
 		case STATS_TYPE_SUM:
@@ -1043,6 +1058,9 @@ void Statistics::History()
 			break;
 		case STATS_OBJ_Power_RBOILER:
 			int_to_dec_str(HP.power_RBOILER, 1, &buf, 0); // W
+			break;
+		case STATS_OBJ_Power_BOILER:
+			int_to_dec_str(HP.power_BOILER, 1, &buf, 0); // W
 			break;
 		case STATS_OBJ_Power_GEO:
 			int_to_dec_str(HP.powerGEO, 1, &buf, 0); // W

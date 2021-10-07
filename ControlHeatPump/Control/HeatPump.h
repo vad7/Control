@@ -323,6 +323,14 @@ struct type_statusHP
 
 #define PUMPS_ON          Pumps(true, DELAY_AFTER_SWITCH_RELAY)               // Включить насосы
 #define PUMPS_OFF         Pumps(false, DELAY_AFTER_SWITCH_RELAY)              // Выключить насосы
+#if defined(R3WAY)
+#define BOILER_HEATING_NOW HP.dRelay[R3WAY].get_Relay()
+#elif defined(RPUMPBH)
+#define IS_BOILER_HEATING (HP.dRelay[RPUMPBH].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay())
+#else
+#define IS_BOILER_HEATING false
+#endif
+
 
 // ------------------------- ОСНОВНОЙ КЛАСС --------------------------------------
 class HeatPump
@@ -586,6 +594,7 @@ public:
 	int32_t powerGEO;									// Мощность системы GEO, Вт
 	int32_t power220;									// Мощность системы 220, Вт
 	int32_t power_RBOILER;								// Мощность нагрева бойлера тэном, Вт
+	int32_t power_BOILER;								// Мощность нагрева бойлера, Вт
 	int32_t fullCOP;									// Полный СОР, сотые
 
 // Удаленные датчики

@@ -4106,6 +4106,7 @@ void HeatPump::calculatePower()
 		power_RBOILER = _power220;
   #endif
 	} else power_RBOILER = 0;
+	power_BOILER = power_RBOILER + (IS_BOILER_HEATING ? powerOUT : 0);
 #else
 	#ifdef WATTROUTER
 		#ifdef WR_Load_pins_Boiler_INDEX
@@ -4118,6 +4119,7 @@ void HeatPump::calculatePower()
 		#ifdef PWM_ACCURATE_POWER
 	_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
 		#endif
+	power_BOILER = _power220 + (IS_BOILER_HEATING ? powerOUT : 0);
 	if(dRelay[RBOILER].get_Relay()) {
 		power_RBOILER = _power220;
 	} else power_RBOILER = 0;
