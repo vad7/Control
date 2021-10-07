@@ -586,7 +586,7 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 		break;
 	case STATS_OBJ_Power_RBOILER:
 		if(flag) strcat(ret, "W"); // ось мощность
-		strcat(ret, "Бойлер(тэн), кВтч"); // хранится в Вт
+		strcat(ret, "Тэн бойлера, кВтч"); // хранится в Вт
 		break;
 	case STATS_OBJ_Power_BOILER:
 		if(flag) strcat(ret, "W"); // ось мощность
