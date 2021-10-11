@@ -27,7 +27,7 @@ const char NEXTION_HP_MODE_Cool[] = "\xBE\xE5\xDB\xD0\xD6\xD4\xD5\xDD\xD8\xD5"; 
 const char NEXTION_HP_MODE_Auto[] = "\xC0\xD5\xD6\xD8\xDC\x20\xB0\xD2\xE2\xDE"; 			// Режим Авто
 const char NEXTION_HP_MODE_Only[] = "\xC0\xD5\xD6\xD8\xDC\x20\xE2\xDE\xDB\xEC\xDA\xDE\x3A"; // Режим только:
 const char NEXTION_HP_TEST[] = "\xB2\xDA\xDB\xEE\xE7\xD5\xDD\x20\xE0\xD5\xD6\xD8\xDC\x20\xE2\xD5\xE1\xE2\xD8\xE0\xDE\xD2\xD0\xDD\xD8\xEF\x3A\x20"; // "Включен режим тестирования: "
-const char NEXTION_xB0[] = "\xB0"; 															// °
+const char NEXTION_xB0[] = "\xB0"; // °
 #define COMM_END_B 0xFF
 const char comm_end[3] = { COMM_END_B, COMM_END_B, COMM_END_B };
 
@@ -377,9 +377,10 @@ void Nextion::readCommand()
 //		case 0x00:	// Nextion has started or reset
 //		case 0x67:  // Touch Coordinate (awake)
 		case 0x68:  // Touch Coordinate (sleep)
-			fUpdate = 1;
+			fUpdate = 2;
 			break;
-//		default: // 0x00 - 	Invalid Instruction, 0x03 - Invalid Page ID, 0x1A,0x1B - Invalid Variable, 0x1E - Invalid Quantity of Parameters, 0x1F - IO Operation failed
+		default: // 0x00 - 	Invalid Instruction, 0x03 - Invalid Page ID, 0x1A,0x1B - Invalid Variable, 0x1E - Invalid Quantity of Parameters, 0x1F - IO Operation failed
+			fUpdate = 1;
 		}
 	}
 	if(fUpdate >= 2) Update();
@@ -414,6 +415,10 @@ void Nextion::Update()
 	{
 		strcat(dptoa(ntemp, HP.sTemp[TIN].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t0", ntemp);
+#ifdef TSUN
+		strcat(dptoa(ntemp, HP.sTemp[TSUN].get_Temp() / 10, 1), NEXTION_xB0);
+		setComponentText("k", ntemp);
+#endif
 		strcat(dptoa(ntemp, HP.sTemp[TOUT].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t2", ntemp);
 		strcat(dptoa(ntemp, HP.sTemp[TBOILER].get_Temp() / 10, 1), NEXTION_xB0);
