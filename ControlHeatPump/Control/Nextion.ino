@@ -409,6 +409,10 @@ void Nextion::Update()
 	}
 
 	if(fUpdate == 0) return;
+#ifdef NEXTION_DEBUG3
+	journal.printf("#: %u\n", GetTickCount());
+#endif
+	StatusLine();
 	//if(!sendCommand("ref_stop")) return;      // Остановить обновление
 	// 2. Вывод в зависмости от страницы
 	if(PageID == NXTID_PAGE_MAIN)  // Обновление данных 0 страницы "Главный экран"
@@ -676,9 +680,6 @@ void Nextion::Update()
 			NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);
 		}
 	} else if(PageID == NXTID_PAGE_PROFILE) { // Обновление данных страницы 8 "Профили"
-#ifdef NEXTION_DEBUG
-		journal.printf("#: %u\n", GetTickCount());
-#endif
 		if(HP.Schdlr.IsShedulerOn()) sendCommand("s.val=1"); else sendCommand("s.val=0");
 		if((HP.IsWorkingNow() && HP.get_State() != pSTOPING_HP)) sendCommand("o.val=0");    // Кнопка включения в положение ВКЛ
 		else sendCommand("o.val=1");    // Кнопка включения в положение ВЫКЛ
@@ -699,11 +700,10 @@ void Nextion::Update()
 			}
 			sendCommand("click z,0");
 		}
-#ifdef NEXTION_DEBUG
-		journal.printf("##: %u\n", GetTickCount());
-#endif
 	}
-	StatusLine();
+#ifdef NEXTION_DEBUG3
+	journal.printf("##: %u\n", GetTickCount());
+#endif
 	fUpdate = 1;
 }
 
@@ -727,12 +727,14 @@ void Nextion::StatusLine()
 		if(HP.get_errcode() == OK) {
 			sendCommand("vis ok,1");
 			sendCommand("vis er,0");
-			if(testMode != NORMAL) {
-				strcpy(buffer, NEXTION_HP_TEST);
-				strcat(buffer, HP.TestToStr());
-				setComponentText("e", buffer);
-				sendCommand("vis e,1");
-			} else sendCommand("vis e,0");
+			if(PageID == NXTID_PAGE_MAIN) {
+				if(testMode != NORMAL) {
+					strcpy(buffer, NEXTION_HP_TEST);
+					strcat(buffer, HP.TestToStr());
+					setComponentText("e", buffer);
+					sendCommand("vis e,1");
+				} else sendCommand("vis e,0");
+			}
 		} else {
 			sendCommand("vis er,1");
 			sendCommand("vis ok,0");
@@ -750,8 +752,6 @@ void Nextion::StatusLine()
 			Encode_UTF8_to_ISO8859_5(ntemp, ss, 10); // 10 = txt_maxl.
 			setComponentText("x", ntemp);
 			sendCommand("vis x,1");					// строка состояния ТН
-			sendCommand("vis f,0");					// ТН выключен
-			if(HP.get_BoilerON()) sendCommand("vis gv,1"); else sendCommand("vis gv,0");
 			switch((MODE_HP) HP.get_modeHouse()) {
 			case pOFF:
 				setComponentPic("y", (char*)"9");
@@ -768,6 +768,8 @@ void Nextion::StatusLine()
 			default:
 				break;
 			} //switch ((int)HP.get_modeHouse() )
+			if(HP.get_BoilerON()) sendCommand("vis gv,1"); else sendCommand("vis gv,0");
+			sendCommand("vis f,0");					// ТН выключен
 		} else { // Насос выключен
 			sendCommand("vis x,0");
 			sendCommand("vis f,1");
