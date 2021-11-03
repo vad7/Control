@@ -262,10 +262,12 @@ void Nextion::readCommand()
 		DataAvaliable = NEXTION_PORT.available();
 		if(p == NULL) break;
 		uint8_t len = p - buffer;
-#ifdef NEXTION_DEBUG2
-		journal.jprintf("NRX%d: ", fUpdate);
-		for(uint8_t i = 0; i < len + 3; i++) journal.jprintf("%02x", buffer[i]);
-		journal.jprintf("\n");
+#ifdef NEXTION_DEBUG_RX
+		if(GETBIT(HP.Option.flags2, f2NextionLog)) {
+			journal.jprintf("NRX%d: ", fUpdate);
+			for(uint8_t i = 0; i < len + 3; i++) journal.jprintf("%02X", buffer[i]);
+			journal.jprintf("\n");
+		}
 #endif
 		switch(buffer[0]) {
 		case 0x65:   //   	Touch Event
@@ -380,7 +382,7 @@ void Nextion::readCommand()
 			fUpdate = 2;
 			break;
 		default: // 0x00 - 	Invalid Instruction, 0x03 - Invalid Page ID, 0x1A,0x1B - Invalid Variable, 0x1E - Invalid Quantity of Parameters, 0x1F - IO Operation failed
-			fUpdate = 1;
+			fUpdate = 2;
 		}
 	}
 	if(fUpdate >= 2) Update();
