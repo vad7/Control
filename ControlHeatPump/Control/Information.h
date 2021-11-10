@@ -158,7 +158,7 @@ struct type_boilerHP {
 #define DS_TimeOn_Extended 236
 struct type_DailySwitch {
 	uint8_t Device;					// Реле, если >=RNUMBER, то дистанционные реле; 0 - нет и конец массива
-	uint8_t TimeOn;					// Время включения hh:m0, или если >= 236, то TOUT: b1=0: T<, b1=1: T>, b2=1: ночью
+	uint8_t TimeOn;					// Время включения hh:m0, или если >= 236, то TOUT: b0=0: T<, b0=1: T>, b1=1: ночью
 	uint8_t TimeOff;				// Время выключения hh:m0, или градусы, если TimeOn >= 236
 } __attribute__((packed));
 
