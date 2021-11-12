@@ -1400,10 +1400,12 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 						if(HP.Prof.DailySwitch[i].Device == 0) break;
 						if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
 						if(GETBIT((_dson ^ DailySwitch_on), i)) {
-							if(!GETBIT(_dson, i)) {
+							if(!GETBIT(_dson, i)) { // off
 								uint8_t j = i + 1;
-								for(; j < DAILY_SWITCH_MAX; j++) if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device) break;
-								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле
+								for(; j < DAILY_SWITCH_MAX; j++) {
+									if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
+								}
+								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле или реле уже включено
 							}
 							strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
 							uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER + 1;
@@ -1411,7 +1413,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 							strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
 							_itoa(GETBIT(_dson, i), Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 							if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
-								for(uint8_t j = 0; j < DAILY_SWITCH_MAX; j++) if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device) DailySwitch_on = (DailySwitch_on & ~(1<<j)) | (GETBIT(_dson, i)<<j);
+								DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
 								SETBIT0(Logflags, fLog_HTTP_RelayError);
 								//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 							} else {
@@ -2175,16 +2177,21 @@ void vServiceHP(void *)
 					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
 						if(HP.Prof.DailySwitch[i].Device == 0) break;
 						if(HP.Prof.DailySwitch[i].Device >= RNUMBER) continue;
-						if(GETBIT(_dson, i) != HP.dRelay[HP.Prof.DailySwitch[i].Device].get_Relay()) {
-							if(!GETBIT(_dson, i)) {
+						if(GETBIT((_dson ^ DailySwitch_on), i)) { //GETBIT(_dson, i) != HP.dRelay[HP.Prof.DailySwitch[i].Device].get_Relay()) {
+							if(!GETBIT(_dson, i)) { // off
 								uint8_t j = i + 1;
-								for(; j < DAILY_SWITCH_MAX; j++) if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device) break;
-								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле
+								for(; j < DAILY_SWITCH_MAX; j++) {
+									if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
+								}
+								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле или реле уже включено
 							}
 							HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(GETBIT(_dson, i) ? fR_StatusDaily : -fR_StatusDaily);
-							for(uint8_t j = 0; j < DAILY_SWITCH_MAX; j++) if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device) DailySwitch_on = (DailySwitch_on & ~(1<<j)) | (GETBIT(_dson, i) & (1<<j));
+							DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
 						}
 					}
+
+				journal.jprintf("\n", _dson);
+
 				}
 				STORE_DEBUG_INFO(75);
 			}

@@ -1181,7 +1181,8 @@ int8_t Profile::check_DailySwitch(uint8_t idx, uint32_t hhmm)
 		end = DailySwitch[idx].TimeOff * 10;
 	}
 	ret = (end >= st && hhmm >= st && hhmm < end) || (end < st && (hhmm >= st || hhmm < end));
-	if(ret == 0 && (st = DailySwitch[idx].TimeOn) >= DS_TimeOn_Extended) {
+	if(ret && (st = DailySwitch[idx].TimeOn) >= DS_TimeOn_Extended) { // Ночью температура, было - ночью всегда, температура в другое время : if(!ret && (st = DailySwitch[idx].TimeOn) >= DS_TimeOn_Extended) {
+		//ret = 0;
 xCheckTemp:
 		int16_t t = HP.sTemp[TOUT].get_Temp();
 		int16_t trg = ((int8_t)DailySwitch[idx].TimeOff) * 100;

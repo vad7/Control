@@ -1,6 +1,6 @@
 // Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
 // &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
-var VER_WEB = "1.161";
+var VER_WEB = "1.162";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
