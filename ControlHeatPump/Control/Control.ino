@@ -2189,9 +2189,6 @@ void vServiceHP(void *)
 							DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
 						}
 					}
-
-				journal.jprintf("\n", _dson);
-
 				}
 				STORE_DEBUG_INFO(75);
 			}
