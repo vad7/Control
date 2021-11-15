@@ -55,12 +55,12 @@ void Message::initMessage(uint8_t web_task)
   //  rtcSAM3X8.set_alarmtime(11, 17, 0);                                              // завести будильник для отправки сигнала жизни
   //  rtcSAM3X8.attachalarm(life_signal);
 
-  strcpy(messageSetting.smtp_server, "smtp-devices.yandex.ru");                    // Адрес сервера без SSL/TSL
+  strcpy(messageSetting.smtp_server, "mail.smtp2go.com");                    // Адрес сервера без SSL/TSL
   messageSetting.smtp_serverIP = zeroIP;                                           // сделать адрес 0.0.0.0
   messageSetting.smtp_port = 25;                                                   // Адрес порта сервера
   strcpy(messageSetting.smtp_login, "login");                                      // логин сервера если включена авторизация
   strcpy(messageSetting.smtp_password, "password");                                // пароль сервера если включена авторизация
-  strcpy(messageSetting.smtp_MailTo, "MK@home");                                   // адрес отправителя
+  strcpy(messageSetting.smtp_MailTo, "MK@home.net");                               // адрес отправителя
   strcpy(messageSetting.smtp_RCPTTo, "");                                          // адрес получателя
 
   messageSetting.sms_service = pSMS_RU;                                            // Cервис отправки смс по умолчанию sms.ru
