@@ -379,10 +379,13 @@ void Nextion::readCommand()
 //		case 0x00:	// Nextion has started or reset
 //		case 0x67:  // Touch Coordinate (awake)
 		case 0x68:  // Touch Coordinate (sleep)
-			_delay(100);
+			_delay(120);
 			fUpdate = 2;
 			break;
 		default: // 0x00 - 	Invalid Instruction, 0x03 - Invalid Page ID, 0x1A,0x1B - Invalid Variable, 0x1E - Invalid Quantity of Parameters, 0x1F - IO Operation failed
+			_delay(120);
+			while(NEXTION_PORT.available()) NEXTION_PORT.read();
+			input_delay = 20; // *NEXTION_READ;
 			fUpdate = 2;
 		}
 	}
