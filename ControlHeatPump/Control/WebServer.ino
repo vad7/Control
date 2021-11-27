@@ -1532,7 +1532,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				uint8_t m = atoi(str + 4);
 				for(i = 0; i < TNUMBER; i++)
 					if((HP.sTemp[i].get_cfg_flags() & (1<<m)) && ((HP.sTemp[i].get_cfg_flags()&(1<<0)) || HP.sTemp[i].get_fAddress())) {
-						if(HP.sTemp[i].get_setup_flags() & ((1<<fTEMP_as_TIN_average) | (1<<fTEMP_as_TIN_min))) strcat(strReturn, "*");
+						if(HP.sTemp[i].get_setup_flags() & ((1<<fTEMP_as_TIN_average) | (1<<fTEMP_as_TIN_min) | (1<<fTEMP_HeatTarget))) strcat(strReturn, "*");
 						strcat(strReturn, HP.sTemp[i].get_name()); strcat(strReturn, ";");
 					}
 			} else if(strcmp(str,"Input")==0)     // Функция get_tblInput
@@ -2295,15 +2295,20 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
  							if(strncmp(str, "min", 3)==0)           // Функция get_minTemp
 							{
 								if(HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
-									l_i32 = get_TempAlarmMin(p) / 100;
-									if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+									l_i32 = get_TempAlarmMin(p);
+									if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {
+										_dtoa(strReturn, l_i32, 2);
+									} else {
+										l_i32 /= 100;
+										if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+									}
 								}
 								ADD_WEBDELIM(strReturn); continue;
 							}
 
 							if(strncmp(str, "max", 3)==0)           // Функция get_maxTemp
 							{
-								if(HP.sTemp[p].get_present()) {     // Если датчик есть в конфигурации, то выводим значение
+								if(HP.sTemp[p].get_present() && !HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {     // Если датчик есть в конфигурации, то выводим значение
 									l_i32 = get_TempAlarmMax(p) / 100;
 									if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
 								}
@@ -2368,7 +2373,7 @@ x_get_aTemp:
 
 							if(strncmp(str, "fTemp", 5)==0){  // get_fTempX(N): X - номер флага fTEMP_* (1..), N - имя датчика (flag)
 								_itoa(HP.sTemp[p].get_setup_flag(str[5] - '0' - 1 + fTEMP_ignory_errors), strReturn);
-								ADD_WEBDELIM(strReturn);  continue;
+								ADD_WEBDELIM(strReturn); continue;
 							}
 
 						// ---- SET ----------------- Для температурных датчиков - запросы на УСТАНОВКУ парметров
@@ -2387,14 +2392,21 @@ x_get_aTemp:
 							}
 							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
 								l_i32 = pm;
-								if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN;
-								set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
-								l_i32 = get_TempAlarmMin(p) / 100;
-								if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {
+									set_TempAlarmMin(p, l_i32 & 0xFF);
+									set_TempAlarmMax(p, l_i32 >> 8);
+									_itoa(l_i32, strReturn);
+								} else {
+									if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN;
+									set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
+									l_i32 = get_TempAlarmMin(p) / 100;
+									if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+								}
 								ADD_WEBDELIM(strReturn);  continue;
 							}
 							if(strncmp(str, "max", 3)==0) {         // Функция set_maxTemp
 								l_i32 = pm;
+								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) { ADD_WEBDELIM(strReturn);  continue; }
 								if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MAX;
 								set_TempAlarmMax(p, l_i32);    		// Установить значение в градусах
 								l_i32 = get_TempAlarmMax(p) / 100;
@@ -2414,7 +2426,12 @@ x_get_aTemp:
 
 							if(strncmp(str, "fTemp", 5) == 0) {   // set_fTempX(N=V): X - номер флага fTEMP_* (1..), N - имя датчика (flag)
 								i = str[5] - '0' - 1 + fTEMP_ignory_errors;
-								HP.sTemp[p].set_setup_flag(i, int(pm));
+								int8_t n = pm;
+								if(i == fTEMP_HeatTarget && n == 0) { // нужно очистить
+									set_TempAlarmMin(p, TEMP_ALARM_TEMP_MIN);
+									set_TempAlarmMax(p, TEMP_ALARM_TEMP_MAX);
+								}
+								HP.sTemp[p].set_setup_flag(i, n);
 								_itoa(HP.sTemp[p].get_setup_flag(i), strReturn);
 								ADD_WEBDELIM(strReturn); continue;
 							}

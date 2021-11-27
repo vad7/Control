@@ -874,17 +874,17 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
 			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
-//		} else if(HP.Option.ver <= 155) {
-//			CNVPROF_SIZE_dataProfile	=	120;
-//			CNVPROF_SIZE_SaveON			= 	12;
-//			CNVPROF_SIZE_HeatCool		=	50;
-//			CNVPROF_SIZE_Boiler			=	68;
-//#if I2C_SIZE_EEPROM >= 64
-//			CNVPROF_SIZE_DailySwitch	=	30;
-//#else
-//			CNVPROF_SIZE_DailySwitch	=	15;
-//#endif
-//			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+		} else  { // last ver
+			CNVPROF_SIZE_dataProfile	=	120;
+			CNVPROF_SIZE_SaveON			= 	12;
+			CNVPROF_SIZE_HeatCool		=	50;
+			CNVPROF_SIZE_Boiler			=	68;
+#if I2C_SIZE_EEPROM >= 64
+			CNVPROF_SIZE_DailySwitch	=	30;
+#else
+			CNVPROF_SIZE_DailySwitch	=	15;
+#endif
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		}
 		journal.jprintf("Converting Profiles to new version...\n");
 		if(readEEPROM_I2C(I2C_PROFILE_EEPROM, (byte*)&Socket[0].outBuf, CNVPROF_SIZE_ALL * I2C_PROFIL_NUM)) return ERR_LOAD_EEPROM;

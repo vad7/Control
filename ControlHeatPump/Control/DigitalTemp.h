@@ -29,7 +29,8 @@ enum TEMP_SETUP_FLAGS { // bit #
 	fTEMP_ignory_CRC,		// 4: Ошибки CRC игнорируются - неверные показания отбрасываеются через GAP_TEMP_VAL_CRC
 	fTEMP_as_TIN_average,	// 5: Используется для расчета TIN в качестве средней температуры, между всеми датчиками с таким флагом
 	fTEMP_as_TIN_min,		// 6: Используется для расчета TIN в качестве минимальной температуры, между всеми датчиками с таким и "average" флагами
-	fTEMP_HeatFloor			// 7: Используется для управления реле теплого пола (RPUMPFL), если температура любого датчика с этим флагом меньше целевой - реле вкл, иначе - реле выкл.
+	fTEMP_HeatFloor,		// 7: Используется для управления реле теплого пола (RPUMPFL), если температура любого датчика с этим флагом меньше целевой - реле вкл, иначе - реле выкл.
+	fTEMP_HeatTarget		// 8: Использовать датчик для включения/выключения нагрева по температуре "Мининимум". Гистерезис как задан в настройках отопления.
 };
 #define fDS2482_bus_mask	3
 
@@ -104,7 +105,7 @@ char Radio_RSSI_to_Level(uint8_t RSSI);
 struct _TempAlarm {
 	uint8_t num;
 	int8_t MinTemp;		// градусы
-	int8_t MaxTemp;		// градусы
+	int8_t MaxTemp;		// градусы, или старший байт целевой температуры, если установлен бит fTEMP_HeatTarget
 } __attribute__((packed));
 _TempAlarm *TempAlarm = NULL;
 uint8_t TempAlarm_size = 0;
@@ -143,7 +144,7 @@ class sensorTemp
     __attribute__((always_inline)) inline boolean get_fAddress(){ return GETBIT(flags,fAddress); } // Датчик привязан
     uint8_t get_bus(void);									// Шина
     __attribute__((always_inline)) inline boolean get_setup_flag(uint8_t bit){ return GETBIT(setup_flags, bit); }
-    __attribute__((always_inline)) inline uint8_t get_setup_flags(void){ return setup_flags; }
+    __attribute__((always_inline)) inline uint16_t get_setup_flags(void){ return setup_flags; }
     inline void set_setup_flag(uint8_t bit, uint8_t value){ setup_flags = (setup_flags & ~(1<<bit)) | ((value!=0)<<bit); }
     int8_t   get_radio_received_idx();					// Индекс массива полученных данных
     inline int8_t set_Err(int8_t e) { return err = e; }		// Установить ошибку
@@ -177,11 +178,11 @@ class sensorTemp
    byte    flags;                                       // флаги  датчика
    struct { // Save GROUP, firth number
 	   uint8_t number;  								// Номер датчика
-	   int16_t errTemp;                                 // статическая ошибка датчика
-	   int16_t testTemp;                                // температура датчика в режиме тестирования
+	   int16_t errTemp;                                 // статическая ошибка датчика, сотые
+	   int16_t testTemp;                                // температура датчика в режиме тестирования, сотые
 	   byte    address[8];                              // текущий адрес датчика
 	   	   	   	   	   	   	   	   	   	   	   	   	   	// для радиодатчика, байты: 1 = tRadio, 4 - адрес
-	   uint8_t setup_flags;							   	// флаги настройки (TEMP_SETUP_FLAGS)
+	   uint16_t setup_flags;							// флаги настройки (TEMP_SETUP_FLAGS)
    } __attribute__((packed));// Save Group end, setup_flags
    char    *note;                                       // Описание датчика
    char    *name;                                        // Имя датчика
