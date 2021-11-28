@@ -2,12 +2,33 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="style.css">
+<style>
+#feedback { font-size: 0.8em; }
+#calendar .ui-selecting { background: #FECA40; }
+#calendar .ui-selected { background: #F39814; }
+#calendar { margin: 0; padding: 0; font-size: 0.8em; border-spacing: 0;  max-width: 550px }
+#calendar td.clc { margin: 2px; padding: 1px; text-align: center; color: red; border: 1px dotted black; width: 20px; height: 20px }
+#calendar th { text-align: center }
+</style>
+<script src="jquery.min.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="jquery.ui.touch.js"></script>
+<script>
+window.calendar_act_chr = "&#9899";
+var shifted;
+$( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
+	$( ".ui-selected", this ).each(function() {
+		this.innerHTML = shifted ? "" : window.calendar_act_chr;
+	});
+} }); });
+$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+</script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(ATTEMPT),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW),get_oHP(DSH)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(SCHEDULER)");
 }; 
 </script>
 </head>
@@ -18,12 +39,7 @@ window.onload = function() {
 	<input type="submit" value="?" onclick='location.assign("config-help.html")' style="float:none;"></h1>
 	<div class="row1">
 		<table border="1" rules="rows">
-		<thead>
-		<tr>
-			<th>Описание</th>
-			<th>Значение</th>
-		</tr>
-		</thead>			
+		<thead><tr><th>Описание</th><th>Значение</th></tr></thead>			
 		<tbody>
 		<tr>
 			<td>Расположение файлов веб-сервера на SPI Flash (иначе на SD карте)<sup>1</sup></td>
@@ -132,6 +148,24 @@ window.onload = function() {
 		<tr>
 			<td>Время на запуск генератора (сек.)</td>
 			<td nowrap><input type="number" id="get_ohp-gst"> <input type="submit" value=">" onclick="setParam('get_oHP(GST)');"></td>
+		</tr>
+		<tr>
+			<td nowrap>
+				Период контроля дополнительных целевых датчиков температуры:
+				<table id="calendar">
+					<thead><th style="text-align: right">Часы:</th>
+					<th>00</th><th>01</th><th>02</th><th>03</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="clh"></td>
+							<td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td>
+							<td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+			<td><input type="submit" value="Запомнить" onClick="setParam('get_oHP(SCHEDULER)');"></td>
 		</tr>
 
 		<tr>
