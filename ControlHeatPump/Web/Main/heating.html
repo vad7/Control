@@ -4,12 +4,33 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="style.css">
+<style>
+#feedback { font-size: 0.8em; }
+#calendar .ui-selecting { background: #FECA40; }
+#calendar .ui-selected { background: #F39814; }
+#calendar { margin: 0; padding: 0; font-size: 0.8em; border-spacing: 0;  max-width: 550px }
+#calendar td.clc { margin: 2px; padding: 1px; text-align: center; color: red; border: 1px dotted black; width: 20px; height: 20px }
+#calendar th { text-align: center }
+</style>
+<script src="jquery.min.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="jquery.ui.touch.js"></script>
+<script>
+window.calendar_act_chr = "&#9899";
+var shifted;
+$( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
+	$( ".ui-selected", this ).each(function() {
+		this.innerHTML = shifted ? "" : window.calendar_act_chr;
+	});
+} }); });
+$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+</script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
 	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Cool(KW),get_Heat(KW),get_Cool(W),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL),get_Heat(TRH),get_Heat(PW),get_Heat(PP),get_Heat(TMR)");
-	loadParam("get_listDSR,get_tblPDS");
+	loadParam("get_Heat(AT),get_Heat(SCHEDULER),get_listDSR,get_tblPDS");
 };
 function setDS(v, i) {
 	var val = document.getElementById("get_prof-ds" + v.toLowerCase() + i).value;
@@ -48,6 +69,30 @@ function loadParam_after(paramid) {
 		<td nowrap><input id="get_heat-temp1" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP1)');"></td>
 		<td nowrap><input id="get_cool-temp1" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP1)');"></td>
 	</tr>
+	<tr>
+		<td>Использовать дополнительные целевые датчики температуры</td>
+		<td><input type="checkbox" id="get_heat-hfl" onchange="setParam('get_Heat(AT)');"></td>
+		<td></td>
+	</tr>
+		<tr>
+			<td nowrap>
+				Период контроля дополнительных целевых датчиков температуры:
+				<table id="calendar">
+					<thead><th style="text-align: right">Часы:</th>
+					<th>00</th><th>01</th><th>02</th><th>03</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="clh"></td>
+							<td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td>
+							<td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td><td class="clc"></td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+			<td><input type="submit" value="Запомнить" onClick="setParam('get_oHP(SCHEDULER)');"></td>
+		</tr>
+	<tr>
 	<tr>
 		<td>Целевая температура обратки °C [10..50]</td>
 		<td nowrap><input id="get_heat-temp2" type="number" min="10" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP2)');"></td>
@@ -197,7 +242,6 @@ function loadParam_after(paramid) {
 		<td><b>Опции</b></td>
 		<td></td><td></td>
 	</tr>
-	<tr>
 		<td>Теплый пол</td>
 		<td><input type="checkbox" id="get_heat-hfl" onchange="setParam('get_Heat(HFL)');"></td>
 		<td><input type="checkbox" id="get_cool-hfl" onchange="setParam('get_Cool(HFL)');"></td>

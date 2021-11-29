@@ -576,6 +576,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_HEAT_FLOOR)==0) { Heat.flags = (Heat.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
 	if(strcmp(var,hp_SUN)==0) { Heat.flags = (Heat.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
 	if(strcmp(var,hp_fP_ContinueAfterBoiler)==0) { Heat.flags = (Heat.flags & ~(1<<fP_ContinueAfterBoiler)) | ((x!=0)<<fP_ContinueAfterBoiler); return true; }else
+	if(strcmp(var,hp_fUseAdditionalTargets)==0) { Heat.flags = (Heat.flags & ~(1<<fUseAdditionalTargets)) | ((x!=0)<<fUseAdditionalTargets); return true; }else
 	if(strcmp(var,hp_K_WEATHER)==0){ Heat.kWeatherPID=rd(x, 1000); return true; } else            // Коэффициент погодозависимости
 	if(strcmp(var,hp_kWeatherTarget)==0){ Heat.kWeatherTarget=rd(x, 1000); return true; } else
 	if(strcmp(var,hp_WeatherBase)==0){ Heat.WeatherBase = x; return true; } else
@@ -598,6 +599,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	}else
 	if(strcmp(var,option_PUMP_PAUSE)==0)    { Heat.pausePump=x; return true; }else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
 	if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Heat.delayOffPump = x; return true; } else
+	if(strcmp(var, option_HeatTargetScheduler)==0) { Heat.HeatTargetScheduler = strtol(var, NULL, 2); return true; } else
 	return false;
 }
 
@@ -637,6 +639,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Heat.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Heat.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_fP_ContinueAfterBoiler)==0){ if(GETBIT(Heat.flags,fP_ContinueAfterBoiler)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
+	if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Heat.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_targetPID)==0){ _dtoa(ret,HP.CalcTargetPID(Heat),2); return ret;    } else
 	if(strcmp(var,hp_K_WEATHER)==0){ _dtoa(ret,Heat.kWeatherPID,3); return ret;            } else                 // Коэффициент погодозависимости
 	if(strcmp(var,hp_kWeatherTarget)==0){ _dtoa(ret,Heat.kWeatherTarget,3); return ret;    } else
@@ -646,6 +649,12 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,hp_FC_FreqLimit)==0) { _dtoa(ret, Heat.FC_FreqLimit, 2); return ret; } else
 	if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Heat.delayOffPump, ret); } else
 	if(strcmp(var,hp_FC_FreqLimitHour)==0) { strcat_time(ret, Heat.FC_FreqLimitHour * 10); return ret; } else
+	if(strcmp(var, option_HeatTargetScheduler) == 0){
+		ret += strlen(ret);
+		for(uint8_t i = 0; i < 24; i++) *ret++ = (Heat.HeatTargetScheduler & (1<<i)) ? 1 : 0;
+		*ret = '\0';
+		return ret;
+	} else
 	return  strcat(ret,(char*)cInvalid);
 }
 

@@ -845,6 +845,7 @@ const char *option_DefrostTempSteam   = {"DFTS"};
 const char *option_DefrostTempEnd     = {"DFTE"};
 #endif
 const char *option_fHP_BackupNoPwrWAIT= {"FBNPW"};
+const char *option_HeatTargetScheduler= {"SCHEDULER"};           // Расписание
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
@@ -892,6 +893,7 @@ const char *hp_CompressorPause = {"CP"};
 const char *hp_FC_FreqLimitHour = {"FLH"};
 const char *hp_FC_FreqLimit = {"FL"};
 const char *hp_fP_ContinueAfterBoiler = {"CAB"};
+const char *hp_fUseAdditionalTargets = {"AT"};
 const char *option_ADD_HEAT           = {"H_list"}; // использование дополнительного нагревателя (значения 1 и 0)
 const char *option_TEMP_RHEAT         = {"TRH"};    // температура для управления RHEAT (градусы)
 const char *hp_timeRHEAT		      = {"TMR"};

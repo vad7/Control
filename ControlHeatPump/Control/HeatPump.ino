@@ -1191,11 +1191,11 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	} else if(strcmp(var,option_fHP_BackupNoPwrWAIT)==0) { // set_oHP(FBNPW={0/1})
 		if(n == 1) {
 			HP.sendCommand(pWAIT);
-			SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+			SETBIT1(flags, fHP_BackupNoPwrWAIT);
 		} else if(n == 0) {
-			SETBIT0(HP.flags, fHP_BackupNoPwrWAIT);
+			SETBIT0(flags, fHP_BackupNoPwrWAIT);
 		} else return false;
-		journal.jprintf("SET fHP_BackupNoPwrWAIT=%d\n", GETBIT(HP.flags, fHP_BackupNoPwrWAIT));
+		journal.jprintf("SET fHP_BackupNoPwrWAIT=%d\n", GETBIT(flags, fHP_BackupNoPwrWAIT));
 		return true;
 	}
 	return false;
@@ -2590,6 +2590,19 @@ MODE_COMP HeatPump::UpdateHeat()
 	}
 	t1 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
 	target = get_targetTempHeat();
+	if(GETBIT(Prof.Heat.flags, fUseAdditionalTargets) && (Prof.Heat.HeatTargetScheduler & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
+		for(uint8_t i = 0; i < TNUMBER; i++) {
+			if(GETBIT(HP.Prof.SaveON.bTIN, i) && sTemp[i].get_setup_flag(fTEMP_HeatTarget)) {
+				t1 = sTemp[i].get_Temp();
+				target = get_TempAlarmMin(i);
+				if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp)) {
+					sTemp[i].set_flag(fActive, 1);
+					break;
+				}
+			}
+		}
+	}
+
 	if(is_compressor_on() && !onBoiler) {
 #ifdef R4WAY
 		if(dRelay[R4WAY].get_Relay()) {	// 4-х ходовой в другом положении - ошибка
@@ -2989,6 +3002,9 @@ void HeatPump::vUpdate()
 #endif
 	if(error) return;
 	//  реализуем требуемый режим
+	if(!(Status.modWork & pHEAT)) {
+		for(uint8_t i = 0; i < TNUMBER; i++) sTemp[i].set_flag(fActive, 0);
+	}
 	if(Status.modWork == pOFF) {
 		if(is_compressor_on()) {  // ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
 			compressorOFF();

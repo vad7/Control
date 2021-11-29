@@ -2286,6 +2286,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 									else {
 										strReturn = dptoa(strReturn + m_strlen(strReturn), HP.sTemp[p].get_Temp(), 2);
 										if(*HP.sTemp[p].get_address() == tRadio) *--strReturn = '\0';
+										if(HP.sTemp[p].get_flag(fActive)) { *strReturn++ = '*'; *strReturn = '\0'; }
 									}
 	#endif
 								} else strcat(strReturn, "-");             // Датчика нет ставим прочерк

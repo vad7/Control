@@ -154,6 +154,7 @@ struct type_boilerHP {
 #define fP_ContinueAfterBoiler	4    // Продолжить работу по нагреву/охлаждению после нагрева бойлера
 #define fAddHeat1				5    // Использование дополнительного тэна при нагреве (битовое поле)
 #define fAddHeat2				6    // 0 - нет, 1 - по дому, 2 - по улице, 3 - интеллектуально
+#define fUseAdditionalTargets	7	 // Использовать дополнительные целевые датчики температуры
 
 #define DS_TimeOn_Extended 236
 struct type_DailySwitch {
@@ -190,6 +191,7 @@ struct type_settingHP {
 	uint16_t pausePump;				// Время паузы  насоса при выключенном компрессоре СЕКУНДЫ
 	uint16_t workPump;				// Время работы насоса при выключенном компрессоре СЕКУНДЫ
 	uint16_t delayOffPump;			// Задержка выключения насосов после выключения компрессора (сек).
+	uint32_t HeatTargetScheduler;	// Расписание проверки дополнительных целевых датчиков температуры, час - битовое поле (b0..b23)
 };
 
 #define LEN_PROFILE_NAME        25  // Длина имени профиля
