@@ -1570,6 +1570,7 @@ void vReadSensor(void *)
 			// Проверка на предельные температуры
 			for(i = 0; i < TempAlarm_size; i++) {
 				uint8_t num = TempAlarm[i].num;
+				if(HP.sTemp[i].get_setup_flag(fTEMP_HeatTarget)) continue;
 				int16_t T = HP.sTemp[num].get_Temp();
 				if(T < TempAlarm[i].MinTemp * 100) {
 					set_Error(HP.sTemp[num].set_Err(ERR_MINTEMP), HP.sTemp[num].get_name());

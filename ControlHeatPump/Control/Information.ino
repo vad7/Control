@@ -599,7 +599,6 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	}else
 	if(strcmp(var,option_PUMP_PAUSE)==0)    { Heat.pausePump=x; return true; }else               // пауза между работой насоса конденсатора при выключенном компрессоре МИНУТЫ
 	if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Heat.delayOffPump = x; return true; } else
-	if(strcmp(var, option_HeatTargetScheduler)==0) { Heat.HeatTargetScheduler = strtol(var, NULL, 2); return true; } else
 	return false;
 }
 
@@ -651,7 +650,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,hp_FC_FreqLimitHour)==0) { strcat_time(ret, Heat.FC_FreqLimitHour * 10); return ret; } else
 	if(strcmp(var, option_HeatTargetScheduler) == 0){
 		ret += strlen(ret);
-		for(uint8_t i = 0; i < 24; i++) *ret++ = (Heat.HeatTargetScheduler & (1<<i)) ? 1 : 0;
+		for(uint8_t i = 0; i < 24; i++) *ret++ = (((Heat.HeatTargetSchedulerH<<16) | Heat.HeatTargetSchedulerL) & (1<<i)) ? '1' : '0';
 		*ret = '\0';
 		return ret;
 	} else
@@ -883,10 +882,21 @@ int8_t  Profile::convert_to_new_version(void)
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
 			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
-		} else  { // last ver
+		} else if(HP.Option.ver <= 155) {
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
 			CNVPROF_SIZE_HeatCool		=	50;
+			CNVPROF_SIZE_Boiler			=	68;
+#if I2C_SIZE_EEPROM >= 64
+			CNVPROF_SIZE_DailySwitch	=	30;
+#else
+			CNVPROF_SIZE_DailySwitch	=	15;
+#endif
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+		} else  { // last ver
+			CNVPROF_SIZE_dataProfile	=	120;
+			CNVPROF_SIZE_SaveON			= 	12;
+			CNVPROF_SIZE_HeatCool		=	54;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;

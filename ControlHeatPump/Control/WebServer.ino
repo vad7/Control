@@ -2100,6 +2100,12 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 						if(HP.Prof.Heat.FC_FreqLimitHour > 24 * 6) HP.Prof.Heat.FC_FreqLimitHour = 24 * 6;
 						goto xset_Heat_get;
 					}
+				} else if(strcmp(x, option_HeatTargetScheduler) == 0) {
+					z[24] = '\0';
+					HP.Prof.Heat.HeatTargetSchedulerL = 0; HP.Prof.Heat.HeatTargetSchedulerH = 0;
+					for(i = 0; i < 16; i++) if(*z++ == '1') HP.Prof.Heat.HeatTargetSchedulerL |= (1<<i);
+					for(i = 0; i < 8; i++) if(*z++ == '1') HP.Prof.Heat.HeatTargetSchedulerH |= (1<<i);
+					goto xset_Heat_get;
 				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				ADD_WEBDELIM(strReturn) ; continue;
 			}
@@ -2296,12 +2302,9 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
  							if(strncmp(str, "min", 3)==0)           // Функция get_minTemp
 							{
 								if(HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
-									l_i32 = get_TempAlarmMin(p);
-									if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {
-										_dtoa(strReturn, l_i32, 2);
-									} else {
-										l_i32 /= 100;
-										if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
+x_get_minTemp:						l_i32 = get_TempAlarmMin(p);
+									if(l_i32 != TEMP_ALARM_TEMP_MIN * 100) {
+										if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) _dtoa(strReturn, l_i32, 2); else _itoa(l_i32 / 100, strReturn);
 									}
 								}
 								ADD_WEBDELIM(strReturn); continue;
@@ -2392,12 +2395,13 @@ x_get_aTemp:
 								ADD_WEBDELIM(strReturn);  continue;
 							}
 							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
-								l_i32 = pm;
 								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {
+									l_i32 = rd(pm, 100);
 									set_TempAlarmMin(p, l_i32 & 0xFF);
 									set_TempAlarmMax(p, l_i32 >> 8);
-									_itoa(l_i32, strReturn);
+									goto x_get_minTemp;
 								} else {
+									l_i32 = pm;
 									if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN;
 									set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
 									l_i32 = get_TempAlarmMin(p) / 100;
