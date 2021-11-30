@@ -2399,15 +2399,12 @@ x_get_aTemp:
 									l_i32 = rd(pm, 100);
 									set_TempAlarmMin(p, l_i32 & 0xFF);
 									set_TempAlarmMax(p, l_i32 >> 8);
-									goto x_get_minTemp;
 								} else {
 									l_i32 = pm;
 									if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN;
 									set_TempAlarmMin(p, l_i32);    		// Установить значение в градусах
-									l_i32 = get_TempAlarmMin(p) / 100;
-									if(l_i32 != TEMP_ALARM_TEMP_MIN) _itoa(l_i32, strReturn);
 								}
-								ADD_WEBDELIM(strReturn);  continue;
+								goto x_get_minTemp;
 							}
 							if(strncmp(str, "max", 3)==0) {         // Функция set_maxTemp
 								l_i32 = pm;
