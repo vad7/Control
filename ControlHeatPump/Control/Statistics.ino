@@ -369,6 +369,10 @@ void Statistics::Update()
 		if(SaveStats(2) == OK) {
 			Reset();
 			if(year != rtcSAM3X8.get_years()) NewYearFlag = 1; // waiting to switch a next year
+#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+			journal.jprintf("WR EXCESS: %.3d\n", WR_Power_Excess / 10000);
+			WR_Power_Excess = 0;
+#endif
 			journal.jprintf("=== %s\n", NowDateToStr()); // Новый день.
 		}
 	}
@@ -441,16 +445,30 @@ void Statistics::Update()
 #ifdef WATTROUTER
 		case STATS_OBJ_WattRouter_Out: {
 			newval = 0;
-			for(int8_t j = 0; j < WR_NumLoads; j++)
+#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+			int32_t newval2 = 0;
+#endif
+			for(int8_t j = 0; j < WR_NumLoads; j++) {
+#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+				if(j != WR_LOG_DAYS_POWER_EXCESS
+	#ifdef WR_Load_pins_Boiler_INDEX
+					&& j != WR_Load_pins_Boiler_INDEX
+	#endif
+					) newval2 += WR_LoadRun[j];
+#endif
 #ifdef WR_Load_pins_Boiler_INDEX
 				if(j != WR_Load_pins_Boiler_INDEX || !HP.dRelay[RBOILER].get_Relay())
 #endif
 					newval += WR_LoadRun[j];
+			}
+#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+			WR_Power_Excess += newval2 * tm / 360; // в мВтч*10;
+#endif
 			newval = newval * tm / 360; // в мВтч*10
 			WR_LoadRunStats += newval;
 			break;
 		}
-#endif
+#endif //WATTROUTER
 		case STATS_OBJ_COP_Full:
 			if(Stats_data[i].type == STATS_TYPE_AVG) continue; // COP средний считается в конце дня
 //#ifdef STATS_SKIP_COP_WHEN_RELAY_ON

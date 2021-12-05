@@ -5747,6 +5747,7 @@ const char *noteTemp[] = {"Температура улицы",
 
 	const int8_t WR_Load_pins[]	=	{ PIN_DEVICE_RBOILER, 33, -1, PIN_DEVICE_RBOILER };	// [<0] - реле по HTTP, для PWM нагрузки пины должны быть PWM/TIMER
 
+	#define WR_LOG_DAYS_POWER_EXCESS		2						// Логировать в журнал избыток мощности, кроме индекса (WR_Load_pins) и нагрева бойлера
 #ifndef TEST_BOARD
 #else
 	#undef HTTP_LowConsumeRequest

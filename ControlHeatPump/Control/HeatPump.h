@@ -137,7 +137,7 @@ int32_t  WR_Pnet_avg_sum = 0;
 boolean  WR_Pnet_avg_init = true;
 WR_fTYPE WR_Refresh = 0;
 WR_fTYPE WR_Loads;						// зависим от профиля
-int16_t  WR_LoadRun[WR_NumLoads];		// Включенная мощность
+int16_t  WR_LoadRun[WR_NumLoads];		// Включенная мощность, Вт
 int32_t  WR_LoadRunStats = 0;
 uint32_t WR_SwitchTime[WR_NumLoads];
 uint32_t WR_LastSwitchTime = 0;
@@ -179,7 +179,10 @@ struct {
 #ifdef WEATHER_FORECAST
 uint8_t WF_BoilerTargetPercent = 100;
 #endif
+#ifdef WR_LOG_DAYS_POWER_EXCESS
+int32_t WR_Power_Excess = 0;
 #endif
+#endif //WATTROUTER
 #ifdef WR_PowerMeter_Modbus
 bool WR_PowerMeter_New = false;
 #else

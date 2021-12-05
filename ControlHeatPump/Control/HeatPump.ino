@@ -2588,8 +2588,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
 		return pCOMP_NONE;
 	}
-	t1 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
-	target = get_targetTempHeat();
+	target = t1 = STARTTEMP;
 	if(GETBIT(Prof.Heat.flags, fUseAdditionalTargets) && (((Prof.Heat.HeatTargetSchedulerH<<16) | Prof.Heat.HeatTargetSchedulerL) & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
 		for(uint8_t i = 0; i < TNUMBER; i++) {
 			if(GETBIT(HP.Prof.SaveON.bTIN, i) && sTemp[i].get_setup_flag(fTEMP_HeatTarget)) {
@@ -2601,6 +2600,10 @@ MODE_COMP HeatPump::UpdateHeat()
 				}
 			}
 		}
+	}
+	if(t1 == STARTTEMP) {
+		t1 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
+		target = get_targetTempHeat();
 	}
 
 	if(is_compressor_on() && !onBoiler) {
