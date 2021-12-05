@@ -2597,7 +2597,7 @@ MODE_COMP HeatPump::UpdateHeat()
 				if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp)) {
 					sTemp[i].set_flag(fActive, 1);
 					break;
-				}
+				} else t1 = STARTTEMP;
 			}
 		}
 	}
