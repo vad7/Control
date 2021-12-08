@@ -2594,7 +2594,9 @@ MODE_COMP HeatPump::UpdateHeat()
 			if(GETBIT(HP.Prof.SaveON.bTIN, i) && sTemp[i].get_setup_flag(fTEMP_HeatTarget)) {
 				t1 = sTemp[i].get_Temp();
 				target = get_TempAlarmMin(i);
-				if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp)) {
+				if(sTemp[i].get_flag(fActive)) {
+					if(t1 <= target) break; else t1 = STARTTEMP;
+				} else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp)) {
 					sTemp[i].set_flag(fActive, 1);
 					break;
 				} else t1 = STARTTEMP;

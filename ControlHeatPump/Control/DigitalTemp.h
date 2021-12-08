@@ -139,13 +139,13 @@ class sensorTemp
     
     void     set_address(byte *addr, byte bus);    		// Привязать адрес и номер шины
     uint8_t* get_address(){return address;}  			// Получить адрес датчика
-    __attribute__((always_inline)) inline boolean get_present(){return GETBIT(flags,fPresent);} // Наличие датчика в текущей конфигурации
+    __attribute__((always_inline)) inline bool get_present(){return GETBIT(flags,fPresent);} // Наличие датчика в текущей конфигурации
     uint8_t get_cfg_flags() { return SENSORTEMP[number]; } // Вернуть биты конфигурации (наличие, особенности отображения на веб страницах,)
-    __attribute__((always_inline)) inline boolean get_fAddress(){ return GETBIT(flags,fAddress); } // Датчик привязан
-    __attribute__((always_inline)) inline boolean get_flag(uint8_t bit){ return GETBIT(flags, bit); }
+    __attribute__((always_inline)) inline bool get_fAddress(){ return GETBIT(flags,fAddress); } // Датчик привязан
+    __attribute__((always_inline)) inline bool get_flag(uint8_t bit){ return GETBIT(flags, bit); }
     __attribute__((always_inline)) inline void set_flag(uint8_t bit, uint8_t value) { flags = (flags & ~(1<<bit)) | ((value!=0)<<bit); }	// установить рабочий флаг
     uint8_t get_bus(void);									// Шина
-    __attribute__((always_inline)) inline boolean get_setup_flag(uint8_t bit){ return GETBIT(setup_flags, bit); }
+    __attribute__((always_inline)) inline bool get_setup_flag(uint8_t bit){ return GETBIT(setup_flags, bit); }
     __attribute__((always_inline)) inline uint16_t get_setup_flags(void){ return setup_flags; }
     inline void set_setup_flag(uint8_t bit, uint8_t value){ setup_flags = (setup_flags & ~(1<<bit)) | ((value!=0)<<bit); }
     int8_t   get_radio_received_idx();					// Индекс массива полученных данных
