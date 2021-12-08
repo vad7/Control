@@ -2234,35 +2234,35 @@ boolean HeatPump::boilerAddHeat()
 	}
 
 	// Догрев бойлера
-
-	if(GETBIT(Prof.SaveON.flags, fBoilerON) && scheduleBoiler()) { // Если разрешено греть бойлер согласно расписания И Бойлер включен
-		if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
-			int16_t b_target = get_boilerTempTarget();
-			if(!flagRBOILER && (T < b_target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
-			    flagRBOILER = true;
-				return false;
-			}
-			if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, но догрев не включаем
-			else {
-				if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay()
-						|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
-					return true;
-				} else { // бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
-					flagRBOILER = false;
+	if(GETBIT(Prof.SaveON.flags, fBoilerON)) { // Бойлер включен
+		if(scheduleBoiler()) { // Если разрешено греть бойлер согласно расписания
+			if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
+				int16_t b_target = get_boilerTempTarget();
+				if(!flagRBOILER && (T < b_target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
+					flagRBOILER = true;
 					return false;
 				}
-			}
-		} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
-			return flagRBOILER = onBoiler;
-		} else { // ТЭН не используется (сняты все флажки)
-			flagRBOILER = false;
-			return false;
-		}
-	} else { // Бойлер сейчас запрещен
-		flagRBOILER = false;
-		return false;
-	}
+				if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, но догрев не включаем
+				else {
+					if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay()
+							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
+						return true;
+					}
+					// бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
 
+				}
+			} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
+				return flagRBOILER = onBoiler;
+			}
+			// ТЭН не используется (сняты все флажки)
+
+		} else if(GETBIT(Prof.Boiler.flags, fAddHeating) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
+			return true;
+		}
+	}
+	// Бойлер сейчас запрещен
+	flagRBOILER = false;
+	return false;
 }
 #endif
 
