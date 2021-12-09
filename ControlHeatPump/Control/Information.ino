@@ -715,7 +715,7 @@ boolean Profile::set_boiler(char *var, char *c)
 // Получить параметр из строки по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
 char* Profile::get_boiler(char *var, char *ret)
 {
-	if(strcmp(var,boil_CurrentTarget)==0){   _dtoa(ret, HP.sTemp[TBOILER].get_Temp(), 2); strcat(ret, "° "); goto xTargetTemp; } else
+	if(strcmp(var,boil_CurrentTarget)==0){   _dtoa(ret, HP.sTemp[TBOILER].get_Temp(), 2); strcat(ret, "° "); if(GETBIT(SaveON.flags,fBoilerON)) goto xTargetTemp; else strcat(ret, "-/-"); return ret; } else
 	if(strcmp(var,boil_BOILER_ON)==0){       if (GETBIT(SaveON.flags,fBoilerON))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_SCHEDULER_ON)==0){    if (GETBIT(Boiler.flags,fSchedule))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){ if (GETBIT(Boiler.flags,fScheduleAddHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else

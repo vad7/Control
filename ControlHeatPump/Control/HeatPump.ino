@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2022 by Vadim Kulakov vad7@yahoo.com, vad711
  * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмное обеспечение предназначено для управления
@@ -2257,7 +2257,7 @@ boolean HeatPump::boilerAddHeat()
 			// ТЭН не используется (сняты все флажки)
 
 		} else if(GETBIT(Prof.Boiler.flags, fAddHeating) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
-			return true;
+			if(check_compressor_pause()) return true;
 		}
 	}
 	// Бойлер сейчас запрещен
@@ -2391,7 +2391,10 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		if(GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева
 		{
 			if(T > Boiler_Target_AddHeating()) {
-				Status.ret=pBh22; return pCOMP_OFF; // Температура выше целевой температуры ДОГРЕВА надо выключаться!
+				if(Status.prev == pBh1 && T < Prof.Boiler.tempRBOILER) { // не догрели в прошлый раз
+					Status.ret = pBh4; return pCOMP_ON;
+				}
+				Status.ret = pBh22; return pCOMP_OFF; // Температура выше целевой температуры ДОГРЕВА надо выключаться!
 			}
 		}
 		if (T > TRG) {
@@ -2584,10 +2587,6 @@ MODE_COMP HeatPump::UpdateHeat()
 
 	if ((get_State()==pOFF_HP)||(get_State()==pSTOPING_HP)) return pCOMP_OFF;    // Если ТН выключен или выключается ничего не делаем
 
-	if ((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&((abs(FEED-RET)>Prof.Heat.dt)&&is_compressor_on()))	{ // Превышение разности температур кондесатора при включеноом компрессорае (есть задержка при переключении ГВС)
-		set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
-		return pCOMP_NONE;
-	}
 	target = t1 = STARTTEMP;
 	if(GETBIT(Prof.Heat.flags, fUseAdditionalTargets) && (((Prof.Heat.HeatTargetSchedulerH<<16) | Prof.Heat.HeatTargetSchedulerL) & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
 		for(uint8_t i = 0; i < TNUMBER; i++) {
@@ -2626,6 +2625,11 @@ MODE_COMP HeatPump::UpdateHeat()
 			}// else if(!dRelay[RPUMPFL].get_Relay()) dRelay[RPUMPFL].set_ON();
 		}
 #endif
+	}
+	if(!onBoiler && is_compressor_on() && rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && abs(FEED-RET) > Prof.Heat.dt) {
+		// Превышение разности температур кондесатора при включеноом компрессорае (есть задержка при переключении ГВС)
+		set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
+		return pCOMP_NONE;
 	}
 	switch (Prof.Heat.Rule) // в зависмости от алгоритма
 	{
