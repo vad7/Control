@@ -262,7 +262,6 @@ void Statistics::Init(uint8_t newyear)
 										break;
 									default:
 										if(Stats_data[i].type == STATS_TYPE_TIME) Stats_data[i].value = val * 60000;
-										break;
 									}
 									if(*p == '\0') {
 										switch(Stats_data[i].type) {
@@ -700,7 +699,6 @@ xSkipEmpty:
 	default:
 		if(Stats_data[i].type == STATS_TYPE_TIME) int_to_dec_str(val / 10000, 6, ret, 1);  // минуты;
 		else goto xSkipEmpty;
-		break;
 	}
 }
 
