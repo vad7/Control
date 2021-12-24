@@ -1405,7 +1405,10 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								for(; j < DAILY_SWITCH_MAX; j++) {
 									if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
 								}
-								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле или реле уже включено
+								if(j < DAILY_SWITCH_MAX) { // Еще есть тоже реле или реле уже включено
+									SETBIT0(DailySwitch_on, i);
+									continue;
+								}
 							}
 							strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
 							uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER + 1;
@@ -2184,7 +2187,10 @@ void vServiceHP(void *)
 								for(; j < DAILY_SWITCH_MAX; j++) {
 									if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
 								}
-								if(j < DAILY_SWITCH_MAX) continue; // Еще есть тоже реле или реле уже включено
+								if(j < DAILY_SWITCH_MAX) { // Еще есть тоже реле или реле уже включено
+									SETBIT0(DailySwitch_on, i);
+									continue;
+								}
 							}
 							HP.dRelay[HP.Prof.DailySwitch[i].Device].set_Relay(GETBIT(_dson, i) ? fR_StatusDaily : -fR_StatusDaily);
 							DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
