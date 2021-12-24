@@ -178,7 +178,16 @@ xCutSearch:	while(--pos >= buffer) if(*pos == '\n') break;
 
 void Statistics::Error(const char *text, uint8_t what)
 {
-	journal.jprintf(" %s Error %s (%d,%d)!\n", what ? "History" : "Stats", text, card.cardErrorCode(), card.cardErrorData());
+	if(card.cardErrorCode() == SD_CARD_ERROR_DMA) {
+		journal.jprintf(" %s DMA Error %s: ", what ? "History" : "Stats", text);
+		if(card.cardErrorData() & 0x2) journal.jprintf("TIMEOUT ");
+		if(card.cardErrorData() & 0x1) journal.jprintf("OVERRUN");
+		journal.jprintf("\n");
+	} else if(card.cardErrorCode() == SD_CARD_ERROR_READ_CRC) {
+		journal.jprintf(" %s CRC Error %s!\n", what ? "History" : "Stats", text);
+	} else {
+		journal.jprintf(" %s Error %s (%d,%d)!\n", what ? "History" : "Stats", text, card.cardErrorCode(), card.cardErrorData());
+	}
 }
 
 void Statistics::Init(uint8_t newyear)
