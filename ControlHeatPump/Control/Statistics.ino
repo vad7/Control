@@ -1052,9 +1052,12 @@ void Statistics::History()
 	for(uint8_t i = 0; i < sizeof(HistorySetup) / sizeof(HistorySetup[0]); i++) {
 		*buf++ = ';';
 		switch(HistorySetup[i].object) {
-		case STATS_OBJ_Temp:		// C
-			int_to_dec_str(HP.sTemp[HistorySetup[i].number].get_Temp(), 10, &buf, 0); // T
+		case STATS_OBJ_Temp: {		// C
+			int16_t t = HP.sTemp[HistorySetup[i].number].get_Temp();
+			if(t == STARTTEMP) continue;
+			int_to_dec_str(t, 10, &buf, 0); // T
 			break;
+		}
 		case STATS_OBJ_Press:		// bar
 			int_to_dec_str(HP.sADC[HistorySetup[i].number].get_Value(), 10, &buf, 0); // P
 			break;

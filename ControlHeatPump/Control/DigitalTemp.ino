@@ -532,7 +532,7 @@ char Radio_RSSI_to_Level(uint8_t RSSI)
 int16_t get_TempAlarmMin(uint8_t num)
 {
 	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) {
-		return HP.sTemp[num].get_setup_flag(fTEMP_HeatTarget) ? ((uint8_t)TempAlarm[i].MaxTemp << 8) | (uint8_t)TempAlarm[i].MinTemp : TempAlarm[i].MinTemp * 100;
+		return (HP.sTemp[num].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) ? ((uint8_t)TempAlarm[i].MaxTemp << 8) | (uint8_t)TempAlarm[i].MinTemp : TempAlarm[i].MinTemp * 100;
 	}
 	return TEMP_ALARM_TEMP_MIN * 100;
 }
@@ -541,7 +541,7 @@ int16_t get_TempAlarmMin(uint8_t num)
 int16_t get_TempAlarmMax(uint8_t num)
 {
 	for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num == num) {
-		if(HP.sTemp[num].get_setup_flag(fTEMP_HeatTarget)) break;
+		if(HP.sTemp[num].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) break;
 		return TempAlarm[i].MaxTemp * 100;
 	}
 	return TEMP_ALARM_TEMP_MAX * 100;

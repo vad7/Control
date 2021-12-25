@@ -105,7 +105,7 @@ char Radio_RSSI_to_Level(uint8_t RSSI);
 struct _TempAlarm {
 	uint8_t num;
 	int8_t MinTemp;		// градусы
-	int8_t MaxTemp;		// градусы, или старший байт целевой температуры, если установлен бит fTEMP_HeatTarget
+	int8_t MaxTemp;		// градусы, или старший байт целевой температуры, если установлен бит fTEMP_HeatTarget или fTEMP_HeatFloor
 } __attribute__((packed));
 _TempAlarm *TempAlarm = NULL;
 uint8_t TempAlarm_size = 0;

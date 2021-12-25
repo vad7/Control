@@ -2624,11 +2624,23 @@ MODE_COMP HeatPump::UpdateHeat()
 #ifdef RPUMPFL
 		if(GETBIT(Prof.Heat.flags, fHeatFloor)) {
 			int16_t temp = STARTTEMP;
-			for(uint8_t i = 0; i < TNUMBER; i++) {
+			uint8_t i = 0;
+			for(; i < TNUMBER; i++) {
 				if(sTemp[i].get_setup_flag(fTEMP_HeatFloor) && temp > sTemp[i].get_Temp()) temp = sTemp[i].get_Temp();
 			}
 			if(temp != STARTTEMP) {
-				if(temp < target + HeatFloorDeltaTemp) dRelay[RPUMPFL].set_ON(); else if(temp > target + HeatFloorDeltaTemp + HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_OFF();
+				for(uint8_t j = 0; j < TempAlarm_size; j++) {
+					if(TempAlarm[i].num != i) continue;
+					int16_t T = ((uint8_t)TempAlarm[i].MaxTemp << 8) | (uint8_t)TempAlarm[i].MinTemp;
+					if(temp < T - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
+					else if(temp > T) dRelay[RPUMPFL].set_OFF();
+					temp = STARTTEMP;
+					break;
+				}
+				if(temp != STARTTEMP) {
+					if(temp < target + HeatFloorDeltaTemp - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
+					else if(temp > target + HeatFloorDeltaTemp) dRelay[RPUMPFL].set_OFF();
+				}
 			}// else if(!dRelay[RPUMPFL].get_Relay()) dRelay[RPUMPFL].set_ON();
 		}
 #endif

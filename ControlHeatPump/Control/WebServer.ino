@@ -2304,7 +2304,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 								if(HP.sTemp[p].get_present()) {	// Если датчик есть в конфигурации, то выводим значение
 x_get_minTemp:						l_i32 = get_TempAlarmMin(p);
 									if(l_i32 != TEMP_ALARM_TEMP_MIN * 100) {
-										if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) _dtoa(strReturn, l_i32, 2); else _itoa(l_i32 / 100, strReturn);
+										if(HP.sTemp[p].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) _dtoa(strReturn, l_i32, 2); else _itoa(l_i32 / 100, strReturn);
 									}
 								}
 								ADD_WEBDELIM(strReturn); continue;
@@ -2312,7 +2312,7 @@ x_get_minTemp:						l_i32 = get_TempAlarmMin(p);
 
 							if(strncmp(str, "max", 3)==0)           // Функция get_maxTemp
 							{
-								if(HP.sTemp[p].get_present() && !HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {     // Если датчик есть в конфигурации, то выводим значение
+								if(HP.sTemp[p].get_present() && !(HP.sTemp[p].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor)))) {     // Если датчик есть в конфигурации, то выводим значение
 									l_i32 = get_TempAlarmMax(p) / 100;
 									if(l_i32 != TEMP_ALARM_TEMP_MAX) _itoa(l_i32, strReturn);
 								}
@@ -2395,7 +2395,7 @@ x_get_aTemp:
 								ADD_WEBDELIM(strReturn);  continue;
 							}
 							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
-								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) {
+								if(HP.sTemp[p].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) {
 									l_i32 = rd(pm, 100);
 									set_TempAlarmMin(p, l_i32 & 0xFF);
 									set_TempAlarmMax(p, l_i32 >> 8);
@@ -2408,7 +2408,7 @@ x_get_aTemp:
 							}
 							if(strncmp(str, "max", 3)==0) {         // Функция set_maxTemp
 								l_i32 = pm;
-								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatTarget)) { ADD_WEBDELIM(strReturn);  continue; }
+								if((HP.sTemp[p].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor)))) { ADD_WEBDELIM(strReturn);  continue; }
 								if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MAX;
 								set_TempAlarmMax(p, l_i32);    		// Установить значение в градусах
 								l_i32 = get_TempAlarmMax(p) / 100;
@@ -2429,7 +2429,7 @@ x_get_aTemp:
 							if(strncmp(str, "fTemp", 5) == 0) {   // set_fTempX(N=V): X - номер флага fTEMP_* (1..), N - имя датчика (flag)
 								i = str[5] - '0' - 1 + fTEMP_ignory_errors;
 								int8_t n = pm;
-								if(i == fTEMP_HeatTarget && n == 0) { // нужно очистить
+								if((i == fTEMP_HeatTarget || i == fTEMP_HeatFloor) && n == 0) { // нужно очистить
 									set_TempAlarmMin(p, TEMP_ALARM_TEMP_MIN);
 									set_TempAlarmMax(p, TEMP_ALARM_TEMP_MAX);
 								}
