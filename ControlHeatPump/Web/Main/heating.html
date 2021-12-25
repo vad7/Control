@@ -30,7 +30,7 @@ $(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
 window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
 	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Cool(KW),get_Heat(KW),get_Cool(W),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL),get_Heat(TRH),get_Heat(PW),get_Heat(PP),get_Heat(TMR)");
-	loadParam("get_Heat(AT),get_Heat(SCHEDULER),get_listDSR,get_tblPDS");
+	loadParam("get_Heat(MTR),get_Heat(AT),get_Heat(SCHEDULER),get_listDSR,get_tblPDS");
 };
 function setDS(v, i) {
 	var val = document.getElementById("get_prof-ds" + v.toLowerCase() + i).value;
@@ -70,6 +70,11 @@ function loadParam_after(paramid) {
 		<td nowrap><input id="get_cool-temp1" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP1)');"></td>
 	</tr>
 	<tr>
+		<td>Целевая температура обратки °C [10..50]</td>
+		<td nowrap><input id="get_heat-temp2" type="number" min="10" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP2)');"></td>
+		<td nowrap><input id="get_cool-temp2" type="number" min="10" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP2)');"></td>
+	</tr>						
+	<tr>
 		<td>Использовать дополнительные целевые датчики температуры</td>
 		<td><input type="checkbox" id="get_heat-at" onchange="setParam('get_Heat(AT)');"></td>
 		<td></td>
@@ -94,10 +99,10 @@ function loadParam_after(paramid) {
 		</tr>
 	<tr>
 	<tr>
-		<td>Целевая температура обратки °C [10..50]</td>
-		<td nowrap><input id="get_heat-temp2" type="number" min="10" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP2)');"></td>
-		<td nowrap><input id="get_cool-temp2" type="number" min="10" max="50" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP2)');"></td>
-	</tr>						
+		<td>Максимальное превышение цели температуры при контроле доп. датчиков, C° [0..25]</td>
+		<td nowrap><input id="get_heat-mtr" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(MTR)');"></td>
+		<td></td>
+	</tr>
 	<tr>
 		<td>Минимальная/максимальная температура обратки для вкл. °C [-10..70] [0..40]</td>
 		<td nowrap><input id="get_heat-temp_out" type="number" min="-10" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_OUT)');"></td>
@@ -118,17 +123,17 @@ function loadParam_after(paramid) {
 		<td></td>
 	</tr>
 	<tr>
-		<td>Добавка к целевой температуре по часам C° [-30...50]<sup>3</sup></td>
+		<td>Добавка к целевой температуре по часам C° [-30..50]<sup>3</sup></td>
 		<td nowrap><input id="get_heat-adt" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(ADT)');"></td>
 		<td></td>
 	</tr>
 	<tr>
-		<td>Начальный час добавки к целевой температуре [0...23]</td>
+		<td>Начальный час добавки к целевой температуре [0..23]</td>
 		<td nowrap><input id="get_heat-adh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Heat(ADH)');"></td>
 		<td></td>
 	</tr>
 	<tr>
-		<td>Конечный час добавки к целевой температуре [0...23]</td>
+		<td>Конечный час добавки к целевой температуре [0..23]</td>
 		<td nowrap><input id="get_heat-adeh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Heat(ADEH)');"></td>
 		<td></td>
 	</tr>

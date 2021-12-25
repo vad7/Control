@@ -304,7 +304,7 @@ void Statistics::CheckCreateNewFile()
 {
 	uint8_t sem = 0;
 	if(!HP.get_fSD()) return;
-	if(NewYearFlag) {
+	if(GETBIT(Flags, STATS_fNewYear)) {
 		if(!(sem = SemaphoreTake(xWebThreadSemaphore, 0))) return;
 		SaveHistory(1);
 		// Truncate stats
@@ -329,7 +329,7 @@ void Statistics::CheckCreateNewFile()
 			StatsFile.close();
 		}
 		Init(1);
-		NewYearFlag = 0;
+		SETBIT0(Flags, STATS_fNewYear);
 	}
 	if(GETBIT(HP.Option.flags, fHistory) && (HistoryCurrentBlock == 0 || HistoryBlockCreating != 0)) { // Init History
 		if(!sem && !(sem = SemaphoreTake(xWebThreadSemaphore, 0))) return;
@@ -366,7 +366,7 @@ void Statistics::Reset()
 // Обновить статистику, вызывается часто, раз в TIME_READ_SENSOR
 void Statistics::Update()
 {
-	if(NewYearFlag
+	if(GETBIT(Flags, STATS_fNewYear)
 #ifndef TEST_BOARD
 			|| testMode != NORMAL
 #endif
@@ -376,7 +376,7 @@ void Statistics::Update()
 	if(rtcSAM3X8.get_days() != day) {
 		if(SaveStats(2) == OK) {
 			Reset();
-			if(year != rtcSAM3X8.get_years()) NewYearFlag = 1; // waiting to switch a next year
+			if(year != rtcSAM3X8.get_years()) SETBIT1(Flags, STATS_fNewYear); // waiting to switch a next year
 #if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
 			journal.jprintf("WR EXCESS: %.3d\n", WR_Power_Excess / 10000);
 			WR_Power_Excess = 0;
@@ -964,11 +964,7 @@ int8_t Statistics::SaveStats(uint8_t newday)
 		SPI_switchSD();
 		if(!card.card()->writeBlock(CurrentBlock, stats_buffer)) {
 			Error("save", ID_STATS);
-			// to do - reinit card but in other task
-			//if(card.cardErrorCode() > SD_CARD_ERROR_NONE && card.cardErrorCode() < SD_CARD_ERROR_READ && card.cardErrorData() == 255) { // reinit card
-			//	if(card.begin(PIN_SPI_CS_SD, SD_SCK_MHZ(SD_CLOCK))) goto xContinue;
-			//	else journal.jprintf("Reinit SD card failed!\n");
-			//}
+			ReinitSD();
 			retval = ERR_SD_WRITE;
 		} else if(lensav != len){ // next block
 			if(CurrentBlock >= BlockEnd) {
@@ -1015,10 +1011,24 @@ int8_t Statistics::SaveHistory(uint8_t from_web)
 	SPI_switchSD();
 	if(!card.card()->writeBlock(HistoryCurrentBlock, history_buffer)) {
 		Error("save", ID_STATS);
+		ReinitSD();
 		retval = ERR_SD_WRITE;
 	}
 	if(!from_web) SemaphoreGive(xWebThreadSemaphore);
 	return retval;
+}
+
+void Statistics::ReinitSD(void)
+{
+	if((Flags & STATS_fSD_ErrorMask) == STATS_fSD_ErrorMask) {
+		if(card.begin(PIN_SPI_CS_SD, SD_SCK_MHZ(SD_CLOCK))) {
+			Flags &= ~STATS_fSD_ErrorMask;
+		} else {
+			journal.jprintf("Reinit SD card failed!\n");
+			HP.message.setMessage(pMESSAGE_ERROR, (char*)"SD Card Error!", 0);    // сформировать уведомление об ошибке
+		}
+	}
+	Flags = (Flags & ~STATS_fSD_ErrorMask) | (((Flags & STATS_fSD_ErrorMask) + 1) & STATS_fSD_ErrorMask);
 }
 
 // Логирование параметров работы ТН, раз в 1 минуту

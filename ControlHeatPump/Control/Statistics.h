@@ -61,6 +61,8 @@ enum { // когда
 };
 #define STATS_WORKD_TIME 					90000UL	// ms
 #define STATS_WORKD_SKIP_TIME_HEAT_BOILER	12000UL	// ms
+#define STATS_fSD_ErrorMask		0b0011
+#define STATS_fNewYear			2
 
 //static char *stats_format = { "%.1f", "" }; // printf format string
 
@@ -120,7 +122,7 @@ static fname_t open_fname;
 class Statistics
 {
 public:
-	Statistics() { NewYearFlag = 0; }
+	Statistics() { Flags = 0; }
 	void	Init(uint8_t newyear = 0);
 	void	Update();										// Обновить статистику, раз в период
 	void	UpdateEnergy();									// Обновить энергию и COP, вызывается часто
@@ -139,6 +141,7 @@ public:
 	void	CheckCreateNewFile();
 	int8_t	CreateOpenFile(uint8_t what);
 	void	History();										// Логирование параметров работы ТН, раз в 1 минуту
+	void	ReinitSD(void);
 
 	uint32_t compressor_on_timer;							// ms
 private:
@@ -149,7 +152,7 @@ private:
 	uint8_t	 day;
 	uint8_t	 month;
 	uint16_t year;
-	uint8_t  NewYearFlag;
+	uint8_t  Flags;											// Рабочие флаги
 	uint32_t BlockStart;
 	uint32_t BlockEnd;
 	uint32_t CurrentBlock;

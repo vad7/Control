@@ -556,9 +556,10 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,ADD_DELTA_HOUR)==0){ if((x>=0)&&(x<=23))    {Heat.add_delta_hour=x; return true;} else return false; }else
 	if(strcmp(var,ADD_DELTA_END_HOUR)==0){ if((x>=0)&&(x<=23)){Heat.add_delta_end_hour=x; return true;} else return false; }else
 	if(strcmp(var,hp_TEMP2)==0) {   if((x>=10)&&(x<=50)){ Heat.Temp2=rd(x, 100); return true;} else return false;  }else             // целевая температура обратки
-	if(strcmp(var,hp_TARGET)==0) {  if(x==0) {SETBIT0(Heat.flags,fTarget); return true;} else if (x==1.0) {SETBIT1(Heat.flags,fTarget); return true;} else return false; }else // что является целью значения  0 (температура в доме), 1 (температура обратки).
+	if(strcmp(var,hp_TARGET)==0) {  if(x==0) {SETBIT0(Heat.flags,fTarget); return true;} else if (x==1) {SETBIT1(Heat.flags,fTarget); return true;} else return false; }else // что является целью значения  0 (температура в доме), 1 (температура обратки).
 	if(strcmp(var,hp_DTEMP)==0) {   if((x>=0)&&(x<=30)) { Heat.dTemp=rd(x, 100); return true;} else return false;   }else             // гистерезис целевой температуры
 	if(strcmp(var,hp_dTempGen)==0){ Heat.dTempGen = rd(x, 100); return true; }else
+	if(strcmp(var,hp_MaxTargetRise)==0){ Heat.MaxTargetRise = rd(x, 10); return true; }else
 	if(strcmp(var,hp_HP_TIME)==0) { if((x>=10)&&(x<=1000)) {UpdatePIDbyTime(x, Heat.pid_time, Heat.pid); Heat.pid_time=x; return true;} else return false; }else             // Постоянная интегрирования времени в секундах ПИД ТН !
 	if(strcmp(var,hp_HP_PRO)==0) {  if((x>=0)&&(x<=32)) {Heat.pid.Kp=rd(x, 1000); return true;} else return false;   }else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2
@@ -621,6 +622,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,option_PUMP_PAUSE)==0){return _itoa(Heat.pausePump,ret);}else
 	if(strcmp(var,hp_DTEMP)==0)    { _dtoa(ret,Heat.dTemp/10,1); return ret;                } else             // гистерезис целевой температуры
 	if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Heat.dTempGen / 10, 1); return ret; } else
+	if(strcmp(var,hp_MaxTargetRise)==0) { _dtoa(ret, Heat.MaxTargetRise, 1); return ret; } else
 	if(strcmp(var,hp_HP_TIME)==0)  { return _itoa(Heat.pid_time,ret);                                } else             // Постоянная интегрирования времени в секундах ПИД ТН
 	if(strcmp(var,hp_HP_PRO)==0)   { _dtoa(ret,Heat.pid.Kp,3); return ret;               } else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2

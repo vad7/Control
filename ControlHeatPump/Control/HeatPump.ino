@@ -2605,6 +2605,13 @@ MODE_COMP HeatPump::UpdateHeat()
 	if(t1 == STARTTEMP) {
 		t1 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
 		target = get_targetTempHeat();
+	} else {
+		int16_t t2 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
+		int16_t target2 = get_targetTempHeat() + Prof.Heat.MaxTargetRise * 10;
+		if(t2 > target2) {
+			t1 = t2;
+			target = target2;
+		}
 	}
 
 	if(is_compressor_on() && !onBoiler) {
@@ -2621,7 +2628,7 @@ MODE_COMP HeatPump::UpdateHeat()
 				if(sTemp[i].get_setup_flag(fTEMP_HeatFloor) && temp > sTemp[i].get_Temp()) temp = sTemp[i].get_Temp();
 			}
 			if(temp != STARTTEMP) {
-				if(temp < target) dRelay[RPUMPFL].set_ON(); else if(temp - HYSTERESIS_HeatFloor > target) dRelay[RPUMPFL].set_OFF();
+				if(temp < target + HeatFloorDeltaTemp) dRelay[RPUMPFL].set_ON(); else if(temp > target + HeatFloorDeltaTemp + HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_OFF();
 			}// else if(!dRelay[RPUMPFL].get_Relay()) dRelay[RPUMPFL].set_ON();
 		}
 #endif
@@ -2636,13 +2643,13 @@ MODE_COMP HeatPump::UpdateHeat()
 	case pHYSTERESIS:  // Гистерезис нагрев.
 		if(t1>target && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)) {Status.ret=pHh3; return pCOMP_OFF;} // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_compressor_on() || onBoiler))  { Status.ret=pHh2;   return pCOMP_ON; } // Достигнут гистерезис ВКЛ
+		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else if(onBoiler) {
 			if(GETBIT(Prof.Heat.flags, fP_ContinueAfterBoiler)) { // Опционально переходим в отопление внутри гистерезиса
 				Status.ret = pHh4;
 				return pCOMP_ON;
 			} else return pCOMP_OFF; // Бойлер нагрет и отопление не нужно
 		} else if(rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && FEED > Prof.Heat.tempInLim) { Status.ret=pHh1; return pCOMP_OFF; } // Достигнута максимальная температура подачи ВЫКЛ (С учетом времени перехода с ГВС)
-		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else {
 			if(Prof.Heat.FC_FreqLimitHour) { // Ограничение частоты
 				newFC = rtcSAM3X8.get_hours() * 60 + rtcSAM3X8.get_minutes() <= Prof.Heat.FC_FreqLimitHour * 10 ? Prof.Heat.FC_FreqLimit : dFC.get_startFreq();
@@ -2657,6 +2664,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		// отработка гистререзиса целевой функции (дом/обратка)
 		if(t1 > target && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)) { Status.ret=pHp3; return pCOMP_OFF; } // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_compressor_on() || onBoiler)) { Status.ret=pHp2; return pCOMP_ON; } // Достигнут гистерезис (компрессор не работает) ВКЛ
+		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else if(onBoiler) {
 			if(GETBIT(Prof.Heat.flags, fP_ContinueAfterBoiler)) { // Опционально переходим в отопление внутри гистерезиса
 				Status.ret = pHh4;
@@ -2826,8 +2834,8 @@ MODE_COMP HeatPump::UpdateCool()
 		if(t1<target)             {Status.ret=pCh3;   return pCOMP_OFF;}                            // Достигнута целевая температура  ВЫКЛ
 		else if(t1 > target + (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp) && !is_compressor_on()) { Status.ret=pCh2;   return pCOMP_ON; }                       // Достигнут гистерезис ВКЛ
 		else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED<Prof.Cool.tempInLim)){Status.ret=pCh1;return pCOMP_OFF;}// Достигнута минимальная температура подачи ВЫКЛ
-		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и охлаждение не нужно
 		else if(RET>Prof.Cool.tempOutLim)      {Status.ret=pCh13;  return pCOMP_ON; }                       // Достигнут Максимальная температура обратки ВКЛ
+		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и охлаждение не нужно
 		else  {Status.ret=pCh4;    return pCOMP_NONE;   }                                                // Ничего не делаем  (сохраняем состояние)
 		break;
 	case pPID:   // ПИД регулирует подачу, а целевай функция гистререзис
@@ -2836,6 +2844,7 @@ MODE_COMP HeatPump::UpdateCool()
 		if(t1<target)     { Status.ret=pCp3; return pCOMP_OFF;}    // Достигнута целевая температура  ВЫКЛ
 		else if(t1 > target + (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp) && !is_compressor_on()) { Status.ret=pCh2;   return pCOMP_ON; }                       // Достигнут гистерезис ВКЛ
 		else if(onBoiler) { return pCOMP_OFF; } // Бойлер нагрет и охлаждение не нужно
+		else if(RET>Prof.Cool.tempOutLim)      {Status.ret=pCh13;  return pCOMP_ON; }                       // Достигнут Максимальная температура обратки ВКЛ
 		else if ((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED<Prof.Cool.tempInLim)) {Status.ret=pCp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__);return pCOMP_OFF;}         // Достижение минимальной температуры подачи - это ошибка ПИД не рабоатет
 
         // Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
