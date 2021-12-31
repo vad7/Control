@@ -2630,8 +2630,12 @@ MODE_COMP HeatPump::UpdateHeat()
 			}
 			if(temp != STARTTEMP) {
 				for(uint8_t j = 0; j < TempAlarm_size; j++) {
-					if(TempAlarm[i].num != i) continue;
-					int16_t T = ((uint8_t)TempAlarm[i].MaxTemp << 8) | (uint8_t)TempAlarm[i].MinTemp;
+					if(TempAlarm[j].num != i) continue;
+					int16_t T = ((uint8_t)TempAlarm[j].MaxTemp << 8) | (uint8_t)TempAlarm[j].MinTemp;
+					if(T == TEMP_ALARM_TEMP_MIN * 100) continue;
+					if(GETBIT(Prof.Heat.flags, fWeather)) { // включена погодозависимость
+						T += (Prof.Heat.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
+					}
 					if(temp < T - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
 					else if(temp > T) dRelay[RPUMPFL].set_OFF();
 					temp = STARTTEMP;

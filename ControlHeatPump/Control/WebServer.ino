@@ -2365,6 +2365,14 @@ x_get_aTemp:
 										if(str[5] == '2') m_snprintf(strReturn + strlen(strReturn), 20, ", %.1dV", radio_received[i].battery);
 									} else strcat(strReturn, " \xF0\x9F\x93\xB6");
 								}
+								if(HP.sTemp[i].get_setup_flag(fTEMP_HeatFloor)) {
+									if(GETBIT(HP.Prof.Heat.flags, fWeather)) { // включена погодозависимость
+										strcat(strReturn, " [");
+										l_i32 = HP.sTemp[p].get_Temp() + (HP.Prof.Heat.kWeatherPID * (TEMP_WEATHER - HP.sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
+										_dtoa(strReturn, l_i32, 2);
+										strcat(strReturn, "]");
+									}
+								}
 	#endif
 								ADD_WEBDELIM(strReturn); continue;
 							}
@@ -2397,6 +2405,7 @@ x_get_aTemp:
 							if(strncmp(str, "min", 3)==0) {         // Функция set_minTemp
 								if(HP.sTemp[p].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) {
 									l_i32 = rd(pm, 100);
+									if(*z == '\0') l_i32 = TEMP_ALARM_TEMP_MIN * 100;
 									set_TempAlarmMin(p, l_i32 & 0xFF);
 									set_TempAlarmMax(p, l_i32 >> 8);
 								} else {
