@@ -91,8 +91,8 @@ void HeatPump::process_error(void)
 		if(get_nStart() == 0) sendCommand(pSTOP); // Послать команду на останов ТН, если нет попыток повторного пуска
 		else { // сюда ставить повторные пуски ТН при ошибке.
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
-			for(uint8_t i; i < sizeof(CRITICAL_ERRORS)/sizeof(CRITICAL_ERRORS[0]); i++) {
-				if(CRITICAL_ERRORS[i] == error) sendCommand(pSTOP);
+			for(uint8_t i; i < sizeof(CRITICAL_ERRORS)/sizeof(CRITICAL_ERRORS[0]); i++) if(CRITICAL_ERRORS[i] == error) {
+				sendCommand(pSTOP);
 				goto xExit;
 			}
 #endif

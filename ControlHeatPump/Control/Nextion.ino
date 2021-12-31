@@ -334,7 +334,14 @@ void Nextion::readCommand()
 					if(cmd2 == NXTID_BOILER_ONOFF) {                       // событие нажатие кнопки вкл/выкл ГВС
 						if(HP.get_BoilerON()) HP.set_BoilerOFF(); else HP.set_BoilerON();
 					} else if(cmd2 == NXTID_BOILER_PLUS || cmd2 == NXTID_BOILER_MINUS) {  // Изменение целевой температуры ГВС шаг изменения сотые градуса
-						dptoa(ntemp, HP.setTempTargetBoiler(cmd2 == NXTID_BOILER_PLUS ? 100 : -100) / 10, 1);
+						if(GETBIT(HP.Prof.Boiler.flags, fAddHeating)) {// режим догрева
+							HP.Prof.Boiler.tempRBOILER += cmd2 == NXTID_BOILER_PLUS ? 100 : -100;
+							if(HP.Prof.Boiler.tempRBOILER < 1000) HP.Prof.Boiler.tempRBOILER = 1000;
+							else if(HP.Prof.Boiler.tempRBOILER > HP.Prof.Boiler.TempTarget - HP.Prof.Boiler.dTemp) HP.Prof.Boiler.tempRBOILER = HP.Prof.Boiler.TempTarget - HP.Prof.Boiler.dTemp;
+							dptoa(ntemp, HP.Prof.Boiler.tempRBOILER / 10, 1);
+						} else {
+							dptoa(ntemp, HP.setTempTargetBoiler(cmd2 == NXTID_BOILER_PLUS ? 100 : -100) / 10, 1);
+						}
 						setComponentText("t", ntemp);
 					}
 				} else if(cmd1 == NXTID_PAGE_PROFILE) {
@@ -666,7 +673,7 @@ void Nextion::Update()
 		setComponentText("tconoutg", ntemp);
 		strcat(dptoa(ntemp, HP.sTemp[TCONING].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("tconing", ntemp);
-		dptoa(ntemp, HP.get_boilerTempTarget() / 10, 1);
+		dptoa(ntemp, (GETBIT(HP.Prof.Boiler.flags, fAddHeating) ? HP.Prof.Boiler.tempRBOILER : HP.get_boilerTempTarget()) / 10, 1);
 		setComponentText("t", ntemp);
 		if(HP.get_BoilerON()) sendCommand("o.val=1");    // Кнопка включения ГВС в положение ВКЛ
 		else sendCommand("o.val=0");                     // Кнопка включения ГВС в положение ВЫКЛ
