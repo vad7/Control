@@ -2354,7 +2354,7 @@ x_get_aTemp:
 								strcat(strReturn, GETBIT(HP.Prof.SaveON.bTIN, p) ? cOne : cZero);
 								ADD_WEBDELIM(strReturn); continue;
 							}
-							if(strncmp(str, "nTemp", 5) == 0)           // Функция get_nTemp, если радиодатчик: добавляется уровень сигнала, если get_nTemp2 - +напряжение батарейки
+							if(strncmp(str, "nTemp", 5) == 0) // Функция get_nTemp, если радиодатчик: добавляется уровень сигнала, если get_nTemp2 - +напряжение батарейки
 							{
 								strcat(strReturn, HP.sTemp[p].get_note());
 	#ifdef RADIO_SENSORS
@@ -2365,7 +2365,7 @@ x_get_aTemp:
 										if(str[5] == '2') m_snprintf(strReturn + strlen(strReturn), 20, ", %.1dV", radio_received[i].battery);
 									} else strcat(strReturn, " \xF0\x9F\x93\xB6");
 								}
-								if(HP.sTemp[i].get_setup_flag(fTEMP_HeatFloor)) {
+								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatFloor)) { // добавка t c учетом погодозависимости
 									if(GETBIT(HP.Prof.Heat.flags, fWeather)) { // включена погодозависимость
 										strcat(strReturn, " [");
 										l_i32 = HP.sTemp[p].get_Temp() + (HP.Prof.Heat.kWeatherPID * (TEMP_WEATHER - HP.sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
