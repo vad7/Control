@@ -977,6 +977,11 @@ void get_mailState(EthernetClient client,char *tempBuf)
 			strcat(tempBuf, "): ");
 #endif
 			_dtoa(tempBuf, HP.sADC[i].get_Value(), 2);
+			if(i < 2) {
+				strcat(tempBuf, " [");
+				_dtoa(tempBuf, PressToTemp(HP.sADC[i].get_Value()), 2);
+				strcat(tempBuf, "°]");
+			}
 			if (HP.sADC[i].get_lastErr()!=OK ) { strcat(tempBuf," error:"); _itoa(HP.sADC[i].get_lastErr(),tempBuf); }
 			strcat(tempBuf,cStrEnd);  client.write(tempBuf,strlen(tempBuf));
 		}
