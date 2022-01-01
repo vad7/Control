@@ -2367,8 +2367,10 @@ x_get_aTemp:
 								}
 								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatFloor)) { // добавка t c учетом погодозависимости
 									if(GETBIT(HP.Prof.Heat.flags, fWeather)) { // включена погодозависимость
-										strcat(strReturn, " [");
-										l_i32 = HP.sTemp[p].get_Temp() + (HP.Prof.Heat.kWeatherPID * (TEMP_WEATHER - HP.sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
+										strcat(strReturn, " [ТП:");
+										l_i32 = get_TempAlarmMin(p);
+										if(l_i32 == TEMP_ALARM_TEMP_MIN * 100) l_i32 = HP.get_targetTempHeat() + HeatFloorDeltaTemp;
+										else l_i32 += (HP.Prof.Heat.kWeatherPID * (TEMP_WEATHER - HP.sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
 										_dtoa(strReturn, l_i32, 2);
 										strcat(strReturn, "]");
 									}
@@ -3013,7 +3015,10 @@ TYPE_RET_POST parserPOST(uint8_t thread, uint16_t size)
 
 	// Поиски во входном буфере: данных, имени файла и длины файла
 	ptr = (byte*) strstr(Socket[thread].inPtr, emptyStr);     // поиск начала данных
-	if(!ptr) return pLOAD_ERR;
+	if(!ptr) {
+		journal.jprintf("Upload: Empty data!\n");
+		return pLOAD_ERR;
+	}
 	ptr += sizeof(emptyStr) - 1;
 	nameFile = strstr(Socket[thread].inPtr, Title);
 	pStart = (byte*) strstr(Socket[thread].inPtr, http_Length);
@@ -3197,8 +3202,7 @@ xContinueSearchHeader:
 								ff.close();
 								if(loadLen == lenFile) journal.jprintf("Ok\n");
 								else { // Длины не совпали
-									journal.jprintf("%db, Error length!\n", loadLen);
-									loadLen = 0;
+									journal.jprintf(" loaded only %d!\n", loadLen);
 								}
 							} else journal.jprintf("Error Open!\n");
 						} else journal.jprintf("Error Create %d!\n", loadLen);

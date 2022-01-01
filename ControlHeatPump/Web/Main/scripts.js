@@ -799,6 +799,8 @@ function upload(file) {
 			if(xhr.responseText != null && xhr.responseText != "") {
 				upload_error = true;
 				alert(xhr.responseText);
+				//upload_error = 1;
+				//if(confirm(xhr.responseText + "\nПовторить загрузку файла?")) upload_error = 2;
 			}
 		}
 	}
