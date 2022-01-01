@@ -2623,27 +2623,31 @@ MODE_COMP HeatPump::UpdateHeat()
 #endif
 #ifdef RPUMPFL
 		if(GETBIT(Prof.Heat.flags, fHeatFloor)) {
+			int8_t idx = -1;
 			int16_t temp = STARTTEMP;
-			uint8_t i = 0;
-			for(; i < TNUMBER; i++) {
-				if(sTemp[i].get_setup_flag(fTEMP_HeatFloor) && temp > sTemp[i].get_Temp()) temp = sTemp[i].get_Temp();
+			for(uint8_t i = 0; i < TNUMBER; i++) {
+				if(sTemp[i].get_setup_flag(fTEMP_HeatFloor) && temp > sTemp[i].get_Temp()) {
+					temp = sTemp[i].get_Temp();
+					idx = i;
+				}
 			}
-			if(temp != STARTTEMP) {
-				for(uint8_t j = 0; j < TempAlarm_size; j++) {
-					if(TempAlarm[j].num != i) continue;
-					int16_t T = ((uint8_t)TempAlarm[j].MaxTemp << 8) | (uint8_t)TempAlarm[j].MinTemp;
+			if(idx != -1) {
+				for(uint8_t i = 0; i < TempAlarm_size; i++) {
+					if(TempAlarm[i].num != idx) continue;
+					int16_t T = ((uint8_t)TempAlarm[i].MaxTemp << 8) | (uint8_t)TempAlarm[i].MinTemp;
 					if(T == TEMP_ALARM_TEMP_MIN * 100) continue;
 					if(GETBIT(Prof.Heat.flags, fWeather)) { // включена погодозависимость
-						T += (Prof.Heat.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
+						T += ((int32_t)Prof.Heat.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ, результат в сотых градуса, определяем цель
 					}
 					if(temp < T - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
 					else if(temp > T) dRelay[RPUMPFL].set_OFF();
-					temp = STARTTEMP;
+					idx = -1;
 					break;
 				}
-				if(temp != STARTTEMP) {
-					if(temp < target + HeatFloorDeltaTemp - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
-					else if(temp > target + HeatFloorDeltaTemp) dRelay[RPUMPFL].set_OFF();
+				if(idx != -1) {
+					int16_t T = get_targetTempHeat();
+					if(temp < T + HeatFloorDeltaTemp - HYSTERESIS_HeatFloor) dRelay[RPUMPFL].set_ON();
+					else if(temp > T + HeatFloorDeltaTemp) dRelay[RPUMPFL].set_OFF();
 				}
 			}// else if(!dRelay[RPUMPFL].get_Relay()) dRelay[RPUMPFL].set_ON();
 		}

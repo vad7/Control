@@ -409,7 +409,7 @@ function loadParam(paramid, noretry, resultdiv) {
 												loadsens += "get_eTemp(" +T+ "),";
 												upsens += "get_eTemp(" +T+ "),";
 												if(tnum == 1) {
-													loadsens += "get_maxTemp(" +T+ "),get_errTemp(" +T+ "),get_esTemp(" +T+ "),get_minTemp(" +T+ "),get_fTemp4(" +T+ "),get_fTemp5(" +T+ "),get_fTemp6(" +T+ "),get_fTemp7(" +T+ "),get_nTemp(" +T+ "),get_testTemp(" +T+ "),get_bTemp(" +T+ "),";
+													loadsens += "get_maxTemp(" +T+ "),get_errTemp(" +T+ "),get_esTemp(" +T+ "),get_minTemp(" +T+ "),get_fTemp4(" +T+ "),get_fTemp5(" +T+ "),get_fTemp6(" +T+ "),get_fTemp7(" +T+ "),get_nTemp2(" +T+ "),get_testTemp(" +T+ "),get_bTemp(" +T+ "),";
 													upsens += "get_fullTemp(" +T+ "),get_esTemp(" +T+ "),";
 												} else if(tnum == 2) {
 													loadsens += "get_aTemp(" +T+ "),get_fTemp1(" +T+ "),get_fTemp2(" +T+ "),get_fTemp3(" +T+ "),get_nTemp2(" +T+ "),get_bTemp(" +T+ "),";
@@ -419,7 +419,7 @@ function loadParam(paramid, noretry, resultdiv) {
 												content += '<tr>';
 												content += '<td>' +count[j]+ '</td>';
 												if(tnum == 1) {
-													content += '<td id="get_ntemp-' +T+ '"></td>';
+													content += '<td id="get_ntemp2-' +T+ '"></td>';
 													content += '<td id="get_fulltemp-' +T+ '">-</td>';
 													content += '<td nowrap><input id="get_mintemp-' +T+ '" type="number" class="InpHide" step="1" style="max-width:50px"><input type="submit" value=">" onclick="setParam(\'get_minTemp(' + count[j] + ')\');"></td>';
 													content += '<td nowrap><input id="get_maxtemp-' +T+ '" type="number" class="InpHide" step="1" style="max-width:50px"><input type="submit" value=">" onclick="setParam(\'get_maxTemp(' + count[j] + ')\');"></td>';
