@@ -311,6 +311,11 @@ err=OK;
        set_Error(err,name);                                 // генерация ошибки
        return err;                                          // Возврат
       }
+  if(GETBIT(flags, fOnOff) && state != 3) {
+      set_Error(err = ERR_FC_ERROR, name);					// генерация ошибки
+      return err;                                          // Возврат
+  }
+
 //  else  if ((testMode==NORMAL)||(testMode==HARD_TEST))     //   Режим работа и хард тест, анализируем состояние,
 //        if ((GETBIT(flags,fOnOff))&&(state!=3))                  // Не верное состояние
 //         {
