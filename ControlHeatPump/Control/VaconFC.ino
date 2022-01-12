@@ -757,6 +757,9 @@ boolean devVaconFC::set_paramFC(char *var, float f)
 // Вывести в buffer строковый статус.
 void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 {
+#ifdef FC_VLT
+
+#else //FC_VLT
 	if(st & FC_S_RDY) 	strcat(buffer, FC_S_RDY_str);
 	if(st & FC_S_RUN) 	{
 		strcat(buffer, FC_S_RUN_str);
@@ -766,7 +769,9 @@ void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 	if(st & FC_S_FLT) 	strcat(buffer, FC_S_FLT_str);
 	if(st & FC_S_W) 	strcat(buffer, FC_S_W_str);
 	if(st & FC_S_Z) 	strcat(buffer, FC_S_Z_str);
-	if(st) *(buffer + m_strlen(buffer) - 1) = '\0'; // skip last ','
+#endif
+	int i = m_strlen(buffer);
+	if(i) *(buffer + i - 1) = '\0'; // skip last ','
 }
 
 // Получить информацию о частотнике

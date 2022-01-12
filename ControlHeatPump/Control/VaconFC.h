@@ -23,15 +23,161 @@
 
 #include "Constant.h"
 
-#define FC_VACON_NAME "Vacon"
-#ifdef FC_VACON
-#define ERR_LINK_FC 0         	    // Состояние инертора - нет связи по Modbus
-#endif
-
 #define RECOVER_OIL_PERIOD_MUL		2	// Множитель периода
 #define FC_COOLER_FUN_HYSTERESIS	3	// Гестерезис температуры для управления вентилятором инвертора, градусы
 
-// Регистры Vacon 10
+#ifdef FC_VLT
+	#define FC_VACON_NAME "VLT"
+	#define FC_VACON
+
+// Регистры Danfoss VLT (Basic Drive FC-101)
+// Нумерация - номер параметра "n-nn" = nnn * 10 (нормер ячейки Modbus)
+// Чтение
+#define FC_FREQ_OUT		1			// Выходная частота, поступающая на двигатель
+#define FC_FREQ_REF		2			// Опорная частота для управления двигателем
+#define FC_TEMP			8			// Температуры радиатора частотника, C
+#define FC_TEMP_MOTOR	9			// Расчетная температура двигателя, %
+#define FC_COMM_STATUS	808			// Состояние связи по шине Modbus. Формат: xx.yyy где xx = 0 – 64 (число сообщений об ошибках), yyy = 0 - 999 (число положительных сообщений)
+#define FC_POWER_DAYS	828			// Наработка, дней
+#define FC_POWER_HOURS	829			// Наработка, часов
+#define FC_RUN_DAYS		840			// Счетчик работы двигателя, дней
+#define FC_RUN_HOURS	841			// Счетчик работы двигателя, часов
+#define FC_NUM_FAULTS	842			// Счетчик отказов
+
+// Чтение / запись
+#define FC_REMOTE_CTRL	172			// Выбор источника сигналов управления: 0 = Клемма ввода/вывода, 1 = Шина Fieldbus
+#define FC_REMOTE_REF	117			// Выбор опорной частоты: 1 = Предустановленная скорость 0-7, 2 = Клавиатура, 3 = Шина Fieldbus, 4 = AI1, 5 = AI2, 6 = ПИ-регулятор
+#define FC_FREQ_MIN		101			// Мин. частота 0.01 Гц
+#define FC_FREQ_MAX		102			// Макс. частота 0.01 Гц
+#define FC_MOTOR_CTRL	600			// Режим управления двигателем: 0 = Управление частотой, 1 = Управление скоростью с разомкнутым контуром
+#define FC_MOTOR_Uf		108			// Вид кривой U/f: 0 = Линейная, 1 = Квадратичная, 2 = Программируемая
+#define FC_TORQUE_BOOST	109			// Форсировка момента: 0 = Запрещено, 1 = Разрешено
+#define FC_SW_FREQ		601			// Частота коммутации (ШИМ), 0.1 кГц
+#define FC_COMM_ST_RESET 815		// 1 = Сброс состояния связи FC_COMM_STATUS
+#define FC_MOTOR_NVOLT	110			// Номинальное напряжение двигателя
+#define FC_MOTOR_NA		113			// Номинальный ток двигателя
+#define FC_MOTOR_NCOS	120			// коэфф. мощности
+#define FC_MOTOR_MA		107			// Максимальный ток двигателя
+
+// Системные:
+// Чтение
+#define FC_STATUS		2101		// Слово состояния FB
+#define FC_SPEED		2103		// Фактическая скорость FB, 0.01 %
+#define FC_FREQ			2104		// Выходная частота, +/- 0.01 Гц
+#define FC_RPM			2105		// Скорость двигателя, +/- об/мин
+#define FC_CURRENT		2106		// Ток двигателя, 0.01 A
+#define FC_TORQUE		2107		// Крутящий момент двигателя от номинального, +/- 0.1 %
+#define FC_POWER		2108		// Мощность двигателя от номинального, +/- 0.1 %
+#define FC_VOLTAGE		2109		// Напряжение двигателя, 0.1 В
+#define FC_VOLTATE_DC	2110		// Напряжение шины постоянного тока, 1 В
+#define FC_ERROR		2111		// Код активного отказа
+
+// Запись
+#define FC_CONTROL		2001		// Слово управления FB
+#define FC_SET_SPEED	2003		// Задание скорости FB, 0.01 %
+#define FC_SOURCE		2004		// источник уставки, если P15.1=3
+#define FC_FEEDBACK		2005		// источник обратной связи, если P15.4=2
+
+// Биты
+// FC_STATE
+#define FC_CONTROL_RDY	(1<<0)	// Управление готово
+const char *FC_CONTROL_RDY_str		= {"Ok,"};
+#define FC_S_RDY		(1<<1)	// Привод готов
+const char *FC_S_RDY_str			= {"Ready,"};
+#define FC_S_RUN		(1<<11)	// Привод работает
+const char *FC_S_RUN_str			= {"Run,"};
+#define FC_S_DIR		0		// Не используется (задание направления вращение через знак MRV (Main Reference Value)
+#define FC_S_FLT		(1<<4)	// Действующий отказ
+const char *FC_S_FLT_str			= {"Fault,"};
+#define FC_S_W			(1<<7)	// Сигнал тревоги
+const char *FC_S_W_str				= {"Warn,"};
+#define FC_S_AREF		(1<<8)	// 0 - Линейное изменение скорости, 1 - Задание скорости достигнуто
+const char *FC_S_AREF_str0			= {"Ramping,"};
+#define FC_S_START		(1<<2)	// 1 - преобразователь частоты запускает двигатель командой пуска
+const char *FC_S_START_str			= {"Start,"};
+#define FC_S_TRIP		(1<<3)	// 1 - преобразователь частоты отключается
+const char *FC_S_TRIP_str			= {"Trip,"};
+#define FC_S_TRIPLOCK	(1<<3)	// 1 - преобразователь частоты отключен и блокирован
+const char *FC_S_TRIPLOCK_str		= {"Lock,"};
+#define FC_S_BUS		(1<<9)	// 0 - Управлять преобразователем частоты через канал последовательной связи нельзя
+const char *FC_S_BUS_str0			= {"NO_BUS,"};
+#define FC_S_FREQ_LIM	(1<<10)	// 1 - выходная частота достигла предела (параметры 4-12, 4-14)
+const char *FC_S_FREQ_LIM_str		= {"Freq_Limit,"};
+#define FC_S_OVERTEMP	(1<<12)	// 1 - преобразователь частоты остановлен из-за перегрева
+const char *FC_S_OVERTEMP_str		= {"Over_Temp,"};
+#define FC_S_VOLTAGE	(1<<13)	// 1 - Напряжение постоянного тока в цепи постоянного тока преобразователя частоты слишком мало или велико
+const char *FC_S_VOLTAGE_str		= {"Err_V,"};
+#define FC_S_CURRENT	(1<<14)	// 1 - превышен предел по току (параметр 4-18 Current Limit)
+const char *FC_S_CURRENT_str		= {"Over_I,"};
+#define FC_S_HEAT		(1<<15)	// 1 - таймеры для тепловой защиты двигателя и тепловой защиты преобразователя частоты превысели 100%
+const char *FC_S_HEAT_str			= {"HEAT,"};
+
+// FC_CONTROL
+#define FC_C_RUN		0x01	// 0 - Останов, 1 - Выполнение
+#define FC_C_STOP		0
+#define FC_C_DIR		0		// Не используется (направления вращение через знак MAV (Main Actual Value)
+#define FC_C_RST		0x04	// Сброс отказа
+#define FC_C_COOLER_FAN (1<<13)	// Вкл. вентилятора
+#define FC_C_COOLER_FAN_STR "FB.B13"
+
+const uint8_t FC_NonCriticalFaults[] = { 1, 2, 8, 9, 13, 14,/**/15, 16, 17, 25, 34, 41, 53 }; // Не критичные ошибки, которые можно сбросить
+
+const uint8_t FC_Faults_code[] = {
+	0,
+	1,  // FC_ERR_Overcurrent
+	2,  // FC_ERR_Overvoltage
+	3,  // FC_ERR_Earth_fault
+	8,  // FC_ERR_System_fault
+	9,  // FC_ERR_Undervoltage
+	11, // FC_ERR_Output_phase_fault
+	13, // FC_ERR_FC_Undertemperature
+	14, // FC_ERR_FC_Overtemperature
+	15, // FC_ERR_Motor_stalled
+	16, // FC_ERR_Motor_overtemperature
+	17, // FC_ERR_Motor_underload
+	22, // FC_ERR_EEPROM_checksum_fault
+	25, // FC_ERR_MC_watchdog_fault
+	27, // FC_ERR_Back_EMF_protection
+	34, // FC_ERR_Internal_bus_comm
+	35, // FC_ERR_Application_fault
+	41, // FC_ERR_IGBT_Overtemperature
+	50, // FC_ERR_Analog_input_wrong
+	51, // FC_ERR_External_fault
+	53, // FC_ERR_Fieldbus_fault
+	55, // FC_ERR_Wrong_run_faul
+	57  // FC_ERR_Idenfication_fault
+};
+
+const char *FC_Faults_str[] = {	"Ok", // нет ошибки
+								"Overcurrent",
+								"Overvoltage",
+								"Earth fault",
+								"System fault",
+								"Undervoltage",
+								"Output phase fault",
+								"FC Undertemperature",
+								"FC Overtemperature",
+								"Motor stalled",
+								"Motor overtemperature",
+								"Motor underload",
+								"EEPROM checksum fault",
+								"MC watchdog fault",
+								"Back EMF protection",
+								"Internal bus comm",
+								"Application fault",
+								"IGBT Overtemperature",
+								"Analog input wrong",
+								"External fault",
+								"Fieldbus fault",
+								"Wrong run faul",
+								"Idenfication fault",
+
+								"Unknown"}; // sizeof(FC_Faults_code)+1
+
+#else //FC_VLT
+
+#define FC_VACON_NAME "Vacon"
+// Регистры Vacon 10/20
 // Чтение
 #define FC_FREQ_OUT		1			// Выходная частота, поступающая на двигатель
 #define FC_FREQ_REF		2			// Опорная частота для управления двигателем
@@ -155,6 +301,11 @@ const char *FC_Faults_str[] = {	"Ok", // нет ошибки
 								"Idenfication fault",
 
 								"Unknown"}; // sizeof(FC_Faults_code)+1
+#endif //FC_VLT
+
+#ifdef FC_VACON
+#define ERR_LINK_FC 0         	    // Состояние инертора - нет связи по Modbus
+#endif
 
 class devVaconFC
 {
