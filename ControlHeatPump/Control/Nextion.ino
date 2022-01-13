@@ -293,7 +293,7 @@ void Nextion::readCommand()
 				} else if(cmd1 == NXTID_PAGE_HEAT) { // Изменение целевой температуры СО шаг изменения десятые градуса
 					if(cmd2 == NXTID_TEMP_PLUS || cmd2 == NXTID_TEMP_MINUS) {
 						HP.setTargetTemp(cmd2 == NXTID_TEMP_PLUS ? 10 : -10);
-						HP.getTargetTempStr(ntemp);
+						HP.getTargetTempStr2(ntemp);
 						setComponentText("t", ntemp);
 					} else if(cmd2 == NXTID_NEXT_MODE) { // Переключение режимов отопления ТОЛЬКО если насос выключен
 						if(!HP.is_compressor_on()) {
@@ -430,7 +430,7 @@ void Nextion::Update()
 	// 2. Вывод в зависмости от страницы
 	if(PageID == NXTID_PAGE_MAIN)  // Обновление данных 0 страницы "Главный экран"
 	{
-		strcat(dptoa(ntemp, HP.sTemp[TIN].get_Temp() / 10, 1), NEXTION_xB0);
+		strcat(dptoa(ntemp, HP.sTemp[TIN].get_Temp(), 2), NEXTION_xB0);
 		setComponentText("t0", ntemp);
 #ifdef TSUN
 		strcat(dptoa(ntemp, HP.sTemp[TSUN].get_Temp() / 10, 1), NEXTION_xB0);
@@ -444,7 +444,7 @@ void Nextion::Update()
 		setComponentText("t4", ntemp);
 		strcat(dptoa(ntemp, HP.FEED /10, 1),NEXTION_xB0);
 		setComponentText("t5", ntemp);
-		HP.getTargetTempStr(ntemp);
+		HP.getTargetTempStr2(ntemp);
 		uint16_t newcrc = calc_crc16((uint8_t*)ntemp, 4);
 		if(newcrc != Page1crc || fUpdate == 2) {
 			Page1crc = newcrc;
@@ -600,7 +600,7 @@ void Nextion::Update()
 		 Алгоритм Т в доме - a1
 		 Алгоритм Т обратки - a2
 		 */
-		HP.getTargetTempStr(ntemp);
+		HP.getTargetTempStr2(ntemp);
 		setComponentText("t", ntemp);
 		// Состояние системы отопления
 		if(GETBIT(HP.Prof.SaveON.flags, fAutoSwitchProf_mode)) sendCommand("a.val=1"); else sendCommand("a.val=0");

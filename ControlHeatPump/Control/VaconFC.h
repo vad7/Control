@@ -27,59 +27,46 @@
 #define FC_COOLER_FUN_HYSTERESIS	3	// Гестерезис температуры для управления вентилятором инвертора, градусы
 
 #ifdef FC_VLT
-	#define FC_VACON_NAME "VLT"
+	#define FC_VACON_NAME FC_VLT
 	#define FC_VACON
 
 // Регистры Danfoss VLT (Basic Drive FC-101)
 // Нумерация - номер параметра "n-nn" = nnn * 10 (нормер ячейки Modbus)
+// Параметр 8-3 = 2 (Modbus RTU)
 // Чтение
-#define FC_FREQ_OUT		1			// Выходная частота, поступающая на двигатель
-#define FC_FREQ_REF		2			// Опорная частота для управления двигателем
-#define FC_TEMP			8			// Температуры радиатора частотника, C
-#define FC_TEMP_MOTOR	9			// Расчетная температура двигателя, %
-#define FC_COMM_STATUS	808			// Состояние связи по шине Modbus. Формат: xx.yyy где xx = 0 – 64 (число сообщений об ошибках), yyy = 0 - 999 (число положительных сообщений)
-#define FC_POWER_DAYS	828			// Наработка, дней
-#define FC_POWER_HOURS	829			// Наработка, часов
-#define FC_RUN_DAYS		840			// Счетчик работы двигателя, дней
-#define FC_RUN_HOURS	841			// Счетчик работы двигателя, часов
-#define FC_NUM_FAULTS	842			// Счетчик отказов
-
-// Чтение / запись
-#define FC_REMOTE_CTRL	172			// Выбор источника сигналов управления: 0 = Клемма ввода/вывода, 1 = Шина Fieldbus
-#define FC_REMOTE_REF	117			// Выбор опорной частоты: 1 = Предустановленная скорость 0-7, 2 = Клавиатура, 3 = Шина Fieldbus, 4 = AI1, 5 = AI2, 6 = ПИ-регулятор
-#define FC_FREQ_MIN		101			// Мин. частота 0.01 Гц
-#define FC_FREQ_MAX		102			// Макс. частота 0.01 Гц
-#define FC_MOTOR_CTRL	600			// Режим управления двигателем: 0 = Управление частотой, 1 = Управление скоростью с разомкнутым контуром
-#define FC_MOTOR_Uf		108			// Вид кривой U/f: 0 = Линейная, 1 = Квадратичная, 2 = Программируемая
-#define FC_TORQUE_BOOST	109			// Форсировка момента: 0 = Запрещено, 1 = Разрешено
-#define FC_SW_FREQ		601			// Частота коммутации (ШИМ), 0.1 кГц
-#define FC_COMM_ST_RESET 815		// 1 = Сброс состояния связи FC_COMM_STATUS
-#define FC_MOTOR_NVOLT	110			// Номинальное напряжение двигателя
-#define FC_MOTOR_NA		113			// Номинальный ток двигателя
-#define FC_MOTOR_NCOS	120			// коэфф. мощности
-#define FC_MOTOR_MA		107			// Максимальный ток двигателя
+#define FC_TEMP			16340		// Температуры радиатора частотника, C
+#define FC_POWER_HOURS	15000		// Наработка, часов, int32
+#define FC_RUN_HOURS	15010		// Счетчик работы двигателя, часов, int32
+#define FC_CNT_POWER	15020		// Счетчик кВтч, uint16
+// 15030 - Кол-во включений питания, int32
+// 15040 - Кол-во перегревов
+// 15050 - Кол-во перенапряжений
+// 15060 - 1 - Сброс счетчика кВтч
+// 15070 - 1 - Сброс счетчика наработки
+// 15300..15309 - Журнал ошибок
 
 // Системные:
 // Чтение
-#define FC_STATUS		2101		// Слово состояния FB
-#define FC_SPEED		2103		// Фактическая скорость FB, 0.01 %
-#define FC_FREQ			2104		// Выходная частота, +/- 0.01 Гц
-#define FC_RPM			2105		// Скорость двигателя, +/- об/мин
-#define FC_CURRENT		2106		// Ток двигателя, 0.01 A
-#define FC_TORQUE		2107		// Крутящий момент двигателя от номинального, +/- 0.1 %
-#define FC_POWER		2108		// Мощность двигателя от номинального, +/- 0.1 %
-#define FC_VOLTAGE		2109		// Напряжение двигателя, 0.1 В
-#define FC_VOLTATE_DC	2110		// Напряжение шины постоянного тока, 1 В
-#define FC_ERROR		2111		// Код активного отказа
+#define FC_STATUS		16030		// Слово состояния STW (2910)
+#define FC_SPEED		16020		// Фактическая скорость REF, -16384..+16384 (-100%..+100%)
+#define FC_FREQ			16130		// Выходная частота, +/- 0.1 Гц
+#define FC_FREQ_MUL		10			// приведение к двум знакам после запятой
+#define FC_RPM			16170		// Скорость двигателя, +/- об/мин
+#define FC_CURRENT		16140		// Ток двигателя, 0.01 A
+#define FC_TORQUE		16160		// Крутящий момент двигателя от номинального, +/- 0.1 %
+#define FC_POWER		16100		// Мощность двигателя от номинального, +/- 0.1 %
+//#define FC_POWER_IN_PERCENT			// Мощность (FC_POWER) в десятых %
+#define FC_VOLTAGE		16120		// Напряжение двигателя, В
+#define FC_VOLTATE_DC	16300		// Напряжение шины постоянного тока, 1 В
+#define FC_ERROR		16900		// Коды активного отказа (2 word)
+#define FC_WARNINNG		16920		// Коды предупреждения (2 word)
 
 // Запись
-#define FC_CONTROL		2001		// Слово управления FB
-#define FC_SET_SPEED	2003		// Задание скорости FB, 0.01 %
-#define FC_SOURCE		2004		// источник уставки, если P15.1=3
-#define FC_FEEDBACK		2005		// источник обратной связи, если P15.4=2
+#define FC_CONTROL		2810		// Слово управления CTW
+#define FC_SET_SPEED	2811		// Задание скорости MAV, -16384..+16384 (-100%..+100%)
 
 // Биты
-// FC_STATE
+// FC_STATUS (STW)
 #define FC_CONTROL_RDY	(1<<0)	// Управление готово
 const char *FC_CONTROL_RDY_str		= {"Ok,"};
 #define FC_S_RDY		(1<<1)	// Привод готов
@@ -112,13 +99,14 @@ const char *FC_S_CURRENT_str		= {"Over_I,"};
 #define FC_S_HEAT		(1<<15)	// 1 - таймеры для тепловой защиты двигателя и тепловой защиты преобразователя частоты превысели 100%
 const char *FC_S_HEAT_str			= {"HEAT,"};
 
-// FC_CONTROL
-#define FC_C_RUN		0x01	// 0 - Останов, 1 - Выполнение
-#define FC_C_STOP		0
-#define FC_C_DIR		0		// Не используется (направления вращение через знак MAV (Main Actual Value)
-#define FC_C_RST		0x04	// Сброс отказа
-#define FC_C_COOLER_FAN (1<<13)	// Вкл. вентилятора
-#define FC_C_COOLER_FAN_STR "FB.B13"
+// FC_CONTROL (CTW)
+#define FC_C_RUN		((1<<6)|(1<<10))	// 0 - Останов, 1 - Пуск
+#define FC_C_STOP		((0<<6)|(1<<10))
+#define FC_C_DIR		0					// Не используется (направления вращение через знак MAV (Main Actual Value)
+#define FC_C_RST		((1<<7)|(1<<10))	// Сброс отказа
+#define FC_C_COOLER_FAN ((1<<11)|(1<<10))	// Вкл. вентилятора (Реле 1, параметр 5-40[0] = 36)
+//#define FC_C_COOLER_FAN ((1<<12)|(1<<10))	// Вкл. вентилятора (Реле 2, параметр 5-40[1] = 36)
+#define FC_C_COOLER_FAN_STR "Relay 1"
 
 const uint8_t FC_NonCriticalFaults[] = { 1, 2, 8, 9, 13, 14,/**/15, 16, 17, 25, 34, 41, 53 }; // Не критичные ошибки, которые можно сбросить
 
@@ -210,10 +198,12 @@ const char *FC_Faults_str[] = {	"Ok", // нет ошибки
 #define FC_STATUS		2101		// Слово состояния FB
 #define FC_SPEED		2103		// Фактическая скорость FB, 0.01 %
 #define FC_FREQ			2104		// Выходная частота, +/- 0.01 Гц
+#define FC_FREQ_MUL		1			// приведение к двум знакам после запятой
 #define FC_RPM			2105		// Скорость двигателя, +/- об/мин
 #define FC_CURRENT		2106		// Ток двигателя, 0.01 A
 #define FC_TORQUE		2107		// Крутящий момент двигателя от номинального, +/- 0.1 %
 #define FC_POWER		2108		// Мощность двигателя от номинального, +/- 0.1 %
+#define FC_POWER_IN_PERCENT			// Мощность (FC_POWER) в десятых %
 #define FC_VOLTAGE		2109		// Напряжение двигателя, 0.1 В
 #define FC_VOLTATE_DC	2110		// Напряжение шины постоянного тока, 1 В
 #define FC_ERROR		2111		// Код активного отказа
@@ -345,8 +335,8 @@ public:
 #endif
   
   // Управление по модбас
-  uint16_t	get_power(){return (uint32_t)nominal_power * power / 1000;}   // Получить текущую мощность в Вт
-  uint16_t	get_current();										          // Получить текущий ток в 0.01А
+  uint16_t	get_power(void) { return power; }		  // Получить текущую мощность в Вт
+  uint16_t	get_current();							  // Получить текущий ток в 0.01А
   void		get_infoFC(char *buf);                   // Получить информацию о частотнике
   void		get_infoFC_status(char *buffer, uint16_t st); // Вывести в buffer строковый статус.
   boolean	reset_errorFC();                        // Сброс ошибок инвертора
@@ -386,7 +376,9 @@ public:
   uint32_t read_0x03_32(uint16_t cmd);             // Функция Modbus 0х03 прочитать 4 байта
   int8_t   write_0x06_16(uint16_t cmd, uint16_t data);// Запись данных (2 байта) в регистр cmd возвращает код ошибки
 #endif
+#ifdef FC_POWER_IN_PERCENT
   uint16_t nominal_power;							// Номинальная мощность двигателя Вт
+#endif
 
  private:
   void     Adjust_EEV(int16_t freq_delta);
@@ -397,7 +389,7 @@ public:
    // Управление по 485
   int16_t  FC_target;								// Целевая скорость инвертора в 0.01 %
   int16_t  FC_curr_freq;							// Чтение: текущая частота двигателя в 0.01 Гц
-  int16_t  power;									// Чтение: Текущая мощность двигателя в +-0.1% от номинала
+  uint16_t power;									// Чтение: Текущая мощность двигателя в Вт
   int8_t   FC_Temp;									// Чтение: Температура радиатора инвертора, градусы
 #ifdef FC_MAX_CURRENT
   uint16_t current;									// Чтение: Текущий ток двигателя в 0.01 Ампер единицах

@@ -119,6 +119,7 @@ int8_t devVaconFC::initFC()
 // Вычисление номинальной мощности двигателя компрессора = U*sqrt(3)*I*cos, W
 void devVaconFC::set_nominal_power(void)
 {
+#ifdef FC_POWER_IN_PERCENT
 #ifndef FC_ANALOG_CONTROL
 	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
 	typeof(nominal_power) n = nominal_power;
@@ -134,6 +135,7 @@ void devVaconFC::set_nominal_power(void)
 	nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
 	if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
+#endif
 #endif
 }
 
@@ -244,9 +246,13 @@ int8_t devVaconFC::get_readState()
 		}
 		// Состояние прочитали и оно правильное все остальное читаем
 		{
-			FC_curr_freq = read_0x03_16(FC_FREQ); 	// прочитать текущую частоту
+			FC_curr_freq = read_0x03_16(FC_FREQ) * FC_FREQ_MUL; 	// прочитать текущую частоту
 			if(err == OK) {
+#ifdef FC_POWER_IN_PERCENT
+				power = (uint32_t)nominal_power * read_0x03_16(FC_POWER) / 1000; 	// прочитать мощность
+#else
 				power = read_0x03_16(FC_POWER); 	// прочитать мощность
+#endif
 #ifdef FC_MAX_CURRENT
 				if(err == OK) current = read_0x03_16(FC_CURRENT);
 #endif
@@ -609,6 +615,17 @@ uint16_t devVaconFC::get_current()
 	#endif
 #endif
 }
+
+// Получить текущую мощность в Вт
+uint16_t devVaconFC::get_power(void)
+{
+#ifdef FC_POWER_IN_PERCENT
+	return (uint32_t)nominal_power * power / 1000;
+#else
+	return power;
+#endif
+}
+
 
 // Получить параметр инвертора в виде строки, результат ДОБАВЛЯЕТСЯ в ret
 void devVaconFC::get_paramFC(char *var,char *ret)
