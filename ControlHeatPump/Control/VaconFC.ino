@@ -775,7 +775,23 @@ boolean devVaconFC::set_paramFC(char *var, float f)
 void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 {
 #ifdef FC_VLT
-
+	if((st & FC_S_CONTROL_RDY) == 0) strcat(buffer, FC_S_CONTROL_RDY_str0);
+	if(st & FC_S_RDY) 		strcat(buffer, FC_S_RDY_str);
+	if(st & FC_S_START) 	strcat(buffer, FC_S_START_str);
+	if(st & FC_S_RUN) 	{
+		strcat(buffer, FC_S_RUN_str);
+		if((st & FC_S_AREF)==0)	strcat(buffer, FC_S_AREF_str0);
+	}
+	if(st & FC_S_TRIP) 		strcat(buffer, FC_S_TRIP_str);
+	if(st & FC_S_TRIPLOCK) 	strcat(buffer, FC_S_TRIPLOCK_str);
+	if(!(st & FC_S_BUS)) 	strcat(buffer, FC_S_BUS_str0);
+	if(st & FC_S_FREQ_LIM) 	strcat(buffer, FC_S_FREQ_LIM_str);
+	if(st & FC_S_OVERTEMP) 	strcat(buffer, FC_S_OVERTEMP_str);
+	if(st & FC_S_VOLTAGE) 	strcat(buffer, FC_S_VOLTAGE_str);
+	if(st & FC_S_CURRENT) 	strcat(buffer, FC_S_CURRENT_str);
+	if(st & FC_S_HEAT) 		strcat(buffer, FC_S_HEAT_str);
+	if(st & FC_S_FLT) 		strcat(buffer, FC_S_FLT_str);
+	if(st & FC_S_W) 		strcat(buffer, FC_S_W_str);
 #else //FC_VLT
 	if(st & FC_S_RDY) 	strcat(buffer, FC_S_RDY_str);
 	if(st & FC_S_RUN) 	{
@@ -801,6 +817,29 @@ void devVaconFC::get_infoFC(char* buf)
 			strcat(buf, "|Данные не доступны - нет связи|;");
 		} else {
 			uint32_t i;
+			strcat(buf, "16-00|Состояние инвертора: ");
+			get_infoFC_status(buf + m_strlen(buf), state);
+			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
+			if(err == OK) {
+				buf += m_snprintf(buf, 256, "16-01|Фактическая скорость|%d%%;16-10|Выходная мощность (кВт)|%d;", read_0x03_16(FC_SPEED), get_power());
+				buf += m_snprintf(buf, 256, "16-17|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
+				buf += m_snprintf(buf, 256, "16-22|Крутящий момент|%d%%;", (int16_t)read_0x03_16(FC_TORQUE));
+				buf += m_snprintf(buf, 256, "16-12|Выходное напряжение (В)|%.1d;", (int16_t)read_0x03_16(FC_VOLTAGE));
+				buf += m_snprintf(buf, 256, "16-30|Напряжение шины постоянного тока (В)|%d;", (int16_t)read_0x03_16(FC_VOLTAGE_DC));
+				buf += m_snprintf(buf, 256, "16-34|Температура радиатора (°С)|%d;", read_tempFC());
+				buf += m_snprintf(buf, 256, "15-00|Время включения инвертора (часов)|%d;", read_0x03_32(FC_POWER_HOURS));
+				buf += m_snprintf(buf, 256, "15-01|Время работы компрессора (часов)|%d;", read_0x03_32(FC_RUN_HOURS));
+				buf += m_snprintf(buf, 256, "15-02|Итого выход кВтч|%d;", read_0x03_16(FC_CNT_POWER));
+
+				i = read_0x03_16(FC_ERROR) << 16;
+				if(err == OK) i |= read_0x03_16(FC_ERROR2);
+				if(err == OK) {
+					m_snprintf(buf, 256, "16-90|Активная ошибка|%s (%X);", get_fault_str(i), i);
+				} else {
+					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
+				}
+			}
+#ifdef FC_VLT
 			strcat(buf, "2101|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
 			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
@@ -824,6 +863,31 @@ void devVaconFC::get_infoFC(char* buf)
 					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
 				}
 			}
+#else //FC_VLT
+			strcat(buf, "2101|Состояние инвертора: ");
+			get_infoFC_status(buf + m_strlen(buf), state);
+			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
+			if(err == OK) {
+				buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", read_0x03_16(FC_SPEED), power, get_power());
+				buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
+				buf += m_snprintf(buf, 256, "2107 (V1.5)|Крутящий момент|%.1d%%;", (int16_t)read_0x03_16(FC_TORQUE));
+				i = read_0x03_32(FC_VOLTAGE); // +FC_VOLTATE_DC (low word)
+				buf += m_snprintf(buf, 256, "2109 (V1.7)|Выходное напряжение (В)|%.1d;2110 (V1.8)|Напряжение шины постоянного тока (В)|%d;", i >> 16, i & 0xFFFF);
+				buf += m_snprintf(buf, 256, "0008 (V1.9)|Температура радиатора (°С)|%d;", read_tempFC());
+				i = read_0x03_32(FC_POWER_DAYS); // +FC_POWER_HOURS (low word)
+				buf += m_snprintf(buf, 256, "0828 (V3.3)|Время включения инвертора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
+				i = read_0x03_32(FC_RUN_DAYS); // +FC_RUN_HOURS (low word)
+				buf += m_snprintf(buf, 256, "0840 (V3.5)|Время работы компрессора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
+				buf += m_snprintf(buf, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", read_0x03_16(FC_NUM_FAULTS));
+
+				i = read_0x03_16(FC_ERROR);
+				if(err == OK) {
+					m_snprintf(buf, 256, "2111|Активная ошибка|%s (%d);", get_fault_str(i), i);
+				} else {
+					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
+				}
+			}
+#endif
 		}
 #endif
 	} else {
@@ -999,9 +1063,13 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
 // Возвращает текст ошибки по FT коду
 const char* devVaconFC::get_fault_str(uint8_t fault)
 {
+#ifdef FC_VLT
+	return "";
+#else //FC_VLT
     uint8_t i = 0;
     for (; i < sizeof(FC_Faults_code); i++) {
         if(FC_Faults_code[i] == fault) break;
     }
     return FC_Faults_str[i];
+#endif
 }

@@ -53,13 +53,15 @@
 #define FC_FREQ_MUL		10			// приведение к двум знакам после запятой
 #define FC_RPM			16170		// Скорость двигателя, +/- об/мин
 #define FC_CURRENT		16140		// Ток двигателя, 0.01 A
-#define FC_TORQUE		16160		// Крутящий момент двигателя от номинального, +/- 0.1 %
-#define FC_POWER		16100		// Мощность двигателя от номинального, +/- 0.1 %
+#define FC_TORQUE		16220		// Крутящий момент двигателя от номинального, +/- 1 %
+#define FC_POWER		16100		// Мощность двигателя от номинального, кВт
 //#define FC_POWER_IN_PERCENT			// Мощность (FC_POWER) в десятых %
 #define FC_VOLTAGE		16120		// Напряжение двигателя, В
-#define FC_VOLTATE_DC	16300		// Напряжение шины постоянного тока, 1 В
-#define FC_ERROR		16900		// Коды активного отказа (2 word)
-#define FC_WARNINNG		16920		// Коды предупреждения (2 word)
+#define FC_VOLTAGE_DC	16300		// Напряжение шины постоянного тока, 1 В
+#define FC_ERROR		16900		// Коды активного отказа
+#define FC_ERROR2		16910		// Коды активного отказа 2
+#define FC_WARNING		16920		// Коды предупреждения
+#define FC_WARNING		16930		// Коды предупреждения 2
 
 // Запись
 #define FC_CONTROL		2810		// Слово управления CTW
@@ -67,8 +69,8 @@
 
 // Биты
 // FC_STATUS (STW)
-#define FC_CONTROL_RDY	(1<<0)	// Управление готово
-const char *FC_CONTROL_RDY_str		= {"Ok,"};
+#define FC_S_CONTROL_RDY (1<<0)	// Управление готово
+const char *FC_S_CONTROL_RDY_str0	= {"No_Ctrl,"};
 #define FC_S_RDY		(1<<1)	// Привод готов
 const char *FC_S_RDY_str			= {"Ready,"};
 #define FC_S_RUN		(1<<11)	// Привод работает
@@ -108,7 +110,7 @@ const char *FC_S_HEAT_str			= {"HEAT,"};
 //#define FC_C_COOLER_FAN ((1<<12)|(1<<10))	// Вкл. вентилятора (Реле 2, параметр 5-40[1] = 36)
 #define FC_C_COOLER_FAN_STR "Relay 1"
 
-const uint8_t FC_NonCriticalFaults[] = { 1, 2, 8, 9, 13, 14,/**/15, 16, 17, 25, 34, 41, 53 }; // Не критичные ошибки, которые можно сбросить
+const uint8_t FC_NonCriticalFaults[] = { 0 }; // Не критичные ошибки, которые можно сбросить
 
 const uint8_t FC_Faults_code[] = {
 	0,
@@ -205,7 +207,7 @@ const char *FC_Faults_str[] = {	"Ok", // нет ошибки
 #define FC_POWER		2108		// Мощность двигателя от номинального, +/- 0.1 %
 #define FC_POWER_IN_PERCENT			// Мощность (FC_POWER) в десятых %
 #define FC_VOLTAGE		2109		// Напряжение двигателя, 0.1 В
-#define FC_VOLTATE_DC	2110		// Напряжение шины постоянного тока, 1 В
+#define FC_VOLTAGE_DC	2110		// Напряжение шины постоянного тока, 1 В
 #define FC_ERROR		2111		// Код активного отказа
 
 // Запись
