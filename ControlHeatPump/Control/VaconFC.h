@@ -58,10 +58,10 @@
 //#define FC_POWER_IN_PERCENT			// Мощность (FC_POWER) в десятых %
 #define FC_VOLTAGE		16120		// Напряжение двигателя, В
 #define FC_VOLTAGE_DC	16300		// Напряжение шины постоянного тока, 1 В
-#define FC_ERROR		16900		// Коды активного отказа
-#define FC_ERROR2		16910		// Коды активного отказа 2
-#define FC_WARNING		16920		// Коды предупреждения
-#define FC_WARNING		16930		// Коды предупреждения 2
+#define FC_ERROR		16900		// Коды активного отказа, ALARM
+#define FC_ERROR2		16910		// Коды активного отказа, ALARM 2
+#define FC_WARNING		16920		// Коды предупреждения, WARNING
+#define FC_WARNING2		16930		// Коды предупреждения, WARNING 2
 
 // Запись
 #define FC_CONTROL		2810		// Слово управления CTW
@@ -138,34 +138,90 @@ const uint8_t FC_Faults_code[] = {
 	57  // FC_ERR_Idenfication_fault
 };
 
-const char *FC_Faults_str[] = {	"Ok", // нет ошибки
-								"Overcurrent",
-								"Overvoltage",
+const char *FC_Alarm_str[] = {	"", // битовое поле (0..29 бит)
+								"Pwr.Card Temp",
 								"Earth fault",
-								"System fault",
-								"Undervoltage",
-								"Output phase fault",
-								"FC Undertemperature",
-								"FC Overtemperature",
-								"Motor stalled",
-								"Motor overtemperature",
-								"Motor underload",
-								"EEPROM checksum fault",
-								"MC watchdog fault",
-								"Back EMF protection",
-								"Internal bus comm",
-								"Application fault",
-								"IGBT Overtemperature",
-								"Analog input wrong",
-								"External fault",
-								"Fieldbus fault",
-								"Wrong run faul",
-								"Idenfication fault",
+								"",
+								"Ctrl.Word Timeout",
+								"Over Current",
+								"",
+								"Motor Th. Over",
+								"Motor ETR Over",
+								"Inverter Overld.",
+								"DC under Volt",	//10
+								"DC over Volt.",
+								"Short Circuit",
+								"",
+								"Mains ph. loss",
+								"AMA Not OK",
+								"Live Zero Error",
+								"Internal Fault",
+								"",
+								"U phase Loss",
+								"V phase Loss",		//20
+								"W phase Loss",
+								"",
+								"Control Voltage Fault",
+								"",
+								"VDD1 Supply Low",
+								"",
+								"",
+								"Earth fault",
+								"Drive Initialized"//29
+							};
+const char *FC_Alarm2_str[] = {	"", // битовое поле (0..19 бит)
+								"",
+								"ServiceTrip,Typecode",
+								"Sparepart",
+								"",
+								"No Flow",
+								"",
+								"",
+								"Broken Belt",
+								"",
+								"",	//10
+								"",
+								"External Interlock",
+								"",
+								"",
+								"",
+								"",
+								"",
+								"Fans error" //19
+							};
+const char *FC_Warning_str[] = {"", // битовое поле (0..29 бит)
+								"Pwr.Card Temp",
+								"Earth fault",
+								"",
+								"Ctrl.Word Timeout",
+								"Over Current",
+								"",
+								"Motor Th. Over",
+								"Motor ETR Over",
+								"Inverter Overld.",
+								"DC under Volt",	//10
+								"DC over Volt.",
+								"",
+								"",
+								"Mains ph. loss",
+								"No Motor",
+								"Live Zero Error",
+								"",
+								"",
+								"",
+								"",		//20
+								"",
+								"",
+								"24 V Supply Low",
+								"",
+								"Current Limit",
+								"Low temp"	// 26
+							};
 
-								"Unknown"}; // sizeof(FC_Faults_code)+1
 
 #else //FC_VLT
 
+#define FC_VACON_20
 #define FC_VACON_NAME "Vacon"
 // Регистры Vacon 10/20
 // Чтение
@@ -361,7 +417,11 @@ public:
   bool		check_blockFC();                          // Установить запрет на использование инвертора
   inline bool get_blockFC() { return GETBIT(flags, fErrFC); }// Получить флаг блокировки инвертора
 
+#ifdef FC_VLT
+  void get_fault_str(char *ret, const char *arr, uint32_t code); // Возвращает строкове представление ошибки или предупреждения
+#else
   const char *get_fault_str(uint8_t fault); // Возвращает название ошибки
+#endif
 
 #ifdef FC_ANALOG_CONTROL
   // Аналоговое управление

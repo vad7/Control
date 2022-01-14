@@ -214,8 +214,14 @@ int8_t devVaconFC::get_readState()
 		}
 		if(GETBIT(flags, fOnOff)) { // ТН включил компрессор, проверяем состояние инвертора
 			if(state & FC_S_FLT) { // Действующий отказ
+#ifdef FC_VLT
+				uint32_t reg = read_0x03_32(FC_ERROR);
+				journal.jprintf("%s, Fault: %X - ", name);
+				get_fault_str(NULL, FC_Alarm_str, reg);
+#else
 				uint16_t reg = read_0x03_16(FC_ERROR);
-				journal.jprintf("%s, Fault: %s(%d) - ", name, err ? cError : get_fault_str(reg), err ? err : reg);
+				journal.jprintf("%s, Fault: %s(%d) - ", name, reg ? get_fault_str(reg) : cError, reg ? reg : err);
+#endif
 				err = ERR_FC_FAULT;
 				if(HP.NO_Power) return err;
 				if(GETBIT(HP.Option.flags, fBackupPower)) {
@@ -817,6 +823,7 @@ void devVaconFC::get_infoFC(char* buf)
 			strcat(buf, "|Данные не доступны - нет связи|;");
 		} else {
 			uint32_t i;
+#ifdef FC_VLT
 			strcat(buf, "16-00|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
 			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
@@ -835,30 +842,6 @@ void devVaconFC::get_infoFC(char* buf)
 				if(err == OK) i |= read_0x03_16(FC_ERROR2);
 				if(err == OK) {
 					m_snprintf(buf, 256, "16-90|Активная ошибка|%s (%X);", get_fault_str(i), i);
-				} else {
-					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
-				}
-			}
-#ifdef FC_VLT
-			strcat(buf, "2101|Состояние инвертора: ");
-			get_infoFC_status(buf + m_strlen(buf), state);
-			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
-			if(err == OK) {
-				buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", read_0x03_16(FC_SPEED), power, get_power());
-				buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
-				buf += m_snprintf(buf, 256, "2107 (V1.5)|Крутящий момент|%.1d%%;", (int16_t)read_0x03_16(FC_TORQUE));
-				i = read_0x03_32(FC_VOLTAGE); // +FC_VOLTATE_DC (low word)
-				buf += m_snprintf(buf, 256, "2109 (V1.7)|Выходное напряжение (В)|%.1d;2110 (V1.8)|Напряжение шины постоянного тока (В)|%d;", i >> 16, i & 0xFFFF);
-				buf += m_snprintf(buf, 256, "0008 (V1.9)|Температура радиатора (°С)|%d;", read_tempFC());
-				i = read_0x03_32(FC_POWER_DAYS); // +FC_POWER_HOURS (low word)
-				buf += m_snprintf(buf, 256, "0828 (V3.3)|Время включения инвертора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
-				i = read_0x03_32(FC_RUN_DAYS); // +FC_RUN_HOURS (low word)
-				buf += m_snprintf(buf, 256, "0840 (V3.5)|Время работы компрессора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
-				buf += m_snprintf(buf, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", read_0x03_16(FC_NUM_FAULTS));
-
-				i = read_0x03_16(FC_ERROR);
-				if(err == OK) {
-					m_snprintf(buf, 256, "2111|Активная ошибка|%s (%d);", get_fault_str(i), i);
 				} else {
 					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
 				}
@@ -1060,16 +1043,32 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
 }
 #endif // FC_ANALOG_CONTROL    // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 
+#ifdef FC_VLT
+// Возвращает строкове представление ошибки или предупреждения
+void devVaconFC::get_fault_str(char *ret, const char *arr, uint32_t code)
+{
+	uint8_t i = 0;
+	while(code) {
+		if(code & 1) {
+			if(ret == NULL) {
+				journal.jprintf("%s,", arr[i]);
+			} else {
+				strcat(ret, arr[i]);
+				strcat(ret, ",");
+			}
+		}
+		i++;
+		code >>= 1;
+	}
+}
+#else //FC_VLT
 // Возвращает текст ошибки по FT коду
 const char* devVaconFC::get_fault_str(uint8_t fault)
 {
-#ifdef FC_VLT
-	return "";
-#else //FC_VLT
     uint8_t i = 0;
     for (; i < sizeof(FC_Faults_code); i++) {
         if(FC_Faults_code[i] == fault) break;
     }
     return FC_Faults_str[i];
-#endif
 }
+#endif
