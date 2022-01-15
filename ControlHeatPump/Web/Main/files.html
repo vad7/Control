@@ -17,7 +17,10 @@ function send_files(id) {
 	var mrk = {name:"*"+id+"*", toString: function(){return "";}};
 	upload_error = false;
 	if(id == 's') fs[0].settings = 1; else upload(mrk);
-	for(i = 0; i < fs.length && !upload_error; i++) upload(fs[i]);
+	for(i = 0; i < fs.length && !upload_error; i++) {
+		upload(fs[i]);
+		if(upload_error && confirm("Повторить загрузку " + fs[i].name + "?")) { i--; upload_error = false; continue; }
+	}
 	if(id != 's' && !upload_error) {
 		mrk.name = "*"+id+"_END*";
 		upload(mrk);
