@@ -430,7 +430,7 @@ void Nextion::Update()
 	// 2. Вывод в зависмости от страницы
 	if(PageID == NXTID_PAGE_MAIN)  // Обновление данных 0 страницы "Главный экран"
 	{
-		strcat(dptoa(ntemp, HP.sTemp[TIN].get_Temp(), 2), NEXTION_xB0);
+		strcat(dptoa(ntemp, HP.sTemp[TIN].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t0", ntemp);
 #ifdef TSUN
 		strcat(dptoa(ntemp, HP.sTemp[TSUN].get_Temp() / 10, 1), NEXTION_xB0);

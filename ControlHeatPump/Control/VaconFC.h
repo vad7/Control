@@ -26,8 +26,11 @@
 #define RECOVER_OIL_PERIOD_MUL		2	// Множитель периода
 #define FC_COOLER_FUN_HYSTERESIS	3	// Гестерезис температуры для управления вентилятором инвертора, градусы
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 #ifdef FC_VLT
-	#define FC_VACON_NAME FC_VLT
+	#define FC_VACON_NAME "FC-" TOSTRING(FC_VLT)
 	#define FC_VACON
 
 // Регистры Danfoss VLT (Basic Drive FC-101)
@@ -47,7 +50,7 @@
 
 // Системные:
 // Чтение
-#define FC_STATUS		16030		// Слово состояния STW (2910)
+#define FC_STATUS		2910		// Слово состояния STW (16030)
 #define FC_SPEED		16020		// Фактическая скорость REF, -16384..+16384 (-100%..+100%)
 #define FC_FREQ			16130		// Выходная частота, +/- 0.1 Гц
 #define FC_FREQ_MUL		10			// приведение к двум знакам после запятой
@@ -59,9 +62,11 @@
 #define FC_VOLTAGE		16120		// Напряжение двигателя, В
 #define FC_VOLTAGE_DC	16300		// Напряжение шины постоянного тока, 1 В
 #define FC_ERROR		16900		// Коды активного отказа, ALARM
-#define FC_ERROR2		16910		// Коды активного отказа, ALARM 2
+#define FC_ERROR2		16910		// Коды активного отказа, ALARM 2 (Не доступно для FC-51)
 #define FC_WARNING		16920		// Коды предупреждения, WARNING
-#define FC_WARNING2		16930		// Коды предупреждения, WARNING 2
+#define FC_WARNING2		16930		// Коды предупреждения, WARNING 2 (Не доступно для FC-51)
+#define FC_EX_STATUS	16940		// Доп. состояние
+#define FC_EX_STATUS2	16950		// Доп. состояние 2 (Не доступно для FC-51)
 
 // Запись
 #define FC_CONTROL		2810		// Слово управления CTW
@@ -110,35 +115,9 @@ const char *FC_S_HEAT_str			= {"HEAT,"};
 //#define FC_C_COOLER_FAN ((1<<12)|(1<<10))	// Вкл. вентилятора (Реле 2, параметр 5-40[1] = 36)
 #define FC_C_COOLER_FAN_STR "Relay 1"
 
-const uint8_t FC_NonCriticalFaults[] = { 0 }; // Не критичные ошибки, которые можно сбросить
+#define FC_NonCriticalFaults  0x4D10 // Не критичные ошибки FC_ERROR (ALARM), которые можно сбросить, битовое поле
 
-const uint8_t FC_Faults_code[] = {
-	0,
-	1,  // FC_ERR_Overcurrent
-	2,  // FC_ERR_Overvoltage
-	3,  // FC_ERR_Earth_fault
-	8,  // FC_ERR_System_fault
-	9,  // FC_ERR_Undervoltage
-	11, // FC_ERR_Output_phase_fault
-	13, // FC_ERR_FC_Undertemperature
-	14, // FC_ERR_FC_Overtemperature
-	15, // FC_ERR_Motor_stalled
-	16, // FC_ERR_Motor_overtemperature
-	17, // FC_ERR_Motor_underload
-	22, // FC_ERR_EEPROM_checksum_fault
-	25, // FC_ERR_MC_watchdog_fault
-	27, // FC_ERR_Back_EMF_protection
-	34, // FC_ERR_Internal_bus_comm
-	35, // FC_ERR_Application_fault
-	41, // FC_ERR_IGBT_Overtemperature
-	50, // FC_ERR_Analog_input_wrong
-	51, // FC_ERR_External_fault
-	53, // FC_ERR_Fieldbus_fault
-	55, // FC_ERR_Wrong_run_faul
-	57  // FC_ERR_Idenfication_fault
-};
-
-const char *FC_Alarm_str[] = {	"", // битовое поле (0..29 бит)
+const char *FC_Alarm_str[] = {	"", // битовое поле, если меньше 32, то в конце NULL
 								"Pwr.Card Temp",
 								"Earth fault",
 								"",
@@ -148,8 +127,8 @@ const char *FC_Alarm_str[] = {	"", // битовое поле (0..29 бит)
 								"Motor Th. Over",
 								"Motor ETR Over",
 								"Inverter Overld.",
-								"DC under Volt",	//10
-								"DC over Volt.",
+								"DCV under",	//10
+								"DCV over",
 								"Short Circuit",
 								"",
 								"Mains ph. loss",
@@ -161,35 +140,16 @@ const char *FC_Alarm_str[] = {	"", // битовое поле (0..29 бит)
 								"V phase Loss",		//20
 								"W phase Loss",
 								"",
-								"Control Voltage Fault",
+								"Ctrl. V Fault",
 								"",
-								"VDD1 Supply Low",
+								"VDD1 low",
 								"",
 								"",
 								"Earth fault",
-								"Drive Initialized"//29
+								"Drive Init",//29
+								NULL
 							};
-const char *FC_Alarm2_str[] = {	"", // битовое поле (0..19 бит)
-								"",
-								"ServiceTrip,Typecode",
-								"Sparepart",
-								"",
-								"No Flow",
-								"",
-								"",
-								"Broken Belt",
-								"",
-								"",	//10
-								"",
-								"External Interlock",
-								"",
-								"",
-								"",
-								"",
-								"",
-								"Fans error" //19
-							};
-const char *FC_Warning_str[] = {"", // битовое поле (0..29 бит)
+const char *FC_Warning_str[] = {"", // битовое поле, если меньше 32, то в конце NULL
 								"Pwr.Card Temp",
 								"Earth fault",
 								"",
@@ -199,8 +159,8 @@ const char *FC_Warning_str[] = {"", // битовое поле (0..29 бит)
 								"Motor Th. Over",
 								"Motor ETR Over",
 								"Inverter Overld.",
-								"DC under Volt",	//10
-								"DC over Volt.",
+								"DCV under",	//10
+								"DCV over",
 								"",
 								"",
 								"Mains ph. loss",
@@ -212,10 +172,67 @@ const char *FC_Warning_str[] = {"", // битовое поле (0..29 бит)
 								"",		//20
 								"",
 								"",
-								"24 V Supply Low",
+								"24V low",
 								"",
 								"Current Limit",
-								"Low temp"	// 26
+								"Low temp",	// 26
+								NULL
+							};
+const char *FC_ExtStatus_str[] = {// битовое поле, если меньше 32, то в конце NULL
+								"Ramping",
+								"AMA running",
+								"Start CCW",
+								"",
+								"",
+								"Feedback high",
+								"Feedback low",
+								"Out I high",
+								"Out I low",
+								"Out Freq high",
+								"Out Freq low",	//10
+								"",
+								"",
+								"Braking",
+								"",
+								"OVC active",
+								"AC brake",
+								"",
+								"",
+								"Ref. high",
+								"Ref. low",		//20
+								NULL
+							};
+const char *FC_ExtStatus2_str[] = {// битовое поле, если меньше 32, то в конце NULL
+								"Off",
+								"Auto",
+								"",
+								"",
+								"",
+								"",
+								"",
+								"Ctrl.Ready",
+								"Ready",
+								"Quick Stop",
+								"DC Brake",	//10
+								"Stop",
+								"",
+								"Freeze Out Req",
+								"Freeze Out",
+								"Jog Req",
+								"Jog",
+								"Start Req",
+								"Start",
+								"",
+								"Start Delay",		//20
+								"Sleep",
+								"Sleep boost",
+								"Running",
+								"Bypass",
+								"Fire Mode",
+								"External Interlock",
+								"Fire mode limit exceed",
+								"FlyStart Active",
+								NULL
 							};
 
 
@@ -418,7 +435,7 @@ public:
   inline bool get_blockFC() { return GETBIT(flags, fErrFC); }// Получить флаг блокировки инвертора
 
 #ifdef FC_VLT
-  void get_fault_str(char *ret, const char *arr, uint32_t code); // Возвращает строкове представление ошибки или предупреждения
+  void get_fault_str(char *ret, const char *arr[], uint32_t code); // Возвращает строкове представление ошибки или предупреждения
 #else
   const char *get_fault_str(uint8_t fault); // Возвращает название ошибки
 #endif
@@ -456,7 +473,11 @@ public:
 #ifdef FC_MAX_CURRENT
   uint16_t current;									// Чтение: Текущий ток двигателя в 0.01 Ампер единицах
 #endif
+#ifdef FC_VLT
+  uint32_t state;									// Чтение: Состояние ПЧ регистр FC_STATUS
+#else
   int16_t  state;									// Чтение: Состояние ПЧ регистр FC_STATUS
+#endif
   int16_t  minFC;									// Минимальная скорость инвертора в 0.01 %
   int16_t  maxFC;									// Максимальная скорость инвертора в 0.01 %
   uint32_t startCompressor;							// время старта компрессора

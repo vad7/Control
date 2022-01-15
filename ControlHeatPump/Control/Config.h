@@ -5638,7 +5638,7 @@ const char *noteTemp[] = {"Температура улицы",
 
 	// Частотный преобразователь ТОЛЬКО ОДНА ШТУКА ВСЕГДА (не массив) --------------------------------------------------------
 	const boolean DEVICEFC=true;  // Наличие Частотного преобразователя в конфигурации
-	#define FC_VLT		"FC101"	// Частотник Danfoss VLT (HVAC Basic Drive FC-101)
+	#define FC_VLT		101		// Частотник Danfoss VLT (HVAC Basic Drive FC-*)
 	#define FC_VACON        	// Частотник Vacon
 	// Настройка, параметр(регистр Modbus):
 	// Vacon 10/20: V2.2 = 1; V2.3 = 1; V2.4 = 1; P2.1(172) = 0; P3.3(173) = 3; P5.1(403) = 1;

@@ -1070,7 +1070,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				} else {
 					if(HP.dFC.reset_FC()) {                            // подать команду на сброс
 						strcat(strReturn, "OK");
-#if defind(FC_VACON) && defined(FC_POWER_IN_PERCENT)
+#if defined(FC_VACON) && defined(FC_POWER_IN_PERCENT)
 						HP.dFC.set_nominal_power();
 						strReturn += m_snprintf(strReturn += strlen(strReturn), 256, " Nominal: %d W\n", HP.dFC.nominal_power);
 #endif

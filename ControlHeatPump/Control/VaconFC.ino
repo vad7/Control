@@ -452,13 +452,24 @@ int8_t devVaconFC::start_FC()
  #else // DEMO
     // set_target(FC_START_FC,true);  // Запись в регистр инвертора стартовой частоты  НЕ всегда скорость стартовая - супербойлер
 	if((state & FC_S_FLT)) { // Действующий отказ
+#ifdef FC_VLT
+		uint32_t reg = read_0x03_32(FC_ERROR);
+		journal.jprintf("%s, Fault: %X - ", name);
+		get_fault_str(NULL, FC_Alarm_str, reg);
+#else
 		uint16_t reg = read_0x03_16(FC_ERROR);
-		journal.jprintf("%s, Fault: %s(%d) - ", name, err ? cError : get_fault_str(reg), err ? err : reg);
+		journal.jprintf("%s, Fault: %s(%d) - ", name, reg ? get_fault_str(reg) : cError, reg ? reg : err);
+#endif
 		if(GETBIT(_data.setup_flags, fAutoResetFault)) { // Автосброс не критичного сбоя инвертора
 			if(!err) { // код считан успешно
+#ifdef FC_VLT
+				if((reg & ~FC_NonCriticalFaults) == 0)
+#else
 				uint8_t i = 0;
 				for(; i < sizeof(FC_NonCriticalFaults); i++) if(FC_NonCriticalFaults[i] == reg) break;
-				if(i < sizeof(FC_NonCriticalFaults)) {
+				if(i < sizeof(FC_NonCriticalFaults))
+#endif
+				{
 					if(reset_errorFC()) {
 						if((state & FC_S_FLT)) {
 							if(reset_errorFC() && (state & FC_S_FLT)) err = ERR_FC_FAULT; else journal.jprintf("Reseted(2).\n");
@@ -621,17 +632,6 @@ uint16_t devVaconFC::get_current()
 	#endif
 #endif
 }
-
-// Получить текущую мощность в Вт
-uint16_t devVaconFC::get_power(void)
-{
-#ifdef FC_POWER_IN_PERCENT
-	return (uint32_t)nominal_power * power / 1000;
-#else
-	return power;
-#endif
-}
-
 
 // Получить параметр инвертора в виде строки, результат ДОБАВЛЯЕТСЯ в ret
 void devVaconFC::get_paramFC(char *var,char *ret)
@@ -822,7 +822,6 @@ void devVaconFC::get_infoFC(char* buf)
 		if(state == ERR_LINK_FC) {   // Нет связи
 			strcat(buf, "|Данные не доступны - нет связи|;");
 		} else {
-			uint32_t i;
 #ifdef FC_VLT
 			strcat(buf, "16-00|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
@@ -838,15 +837,31 @@ void devVaconFC::get_infoFC(char* buf)
 				buf += m_snprintf(buf, 256, "15-01|Время работы компрессора (часов)|%d;", read_0x03_32(FC_RUN_HOURS));
 				buf += m_snprintf(buf, 256, "15-02|Итого выход кВтч|%d;", read_0x03_16(FC_CNT_POWER));
 
-				i = read_0x03_16(FC_ERROR) << 16;
-				if(err == OK) i |= read_0x03_16(FC_ERROR2);
+				uint32_t reg = read_0x03_32(FC_ERROR);
 				if(err == OK) {
-					m_snprintf(buf, 256, "16-90|Активная ошибка|%s (%X);", get_fault_str(i), i);
+					strcat(buf, "16-90|Ошибки (");
+					get_fault_str(buf, FC_Alarm_str, reg);
+					buf += m_snprintf(buf += strlen(buf), 256, ")|0x%X;", reg);
+					strcat(buf, "16-92|Предупреждения (");
+					reg = read_0x03_32(FC_WARNING);
+					get_fault_str(buf, FC_Warning_str, reg);
+					buf += m_snprintf(buf += strlen(buf), 256, ")|0x%X;", reg);
+					strcat(buf, "16-94|Статус (");
+					reg = read_0x03_32(FC_EX_STATUS);
+					get_fault_str(buf, FC_ExtStatus_str, reg);
+					buf += m_snprintf(buf += strlen(buf), 256, ")|0x%X;", reg);
+#ifdef FC_EX_STATUS2
+					strcat(buf, "16-94|Статус2 (");
+					reg = read_0x03_32(FC_EX_STATUS2);
+					get_fault_str(buf, FC_ExtStatus2_str, reg);
+					buf += m_snprintf(buf += strlen(buf), 256, ")|0x%X;", reg);
+#endif
 				} else {
 					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
 				}
 			}
 #else //FC_VLT
+			uint32_t i;
 			strcat(buf, "2101|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
 			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
@@ -1045,10 +1060,10 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
 
 #ifdef FC_VLT
 // Возвращает строкове представление ошибки или предупреждения
-void devVaconFC::get_fault_str(char *ret, const char *arr, uint32_t code)
+void devVaconFC::get_fault_str(char *ret, const char *arr[], uint32_t code)
 {
 	uint8_t i = 0;
-	while(code) {
+	while(code && arr[i] != NULL) {
 		if(code & 1) {
 			if(ret == NULL) {
 				journal.jprintf("%s,", arr[i]);
