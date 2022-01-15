@@ -119,6 +119,7 @@ int8_t devVaconFC::initFC()
 // Вычисление номинальной мощности двигателя компрессора = U*sqrt(3)*I*cos, W
 void devVaconFC::set_nominal_power(void)
 {
+#ifdef FC_POWER_IN_PERCENT
 #ifndef FC_ANALOG_CONTROL
 	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
 	typeof(nominal_power) n = nominal_power;
@@ -134,6 +135,7 @@ void devVaconFC::set_nominal_power(void)
 	nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
 	if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
+#endif
 #endif
 }
 
@@ -212,8 +214,14 @@ int8_t devVaconFC::get_readState()
 		}
 		if(GETBIT(flags, fOnOff)) { // ТН включил компрессор, проверяем состояние инвертора
 			if(state & FC_S_FLT) { // Действующий отказ
+#ifdef FC_VLT
+				uint32_t reg = read_0x03_32(FC_ERROR);
+				journal.jprintf("%s, Fault: %X - ", name);
+				get_fault_str(NULL, FC_Alarm_str, reg);
+#else
 				uint16_t reg = read_0x03_16(FC_ERROR);
-				journal.jprintf("%s, Fault: %s(%d) - ", name, err ? cError : get_fault_str(reg), err ? err : reg);
+				journal.jprintf("%s, Fault: %s(%d) - ", name, reg ? get_fault_str(reg) : cError, reg ? reg : err);
+#endif
 				err = ERR_FC_FAULT;
 				if(HP.NO_Power) return err;
 				if(GETBIT(HP.Option.flags, fBackupPower)) {
@@ -244,9 +252,13 @@ int8_t devVaconFC::get_readState()
 		}
 		// Состояние прочитали и оно правильное все остальное читаем
 		{
-			FC_curr_freq = read_0x03_16(FC_FREQ); 	// прочитать текущую частоту
+			FC_curr_freq = read_0x03_16(FC_FREQ) * FC_FREQ_MUL; 	// прочитать текущую частоту
 			if(err == OK) {
+#ifdef FC_POWER_IN_PERCENT
+				power = (uint32_t)nominal_power * read_0x03_16(FC_POWER) / 1000; 	// прочитать мощность
+#else
 				power = read_0x03_16(FC_POWER); 	// прочитать мощность
+#endif
 #ifdef FC_MAX_CURRENT
 				if(err == OK) current = read_0x03_16(FC_CURRENT);
 #endif
@@ -610,6 +622,17 @@ uint16_t devVaconFC::get_current()
 #endif
 }
 
+// Получить текущую мощность в Вт
+uint16_t devVaconFC::get_power(void)
+{
+#ifdef FC_POWER_IN_PERCENT
+	return (uint32_t)nominal_power * power / 1000;
+#else
+	return power;
+#endif
+}
+
+
 // Получить параметр инвертора в виде строки, результат ДОБАВЛЯЕТСЯ в ret
 void devVaconFC::get_paramFC(char *var,char *ret)
 {
@@ -757,6 +780,25 @@ boolean devVaconFC::set_paramFC(char *var, float f)
 // Вывести в buffer строковый статус.
 void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 {
+#ifdef FC_VLT
+	if((st & FC_S_CONTROL_RDY) == 0) strcat(buffer, FC_S_CONTROL_RDY_str0);
+	if(st & FC_S_RDY) 		strcat(buffer, FC_S_RDY_str);
+	if(st & FC_S_START) 	strcat(buffer, FC_S_START_str);
+	if(st & FC_S_RUN) 	{
+		strcat(buffer, FC_S_RUN_str);
+		if((st & FC_S_AREF)==0)	strcat(buffer, FC_S_AREF_str0);
+	}
+	if(st & FC_S_TRIP) 		strcat(buffer, FC_S_TRIP_str);
+	if(st & FC_S_TRIPLOCK) 	strcat(buffer, FC_S_TRIPLOCK_str);
+	if(!(st & FC_S_BUS)) 	strcat(buffer, FC_S_BUS_str0);
+	if(st & FC_S_FREQ_LIM) 	strcat(buffer, FC_S_FREQ_LIM_str);
+	if(st & FC_S_OVERTEMP) 	strcat(buffer, FC_S_OVERTEMP_str);
+	if(st & FC_S_VOLTAGE) 	strcat(buffer, FC_S_VOLTAGE_str);
+	if(st & FC_S_CURRENT) 	strcat(buffer, FC_S_CURRENT_str);
+	if(st & FC_S_HEAT) 		strcat(buffer, FC_S_HEAT_str);
+	if(st & FC_S_FLT) 		strcat(buffer, FC_S_FLT_str);
+	if(st & FC_S_W) 		strcat(buffer, FC_S_W_str);
+#else //FC_VLT
 	if(st & FC_S_RDY) 	strcat(buffer, FC_S_RDY_str);
 	if(st & FC_S_RUN) 	{
 		strcat(buffer, FC_S_RUN_str);
@@ -766,7 +808,9 @@ void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 	if(st & FC_S_FLT) 	strcat(buffer, FC_S_FLT_str);
 	if(st & FC_S_W) 	strcat(buffer, FC_S_W_str);
 	if(st & FC_S_Z) 	strcat(buffer, FC_S_Z_str);
-	if(st) *(buffer + m_strlen(buffer) - 1) = '\0'; // skip last ','
+#endif
+	int i = m_strlen(buffer);
+	if(i) *(buffer + i - 1) = '\0'; // skip last ','
 }
 
 // Получить информацию о частотнике
@@ -779,6 +823,30 @@ void devVaconFC::get_infoFC(char* buf)
 			strcat(buf, "|Данные не доступны - нет связи|;");
 		} else {
 			uint32_t i;
+#ifdef FC_VLT
+			strcat(buf, "16-00|Состояние инвертора: ");
+			get_infoFC_status(buf + m_strlen(buf), state);
+			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
+			if(err == OK) {
+				buf += m_snprintf(buf, 256, "16-01|Фактическая скорость|%d%%;16-10|Выходная мощность (кВт)|%d;", read_0x03_16(FC_SPEED), get_power());
+				buf += m_snprintf(buf, 256, "16-17|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
+				buf += m_snprintf(buf, 256, "16-22|Крутящий момент|%d%%;", (int16_t)read_0x03_16(FC_TORQUE));
+				buf += m_snprintf(buf, 256, "16-12|Выходное напряжение (В)|%.1d;", (int16_t)read_0x03_16(FC_VOLTAGE));
+				buf += m_snprintf(buf, 256, "16-30|Напряжение шины постоянного тока (В)|%d;", (int16_t)read_0x03_16(FC_VOLTAGE_DC));
+				buf += m_snprintf(buf, 256, "16-34|Температура радиатора (°С)|%d;", read_tempFC());
+				buf += m_snprintf(buf, 256, "15-00|Время включения инвертора (часов)|%d;", read_0x03_32(FC_POWER_HOURS));
+				buf += m_snprintf(buf, 256, "15-01|Время работы компрессора (часов)|%d;", read_0x03_32(FC_RUN_HOURS));
+				buf += m_snprintf(buf, 256, "15-02|Итого выход кВтч|%d;", read_0x03_16(FC_CNT_POWER));
+
+				i = read_0x03_16(FC_ERROR) << 16;
+				if(err == OK) i |= read_0x03_16(FC_ERROR2);
+				if(err == OK) {
+					m_snprintf(buf, 256, "16-90|Активная ошибка|%s (%X);", get_fault_str(i), i);
+				} else {
+					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
+				}
+			}
+#else //FC_VLT
 			strcat(buf, "2101|Состояние инвертора: ");
 			get_infoFC_status(buf + m_strlen(buf), state);
 			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
@@ -802,6 +870,7 @@ void devVaconFC::get_infoFC(char* buf)
 					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
 				}
 			}
+#endif
 		}
 #endif
 	} else {
@@ -974,6 +1043,25 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
 }
 #endif // FC_ANALOG_CONTROL    // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 
+#ifdef FC_VLT
+// Возвращает строкове представление ошибки или предупреждения
+void devVaconFC::get_fault_str(char *ret, const char *arr, uint32_t code)
+{
+	uint8_t i = 0;
+	while(code) {
+		if(code & 1) {
+			if(ret == NULL) {
+				journal.jprintf("%s,", arr[i]);
+			} else {
+				strcat(ret, arr[i]);
+				strcat(ret, ",");
+			}
+		}
+		i++;
+		code >>= 1;
+	}
+}
+#else //FC_VLT
 // Возвращает текст ошибки по FT коду
 const char* devVaconFC::get_fault_str(uint8_t fault)
 {
@@ -983,3 +1071,4 @@ const char* devVaconFC::get_fault_str(uint8_t fault)
     }
     return FC_Faults_str[i];
 }
+#endif
