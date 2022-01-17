@@ -182,7 +182,11 @@ int8_t devVaconFC::get_readState()
 			return err; // выходим если нет инвертора или нет связи
 		}
 		// Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
+#ifdef FC_VLT
+		state = read_0x03_32(FC_STATUS); // прочитать состояние
+#else
 		state = read_0x03_16(FC_STATUS); // прочитать состояние
+#endif
 		if(err) // Ошибка
 		{
 			state = ERR_LINK_FC; // признак потери связи с инвертором
@@ -269,12 +273,12 @@ int8_t devVaconFC::get_readState()
 						return err;
 					}
 					if(_data.FC_TargetTemp) {
-#ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
+#ifdef FC_VLT
+						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+#else
 						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN); // подать команду
 						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, 0); // подать команду
-#else
-						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0) | (state & FC_S_DIR ? FC_C_DIR : 0)); // подать команду
-						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0) | (state & FC_S_DIR ? FC_C_DIR : 0)); // подать команду
 #endif
 					}
 				}
@@ -491,7 +495,8 @@ int8_t devVaconFC::start_FC()
   #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
 		HP.dRelay[RCOMP].set_ON();
   #else
-		err = write_0x06_16(FC_CONTROL, FC_C_RUN); // Команда Ход
+		uint16_t ctrl = read_0x03_16(FC_CONTROL);
+		if(!err) err = write_0x06_16(FC_CONTROL, (ctrl & FC_C_COOLER_FAN) | FC_C_RUN); // Команда Ход
   #endif
 	}
  #endif // DEMO
@@ -574,7 +579,8 @@ int8_t devVaconFC::stop_FC()
             return err; // выходим если нет инвертора или нет связи
     	}
   #ifndef FC_USE_RCOMP
-        err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
+		uint16_t ctrl = read_0x03_16(FC_CONTROL);
+		if(!err) err = write_0x06_16(FC_CONTROL, (ctrl & FC_C_COOLER_FAN) | FC_C_STOP); // подать команду ход/стоп через модбас
   #else
         err = OK;
   #endif
