@@ -305,7 +305,11 @@ int8_t devVaconFC::get_readState()
 					if(FC_curr_freq < _data.ReturnOilMinFreq && (FC_curr_freq < _data.maxFreqGen || !GETBIT(HP.Option.flags, fBackupPower))) {
 						if(++ReturnOilTimer >= _data.ReturnOilPeriod - (_data.ReturnOilMinFreq - FC_curr_freq) * _data.ReturnOilPerDivHz / 100) {
 							flags |= 1 << fFC_RetOilSt;
+#ifdef FC_VLT
+							err = write_0x06_16((uint16_t) FC_SET_SPEED, map(_data.ReturnOilFreq, 0, 10000, 0, 16384));
+#else
 							err = write_0x06_16((uint16_t) FC_SET_SPEED, _data.ReturnOilFreq);
+#endif
 							Adjust_EEV(_data.ReturnOilFreq - FC_target);
 							ReturnOilTimer = 0;
 						}
@@ -314,7 +318,11 @@ int8_t devVaconFC::get_readState()
 					if(++ReturnOilTimer >= _data.ReturnOilTime) {
 						Adjust_EEV(FC_target - _data.ReturnOilFreq);
 						flags &= ~(1 << fFC_RetOilSt);
+#ifdef FC_VLT
+						err = write_0x06_16((uint16_t) FC_SET_SPEED, map(FC_target, 0, 10000, 0, 16384));
+#else
 						err = write_0x06_16((uint16_t) FC_SET_SPEED, FC_target);
+#endif
 						ReturnOilTimer = 0;
 					}
 				}
@@ -372,7 +380,11 @@ int8_t devVaconFC::set_target(int16_t x, boolean show, int16_t _min, int16_t _ma
 #ifndef FC_ANALOG_CONTROL // Не аналоговое управление
 	// Запись в регистры инвертора установленной частоты
 	if(testMode == NORMAL || testMode == HARD_TEST){
+#ifdef FC_VLT
+		err = write_0x06_16((uint16_t)FC_SET_SPEED, map(x, 0, 10000, 0, 16384));
+#else
 		err = write_0x06_16((uint16_t)FC_SET_SPEED, x);
+#endif
 	}
 	if(err == OK) {
 		Adjust_EEV(x - FC_target);
