@@ -1440,20 +1440,20 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		}
 		WEB_STORE_DEBUG_INFO(27);
 
-		if (strcmp(str,"test_Mail")==0)  // Функция test_mail
+		if (strcmp(str,"test_Mail")==0)  // Функция test_Mail
 		{
 			if (HP.message.setTestMail()) { strcat(strReturn,"Send test mail to "); HP.message.get_messageSetting((char*)mess_SMTP_RCPTTO,strReturn); }
 			else { strcat(strReturn,"Error send test mail.");}
 			ADD_WEBDELIM(strReturn) ;
 			continue;
-		}   // test_Mail
-		if (strcmp(str,"test_SMS")==0)  // Функция test_mail
+		}
+		if (strcmp(str,"test_SMS")==0)  // Функция test_SMS
 		{
 			if (HP.message.setTestSMS()) { strcat(strReturn,"Send SMS to "); HP.message.get_messageSetting((char*)mess_SMS_PHONE,strReturn);}  //strcat(strReturn,HP.message.get_messageSetting(pSMS_PHONE));}
 			else { strcat(strReturn,"Error send test sms.");}
 			ADD_WEBDELIM(strReturn) ;
 			continue;
-		}   // test_Mail
+		}
 		if(strcmp(str, "get_OverCool") == 0) {
 			_dtoa(strReturn, HP.get_overcool(), 2);
 			ADD_WEBDELIM(strReturn);

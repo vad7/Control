@@ -240,7 +240,7 @@ boolean Message::set_messageSetting(char *var, char *c)
   } else return false;
 
 }
-// Получить параметр Уведомления по имени var, результат ДОБАВОЯЕТСЯ в строку ret
+// Получить параметр Уведомления по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
 char* Message::get_messageSetting(char *var, char *ret)
 {
 	if(strcmp(var, mess_MAIL) == 0) {
@@ -380,7 +380,7 @@ boolean  Message::SendCommandSMTP(char *c, boolean wait)
 
   if (!clientMessage.connected())  // если клиент не соединен то это ошибка выходим
   {
-    JOURNAL("Server no connected, abort send mail???\n");
+	if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Server no connected, abort send mail\n");
     return false;
   }
 
@@ -529,14 +529,14 @@ boolean Message::sendMessage()  // запуск из 0 потока
     {
       // Отправка удачна
       for (i = 0; i < strlen(retMail); i++) if (retMail[i] == '=') retMail[i] = ':'; // замена знака = на : т.к. это запрещенный знак в запросах
-      strcpy(retTest, "Тестовое письмо отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
+      strcpy(retTest, "Письмо отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
       strcat(retTest, "\nОтвет: "); strcat(retTest, retMail);
     }
     else
     {
       // Отправка не удачна
       for (i = 0; i < strlen(retMail); i++) if (retMail[i] == '=') retMail[i] = ':'; // замена знака = на : т.к. это запрещенный знак в запросах
-      strcpy(retTest, "Тестовое письмо НЕ отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
+      strcpy(retTest, "Письмо НЕ отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
       strcat(retTest, "\nОтвет: "); strcat(retTest, retMail);
     }
   }
@@ -553,12 +553,12 @@ boolean Message::sendMessage()  // запуск из 0 потока
       case pSMS_RU:
         if (sendSMS())
         { // Удачно
-          strcpy(retTest, "Тестовое SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         else
         { // Не удачно
-          strcpy(retTest, "Тестовое SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         break;
@@ -566,12 +566,12 @@ boolean Message::sendMessage()  // запуск из 0 потока
       case pSMSC_RU:
         if (sendSMSC())
         { // Удачно
-          strcpy(retTest, "Тестовое SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         else
         { // Не удачно
-          strcpy(retTest, "Тестовое SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         break;
@@ -579,12 +579,12 @@ boolean Message::sendMessage()  // запуск из 0 потока
       case pSMSC_UA:
         if (sendSMSC())
         { // Удачно
-          strcpy(retTest, "Тестовое SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         else
         { // Не удачно
-          strcpy(retTest, "Тестовое SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         break;
@@ -592,12 +592,12 @@ boolean Message::sendMessage()  // запуск из 0 потока
       case pSMSCLUB:
         if (sendSMSCLUB())
         { // Удачно
-          strcpy(retTest, "Тестовое SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         else
         { // Не удачно
-          strcpy(retTest, "Тестовое SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
+          strcpy(retTest, "SMS НЕ отправлено на номер "); get_messageSetting((char*)mess_SMS_PHONE, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMS_PHONE));
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         break;
@@ -631,15 +631,18 @@ boolean Message::sendMail()
 		strncpy(retMail, "No connect", LEN_RETMAIL);
 		SETBIT1(WorkFlags, fWF_MessageSendError);
 		SemaphoreGive (xWebThreadSemaphore);
+		dnsUpadateSMTP = true;
 		return false;
 	}
 
 	// 2. Общение с сервером, получаем приветствие при соединении
 	if(!SendCommandSMTP((char*) "", true)) {
+		if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Error send mail to %s\n", messageSetting.smtp_server);
 		if(strlen(retMail) == 0) strncpy(retMail, (char*) "No answer", LEN_RETMAIL);
 		clientMessage.stop();  // ответ содержит ошибки
 		SETBIT1(WorkFlags, fWF_MessageSendError);
 		SemaphoreGive (xWebThreadSemaphore);
+		dnsUpadateSMTP = true;
 		return false;
 	}
 	// 3. Авторизация
@@ -649,12 +652,14 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
+			dnsUpadateSMTP = true;
 			return false;
 		}
 		if(!SendCommandSMTP((char*) "AUTH LOGIN", true)) {
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
+			dnsUpadateSMTP = true;
 			return false;
 		}
 		strcpy(tempBuf, "");
@@ -663,6 +668,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
+			dnsUpadateSMTP = true;
 			return false;
 		}
 		strcpy(tempBuf, "");
@@ -671,6 +677,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
+			dnsUpadateSMTP = true;
 			return false;
 		}
 	} else                                                               // Авторизация не требуется
@@ -679,6 +686,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
+			dnsUpadateSMTP = true;
 			return false;
 		}
 	}

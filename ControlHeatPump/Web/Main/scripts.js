@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2022 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.166";
+var VER_WEB = "1.168";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 //var urlcontrol = 'http://192.168.0.199';
@@ -135,7 +135,7 @@ function loadParam(paramid, noretry, resultdiv) {
 								else if(/_list|et_modeHP|[(]RULE|et_testMode|[(]TARGET|NSL/.test(values[0])) type = "select"; // значения
 								else if(/Prof[(]NUM|get_tbl|listRelay|sensorIP|get_numberIP|TASK_/.test(values[0])) type = "table"; 
 								else if(values[0].indexOf("get_is")==0) type = "is"; // наличие датчика в конфигурации
-								else if(values[0].indexOf("scan_")==0) type = "scan"; // ответ на сканирование
+								else if(values[0].indexOf("scan_")!=-1) type = "scan"; // ответ на сканирование
 								else if(values[0].indexOf("hide_")==0) { // clear
 									if(values[1] == '1') {
 										var elements = document.getElementsByName(valueid);
@@ -227,11 +227,11 @@ function loadParam(paramid, noretry, resultdiv) {
 								} else if(type == 'scan') {
 									if(valueid == "get_message-scan_sms") {
 										if(values[1] == "wait response") {
-											setTimeout(loadParam('get_Message(scan_SMS)'), 3000);
+											setTimeout(loadParam('get_Message(scan_SMS)'), 2000);
 										} else alert(values[1]);
 									} else if(valueid == "get_message-scan_mail") {
 										if(values[1] == "wait response") {
-											setTimeout(loadParam('get_Message(scan_MAIL)'), 3000);
+											setTimeout(loadParam('get_Message(scan_MAIL)'), 2000);
 										} else alert(values[1]);
 									} else if(values[0] != null && values[0] != 0 && values[1] != null && values[1] != 0) {
 										var content = "<tr><td>" + values[1].replace(/\:/g, "</td><td>").replace(/(\;)/g, "</td></tr><tr><td>") + "</td></tr>";
@@ -676,9 +676,9 @@ function loadParam(paramid, noretry, resultdiv) {
 								} else if(values[0] == "get_errcode" && values[1] < 0) {
 									document.getElementById("get_errcode").innerHTML = "Ошибка";
 								} else if(values[0] == "test_Mail") {
-									setTimeout(loadParam('get_Message(scan_MAIL)'), 3000);
+									setTimeout(loadParam('get_Message(scan_MAIL)'), 1000);
 								} else if(values[0] == "test_SMS") {
-									setTimeout(loadParam('get_Message(scan_SMS)'), 3000);
+									setTimeout(loadParam('get_Message(scan_SMS)'), 1000);
 								} else if(values[0] == "progFC") {
 									alert(values[1]);
 								} else if(values[0].indexOf("set_SAVE")==0) {
