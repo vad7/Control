@@ -6,7 +6,7 @@
 window.onload = function() {
 	var arr = document.getElementById('links').getElementsByTagName('a'); 
 	for (i=0; i<arr.length; i++) fix_href(arr[i]);
-	loadParam("get_listStats,get_listHist");
+	loadParam("get_version,get_listStats,get_listHist");
 }
 function fix_href(el) {
 	el.href = el.href.replace(/^.+:\/+.*\//i, urlcontrol + '/');
@@ -56,7 +56,7 @@ function fix_hist() {
 		<tr><td>Текущее состояние ТН</td><td><a class="download" href="/state.txt" download><button>Загрузить</button></a></td></tr>
 		<tr><td>Сохранение настроек ТН в текстовом виде</td><td><a class="download" href="/settings.txt" download><button>Загрузить</button></a></td></tr>
 		<tr><td>Прочитать всю EEPROM</td><td><a class="download" href="/settings_eeprom.bin" download><button>Загрузить</button></a></td></tr>
-		<tr><td>Сохранение настроек ТН в бинарном виде</td><td><a class="download" href="/settings.bin" download><button>Загрузить</button></a></td></tr>
+		<tr><td>Сохранение настроек ТН в бинарном виде (v<span id="get_version"></span>)</td><td><a class="download" href="/settings.bin" download><button>Загрузить</button></a></td></tr>
 		<tr><td>Восстановление настроек ТН из бинарного файла<sup>1</sup></td><td><input type="file" id="Setup"></td></tr>
 		<tr><td></td><td><input type="submit" value="Восстановить" onclick="send_files('s')"></td></tr>
 		<tr><td><b>Web интерфейс контроллера</b></td><td></td></tr>
