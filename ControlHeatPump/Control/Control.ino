@@ -1608,6 +1608,7 @@ void vReadSensor(void *)
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 		HP.dSDM.get_readState(0); // Основная группа регистров
 #endif
+		_delay(1);
 		HP.calculatePower();  // Расчет мощностей и СОР
 		Stats.Update();
 
@@ -1672,6 +1673,7 @@ void vReadSensor(void *)
 #endif
 
 		//
+ 		_delay(1);
 		vReadSensor_delay1ms(TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime));     // Ожидать время нужное для цикла чтения
 
 	}  // for

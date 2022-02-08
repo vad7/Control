@@ -158,7 +158,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
 #define FC_TIME_READ       4000UL       // Время опроса инвертора в мс (было 8)
 #define FC_NUM_READ        3             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке
-#define FC_DELAY_REPEAT    40            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
+#define FC_DELAY_REPEAT    50            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      5             // мсек Время между последовательными запросами было 20
 #define FC_WRITE_READ      10            // мсек Время между последовательной записью
 #ifndef FC_ANALOG_RESOLUTION

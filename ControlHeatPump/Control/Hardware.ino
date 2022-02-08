@@ -1840,28 +1840,33 @@ boolean devSDM::set_paramSDM(char *var, char *c)
 
 // МОДБАС Устройство ----------------------------------------------------------
 // функции обратного вызова
+#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
 static uint8_t Modbus_Entered_Critical = 0;
+#endif
 static inline void idle() // задержка между чтениями отдельных байт по Modbus
-    {
+{
 //		delay(1);		// Не отдает время другим задачам
-		_delay(1);		// Отдает время другим задачам
-    }
+	_delay(1);		// Отдает время другим задачам
+}
 static inline void preTransmission() // Функция вызываемая ПЕРЕД началом передачи
-    {
-      #ifdef PIN_MODBUS_RSE
+{
+#ifdef PIN_MODBUS_RSE
       digitalWriteDirect(PIN_MODBUS_RSE, HIGH);
       _delay(1);       // что бы слейв не терял первый бит повышается надежность передачи
       #endif
+#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
       Modbus_Entered_Critical = TaskSuspendAll(); // Запрет других задач во время передачи по Modbus 	
- 
-     }
+#endif
+}
 static inline void postTransmission() // Функция вызываемая ПОСЛЕ окончания передачи
-    {
-  	if(Modbus_Entered_Critical) {
-	xTaskResumeAll();
-	Modbus_Entered_Critical = 0;
-	}    	
-    #ifdef PIN_MODBUS_RSE
+{
+#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
+	if(Modbus_Entered_Critical) {
+		xTaskResumeAll();
+		Modbus_Entered_Critical = 0;
+	}
+#endif
+#ifdef PIN_MODBUS_RSE
 	#if MODBUS_TIME_TRANSMISION != 0
     _delay(MODBUS_TIME_TRANSMISION);// Минимальная пауза между командой и ответом 3.5 символа
 	#endif

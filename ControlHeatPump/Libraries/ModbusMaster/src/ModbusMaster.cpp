@@ -753,6 +753,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 		   u32StartTime = millis();   // время продолжения
 	   } else {                        // нет символов во входном буфере
 		   if(_idle) {  _idle();  }      // если разрешено - операция ожидания
+		   continue;
 	   }
 
 	   // evaluate slave ID, function code once enough bytes have been read
