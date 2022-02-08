@@ -478,7 +478,8 @@ const char *cError={"error"};
 const char *cInvalid={"---"};
 const char *cStrEnd={"\n"};
 const char *cErrorRS485={"%s: %s(%d) error %d\n"};  			// имя, функция, ячейка, код
-const char *cErrorMutex={"Function %s: %s, mutex is buzy\n"};   // функция, мютекс
+const char *cErrorMutex={" %s: %s, mutex is buzy\n"};   // функция, мютекс
+const char *cErrorMutexRS485={"MODBUS %s(%d,%d), mutex is buzy\n"};   // функция, мютекс
 const char *cAddHeat = {"+"};                                   // Значек нагрева ГВС ТЭНом
 const char http_get_str1[] = "GET ";
 const char http_get_str2[] = " HTTP/1.0\r\nHost: ";
@@ -1119,15 +1120,15 @@ const char *noteError[] = {"Ok",                                                
                            "Ошибка чтения файла с SD карты",                                     // -37
                            "Правило вычисления перегрева не соответствует датчикам",				//-38
                            "Инвертор на шине Modbus не найден (работа инвертора запрещена)",                    //-39
-                           "При обращении к 485 порту превышено время ожидания его освобождения",               //-40
+                           "Modbus - превышено время ожидания его освобождения",               					//-40
                            "Modbus error 0x01 protocol illegal function exception",                             //-41
                            "Modbus error 0x02 protocol illegal data address exception",                         //-42
                            "Modbus error 0x03 protocol illegal data value exception",                           //-43
                            "Modbus error 0х04 protocol slave device failure exception",                         //-44
-                           "Modbus error 0xe0 Master invalid response slave ID exception",                      //-45
-                           "Modbus error 0xe1 Master invalid response function exception",                      //-46
-                           "Modbus error 0xe2 Master response timed out exception",                             //-47
-                           "Modbus error 0xe3 Master invalid response CRC exception",                           //-48
+                           "Modbus error 0xE0 Master invalid response slave ID exception",                      //-45
+                           "Modbus error 0xE1 Master invalid response function exception",                      //-46
+                           "Modbus error 0xE2 Master response timed out exception",                             //-47
+                           "Modbus error 0xE3 Master invalid response CRC exception",                           //-48
                            #ifdef FC_VACON // Спицифические ошибки Vocon 10
                               "Ведомое устройство приняло запрос и обрабатывает его (0x05)",                    //-49
                               "Ведомое устройство занято обработкой команды (0x06)",                            //-50
