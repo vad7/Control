@@ -1,6 +1,6 @@
 /*
 Доработка библиотеки для "Народного контроллера теплового насоса"
-Автор pav2000  firstlast2007@gmail.com
+pav2000  firstlast2007@gmail.com
 Добавлены изменения для работы с инвертором Omron MX2
 - поддерживается функция проверки связи (код функции 0х08)
 для проверки функции используйте   LinkTestOmronMX2Only(code)
@@ -10,7 +10,7 @@
 при этом возвращается состяние ku8MBErrorOmronMX2,
 первый элемент буфера при этом содержит код ошибки
 *
-* Some additional - vad7@yahoo.com
+* Доработки - vad7@yahoo.com
 */
 
 /**
@@ -53,10 +53,11 @@ Arduino library for communicating with Modbus slaves over RS232/485 (via RTU pro
 #endif
 
 #define MODBUS_CHAR_TIMING				1    // ms, depend on UART speed (1 / UART_CLOCK * 10)
-#define MODBUS_WAIT_BEFORE_RECEIVE_CHARS 3   // Chars
-#define MIN_TIME_BETWEEN_TRANSACTION	50UL // ms
+//#define MODBUS_WAIT_BEFORE_RECEIVE           // wait before recieve after request send
+//#define MODBUS_WAIT_BEFORE_RECEIVE_CHARS 3   // Chars
+#define MIN_TIME_BETWEEN_TRANSACTION	40UL // ms
 // Modbus timeout [milliseconds] Depend on serial speed
-#define ku16MBResponseTimeout          	80UL // was 100,  < Modbus timeout, every byte [milliseconds]
+#define ku16MBResponseTimeout          	100UL // was 100,  < Modbus timeout, every byte [milliseconds]
 
 // Коды функций Modbus
 // Modbus function codes for bit access

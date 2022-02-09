@@ -1,6 +1,6 @@
 /*
 Доработка библиотеки для "Народного контроллера теплового насоса"
-Автор pav2000  firstlast2007@gmail.com
+pav2000  firstlast2007@gmail.com
 Добавлены изменения для работы с инвертором Omron MX2
 - поддерживается функция проверки связи (код функции 0х08)
 для проверки функции используйте   LinkTestOmronMX2Only(code)
@@ -727,7 +727,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   {
     _serial->write(u8ModbusADU[i]);
   }
-
+#ifdef MODBUS_WAIT_BEFORE_RECEIVE
 #ifdef MODBUS_FREERTOS
   if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
   else delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
@@ -735,10 +735,10 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
 #endif
   //_serial->flush();           // Очистить передающий буфер
+#endif
   if (_postTransmission)  {
 	   // вызов функции в конце передачи - дернуть ногу передачи max485 + задержка перед чтением(помним про полудуплекс)
 	  _postTransmission();
-  } else {
   }
 
   // -------------------- ЧТЕНИЕ ОТВЕТА --------------------------------------
