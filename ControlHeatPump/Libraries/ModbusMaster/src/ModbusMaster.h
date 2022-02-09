@@ -52,7 +52,11 @@ Arduino library for communicating with Modbus slaves over RS232/485 (via RTU pro
 #include "FreeRTOS_ARM.h"                // поддержка многозадачности
 #endif
 
-#define MIN_TIME_BETWEEN_TRANSACTION	30UL // ms
+#define MODBUS_CHAR_TIMING				1    // ms, depend on UART speed (1 / UART_CLOCK * 10)
+#define MODBUS_WAIT_BEFORE_RECEIVE_CHARS 3   // Chars
+#define MIN_TIME_BETWEEN_TRANSACTION	50UL // ms
+// Modbus timeout [milliseconds] Depend on serial speed
+#define ku16MBResponseTimeout          	80UL // was 100,  < Modbus timeout, every byte [milliseconds]
 
 // Коды функций Modbus
 // Modbus function codes for bit access
@@ -259,9 +263,6 @@ class ModbusMaster
     uint8_t _u8ResponseBufferLength;
     uint32_t last_transaction_time;
 
-    // Modbus timeout [milliseconds] Depend on serial speed
-    static const uint16_t ku16MBResponseTimeout          = 60UL;   /// was 100,  < Modbus timeout, every byte [milliseconds]
-    
     // idle callback function; gets called during idle time between TX and RX
     void (*_idle)();
     // preTransmission callback function; gets called before writing a Modbus message

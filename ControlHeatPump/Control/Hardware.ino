@@ -1677,7 +1677,7 @@ xErr:
 #endif
 		numErr++;                  // число ошибок чтение по модбасу
 		if(GETBIT(HP.Option.flags, fSDMLogErrors)) {
-	        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, err); 	// Сообщение об ошибке
+	        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, _err); 	// Сообщение об ошибке
 		}
 		_delay(SDM_DELAY_REPEAD);  // Чтение не удачно, делаем паузу
 	}
@@ -1910,7 +1910,7 @@ int8_t devModbus::readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret)
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -1932,7 +1932,7 @@ int8_t devModbus::readInputRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret)
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -1953,7 +1953,7 @@ int8_t devModbus::readInputRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret)
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -1974,7 +1974,7 @@ int8_t devModbus::readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -1996,7 +1996,7 @@ int8_t devModbus::readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2018,7 +2018,7 @@ int8_t devModbus::readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE)      // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2041,7 +2041,7 @@ int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2066,7 +2066,7 @@ uint8_t result;
 // Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2092,7 +2092,7 @@ int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2114,7 +2114,7 @@ int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t dat
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 
@@ -2132,7 +2132,7 @@ int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t dat
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 	RS485.set_slave(id);
@@ -2154,7 +2154,7 @@ int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat
 	// Если шедулер запущен то захватываем семафор
 	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
 	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, id, cmd);
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
 

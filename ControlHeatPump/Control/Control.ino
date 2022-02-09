@@ -1674,7 +1674,6 @@ void vReadSensor(void *)
 #endif
 
 		//
- 		_delay(1);
 		vReadSensor_delay1ms(TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime));     // Ожидать время нужное для цикла чтения
 
 	}  // for

@@ -728,9 +728,18 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
     _serial->write(u8ModbusADU[i]);
   }
 
-   _serial->flush();           // Очистить передающий буфер
-  // вызов функции в конце передачи - дернуть ногу передачи max485 + задержка перед чтением(помним про полудуплекс)
-  if (_postTransmission)  { _postTransmission(); }
+#ifdef MODBUS_FREERTOS
+  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
+  else delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
+#else
+  delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
+#endif
+  //_serial->flush();           // Очистить передающий буфер
+  if (_postTransmission)  {
+	   // вызов функции в конце передачи - дернуть ногу передачи max485 + задержка перед чтением(помним про полудуплекс)
+	  _postTransmission();
+  } else {
+  }
 
   // -------------------- ЧТЕНИЕ ОТВЕТА --------------------------------------
    u8ModbusADUSize = 0;       // Сбросить длину буфера

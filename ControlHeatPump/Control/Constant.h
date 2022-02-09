@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.168"				// Версия прошивки
+#define VERSION			"1.169"				// Версия прошивки
 #define VER_SAVE		156					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -479,7 +479,7 @@ const char *cInvalid={"---"};
 const char *cStrEnd={"\n"};
 const char *cErrorRS485={"%s: %s(%d) error %d\n"};  			// имя, функция, ячейка, код
 const char *cErrorMutex={" %s: %s, mutex is buzy\n"};   // функция, мютекс
-const char *cErrorMutexRS485={"MODBUS %s(%d,%d), mutex is buzy\n"};   // функция, мютекс
+const char *cErrorMutexRS485={"MODBUS %s(0x%X), mutex is buzy\n"};   // функция, мютекс, func((id << 16) + cmd)
 const char *cAddHeat = {"+"};                                   // Значек нагрева ГВС ТЭНом
 const char http_get_str1[] = "GET ";
 const char http_get_str2[] = " HTTP/1.0\r\nHost: ";
@@ -498,7 +498,6 @@ const char SendSMSTitle[] 		= "Control";
 const char *nameFREERTOS =     {"FreeRTOS"};           // Имя источника ошибки (нужно для передачи в функцию) - операционная система
 const char *nameHeatPump =     {"Heat Pump"};           // Имя теплового насоса (для лога ошибок) Здесь можно его поменять
 const char *MutexI2CBuzy =     {"I2C"}; 
-const char *MutexModbusBuzy=   {"Modbus"}; 
 const char *MutexWebThreadBuzy={"WebThread"}; 
 const char *MutexSPIBuzy=      {"SPI"}; 
 const char *MutexCommandBuzy = {"Command"}; 
