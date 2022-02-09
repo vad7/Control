@@ -145,6 +145,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef MODBUS_TIME_TRANSMISION
 #define MODBUS_TIME_TRANSMISION 4           // Пауза (msec) между запросом и ответом по модбас было 4
 #endif
+#define MODBUS_CHAR_TIMING	 (10000 / MODBUS_PORT_SPEED) // ms, depend on UART speed (1 / UART_CLOCK * 10)
 #endif
 //#define MODBUS_FREERTOS                     // Настроить либу на многозадачность определить надо в либе.
 #if RADIO_SENSORS_PORT == 2

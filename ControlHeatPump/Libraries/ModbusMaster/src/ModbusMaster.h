@@ -52,9 +52,6 @@ Arduino library for communicating with Modbus slaves over RS232/485 (via RTU pro
 #include "FreeRTOS_ARM.h"                // поддержка многозадачности
 #endif
 
-#define MODBUS_CHAR_TIMING				1    // ms, depend on UART speed (1 / UART_CLOCK * 10)
-//#define MODBUS_WAIT_BEFORE_RECEIVE           // wait before recieve after request send
-//#define MODBUS_WAIT_BEFORE_RECEIVE_CHARS 3   // Chars
 #define MIN_TIME_BETWEEN_TRANSACTION	40UL // ms
 // Modbus timeout [milliseconds] Depend on serial speed
 #define ku16MBResponseTimeout          	100UL // was 100,  < Modbus timeout, every byte [milliseconds]
@@ -90,7 +87,7 @@ class ModbusMaster
     inline uint8_t set_slave(uint8_t slave) {return _u8MBSlave=slave;} // Установить slave
     void idle(void (*)());
     void preTransmission(void (*)());
-    void postTransmission(void (*)());
+    void postTransmission(void (*)(uint8_t));
 
     // Modbus exception codes
     /**
@@ -244,7 +241,7 @@ class ModbusMaster
     uint8_t  LinkTestOmronMX2Only(uint16_t);
 
     // master function that conducts Modbus transactions
-    uint8_t ModbusMasterTransaction(uint8_t u8MBFunction);
+    uint8_t ModbusMasterTransaction(uint8_t);
     
   private:
     Stream* _serial;                                             ///< reference to serial port object
@@ -269,7 +266,7 @@ class ModbusMaster
     // preTransmission callback function; gets called before writing a Modbus message
     void (*_preTransmission)();
     // postTransmission callback function; gets called after a Modbus message has been sent
-    void (*_postTransmission)();
+    void (*_postTransmission)(uint8_t message_size);
 };
 #endif
 

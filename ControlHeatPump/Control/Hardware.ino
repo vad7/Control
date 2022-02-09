@@ -1859,20 +1859,28 @@ static inline void preTransmission() // Функция вызываемая ПЕ
       Modbus_Entered_Critical = TaskSuspendAll(); // Запрет других задач во время передачи по Modbus 	
 #endif
 }
-static inline void postTransmission() // Функция вызываемая ПОСЛЕ окончания передачи
-{
+
+// Функция вызываемая ПОСЛЕ окончания передачи
+#if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
+static inline void postTransmission(uint8_t message_size) {
+#else
+static inline void postTransmission(uint8_t) {
+#endif
 #ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
 	if(Modbus_Entered_Critical) {
 		xTaskResumeAll();
 		Modbus_Entered_Critical = 0;
 	}
 #endif
+#if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
+	_delay(message_size * MODBUS_CHAR_TIMING);
+#endif
 #ifdef PIN_MODBUS_RSE
 	#if MODBUS_TIME_TRANSMISION != 0
     _delay(MODBUS_TIME_TRANSMISION);// Минимальная пауза между командой и ответом 3.5 символа
 	#endif
     digitalWriteDirect(PIN_MODBUS_RSE, LOW);
-    #endif
+#endif
 }
 #endif
 

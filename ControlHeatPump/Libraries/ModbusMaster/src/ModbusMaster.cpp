@@ -193,7 +193,7 @@ Receiver Enable pin, and disable its Driver Enable pin.
 @see ModbusMaster::ModbusMasterTransaction()
 @see ModbusMaster::preTransmission()
 */
-void ModbusMaster::postTransmission(void (*postTransmission)())
+void ModbusMaster::postTransmission(void (*postTransmission)(uint8_t))
 {
   _postTransmission = postTransmission;
 }
@@ -721,25 +721,13 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   // transmit request
   // вызов функции перед началом передачи - дернуть ногу передачи max485 (помним про полудуплекс)
   if (_preTransmission)  { _preTransmission();  }
-
   // передаем данные
   for (i = 0; i < u8ModbusADUSize; i++)
   {
     _serial->write(u8ModbusADU[i]);
   }
-#ifdef MODBUS_WAIT_BEFORE_RECEIVE
-#ifdef MODBUS_FREERTOS
-  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
-  else delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
-#else
-  delay(u8ModbusADUSize * MODBUS_CHAR_TIMING + MODBUS_WAIT_BEFORE_RECEIVE_CHARS * MODBUS_CHAR_TIMING);
-#endif
   //_serial->flush();           // Очистить передающий буфер
-#endif
-  if (_postTransmission)  {
-	   // вызов функции в конце передачи - дернуть ногу передачи max485 + задержка перед чтением(помним про полудуплекс)
-	  _postTransmission();
-  }
+  if (_postTransmission)  { _postTransmission(u8ModbusADUSize); }
 
   // -------------------- ЧТЕНИЕ ОТВЕТА --------------------------------------
    u8ModbusADUSize = 0;       // Сбросить длину буфера
