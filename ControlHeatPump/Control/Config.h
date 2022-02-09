@@ -5154,7 +5154,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4
 	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки
-	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
+	//#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
+	#define MODBUS_CHAR_TIMING	 	(10 * 1000 / MODBUS_PORT_SPEED) // ms, depend on UART speed (1 / UART_CLOCK * 10)
 	//#define PIN_MODBUS_RSE          22          // Не используется из-за платы UART-RS485! Управление направлением передачи 485 для связи с инвертором по Modbus (1-передача 0-прием)
 	#define SDM_READ_PERIOD     	30000       // Время опроса счетчика, не важных параметров (0 - нет), в ms
 	#define SDM_NUM_READ        	2           // Число попыток чтения счетчика подряд до его отключения (если SDM_BLOCK), ошибка не генерится
