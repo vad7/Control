@@ -1523,15 +1523,12 @@ void vReadSensor(void *)
 			}
 #endif
 #endif
-#if defined(WR_PowerMeter_Modbus) //&& TIME_READ_SENSOR > 1500
+#if defined(WR_PowerMeter_Modbus)
 		if(GETBIT(WR.Flags, WR_fActive)) {
-//			int32_t tm = TIME_READ_SENSOR - (int32_t)(GetTickCount() - ttime);
-//			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: +%d\n", tm);
-//			if(tm > WEB0_FREQUENT_JOB_PERIOD / 2) {
-//				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
-			 	WR_ReadPowerMeter();
-//			}
-		} else WR_PowerMeter_New = true;
+			vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD / 2 - (GetTickCount() - ttime));	// через (WEB0_FREQUENT_JOB_PERIOD / 2) после начала очередного цикла чтения
+			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: +%d\n", GetTickCount() - ttime);
+		 	WR_ReadPowerMeter();
+		}
 #else
 #if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
 		WR_Calc_Power_Array_NewMeter(0);
@@ -1647,6 +1644,17 @@ void vReadSensor(void *)
 #ifdef SEVA  //Если определен лепестковый датчик протока - это переливная схема ТН - надо контролировать проток при работе
  	if(HP.dRelay[RPUMPI].get_Relay())                                                                                             // Только если включен насос геоконтура  (PUMP_IN)
 		if (HP.sInput[SEVA].get_Input()==SEVA_OFF) {set_Error(ERR_SEVA_FLOW,(char*)"SEVA"); return;}                              // Выход по ошибке отсутствия протока
+#endif
+
+#if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
+		if(GETBIT(WR.Flags, WR_fActive)) {
+			int32_t tm = (int32_t)(GetTickCount() - ttime);
+			if(TIME_READ_SENSOR - tm > ku16MBResponseTimeout) {
+				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
+				if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR2: +%d\n", GetTickCount() - ttime);
+			 	WR_ReadPowerMeter();
+			}
+		} else WR_PowerMeter_New = true;
 #endif
 
 		//

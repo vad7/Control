@@ -5797,13 +5797,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define HTTP_MAP_RELAY_SW_2		"&mode="						// On = 1, Off = 0
 	#define HTTP_MAP_RELAY_MAX		3
 
-#if defined(WR_CurrentSensor_4_20mA)
 	#define WEB0_FREQUENT_JOB_PERIOD 	1000	 		// Периодичность важных функций в задаче WEB0, мс
-#elif  defined(WR_PowerMeter_Modbus)
-	#define WEB0_FREQUENT_JOB_PERIOD 	TIME_READ_SENSOR// Периодичность важных функций в задаче WEB0, мс
-#else
-	#define WEB0_FREQUENT_JOB_PERIOD 	1500	 		// Периодичность важных функций в задаче WEB0, мс
-#endif
 	#define WEB0_OTHER_JOB_PERIOD    	10000   		// Периодичность других функций внутри задачи WEB0, мс
 
 	#define WEATHER_FORECAST							// Корректировка ночного нагрева бойлера по прогнозу погоды
