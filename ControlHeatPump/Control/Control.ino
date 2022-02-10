@@ -1105,7 +1105,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 						WR_Pnet_avg_init = false;
 					}
 					WR_Pnet = pnet; //need_average ? pnet : median3;
-					if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
+					if(WR.Flags & ((1<<WR_fLogFull) | (1<<WR_fLog))) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
 					// проверка перегрузки
 					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad; // / 2;
@@ -1526,7 +1526,7 @@ void vReadSensor(void *)
 #if defined(WR_PowerMeter_Modbus)
 		if(GETBIT(WR.Flags, WR_fActive)) {
 			vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD / 2 - (GetTickCount() - ttime));	// через (WEB0_FREQUENT_JOB_PERIOD / 2) после начала очередного цикла чтения
-			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: +%d\n", GetTickCount() - ttime);
+			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
 		 	WR_ReadPowerMeter();
 		}
 #else
@@ -1648,10 +1648,10 @@ void vReadSensor(void *)
 
 #if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
 		if(GETBIT(WR.Flags, WR_fActive)) {
-			int32_t tm = (int32_t)(GetTickCount() - ttime);
+			int32_t tm = GetTickCount() - ttime;
 			if(TIME_READ_SENSOR - tm > ku16MBResponseTimeout) {
 				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
-				if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR2: +%d\n", GetTickCount() - ttime);
+				if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
 			 	WR_ReadPowerMeter();
 			}
 		} else WR_PowerMeter_New = true;
