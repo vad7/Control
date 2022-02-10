@@ -46,6 +46,8 @@ ModbusMaster::ModbusMaster(void)
   _preTransmission = 0;
   _postTransmission = 0;
   last_transaction_time = 0;
+  ModbusMinTimeBetweenTransaction = 20; // ms
+  ModbusResponseTimeout = 200; // ms
 }
 
 /**
@@ -600,16 +602,16 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   uint8_t u8MBStatus = ku8MBSuccess;   // текущий статус
   
 #ifdef MODBUSMASTER_DEBUG
-   Serial.print("MB"); Serial.print(_u8MBSlave); Serial.print(": ");
+   Serial.print("MB"); Serial.print(_u8MBSlave);
 #endif
-  if((u32StartTime = millis() - last_transaction_time) < MIN_TIME_BETWEEN_TRANSACTION) {
+  if((u32StartTime = millis() - last_transaction_time) < ModbusMinTimeBetweenTransaction) {
 #ifdef MODBUSMASTER_DEBUG
 	  Serial.print('#');
 #endif
 #ifdef MODBUS_FREERTOS
-	  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime); else delay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime);
+	  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(ModbusMinTimeBetweenTransaction - u32StartTime); else delay(ModbusMinTimeBetweenTransaction - u32StartTime);
 #else
-	  delay(MIN_TIME_BETWEEN_TRANSACTION - u32StartTime);
+	  delay(ModbusMinTimeBetweenTransaction - u32StartTime);
 #endif
   }
 #ifdef MODBUSMASTER_DEBUG
@@ -829,7 +831,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 	   } // if (u8ModbusADUSize == 5)
 
 	   // проверка привышения времени ожидания
-	   if((millis() - u32StartTime) > ku16MBResponseTimeout) {
+	   if((millis() - u32StartTime) > ModbusResponseTimeout) {
 		   u8MBStatus = ku8MBResponseTimedOut;
 		   break;
 	   }

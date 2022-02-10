@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.169"				// Версия прошивки
+#define VERSION			"1.170"				// Версия прошивки
 #define VER_SAVE		156					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -145,7 +145,8 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef MODBUS_TIME_TRANSMISION
 #define MODBUS_TIME_TRANSMISION 4           // Пауза (msec) между запросом и ответом по модбас было 4
 #endif
-#define MODBUS_CHAR_TIMING	 (10000 / MODBUS_PORT_SPEED) // ms, depend on UART speed (1 / UART_CLOCK * 10)
+#define MODBUS_TIMEOUT       100			// Таймаут ожидания ответа, мсек
+#define MODBUS_MIN_TIME_BETWEEN_TRNS 50		// Минимальная пауза между транзакциями, мсек
 #endif
 //#define MODBUS_FREERTOS                     // Настроить либу на многозадачность определить надо в либе.
 #if RADIO_SENSORS_PORT == 2

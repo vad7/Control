@@ -1589,7 +1589,7 @@ void vReadSensor(void *)
 #if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
 		if(GETBIT(WR.Flags, WR_fActive)) {
 			int32_t tm = GetTickCount() - ttime;
-			if(TIME_READ_SENSOR - tm > ku16MBResponseTimeout + 2) {
+			if((int32_t)TIME_READ_SENSOR - tm > Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction + Modbus.RS485.ModbusMinTimeBetweenTransaction / 2) {
 				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
 				if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
 			 	WR_ReadPowerMeter();
@@ -1625,7 +1625,7 @@ void vReadSensor(void *)
 			}
 		} else
 #endif
-			if(HP.dFC.get_present() && (GetTickCount() - readFC > FC_TIME_READ) && GetTickCount() - ttime < TIME_READ_SENSOR - (ku16MBResponseTimeout + 2)) {
+			if(HP.dFC.get_present() && (GetTickCount() - readFC > FC_TIME_READ) && GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
 				readFC = GetTickCount();
 				HP.dFC.get_readState();
 			}

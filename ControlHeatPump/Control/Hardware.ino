@@ -1869,8 +1869,7 @@ static inline void postTransmission() {
 	}
 #endif
 #if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
-	while(!(MODBUS_PORT_NUM.availableForWrite() >= SERIAL_BUFFER_SIZE-1 && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY)))
-		_delay(1);
+	while(!(MODBUS_PORT_NUM.availableForWrite() >= SERIAL_BUFFER_SIZE-1 && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY))) _delay(1);
 #endif
 #ifdef PIN_MODBUS_RSE
 	#if MODBUS_TIME_TRANSMISION != 0
@@ -1892,8 +1891,10 @@ int8_t devModbus::initModbus()
         digitalWriteDirect(PIN_MODBUS_RSE , LOW);
 	#endif
         MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED,MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
-        MODBUS_PORT_NUM.setInterruptPriority(0);
-        RS485.begin(1,MODBUS_PORT_NUM);                                              // Привязать к сериал
+        MODBUS_PORT_NUM.setInterruptPriority(1);
+        RS485.begin(1, MODBUS_PORT_NUM);                                              // Привязать к сериал
+        RS485.ModbusMinTimeBetweenTransaction = MODBUS_TIMEOUT;
+        RS485.ModbusResponseTimeout = MODBUS_MIN_TIME_BETWEEN_TRNS;
         // Назначение функций обратного вызова
 #if defined(PIN_MODBUS_RSE) || !defined(MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT)
         RS485.preTransmission(preTransmission);
