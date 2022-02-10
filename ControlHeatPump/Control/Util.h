@@ -65,14 +65,15 @@ int8_t WR_Check_MPPT(void);
 #ifdef PWM_CALC_POWER_ARRAY
 void WR_Calc_Power_Array_NewMeter(int32_t power);
 #endif
+void WR_ReadPowerMeter(void);
 
-#else
+#else //WATTROUTER
 
 #define PWM_WRITE_OUT_FREQUENCY	PWM_FREQUENCY	// PWM freq for PWM_Write() function
 #ifndef PWM_WRITE_OUT_RESOLUTION
 #define PWM_WRITE_OUT_RESOLUTION 8				// bit
 #endif
 
-#endif
+#endif //WATTROUTER
 
 #endif

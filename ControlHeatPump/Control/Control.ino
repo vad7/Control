@@ -1514,7 +1514,7 @@ void vReadSensor(void *)
 #else
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
-		_delay(1);
+		//_delay(1);
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 #if (SDM_READ_PERIOD > 0)
 			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
@@ -1529,30 +1529,7 @@ void vReadSensor(void *)
 //			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR: +%d\n", tm);
 //			if(tm > WEB0_FREQUENT_JOB_PERIOD / 2) {
 //				vReadSensor_delay1ms(tm - WEB0_FREQUENT_JOB_PERIOD);     													// 1. Ожидать время нужное для цикла чтения
-				if(GETBIT(HP.Option.flags, fBackupPower)) {
-					WR_PowerMeter_Power = -1;
-					WR_PowerMeter_New = true;
-				} else {
-	#ifdef WR_PowerMeter_DDS238
-					i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
-	#else
-					i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-					WR_PowerMeter_Power /= 10;
-	#endif
-					if(i == OK) {
-						WR_Error_Read_PowerMeter = 0;
-#ifdef PWM_CALC_POWER_ARRAY
-						WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
-#endif
-					} else {
-						if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
-						if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
-							WR_PowerMeter_Power = -1;
-							if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
-						}
-					}
-					WR_PowerMeter_New = true;
-				}
+			 	WR_ReadPowerMeter();
 //			}
 		} else WR_PowerMeter_New = true;
 #else
@@ -1609,7 +1586,6 @@ void vReadSensor(void *)
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 		HP.dSDM.get_readState(0); // Основная группа регистров
 #endif
-		_delay(1);
 		HP.calculatePower();  // Расчет мощностей и СОР
 		Stats.Update();
 

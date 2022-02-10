@@ -1861,11 +1861,7 @@ static inline void preTransmission() // Функция вызываемая ПЕ
 }
 
 // Функция вызываемая ПОСЛЕ окончания передачи
-#if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
-static inline void postTransmission(uint8_t message_size) {
-#else
-static inline void postTransmission(uint8_t) {
-#endif
+static inline void postTransmission() {
 #ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
 	if(Modbus_Entered_Critical) {
 		xTaskResumeAll();
@@ -1873,7 +1869,8 @@ static inline void postTransmission(uint8_t) {
 	}
 #endif
 #if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
-	_delay(message_size * MODBUS_CHAR_TIMING);
+	while(MODBUS_PORT_NUM.availableForWrite() != SERIAL_BUFFER_SIZE && !(MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY))
+		_delay(1);
 #endif
 #ifdef PIN_MODBUS_RSE
 	#if MODBUS_TIME_TRANSMISION != 0

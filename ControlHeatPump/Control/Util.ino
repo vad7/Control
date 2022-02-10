@@ -1366,7 +1366,35 @@ void WR_Calc_Power_Array_Start(int8_t load_idx)
 	PWM_CalcFlags |= (1<<PWM_fCalcNow);
 #endif
 }
-#endif
+#endif //PWM_CALC_POWER_ARRAY
 
-#endif
+void WR_ReadPowerMeter(void)
+{
+	if(GETBIT(HP.Option.flags, fBackupPower)) {
+		WR_PowerMeter_Power = -1;
+		WR_PowerMeter_New = true;
+	} else {
+	#ifdef WR_PowerMeter_DDS238
+		int8_t i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
+	#else
+		int8_t i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
+		WR_PowerMeter_Power /= 10;
+	#endif
+		if(i == OK) {
+			WR_Error_Read_PowerMeter = 0;
+	#ifdef PWM_CALC_POWER_ARRAY
+			WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
+	#endif
+		} else {
+			if(WR_Error_Read_PowerMeter < 255) WR_Error_Read_PowerMeter++;
+			if(WR_Error_Read_PowerMeter == WR_Error_Read_PowerMeter_Max) {
+				WR_PowerMeter_Power = -1;
+				if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Modbus read err %d\n", i);
+			}
+		}
+		WR_PowerMeter_New = true;
+	}
+}
+
+#endif //WATTROUTER
 
