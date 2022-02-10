@@ -2123,8 +2123,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32; else l_i32 = Modbus.RS485.ModbusResponseTimeout;
 					} else if(strcmp(x, "pause")) { // Пауза между транзакциями
 						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32; else l_i32 = Modbus.RS485.ModbusMinTimeBetweenTransaction;
-					}
-					_itoa(pm, strReturn);
+					} else goto x_FunctionNotFound;
+					_itoa(l_i32, strReturn);
 					ADD_WEBDELIM(strReturn);
 					continue;
 				} else if((y = strchr(x, ':'))) {

@@ -152,7 +152,7 @@ function loadParam(paramid, noretry, resultdiv) {
 									}
 								} else if(values[0].indexOf("(SCHEDULER)")!=-1) type = "sch"; // расписание бойлера
 								else if(values[0].indexOf("(Calendar")!=-1) type = "cld"; // расписание
-								else if(values[0].indexOf("et_modbus_")==1) type = "tbv"; // таблица значений
+								else if(values[0].indexOf("et_modbus_v")==1) type = "tbv"; // таблица значений
 								else if(values[0].indexOf("set_pEEV(POS")==0) {
 									var s = "get_peev-pos";
 									if(values[0].substr(-1) == 'p') s += "p";  
