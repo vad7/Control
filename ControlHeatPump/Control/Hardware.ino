@@ -1869,7 +1869,7 @@ static inline void postTransmission() {
 	}
 #endif
 #if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
-	while(!(MODBUS_PORT_NUM.availableForWrite() == SERIAL_BUFFER_SIZE && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY)))
+	while(!(MODBUS_PORT_NUM.availableForWrite() >= SERIAL_BUFFER_SIZE-1 && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY)))
 		_delay(1);
 #endif
 #ifdef PIN_MODBUS_RSE
