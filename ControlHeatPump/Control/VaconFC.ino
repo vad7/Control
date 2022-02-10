@@ -996,7 +996,7 @@ int16_t devVaconFC::read_0x03_16(uint16_t cmd)
         	break;
         }
         numErr++; // число ошибок чтение по модбасу
-        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
+        if(number_err == FC_NUM_READ-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
         _delay(FC_DELAY_REPEAT);
     }
@@ -1033,7 +1033,7 @@ uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
         	break;
         }
         numErr++; // число ошибок чтение по модбасу
-        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
+        if(number_err == FC_NUM_READ-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
         _delay(FC_DELAY_REPEAT);
     }
@@ -1068,7 +1068,7 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
         	break;
         }
         numErr++; // число ошибок чтение по модбасу
-        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
+        if(number_err == FC_NUM_READ-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
         _delay(FC_DELAY_REPEAT);
     }

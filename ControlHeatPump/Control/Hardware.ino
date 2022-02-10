@@ -1676,7 +1676,7 @@ xErr:
         if(HP.sInput[SPOWER].is_alarm()) return err;
 #endif
 		numErr++;                  // число ошибок чтение по модбасу
-		if(GETBIT(HP.Option.flags, fSDMLogErrors)) {
+		if(GETBIT(HP.Option.flags, fModbusLogErrors)) {
 	        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, _err); 	// Сообщение об ошибке
 		}
 		_delay(SDM_DELAY_REPEAD);  // Чтение не удачно, делаем паузу
@@ -1696,7 +1696,7 @@ xErr:
 #ifdef SDM_BLOCK                     // если стоит флаг блокировки связи
 	SETBIT0(flags,fSDMLink);             // связь со счетчиком потеряна
 #endif
-	if(!err && _err && !GETBIT(HP.Option.flags, fSDMLogErrors) && !GETBIT(flags, fSDM_LogErrorOff)) {
+	if(!err && _err && !GETBIT(HP.Option.flags, fModbusLogErrors) && !GETBIT(flags, fSDM_LogErrorOff)) {
         SETBIT1(flags, fSDM_LogErrorOff);
         journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, _err); 	// Сообщение об ошибке
 	}
