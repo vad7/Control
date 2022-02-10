@@ -1378,9 +1378,9 @@ void WR_ReadPowerMeter(void)
 		int8_t i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
 	#else
 		int8_t i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
-		WR_PowerMeter_Power /= 10;
 	#endif
 		if(i == OK) {
+			WR_PowerMeter_Power /= 10;
 			WR_Error_Read_PowerMeter = 0;
 	#ifdef PWM_CALC_POWER_ARRAY
 			WR_Calc_Power_Array_NewMeter(WR_PowerMeter_Power);
