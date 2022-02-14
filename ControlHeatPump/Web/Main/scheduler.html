@@ -17,28 +17,29 @@
 <script src="jquery-ui.min.js"></script>
 <script src="jquery.ui.touch.js"></script>
 <script>
-	var shifted;
-	$( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
-		$( ".ui-selected", this ).each(function() {
-			if(shifted) this.innerHTML = "";
-			else {
-				var v, el = document.getElementById('get_listprof2').options;
-				el = el[el.selectedIndex];
-				if(el.value == -2) {
-					this.innerHTML = "";
-				} else if(el.value == -1) {
-					v = document.getElementById('delta_temp').value;
-					if(v > 0) v = '+' + v; else if(v == 0) v = "-";
-					this.innerHTML = v;
-					this.style = "color:red";
-				} else {
-					this.innerHTML = el.value == -2 ? 0 : el.innerHTML.replace(/\. .*$/, "");
-					this.style = "color:yellow";
-				}
+var shifted;
+$( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
+	$( ".ui-selected", this ).each(function() {
+		if(shifted) this.innerHTML = "";
+		else {
+			var v, el = document.getElementById('get_listprof2').options;
+			el = el[el.selectedIndex];
+			if(el.value == -2) {
+				this.innerHTML = "";
+			} else if(el.value == -1) {
+				v = document.getElementById('delta_temp').value;
+				if(v > 0) v = '+' + v; else if(v == 0) v = "-";
+				this.innerHTML = v;
+				this.style = "color:red";
+			} else {
+				this.innerHTML = el.value == -2 ? 0 : el.innerHTML.replace(/\. .*$/, "");
+				this.style = "color:yellow";
 			}
-		});
-	} }); });
-	$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+		}
+	});
+} }); });
+$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+$(document).on('dblclick', '#calendar', function(e){ shifted = !shifted });
 </script>
 <script type="text/javascript">
 	window.onload = function() {
@@ -143,7 +144,7 @@ function SelectNewProfile() {
 </table>
 <br><input type="submit" value="Запомнить календарь" onclick="process_calendar(1);">
 <br><br>
-Левая кнопка мыши - установить, с клавишой SHIFT - очистить.<br>
+Левая кнопка мыши - установить, с клавишой SHIFT - очистить, переключить - двойной клик.<br>
 Чтобы текущий профиль не менялся нужно заполнить ± температурой равной 0.
 </div>
 </body>

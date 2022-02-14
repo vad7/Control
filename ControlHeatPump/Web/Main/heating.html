@@ -23,7 +23,8 @@ $( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
 		this.innerHTML = shifted ? "" : window.calendar_act_chr;
 	});
 } }); });
-$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+$(document).on('keyup keydown', function(e){ shifted = e.shiftKey });
+$(document).on('dblclick', '#calendar', function(e){ shifted = !shifted });
 </script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">

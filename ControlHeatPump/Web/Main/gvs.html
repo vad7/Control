@@ -24,6 +24,7 @@ $( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
 	});
 } }); });
 $(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
+$(document).on('dblclick', '#calendar', function(e){ shifted = !shifted });
 </script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
@@ -218,7 +219,7 @@ window.onload = function() {
 		</tr>
 	</tbody>
 </table>
-Левая кнопка мыши - установить, с клавишой SHIFT - очистить.<br>
+Левая кнопка мыши - установить, с клавишой SHIFT - очистить, переключить - двойной клик.<br>
 <br><input type="submit" value="Запомнить расписание" onClick="setParam('get_Boiler(SCHEDULER)');"><br>
 <br>
 1. Диапазон регулирования равен: Целевая температура - Гистерезис целевой температуры.<br/>
