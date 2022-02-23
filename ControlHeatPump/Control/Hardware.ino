@@ -1896,7 +1896,7 @@ int8_t devModbus::initModbus()
         RS485.ModbusMinTimeBetweenTransaction = MODBUS_TIMEOUT;
         RS485.ModbusResponseTimeout = MODBUS_MIN_TIME_BETWEEN_TRNS;
         // Назначение функций обратного вызова
-#if defined(PIN_MODBUS_RSE) || !defined(MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT)
+#ifdef MODBUS_TIME_TRANSMISION
         RS485.preTransmission(preTransmission);
         RS485.postTransmission(postTransmission);
 #endif
