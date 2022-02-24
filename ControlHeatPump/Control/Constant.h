@@ -145,6 +145,8 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef MODBUS_TIME_TRANSMISION
 #define MODBUS_TIME_TRANSMISION 4           // Пауза (msec) между запросом и ответом по модбас было 4
 #endif
+#endif
+#ifndef MODBUS_TIMEOUT
 #define MODBUS_TIMEOUT       100			// Таймаут ожидания ответа, мсек
 #define MODBUS_MIN_TIME_BETWEEN_TRNS 50		// Минимальная пауза между транзакциями, мсек
 #endif
