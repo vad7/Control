@@ -2140,7 +2140,9 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 						else if(*y == 'f') i = Modbus.writeHoldingRegistersFloat(id, par, strtol(z, NULL, 0)); // 2 registers (float).
 						else if(*y == 'c') i = Modbus.writeSingleCoil(id, par, atoi(z));	// coil
 						else goto x_FunctionNotFound;
+#ifdef MODBUS_TIME_TRANSMISION
 						_delay(MODBUS_TIME_TRANSMISION * 10); // Задержка перед чтением
+#endif
 					} else if(str[0] == 'g') {
 					} else goto x_FunctionNotFound;
 					if(i == OK) {
@@ -2545,6 +2547,8 @@ xget_WR:
 								*strReturn++ = '0' + (on ? WR_Load_pins_Boiler_INDEX : WR_Boiler_Substitution_INDEX);
 								*strReturn = '\0';
 #endif
+							} else if(p == 2) { // get_WR(2)
+								_dtoa(strReturn, WR_Power_Excess / 10000, 3);
 							}
 						}
 					} else if(*str == '(') goto xget_WR;
