@@ -990,6 +990,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					int pnet = HP.sADC[IWR].get_Value() * HP.dSDM.get_voltage();
 #elif WR_PowerMeter_Modbus
 					int pnet = WR_PowerMeter_Power; //round_div_int32(WR_PowerMeter_Power, 10);
+					if(pnet == -1) break; // Ошибка
 #else
 					// HTTP power meter
 					active = false;
