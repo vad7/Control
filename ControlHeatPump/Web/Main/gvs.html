@@ -23,8 +23,10 @@ $( function() { $("#calendar").selectable({filter: ".clc", stop: function() {
 		this.innerHTML = shifted ? "" : window.calendar_act_chr;
 	});
 } }); });
-$(document).on('keyup keydown', function(e){ shifted = e.shiftKey } );
-$(document).on('dblclick', '#calendar', function(e){ shifted = !shifted });
+$(document).ready(function() {
+	$(document).on('keyup keydown', function(e){ shifted = e.shiftKey });
+	$("#calendar .clh").click(function(e){ shifted = !shifted; });
+});
 </script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
@@ -219,7 +221,7 @@ window.onload = function() {
 		</tr>
 	</tbody>
 </table>
-Левая кнопка мыши - установить, с клавишой SHIFT - очистить, переключить - двойной клик.<br>
+Левая кнопка мыши - установить, с клавишой SHIFT - очистить, переключить - клик на днях недели.<br>
 <br><input type="submit" value="Запомнить расписание" onClick="setParam('get_Boiler(SCHEDULER)');"><br>
 <br>
 1. Диапазон регулирования равен: Целевая температура - Гистерезис целевой температуры.<br/>
