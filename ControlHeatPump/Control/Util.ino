@@ -1258,7 +1258,8 @@ int8_t WR_Check_MPPT(void)
 	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_P_Out);
 	if(!fld) return 0;
 	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
-	if(WR_LastSunPowerOut == 0) return 1;
+	if(WR_LastSunPowerOut == 0 && ++WR_LastSunPowerOutCnt > 10) return 1;
+	WR_LastSunPowerOutCnt = 0;
 	fld = strstr(fld, HTTP_MAP_JSON_Mode);
 	if(!fld) return 0;
 	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return 2;

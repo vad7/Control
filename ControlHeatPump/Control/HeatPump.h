@@ -144,6 +144,7 @@ uint32_t WR_LastSwitchTime = 0;
 uint8_t  WR_TestLoadStatus = 0; 		// >0 - идет тестирование нагрузки
 uint8_t  WR_TestLoadIndex;
 int32_t  WR_LastSunPowerOut = 0;
+uint8_t  WR_LastSunPowerOutCnt = 0;
 
 #ifdef PWM_CALC_POWER_ARRAY
 // Вычисление массива точного расчета мощности
