@@ -5749,7 +5749,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PIN_WR_Boiler_Substitution		13						// R_10(X2.2). Если бойлер нагрет, то переключаем выход контактором и продолжаем с другой нагрузкой
 	#define WR_Boiler_Substitution_swtime	50						// Время переключения контактора, мсек
 	#define WR_BOILER_MAX_TEMP 				8000					// Максимальная температура бойлера для нагрева от солнца, сотые градуса
-
+	#define WR_NEXTION_FULL_SUN										// Показывать полную электрическую мощность, получаемую от солнца в Вт.
 
 	const int8_t WR_Load_pins[]	=	{ PIN_DEVICE_RBOILER, 33, -1, PIN_DEVICE_RBOILER };	// [<0] - реле по HTTP, для PWM нагрузки пины должны быть PWM/TIMER
 

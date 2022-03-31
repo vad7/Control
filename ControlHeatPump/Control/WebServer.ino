@@ -2549,6 +2549,8 @@ xget_WR:
 #endif
 							} else if(p == 2) { // get_WR(2)
 								_dtoa(strReturn, WR_Power_Excess / 10000, 3);
+							} else if(p == 3) { // get_WR(3)
+								_itoa(WR_LastSunPowerOut, strReturn);
 							}
 						}
 					} else if(*str == '(') goto xget_WR;

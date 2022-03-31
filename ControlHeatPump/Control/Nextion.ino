@@ -451,6 +451,11 @@ void Nextion::Update()
 			strcat(ntemp, NEXTION_xB0);
 			setComponentText("t1", ntemp);
 		}
+#ifdef WR_NEXTION_FULL_SUN
+		if(WR_LastSunPowerOutCnt <= 1) { // Если не 0
+			setComponentText("b", WR_LastSunPowerOut == 0 ? (char*)"" : itoa(WR_LastSunPowerOut, ntemp, 10));
+		}
+#endif
 		uint8_t fl = (HP.IsWorkingNow() && HP.get_State() != pSTOPING_HP) | (HP.HeatBoilerUrgently << 1)
 #ifdef USE_SUN_COLLECTOR
 					| (HP.dRelay[RSUN].get_Relay() << 2)
@@ -544,8 +549,8 @@ void Nextion::Update()
 		setComponentText("syst2", TimeIntervalToStr(HP.get_uptime(), ntemp));
 		setComponentText("syst3", ResetCause());
 		setComponentText("syst4", HP.IsWorkingNow() ? itoa(HP.num_repeat, ntemp, 10) : (char*) NEXTION_HP_OFF_8859);
-		setComponentText("syst5", ftoa(ntemp, (float) HP.get_motoHour()->H2 / 60.0, 1));
-		setComponentText("syst6", ftoa(ntemp, (float) HP.get_motoHour()->C2 / 60.0, 1));
+		setComponentText("syst5", dptoa(ntemp, HP.get_motoHour()->H2 / 6, 1));
+		setComponentText("syst6", dptoa(ntemp, HP.get_motoHour()->C2 / 6, 1));
 		setComponentText("syst7", itoa(HP.CPU_LOAD, ntemp, 10));
 		setComponentText("syst8", HP.get_errcode() == OK ? (char *)"-" : itoa(HP.get_errcode(), ntemp, 10));
 		if(HP.get_errcode() == OK) buffer[0] = '\0';
