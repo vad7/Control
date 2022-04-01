@@ -837,9 +837,9 @@ void vWeb0(void *)
 #ifdef WR_NEXTION_FULL_SUN
 					int8_t mppt = -1;
 					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
-						active = false;
 						mppt = WR_Check_MPPT();				// Чтение солнечного контроллера
 						SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
+						WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					}
 #endif
 					// Выключить все
