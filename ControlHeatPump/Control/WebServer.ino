@@ -2551,6 +2551,7 @@ xget_WR:
 								_dtoa(strReturn, WR_Power_Excess / 10000, 3);
 							} else if(p == 3) { // get_WR(3)
 								_itoa(WR_LastSunPowerOut, strReturn);
+								SETBIT1(WR_WorkFlags, WR_fWF_Read_MPPT);
 							}
 						}
 					} else if(*str == '(') goto xget_WR;

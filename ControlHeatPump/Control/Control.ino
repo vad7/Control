@@ -834,6 +834,14 @@ void vWeb0(void *)
 #ifdef PWM_CALC_POWER_ARRAY
 					if(GETBIT(PWM_CalcFlags, PWM_fCalcNow)) break;
 #endif
+#ifdef WR_NEXTION_FULL_SUN
+					int8_t mppt = -1;
+					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
+						active = false;
+						mppt = WR_Check_MPPT();				// Чтение солнечного контроллера
+						SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
+					}
+#endif
 					// Выключить все
 					uint8_t nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
 #ifdef WR_PowerMeter_Modbus
@@ -985,6 +993,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 #endif
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 
+
 #ifdef WR_CurrentSensor_4_20mA
 					HP.sADC[IWR].Read();
 					int pnet = HP.sADC[IWR].get_Value() * HP.dSDM.get_voltage();
@@ -1110,7 +1119,9 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					// проверка перегрузки
 					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad; // / 2;
+#ifndef WR_NEXTION_FULL_SUN
 						int8_t mppt = -1;
+#endif
 						for(int8_t i = WR_NumLoads-1; i >= 0; i--) { // PWM only
 							if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
 #ifdef WR_Load_pins_Boiler_INDEX

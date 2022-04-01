@@ -145,6 +145,8 @@ uint8_t  WR_TestLoadStatus = 0; 		// >0 - идет тестирование на
 uint8_t  WR_TestLoadIndex;
 int32_t  WR_LastSunPowerOut = 0;		// Вт
 uint8_t  WR_LastSunPowerOutCnt = 0;
+#define WR_fWF_Read_MPPT	1			// Прочитать данные с солнечного контроллера MPPT
+uint8_t  WR_WorkFlags = 0;
 
 #ifdef PWM_CALC_POWER_ARRAY
 // Вычисление массива точного расчета мощности
