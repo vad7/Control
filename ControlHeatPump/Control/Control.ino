@@ -1400,6 +1400,27 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 				if(t - daily_http_time > 600UL) { // дискретность 10 минут
 					daily_http_time = t;
 					daily_http_time -= daily_http_time % 600;
+					if(DailySwitch_on & DailySwitch_on_MASK_OFF) { // Выкл. после смены профиля
+						for(uint8_t i = 1; i < 8; i++) {
+							if(DailySwitch_on & (1<<(i + 24 - 1))) {
+								strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
+								_itoa(i, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
+								strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
+								_itoa(0, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1); // OFF
+								if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+									DailySwitch_on ^= (1<<(i + 24 - 1));
+									SETBIT0(Logflags, fLog_HTTP_RelayError);
+									//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
+								} else {
+									if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+										SETBIT1(Logflags, fLog_HTTP_RelayError);
+										journal.jprintf(". Fail set HTTP-%d relay!\n", i);
+									}
+								}
+								WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+							}
+						}
+					}
 					uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
 					typeof(DailySwitch_on) _dson = 0;
 					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
@@ -1886,10 +1907,10 @@ void vReadSensor_delay1ms(int32_t ms)
 								while(HP.isCommand()) {	_delay(1000); if(!--i) break; } // ждем отработки команды
 								if(!HP.Task_vUpdate_run) continue;
 							}
-							vTaskSuspendAll();	// без проверки
+							//vTaskSuspendAll();	// без проверки
 							HP.Prof.load(_profile);
 							HP.set_profile();
-							xTaskResumeAll();
+							//xTaskResumeAll();
 							journal.jprintf_time("Profile changed to #%d\n", _profile);
 							if(frestart) HP.sendCommand(pRESUME);
 						}

@@ -109,7 +109,8 @@ boolean Charts_when_comp_on = false;
 #endif
 uint8_t Request_LowConsume = 0xFF;
 uint8_t Calc_COP_skip_timer = 0;	// Пропустить расчет COP на время *TIME_READ_SENSOR
-uint32_t DailySwitch_on = 0;		// bit array
+uint32_t DailySwitch_on = 0;		// Битовый массив включенных дневных реле, b24..31 - выключить HTTP реле
+#define DailySwitch_on_MASK_OFF 0xFF000000
 
 #ifdef WATTROUTER
 #define  WR_fActive				1				// Ваттроутер включен

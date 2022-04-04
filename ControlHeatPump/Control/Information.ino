@@ -987,6 +987,19 @@ int32_t Profile::load(int8_t num)
   if (dataProfile.len!=get_sizeProfile())  { set_Error(ERR_BAD_LEN_PROFILE,(char*)nameHeatPump); return err=ERR_BAD_LEN_PROFILE;}   // длины не совпали
   #endif
   
+  // Выключение дневных реле, кроме HTTP!
+  if(DailySwitch_on & ~DailySwitch_on_MASK_OFF) {
+	  for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
+		  if(DailySwitch[i].Device == 0) break;
+		  if(!GETBIT(DailySwitch_on, i)) continue;
+		  if(DailySwitch[i].Device >= RNUMBER) {
+			  DailySwitch_on |= 1<<(DailySwitch[i].Device - RNUMBER + 24);
+			  continue;
+		  } else HP.dRelay[DailySwitch[i].Device].set_Relay(-fR_StatusDaily); // OFF
+	  }
+	  DailySwitch_on &= DailySwitch_on_MASK_OFF;
+  }
+
   magic = TaskSuspendAll(); // Запрет других задач
   // читаем основные данные
   if(readEEPROM_I2C(adr, (byte*) &SaveON, sizeof(SaveON))) err = ERR_LOAD_PROFILE; // прочитать состояние ТН
