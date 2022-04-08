@@ -444,7 +444,7 @@ uint16_t maxPower;                      // максимальная мощнос
 	// Special command
 	#define PWM_RESET_ENERGY	 0x42
 #endif
-#ifdef USE_DDS238	// Использовать DDS238-2 ZN/S RS485
+#ifdef USE_DDS238	// Использовать Hiking DDS238-2 ZN/S RS485
 	#define USE_NOT_SDM_METER
 	const char *nameSDM = {"DDS238-2"};         // Имя счетчика
 	#define SDM_AC_ENERGY        0x0000			// uint32, 0.01kWh
@@ -456,7 +456,7 @@ uint16_t maxPower;                      // максимальная мощнос
 	#define SDM_RE_POWER         0x000F			// int16, 1VAr
 	#define SDM_POW_FACTOR       0x0010			// uint16, 0.001
 	#define SDM_FREQUENCY        0x0011			// uint16, 0.01Hz
-	// Address (Hi byte), Baundrate (Low byte) 0x0015
+	// Address (Hi byte), Baundrate (Low byte) 0x0015  // Baundrate: 1 - 9600, 2 - 4800, 3 - 2400, 4 - 1200 (write multiple registers #16)
 	// Relay out                 0x001A			// uint16, 0/1
 #endif
 #ifndef USE_NOT_SDM_METER   // Регистры однофазного счетчика sdm*
