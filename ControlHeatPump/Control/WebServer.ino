@@ -2550,6 +2550,7 @@ xget_WR:
 							} else if(p == 2) { // get_WR(2)
 								_dtoa(strReturn, WR_Power_Excess / 10000, 3);
 							} else if(p == 3) { // get_WR(3)
+								strcat(strReturn, WR_LastSunSign == 0 ? "!" : WR_LastSunSign == 1 ? "+" : WR_LastSunSign == 2 ? "*" : ">");
 								_itoa(WR_LastSunPowerOut, strReturn);
 								SETBIT1(WR_WorkFlags, WR_fWF_Read_MPPT);
 							}

@@ -1247,7 +1247,7 @@ int8_t WR_Check_MPPT(void)
 	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
 		if(testMode != NORMAL) {
-			return 3;
+			return WR_LastSunSign = 3;
 		}
 		if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
 			SETBIT1(Logflags, fLog_HTTP_RelayError);
@@ -1256,16 +1256,16 @@ int8_t WR_Check_MPPT(void)
 		return 0;
 	} else SETBIT0(Logflags, fLog_HTTP_RelayError);
 	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_P_Out);
-	if(!fld) return 0;
+	if(!fld) return WR_LastSunSign = 0;
 	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
-	if(WR_LastSunPowerOut == 0 && ++WR_LastSunPowerOutCnt > 10) return 1;
+	if(WR_LastSunPowerOut == 0 && ++WR_LastSunPowerOutCnt > 10) return WR_LastSunSign = 1;
 	WR_LastSunPowerOutCnt = 0;
 	fld = strstr(fld, HTTP_MAP_JSON_Mode);
-	if(!fld) return 0;
-	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return 2;
+	if(!fld) return WR_LastSunSign = 0;
+	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return WR_LastSunSign = 2;
 	fld = strstr(fld, HTTP_MAP_JSON_Sign);
-	if(fld && *(fld + sizeof(HTTP_MAP_JSON_Sign) + 1) == '-') return 3;
-	return 1;
+	if(fld && *(fld + sizeof(HTTP_MAP_JSON_Sign) + 1) == '-') return WR_LastSunSign = 3;
+	return WR_LastSunSign = 1;
 }
 #endif
 
