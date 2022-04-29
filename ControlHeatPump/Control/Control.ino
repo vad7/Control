@@ -1139,7 +1139,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 							pnet -= chg;
 							if(pnet <= 0) break;
 						}
-						if(pnet > 0 && mppt <= 1) {
+						if(pnet > 0 && mppt <= 1) { // not PWM
 							uint8_t reserv = 255;
 							uint32_t t = rtcSAM3X8.unixtime();
 							for(int8_t i = WR_NumLoads-1; i >= 0; i--) {  // Relay only
@@ -1220,7 +1220,8 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								active = false;
 								mppt = WR_Check_MPPT();
 								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
-								if(mppt == 1 && availidx == 0) break;
+								// Отключено, на КЭС можно рассчитывать только в плане избытка
+								//if(mppt == 1 && availidx == 0) break;
 							}
 #endif
 							if(GETBIT(WR.PWM_Loads, i)) {
@@ -1228,7 +1229,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								if(i == WR_Boiler_Substitution_INDEX && WR_LoadRun[WR_Load_pins_Boiler_INDEX] != 0) continue;
 #endif
 								int16_t chg;
-								if(mppt < 3) { 								// Добавляем помаленьку, когда MPPT говорит, что нет энергии
+								if(mppt == 0 || mppt == 2) { // Добавляем помаленьку, когда ошибка или пауза у MPPT
 									if(skip_next_small_increase) break;
 									if(pnet > 0) {
 										chg = _MinNetLoad - pnet;
@@ -1239,16 +1240,17 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								WR_Change_Load_PWM(i, WR_Adjust_PWM_delta(i, chg));
 								break;
 							} else {
-								if(mppt <= 1 && availidx) {
+								if(/*mppt <= 1 &&*/ availidx) { // на КЭС можно рассчитывать только в плане избытка
 									if(GETBIT(WR.PWM_Loads, availidx)) {
 										WR_Change_Load_PWM(availidx, -WR.LoadPower[i]);
 									} else {
 										if(WR_SwitchTime[i] && rtcSAM3X8.unixtime() - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
 										WR_Switch_Load(i, 0);
 									}
-								} else {
-									if(mppt < 3 && pnet > 0) continue;
-									availidx = 0;
+								// на КЭС можно рассчитывать только в плане избытка
+								//} else {
+								//	if(mppt < 3 && pnet > 0) continue;
+								//	availidx = 0;
 								}
 #ifdef WR_TestAvailablePowerForRelayLoads
 	#if defined(WR_Load_pins_Boiler_INDEX) && WR_TestAvailablePowerForRelayLoads == WR_Load_pins_Boiler_INDEX
