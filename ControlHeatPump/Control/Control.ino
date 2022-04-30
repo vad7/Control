@@ -1117,7 +1117,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					WR_Pnet = pnet; //need_average ? pnet : median3;
 					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
 					// проверка перегрузки
-					if(WR_Pnet - _MinNetLoad > 0) { // Потребление из сети больше - уменьшаем нагрузку
+					if(WR_Pnet > _MinNetLoad) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad; // / 2;
 #ifndef WR_NEXTION_FULL_SUN
 						int8_t mppt = -1;
@@ -1166,7 +1166,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								WR_Switch_Load(reserv, 0);
 							}
 						}
-					} else { // Увеличиваем нагрузку
+					} else if(WR_Pnet <= _MinNetLoad - WR.MinNetLoadHyst) { // Увеличиваем нагрузку
 #ifdef WR_Load_pins_Boiler_INDEX
 						bool need_heat_boiler =	WR.LoadPower[WR_Load_pins_Boiler_INDEX] - WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0
 												&& (HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - HP.Prof.Boiler.dAddHeat) && !HP.dRelay[RBOILER].get_Relay();
@@ -1561,7 +1561,7 @@ void vReadSensor(void *)
 #if defined(WR_PowerMeter_Modbus)
 		if(GETBIT(WR.Flags, WR_fActive)) {
 			vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD / 2 - (GetTickCount() - ttime));	// через (WEB0_FREQUENT_JOB_PERIOD / 2) после начала очередного цикла чтения
-			if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
+			if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
 		 	WR_ReadPowerMeter();
 		}
 #else
@@ -1626,7 +1626,7 @@ void vReadSensor(void *)
 			int32_t tm = GetTickCount() - ttime;
 			if((int32_t)TIME_READ_SENSOR - tm > Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction + Modbus.RS485.ModbusMinTimeBetweenTransaction / 2) {
 				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
-				if(GETBIT(WR.Flags, WR_fLogFull)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
+				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
 			 	WR_ReadPowerMeter();
 			}
 		} else WR_PowerMeter_New = true;

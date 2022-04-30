@@ -1149,6 +1149,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 		   return true;
 	   }
 	} else if(strcmp(var,option_WR_MinNetLoad)==0) { WR.MinNetLoad = n; return true; }
+	else if(strcmp(var,option_WR_MinNetLoadHyst)==0){ WR.MinNetLoadHyst = n; return true; }
 	else if(strcmp(var,option_WR_TurnOnPause)==0)  { WR.TurnOnPause = n; return true; }
 	else if(strcmp(var,option_WR_NextSwitchPause)==0){ WR.NextSwitchPause = n; return true; }
 	else if(strcmp(var,option_WR_TurnOnMinTime)==0){ WR.TurnOnMinTime = n; return true; }
@@ -1296,6 +1297,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 		   return _itoa(WR.LoadPower[bit], ret);
 	   }
 	} else if(strcmp(var, option_WR_MinNetLoad)==0){ return _itoa(WR.MinNetLoad, ret); }
+	else if(strcmp(var, option_WR_MinNetLoadHyst)==0) { return _itoa(WR.MinNetLoadHyst, ret); }
 	else if(strcmp(var, option_WR_TurnOnPause)==0) { return _itoa(WR.TurnOnPause, ret); }
 	else if(strcmp(var, option_WR_NextSwitchPause)==0){ return _itoa(WR.NextSwitchPause, ret); }
 	else if(strcmp(var, option_WR_TurnOnMinTime)==0){ return _itoa(WR.TurnOnMinTime, ret); }

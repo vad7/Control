@@ -856,6 +856,7 @@ const char option_WR_Loads[]			= "WL";					// WLn, Биты активирова
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
 const char option_WR_LoadPower[]		= "WR";					// Мощности нагрузки, Вт
 const char *option_WR_MinNetLoad		= {"WM"};				// Сколько минимально можно брать из сети, Вт
+const char *option_WR_MinNetLoadHyst	= {"WY"};
 const char *option_WR_LoadHist			= {"WH"};				// Гистерезис нагрузки, Вт
 const char *option_WR_LoadAdd			= {"WA"};				// Увеличение нагрузки PWM за один шаг, Вт
 const char *option_WR_TurnOnPause		= {"WO"};				// Задержка включения реле после его выключения, секунды
