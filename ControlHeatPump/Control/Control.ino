@@ -1118,7 +1118,8 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
 					// проверка перегрузки
 					if(WR_Pnet > _MinNetLoad) { // Потребление из сети больше - уменьшаем нагрузку
-						pnet = WR_Pnet - _MinNetLoad; // / 2;
+						pnet = WR_Pnet - _MinNetLoad - WR.MinNetLoadHyst / 2; // / 2;
+						if(pnet <= 0) break;
 #ifndef WR_NEXTION_FULL_SUN
 						int8_t mppt = -1;
 #endif
