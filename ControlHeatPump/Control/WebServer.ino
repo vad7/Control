@@ -2538,7 +2538,12 @@ xget_WR:
 									if(testMode != NORMAL) WR_PowerMeter_Power = pm;
 #endif
 								}
-								if(WR_Pnet == -32768) strcat(strReturn, "-"); else _itoa(WR_Pnet, strReturn);
+								if(WR_Pnet == -32768) strcat(strReturn, "-"); else {
+									_itoa(WR_Pnet, strReturn);
+									l_i32 = WR.MinNetLoad;
+									if(WR.MinNetLoadSunDivider) l_i32 += WR_LastSunPowerOut / WR.MinNetLoadSunDivider;
+									if(WR_Pnet <= l_i32 && WR_Pnet > l_i32 - WR.MinNetLoadHyst) strcat(strReturn, ".");
+								}
 							} else if(p == 1) { // get_WR(1)
 #ifdef WR_Boiler_Substitution_INDEX
 								bool on = digitalReadDirect(PIN_WR_Boiler_Substitution);

@@ -6,7 +6,7 @@
 <script type="text/javascript">
 urlupdate = 2000;
 window.onload = function() {
-	loadParam("get_tblWR,get_oHP(WON),get_oHP(WM),get_oHP(WY),get_oHP(WO),get_oHP(WOM),get_oHP(WH),get_oHP(WA),get_oHP(WD),get_oHP(WDF),get_oHP(NS),get_oHP(WF),get_oHP(WFPT),get_oHP(WFPL),get_oHP(WFH),get_oHP(WSD),get_oHP(WAV),get_WR(2)");
+	loadParam("get_tblWR,get_oHP(WON),get_oHP(WM),get_oHP(WY),get_oHP(WO),get_oHP(WOM),get_oHP(WH),get_oHP(WA),get_oHP(WD),get_oHP(WDF),get_oHP(NS),get_oHP(WF),get_oHP(WFPT),get_oHP(WFPL),get_oHP(WFH),get_oHP(WSD),get_oHP(WAV),get_oHP(WMF),get_WR(2)");
 	updateParam("get_WR(0),get_WR(1),get_WR(3)");
 }
 var edit_allowed = true;
@@ -97,8 +97,8 @@ function run_pwm_calc() {
 		<td>Пропорциональное увеличение мин.мощности, в зависимости от мощности с панелей, +(SunPower / n)</td>
 		<td nowrap><input id="get_ohp-wsd" type="number" step="1"><input type="submit" value=">" onclick="setParam('get_oHP(WSD)')"></td>
 	</tr><tr>
-		<td>Усреднение</td>
-		<td><input type="checkbox" id="get_ohp-wav" onChange="setParam('get_oHP(WAV)')"></td>
+		<td>Усреднение, Медианный фильтр</td>
+		<td><input type="checkbox" id="get_ohp-wav" onChange="setParam('get_oHP(WAV)')"> <input type="checkbox" id="get_ohp-wmf" onChange="setParam('get_oHP(WMF)')"></td>
 	</tr><tr>
 		<td>Минимальная пауза переключения следующего реле, сек</td>
 		<td nowrap><input id="get_ohp-ns" type="number" step="1"><input type="submit" value=">" onclick="setParam('get_oHP(NS)')"></td>

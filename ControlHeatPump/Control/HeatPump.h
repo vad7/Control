@@ -117,7 +117,8 @@ uint32_t DailySwitch_on = 0;		// Битовый массив включенны�
 #define  WR_fLog				2				// Логирование ваттроутера
 #define  WR_fLogFull			3				// Логирование ваттроутера полное
 #define  WR_fAverage			4				// Усреднение
-#define  WR_fLoadMask			((1<<WR_NumLoads)-1)
+#define  WR_fMedianFilter		5				// Медианный фильтр на 3 значения
+#define  WR_fLoadMask			((1<<WR_NumLoads)-1) // для WR_Refresh
 #define  WR_fTYPE				uint8_t
 int16_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus

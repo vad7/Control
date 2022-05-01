@@ -836,7 +836,7 @@ void vWeb0(void *)
 #endif
 #ifdef WR_NEXTION_FULL_SUN
 					int8_t mppt = -1;
-					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
+					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || WR_LastSunPowerOutCnt == 0) {
 						mppt = WR_Check_MPPT();				// Чтение солнечного контроллера
 						SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
 						WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
@@ -1076,21 +1076,23 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 #endif
 
 	#ifdef WR_PNET_MEDIAN
-						// Медианный фильтр на увеличение
-						static int median1, median2;
-						if(WR_Pnet_avg_init) median1 = median2 = pnet;
-						int median3 = pnet;
-						if(median3 > median2) { // предыдущее меньше
-							if(median1 <= median2 && median1 <= median3) {
-								pnet = median2 <= median3 ? median2 : median3;
-							} else if(median2 <= median1 && median2 <= median3) {
-								pnet = median1 <= median3 ? median1 : median3;
-							} else {
-								pnet = median1 <= median2 ? median1 : median2;
+						if(GETBIT(WR.Flags, WR_fMedianFilter)) {
+							// Медианный фильтр на увеличение
+							static int median1, median2;
+							if(WR_Pnet_avg_init) median1 = median2 = pnet;
+							int median3 = pnet;
+							if(median3 > median2) { // предыдущее меньше
+								if(median1 <= median2 && median1 <= median3) {
+									pnet = median2 <= median3 ? median2 : median3;
+								} else if(median2 <= median1 && median2 <= median3) {
+									pnet = median1 <= median3 ? median1 : median3;
+								} else {
+									pnet = median1 <= median2 ? median1 : median2;
+								}
 							}
+							median1 = median2;
+							median2 = median3;
 						}
-						median1 = median2;
-						median2 = median3;
 	#endif
 #ifdef WR_PNET_AVERAGE
 						if(GETBIT(WR.Flags, WR_fAverage)) {
@@ -1115,10 +1117,14 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 						WR_Pnet_avg_init = false;
 					}
 					WR_Pnet = pnet; //need_average ? pnet : median3;
-					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) journal.jprintf("WR: P=%d(%d)\n", WR_Pnet, WR_PowerMeter_Power);
+					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
+						journal.jprintf("WR: P=%d%s", WR_Pnet, mppt == 0 ? '!' : mppt == 1 ? '+' : mppt == 2 ? '*' : mppt == 3 ? '-': '?');
+						if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
+						journal.jprintf("\n");
+					}
 					// проверка перегрузки
 					if(WR_Pnet > _MinNetLoad) { // Потребление из сети больше - уменьшаем нагрузку
-						pnet = WR_Pnet - _MinNetLoad - WR.MinNetLoadHyst / 2; // / 2;
+						pnet = WR_Pnet - _MinNetLoad + WR.MinNetLoadHyst / 2; // / 2;
 						if(pnet <= 0) break;
 #ifndef WR_NEXTION_FULL_SUN
 						int8_t mppt = -1;
@@ -1167,7 +1173,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								WR_Switch_Load(reserv, 0);
 							}
 						}
-					} else if(WR_Pnet <= _MinNetLoad - WR.MinNetLoadHyst) { // Увеличиваем нагрузку
+					} else if(WR_Pnet <= _MinNetLoad - WR.MinNetLoadHyst || mppt == 3) { // Увеличиваем нагрузку
 #ifdef WR_Load_pins_Boiler_INDEX
 						bool need_heat_boiler =	WR.LoadPower[WR_Load_pins_Boiler_INDEX] - WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0
 												&& (HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - HP.Prof.Boiler.dAddHeat) && !HP.dRelay[RBOILER].get_Relay();

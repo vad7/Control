@@ -866,6 +866,7 @@ const char *option_WR_fLog				= {"WD"};
 const char *option_WR_fLogFull			= {"WDF"};
 const char *option_WR_fActive			= {"WON"};
 const char *option_WR_fAverage			= {"WAV"};
+const char *option_WR_fMedianFilter 	= {"WMF"};
 const char *option_WR_PWM_Freq			= {"WF"};
 const char *option_WR_PWM_FullPowerTime = {"WFPT"};
 const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
