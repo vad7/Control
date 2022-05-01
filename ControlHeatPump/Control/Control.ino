@@ -1118,7 +1118,7 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					}
 					WR_Pnet = pnet; //need_average ? pnet : median3;
 					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
-						journal.jprintf("WR: P=%d%s", WR_Pnet, mppt == 0 ? '!' : mppt == 1 ? '+' : mppt == 2 ? '*' : mppt == 3 ? '-': '?');
+						journal.jprintf("WR: P=%d%c", WR_Pnet, mppt == 0 ? '!' : mppt == 1 ? '+' : mppt == 2 ? '*' : mppt == 3 ? '-': '?');
 						if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
 						journal.jprintf("\n");
 					}
