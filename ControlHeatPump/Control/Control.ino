@@ -1117,6 +1117,9 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 						WR_Pnet_avg_init = false;
 					}
 					WR_Pnet = pnet; //need_average ? pnet : median3;
+#ifndef WR_NEXTION_FULL_SUN
+					int8_t mppt = -1;
+#endif
 					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
 						journal.jprintf("WR: P=%d%c", WR_Pnet, mppt == 0 ? '!' : mppt == 1 ? '+' : mppt == 2 ? '*' : mppt == 3 ? '-': '?');
 						if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
@@ -1126,9 +1129,6 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					if(WR_Pnet > _MinNetLoad) { // Потребление из сети больше - уменьшаем нагрузку
 						pnet = WR_Pnet - _MinNetLoad + WR.MinNetLoadHyst / 2; // / 2;
 						if(pnet <= 0) break;
-#ifndef WR_NEXTION_FULL_SUN
-						int8_t mppt = -1;
-#endif
 						for(int8_t i = WR_NumLoads-1; i >= 0; i--) { // PWM only
 							if(!GETBIT(WR.PWM_Loads, i) || WR_LoadRun[i] == 0 || !GETBIT(WR_Loads, i)) continue;
 #ifdef WR_Load_pins_Boiler_INDEX
@@ -1137,8 +1137,9 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 #ifdef HTTP_MAP_Read_MPPT
 							if(mppt == -1) {
 								active = false;
-								if((mppt = WR_Check_MPPT()) > 1) break;				// Проверка наличия свободного солнца
+								mppt = WR_Check_MPPT();					// Проверка наличия свободного солнца
 							}
+							if(mppt > 1) break;
 #endif
 							int chg = WR_LoadRun[i];
 							if(chg > pnet && chg - pnet > WR_PWM_POWER_MIN) chg = pnet;
@@ -1203,7 +1204,6 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 							if(!need_heat_boiler) break;
 						}
 #endif
-						uint8_t mppt = 255;
 						for(int8_t i = 0; i < WR_NumLoads; i++) {
 							if(WR_LoadRun[i] == WR.LoadPower[i] || !GETBIT(WR_Loads, i)) continue;
 #ifdef WR_Load_pins_Boiler_INDEX
@@ -1223,13 +1223,13 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 								}
 							}
 #ifdef HTTP_MAP_Read_MPPT
-							if(mppt == 255 && pnet > 0) {
+							if(mppt == -1 && pnet > 0) {
 								active = false;
 								mppt = WR_Check_MPPT();
-								if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
-								// Отключено, на КЭС можно рассчитывать только в плане избытка
-								//if(mppt == 1 && availidx == 0) break;
 							}
+							if(mppt == 2 || (mppt == 0 && pnet == 0)) break;	// Проверка наличия свободного солнца
+							// Отключено, на КЭС можно рассчитывать только в плане избытка
+							//if(mppt == 1 && availidx == 0) break;
 #endif
 							if(GETBIT(WR.PWM_Loads, i)) {
 #ifdef WR_Boiler_Substitution_INDEX
