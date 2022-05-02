@@ -5763,8 +5763,7 @@ const char *noteTemp[] = {"Температура улицы",
 
 	#define WR_MIN_LOAD_POWER			10							// Минимальная мощность нагрузки, если отдача превышает потребление, Вт
 	#define WR_PWM_POWER_MIN			40							// Минимальная мощность для PWM, Вт
-	#define WR_NO_POWER_MIN_DELTA_Uacc	-3							// Минимальная дельта Uacc - Ubuf для нагрева бойлера (меньше - перестаем греть), когда нет электричества, десятые вольта
-	#define WR_NO_POWER_WORK_DELTA_Uacc	-1							// Минимально-рабочая дельта Uacc - Ubuf для нагрева бойлера, когда нет электричества, десятые вольта
+	#define WR_NO_POWER_WORK_DELTA_Uacc	1							// Минимально-рабочая дельта Ubuf - Uacc для нагрева бойлера, когда нет электричества, десятые вольта
 	#define WR_TestAvailablePowerForRelayLoads WR_Load_pins_Boiler_INDEX// Использовать нагрузку PWM для проверки доступной мощности перед включением релейной нагрузки, индекс
 	#define WR_TestAvailablePowerTime 	2							// Сколько циклов (WEB0_FREQUENT_JOB_PERIOD) ждать проверки нагрузки
 	#define WR_RELAY_LEVEL_ON			1							// Уровень реле ВКЛ
@@ -5797,7 +5796,10 @@ const char *noteTemp[] = {"Температура улицы",
 	#define HTTP_MAP_RELAY_SW_1		"/write_sec.php?id=1&relay="	// 1..HTTP_MAP_RELAY_MAX
 	#define HTTP_MAP_RELAY_SW_2		"&mode="						// On = 1, Off = 0
 	#define HTTP_MAP_RELAY_MAX		3
+	#define WR_DEFAULT_MAP_Ubuf		538								// Буферное напряжение на АКБ, десятые V
 
+//	#define WR_NOPWR_READ_MAP_INSTEAD_OF_MPPT			// При отсключении питания читать напряжение с MAP, иначе с MPPT
+	#define WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN			// Проверять напряжение на АКБ вместо "знака" наличия свободного солнца от MPPT
 	#define WEB0_FREQUENT_JOB_PERIOD 	1000	 		// Периодичность важных функций в задаче WEB0, мс
 	#define WEB0_OTHER_JOB_PERIOD    	10000   		// Периодичность других функций внутри задачи WEB0, мс
 

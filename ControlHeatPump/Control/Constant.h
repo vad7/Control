@@ -424,6 +424,7 @@ const char HTTP_MAP_JSON_Mode[]			= "\"Mode\""; // "Mode":"S"
 const char HTTP_MAP_JSON_P_Out[]		= "\"P_Out\""; // Power out, W
 const char HTTP_MAP_JSON_Ubuf[]			= "\"_Ubuf_T\""; // Ubuf, V (nnn.n)
 const char HTTP_MAP_JSON_Uacc[]			= "\"_Uacc\""; // Uacc, V (nnn.n)
+const char HTTP_MAP_JSON_Vbat[]			= "\"V_Bat\""; // Ubat, V (nnn.n)
 
 // Константы регистров контроллера питания SOPC SAM3x ---------------------------------------
 // Регистр SMMR
@@ -867,11 +868,13 @@ const char *option_WR_fLogFull			= {"WDF"};
 const char *option_WR_fActive			= {"WON"};
 const char *option_WR_fAverage			= {"WAV"};
 const char *option_WR_fMedianFilter 	= {"WMF"};
+const char *option_WR_fPeriod_1sec	 	= {"W1"};
 const char *option_WR_PWM_Freq			= {"WF"};
 const char *option_WR_PWM_FullPowerTime = {"WFPT"};
 const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
 const char *option_WR_WF_Hour			= {"WFH"};
 const char *option_WR_MinNetLoadSunDivider={"WSD"};
+const char *option_WR_DeltaUbatmin		={"WB"};
 
 // Отопление/охлаждение параметры
 const char *hp_RULE      = {"RULE"};            // алгоритм работы

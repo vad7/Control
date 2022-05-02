@@ -834,90 +834,65 @@ void vWeb0(void *)
 #ifdef PWM_CALC_POWER_ARRAY
 					if(GETBIT(PWM_CalcFlags, PWM_fCalcNow)) break;
 #endif
+					uint8_t nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
+#ifdef WR_PowerMeter_Modbus
+									|| WR_Error_Read_PowerMeter > WR_Error_Read_PowerMeter_Max
+#endif
+									 );
 #ifdef WR_NEXTION_FULL_SUN
 					int8_t mppt = -1;
-					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || WR_LastSunPowerOutCnt == 0) {
+					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || WR_LastSunPowerOutCnt == 0 || nopwr) {
 						mppt = WR_Check_MPPT();				// Чтение солнечного контроллера
 						SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
 						WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					}
 #endif
 					// Выключить все
-					uint8_t nopwr = GETBIT(WR.Flags, WR_fActive) && (GETBIT(HP.Option.flags, fBackupPower) || HP.NO_Power
-#ifdef WR_PowerMeter_Modbus
-									|| WR_Error_Read_PowerMeter > WR_Error_Read_PowerMeter_Max
-#endif
-									 );
 					if(nopwr) {
 						WR_Refresh |= WR_Loads;
 						// При отсутствии питания мониторим напряжение на АКБ (не должно быть ниже буферного - дельта)
-#ifdef HTTP_MAP_Read_MAP
+						int16_t Vd;
+#if defined(HTTP_MAP_Read_MAP) && defined(WR_NOPWR_READ_MAP_INSTEAD_OF_MPPT)
 						active = false;
-						// Read MAP
-						int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
-						if(err) {
-							if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
-								SETBIT1(Logflags, fLog_HTTP_RelayError);
-								journal.jprintf("WR: HTTP request Error %d\n", err);
-							}
-						} else {
-							SETBIT0(Logflags, fLog_HTTP_RelayError);
-							char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Uacc);
-							if(!fld) {
-								if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
-							} else {
-								char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Uacc) + 1, '"');
-								if(fld2) {
-									int Vd = atoi(fld) * 10;
-									Vd += *(fld2 - 1) - '0';
-									char *fld = strstr(fld2, HTTP_MAP_JSON_Ubuf);
-									if(!fld) {
-										if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
-									} else {
-										char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Ubuf) + 1, '"');
-										if(fld2) {
-											int Vbuf = atoi(fld) * 10;
-											Vbuf += *(fld2 - 1) - '0';
-											Vd -= Vbuf;
-											if(Vd >= WR_NO_POWER_MIN_DELTA_Uacc) { // Можно нагружать
-												if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target) { // Нужно греть бойлер
-													if(Vd >= 0) { // Можно увеличивать нагрузку
-														if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0 || HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
-															if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
-															else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
-															Vd = WR_NO_POWER_WORK_DELTA_Uacc - 1; // Выключить остальные нагрузки
-														}
-														goto xNOPWR_OtherLoad;
-													} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
-														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -WR.LoadAdd);
-													}
-												} else { // Другая нагрузка
-													if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
-														if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
-														else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
-													}
-xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
-														if(i == WR_Load_pins_Boiler_INDEX) continue;
-														if(Vd >= 0) { // Можно увеличивать нагрузку
-															if(WR_LoadRun[i] < WR.LoadPower[i]) {
-																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
-															}
-														} else if(Vd < WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
-															if(WR_LoadRun[i] > 0) {
-																if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
-															}
-														}
-														break;
-													}
-												}
-												break; // больше ни чего не делаем
-											} // отключаем нагрузку
+						Vd = WR_Read_MAP();
+#else
+						if(WR_MAP_Ubat) Vd = WR_MAP_Ubuf - WR_MAP_Ubat; else Vd = -32768;
+#endif //HTTP_MAP_Read_MAP
+						if(Vd != -32768) {
+							if(Vd <= WR.DeltaUbatmin) { // Можно нагружать
+								if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target) { // Нужно греть бойлер
+									if(Vd <= 0) { // Можно увеличивать нагрузку
+										if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0 || HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
+											if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
+											else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 1);
+											Vd = WR_NO_POWER_WORK_DELTA_Uacc - 1; // Выключить остальные нагрузки
 										}
+										goto xNOPWR_OtherLoad;
+									} else if(Vd > WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
+										if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -WR.LoadAdd);
+									}
+								} else { // Другая нагрузка
+									if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0) {
+										if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
+										else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
+									}
+xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
+										if(i == WR_Load_pins_Boiler_INDEX) continue;
+										if(Vd <= 0) { // Можно увеличивать нагрузку
+											if(WR_LoadRun[i] < WR.LoadPower[i]) {
+												if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
+											}
+										} else if(Vd > WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
+											if(WR_LoadRun[i] > 0) {
+												if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, -WR.LoadAdd); else WR_Switch_Load(i, 0);
+											}
+										}
+										break;
 									}
 								}
-							}
+								break; // больше ни чего не делаем
+							} // отключаем нагрузку
 						}
-#endif //HTTP_MAP_Read_MAP
 					}
 					if(WR_Refresh || WR.PWM_FullPowerTime) {
 						for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -1285,6 +1260,18 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 					}
 					break;
 				}
+			} else {
+				WR_Pnet = WR_PowerMeter_Power;
+				if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || (GETBIT(WR.Flags, WR_fLog) && WR_LastSunPowerOutCnt == 0)) {
+					WR_Check_MPPT();				// Чтение солнечного контроллера
+					SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
+					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+				} else WR_LastSunSign = -1;
+				if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
+					journal.jprintf("WR: P=%d%c", WR_Pnet, WR_LastSunSign == 0 ? '!' : WR_LastSunSign == 1 ? '+' : WR_LastSunSign == 2 ? '*' : WR_LastSunSign == 3 ? '-': '?');
+					if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
+					journal.jprintf(",%.1d\n", WR_MAP_Ubat);
+				}
 			}
 #endif // WATTROUTER
 		}
@@ -1405,6 +1392,10 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 #endif
 #if defined(HTTP_MAP_RELAY_MAX) && defined(HTTP_MAP_Server)
 			if(HP.IsWorkingNow()) {
+				if(!active) {
+					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+					active = true;
+				}
 				uint32_t t = rtcSAM3X8.unixtime();
 				if(t - daily_http_time > 600UL) { // дискретность 10 минут
 					daily_http_time = t;
@@ -1467,9 +1458,13 @@ xNOPWR_OtherLoad:									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Упра
 									journal.jprintf(". Fail set HTTP-%d relay!\n", rel);
 								}
 							}
-							//if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+							active = false;
 						}
 					}
+					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+					WR_Read_MAP();
+#endif
 				}
 			}
 #endif
@@ -1629,17 +1624,16 @@ void vReadSensor(void *)
 		Stats.Update();
 
 #if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
-		if(GETBIT(WR.Flags, WR_fActive)) {
+		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
 			int32_t tm = GetTickCount() - ttime;
 			if((int32_t)TIME_READ_SENSOR - tm > Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction + Modbus.RS485.ModbusMinTimeBetweenTransaction / 2) {
 				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
 				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
 			 	WR_ReadPowerMeter();
 			}
-		} else WR_PowerMeter_New = true;
-#else
-		vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
+		} else //WR_PowerMeter_New = true;
 #endif
+			vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
 
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев

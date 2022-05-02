@@ -1161,8 +1161,10 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var,option_WR_fLogFull)==0)     { WR.Flags = (WR.Flags & ~(1<<WR_fLogFull)) | ((n!=0)<<WR_fLogFull); return true; }
 	else if(strcmp(var,option_WR_fAverage)==0)     { WR.Flags = (WR.Flags & ~(1<<WR_fAverage)) | ((n!=0)<<WR_fAverage); return true; }
 	else if(strcmp(var,option_WR_fMedianFilter)==0){ WR.Flags = (WR.Flags & ~(1<<WR_fMedianFilter)) | ((n!=0)<<WR_fMedianFilter); return true; }
+	else if(strcmp(var,option_WR_fPeriod_1sec)==0){ WR.Flags = (WR.Flags & ~(1<<WR_fPeriod_1sec)) | ((n!=0)<<WR_fPeriod_1sec); return true; }
 	else if(strcmp(var,option_WR_WF_Hour)==0)      { if(n >= 0 && n <= 23) { WR.WF_Hour = n; return true; } else return false; }
 	else if(strcmp(var,option_WR_MinNetLoadSunDivider)==0){ WR.MinNetLoadSunDivider = n; return true; }
+	else if(strcmp(var,option_WR_DeltaUbatmin)==0){ WR.DeltaUbatmin = WR_MAP_Ubuf - rd(x, 10); return true; }
 	else if(strcmp(var,option_WR_PWM_Freq)==0)     {
 #ifdef WR_ONE_PERIOD_PWM
 		WR.PWM_Freq = PWM_WRITE_OUT_FREQ_DEFAULT;
@@ -1312,8 +1314,10 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	else if(strcmp(var, option_WR_fActive) == 0)   { if(GETBIT(WR.Flags, WR_fActive)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_fAverage) == 0)  { if(GETBIT(WR.Flags, WR_fAverage)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_fMedianFilter) == 0){ if(GETBIT(WR.Flags, WR_fMedianFilter)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
+	else if(strcmp(var, option_WR_fPeriod_1sec) == 0){ if(GETBIT(WR.Flags, WR_fPeriod_1sec)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_WF_Hour) == 0)   { return _itoa(WR.WF_Hour, ret); }
 	else if(strcmp(var, option_WR_MinNetLoadSunDivider) == 0){ return _itoa(WR.MinNetLoadSunDivider, ret); }
+	else if(strcmp(var, option_WR_DeltaUbatmin) == 0){ _dtoa(ret, WR_MAP_Ubuf - WR.DeltaUbatmin, 1); return ret; }
 #endif
 	return strcat(ret,(char*)cInvalid);
 }

@@ -1246,6 +1246,7 @@ int8_t WR_Check_MPPT(void)
 {
 	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
+		if(WR_LastSunSign == 0) WR_MAP_Ubat = 0;
 		if(testMode != NORMAL) {
 			return WR_LastSunSign = 3;
 		}
@@ -1253,9 +1254,20 @@ int8_t WR_Check_MPPT(void)
 			SETBIT1(Logflags, fLog_HTTP_RelayError);
 			journal.jprintf("WR: MPPT request Error %d\n", err);
 		}
-		return 0;
+		return WR_LastSunSign = 0;
 	} else SETBIT0(Logflags, fLog_HTTP_RelayError);
-	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_P_Out);
+	char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Vbat);
+	if(fld) {
+		char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Vbat) + 1, '"');
+		if(fld2) {
+			WR_MAP_Ubat = atoi(fld) * 10;
+			WR_MAP_Ubat += *(fld2 - 1) - '0';
+		}
+	} else {
+		if(WR_LastSunSign == 0) WR_MAP_Ubat = 0;
+		return WR_LastSunSign = 0;
+	}
+	fld = strstr(fld, HTTP_MAP_JSON_P_Out);
 	if(!fld) return WR_LastSunSign = 0;
 	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
 	if(WR_LastSunPowerOut == 0 && ++WR_LastSunPowerOutCnt > 10) return WR_LastSunSign = 1;
@@ -1263,9 +1275,53 @@ int8_t WR_Check_MPPT(void)
 	fld = strstr(fld, HTTP_MAP_JSON_Mode);
 	if(!fld) return WR_LastSunSign = 0;
 	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return WR_LastSunSign = 2;
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+	return WR_LastSunSign = WR_MAP_Ubuf - WR_MAP_Ubat <= WR.DeltaUbatmin ? 3 : 1;
+#else
 	fld = strstr(fld, HTTP_MAP_JSON_Sign);
 	if(fld && *(fld + sizeof(HTTP_MAP_JSON_Sign) + 1) == '-') return WR_LastSunSign = 3;
 	return WR_LastSunSign = 1;
+#endif
+}
+#endif
+
+#ifdef HTTP_MAP_Read_MAP
+// Пррочитать данные напряжения АКБ MAP, возврат дельты Ubuf - Ubat, ошибка: -32768
+int16_t WR_Read_MAP(void)
+{
+	// Read MAP
+	int16_t retval = -32768;
+	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MAP, 1);
+	if(err) {
+		if(GETBIT(WR.Flags, WR_fLog) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+			SETBIT1(Logflags, fLog_HTTP_RelayError);
+			journal.jprintf("WR: HTTP request Error %d\n", err);
+		}
+	} else {
+		SETBIT0(Logflags, fLog_HTTP_RelayError);
+		char *fld = strstr(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_JSON_Uacc);
+		if(!fld) {
+			if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
+		} else {
+			char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Uacc) + 1, '"');
+			if(fld2) {
+				int16_t Vd = atoi(fld) * 10;
+				Vd += *(fld2 - 1) - '0';
+				char *fld = strstr(fld2, HTTP_MAP_JSON_Ubuf);
+				if(!fld) {
+					if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: HTTP json wrong!\n");
+				} else {
+					char *fld2 = strchr(fld += sizeof(HTTP_MAP_JSON_Ubuf) + 1, '"');
+					if(fld2) {
+						WR_MAP_Ubuf = atoi(fld) * 10;
+						WR_MAP_Ubuf += *(fld2 - 1) - '0';
+						retval = WR_MAP_Ubuf - Vd;
+					}
+				}
+			}
+		}
+	}
+	return retval;
 }
 #endif
 
