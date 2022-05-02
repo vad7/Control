@@ -788,6 +788,9 @@ void vWeb0(void *)
 #ifndef WR_PowerMeter_Modbus
 	Web0_FreqTime = thisTime;
 #endif
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+	if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
+#endif
 	for(;;)
 	{
 		#define WEB_SERVER_MAIN_TASK() {\
@@ -915,7 +918,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 								}
 							}
 						}
-						WR_Refresh = false;
+						WR_Refresh = 0;
 					}
 #ifdef WR_Load_pins_Boiler_INDEX
 					if(GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && !HP.dRelay[RBOILER].get_Relay()) {
@@ -1098,7 +1101,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 					if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
 						journal.jprintf("WR: P=%d%c", WR_Pnet, mppt == 0 ? '!' : mppt == 1 ? '+' : mppt == 2 ? '*' : mppt == 3 ? '-': '?');
 						if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
-						journal.jprintf("\n");
+						journal.jprintf(",%.1d\n", WR_MAP_Ubat);
 					}
 					// проверка перегрузки
 					if(WR_Pnet > _MinNetLoad) { // Потребление из сети больше - уменьшаем нагрузку
@@ -1262,7 +1265,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 				}
 			} else {
 				WR_Pnet = WR_PowerMeter_Power;
-				if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || (GETBIT(WR.Flags, WR_fLog) && WR_LastSunPowerOutCnt == 0)) {
+				if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
 					WR_Check_MPPT();				// Чтение солнечного контроллера
 					SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
 					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
@@ -1270,7 +1273,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 				if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
 					journal.jprintf("WR: P=%d%c", WR_Pnet, WR_LastSunSign == 0 ? '!' : WR_LastSunSign == 1 ? '+' : WR_LastSunSign == 2 ? '*' : WR_LastSunSign == 3 ? '-': '?');
 					if(WR_Pnet != WR_PowerMeter_Power) journal.jprintf("(%d)", WR_PowerMeter_Power);
-					journal.jprintf(",%.1d\n", WR_MAP_Ubat);
+					journal.jprintf(",%.1d(%.1d)\n", WR_MAP_Ubat, WR_MAP_Ubuf);
 				}
 			}
 #endif // WATTROUTER
@@ -1561,7 +1564,7 @@ void vReadSensor(void *)
 #endif
 #endif
 #if defined(WR_PowerMeter_Modbus)
-		if(GETBIT(WR.Flags, WR_fActive)) {
+		if(GETBIT(WR.Flags, WR_fActive) || GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
 			vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD / 2 - (GetTickCount() - ttime));	// через (WEB0_FREQUENT_JOB_PERIOD / 2) после начала очередного цикла чтения
 			if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
 		 	WR_ReadPowerMeter();

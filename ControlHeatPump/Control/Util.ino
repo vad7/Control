@@ -1246,7 +1246,11 @@ int8_t WR_Check_MPPT(void)
 {
 	int err = Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, HTTP_MAP_Read_MPPT, 1);
 	if(err) {
-		if(WR_LastSunSign == 0) WR_MAP_Ubat = 0;
+		if(WR_LastSunSign == 0) {
+			WR_MAP_Ubat = 0;
+			WR_LastSunPowerOut = 0;
+			WR_LastSunPowerOutCnt = 0;
+		}
 		if(testMode != NORMAL) {
 			return WR_LastSunSign = 3;
 		}
@@ -1264,7 +1268,11 @@ int8_t WR_Check_MPPT(void)
 			WR_MAP_Ubat += *(fld2 - 1) - '0';
 		}
 	} else {
-		if(WR_LastSunSign == 0) WR_MAP_Ubat = 0;
+		if(WR_LastSunSign == 0) {
+			WR_MAP_Ubat = 0;
+			WR_LastSunPowerOut = 0;
+			WR_LastSunPowerOutCnt = 0;
+		}
 		return WR_LastSunSign = 0;
 	}
 	fld = strstr(fld, HTTP_MAP_JSON_P_Out);
