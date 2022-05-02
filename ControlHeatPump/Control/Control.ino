@@ -781,15 +781,17 @@ void vWeb0(void *)
  #ifdef PIN_WR_Boiler_Substitution
 	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
  #endif
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+	if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
+	journal.jprintf("WattRouter started, Ubuf=%.1d\n", WR_MAP_Ubuf);
+#else
 	journal.jprintf("WattRouter started\n");
+#endif
 #endif
 
 	HP.timeNTP = thisTime = xTaskGetTickCount();        // В первый момент не обновляем
 #ifndef WR_PowerMeter_Modbus
 	Web0_FreqTime = thisTime;
-#endif
-#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-	if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
 #endif
 	for(;;)
 	{
