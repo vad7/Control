@@ -5807,9 +5807,9 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WF_ForecastHour				5				// Час, когда запрашивать прогноз
 	#define WF_ForecastAggregateHours	5				// За сколько часов брать среднее
 	#define WF_ForecastAfterSunrise		2*60*60 		// Через сколько времени после восхода смотреть прогноз, сек
-	#define WF_BOILER_MAX_CLOUDS		95				// Ниже этой облачности начинаем корректировать температуру бойлера, %
+	#define WF_BOILER_MAX_CLOUDS		98				// Ниже этой облачности начинаем корректировать температуру бойлера, %
 	//                                   янв, фев, мар, апр, май, июн, июл, авг, сен, окт, ноя, дек
-	const uint8_t WF_SunByMonth[12] = 	{ 60,  45,  10,   0,   0,   0,   0,   0,  15,  30,  40,  60 };	// + к облачности, %
+	const uint8_t WF_SunByMonth[12] = 	{ 60,  40,  10,   0,   0,   0,   0,   0,  10,  30,  40,  60 };	// + к облачности, %
 
 	// Графики в памяти
 	Charts_Mod_setup ChartsModSetup[] = {

@@ -77,13 +77,13 @@ int WF_ProcessForecast(char *json)
 			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: Clouds(%d)=%d", i, avg_cl);
 			if(avg_cl < 100) {
 				//avg = (avg - 66) * 3; // 66..99 -> 0..98
-				avg_cl = (avg_cl - 50) * 2; // 50..99 -> 0..98
+				avg_cl = (avg_cl - 60) * 2; // 60..99 -> 0..98
 				if(avg_cl < 0) avg_cl = 0;
 			}
 			avg_cl += WF_SunByMonth[rtcSAM3X8.get_months()-1];
 			if(avg_cl > 100) avg_cl = 100;
-			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%, BoilerTrg=%.2d\n", avg_cl, HP.get_boilerTempTarget());
 			WF_BoilerTargetPercent = avg_cl;
+			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%, BoilerTrg=%.2d\n", avg_cl, HP.get_boilerTempTarget());
 		} else {
 			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: 100%, FeelTemp low: %d\n", avg_t);
 			WF_BoilerTargetPercent = 100;
