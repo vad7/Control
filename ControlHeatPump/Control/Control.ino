@@ -1157,7 +1157,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 					} else if(WR_Pnet <= _MinNetLoad - WR.MinNetLoadHyst || mppt == 3) { // Увеличиваем нагрузку
 #ifdef WR_Load_pins_Boiler_INDEX
 						bool need_heat_boiler =	WR.LoadPower[WR_Load_pins_Boiler_INDEX] - WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0
-												&& (HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - HP.Prof.Boiler.dAddHeat) && !HP.dRelay[RBOILER].get_Relay();
+												&& (HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) && !HP.dRelay[RBOILER].get_Relay();
 						if(need_heat_boiler) {
 							// Переключаемся на нагрев бойлера
 							for(int8_t i = 0; i < WR_NumLoads; i++) {
@@ -1187,7 +1187,7 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 						for(int8_t i = 0; i < WR_NumLoads; i++) {
 							if(WR_LoadRun[i] == WR.LoadPower[i] || !GETBIT(WR_Loads, i)) continue;
 #ifdef WR_Load_pins_Boiler_INDEX
-							if(i == WR_Load_pins_Boiler_INDEX && ((HP.sTemp[TBOILER].get_Temp() > HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) || HP.dRelay[RBOILER].get_Relay())) continue;
+							if(i == WR_Load_pins_Boiler_INDEX && ((HP.sTemp[TBOILER].get_Temp() > HP.Prof.Boiler.WR_Target) || HP.dRelay[RBOILER].get_Relay())) continue;
 #endif
 							int8_t availidx = 0;
 							if(!GETBIT(WR.PWM_Loads, i)) {
