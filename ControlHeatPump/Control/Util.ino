@@ -1197,7 +1197,7 @@ void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 						WR_LoadRun[WR_Load_pins_Boiler_INDEX] = 0;
 						_delay(10); // 1/100 Hz
 					}
-					digitalWriteDirect(PIN_WR_Boiler_Substitution, 1);
+					digitalWriteDirect(PIN_WR_Boiler_Substitution, 1);	// to Substitution
 					_delay(WR_Boiler_Substitution_swtime);
 				} else if(idx == WR_Load_pins_Boiler_INDEX && digitalReadDirect(PIN_WR_Boiler_Substitution)) {
 					if(WR_LoadRun[WR_Boiler_Substitution_INDEX] > 0) {
@@ -1206,7 +1206,7 @@ void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 						WR_LoadRun[WR_Boiler_Substitution_INDEX] = 0;
 						_delay(10); // 1/100 Hz
 					}
-					digitalWriteDirect(PIN_WR_Boiler_Substitution, 0);
+					digitalWriteDirect(PIN_WR_Boiler_Substitution, 0); // to Boiler
 					_delay(WR_Boiler_Substitution_swtime);
 				}
 			}

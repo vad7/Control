@@ -1187,7 +1187,14 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 						for(int8_t i = 0; i < WR_NumLoads; i++) {
 							if(WR_LoadRun[i] == WR.LoadPower[i] || !GETBIT(WR_Loads, i)) continue;
 #ifdef WR_Load_pins_Boiler_INDEX
-							if(i == WR_Load_pins_Boiler_INDEX && ((HP.sTemp[TBOILER].get_Temp() > HP.Prof.Boiler.WR_Target) || HP.dRelay[RBOILER].get_Relay())) continue;
+							if(i == WR_Load_pins_Boiler_INDEX) {
+								int16_t d = HP.Prof.Boiler.WR_Target - HP.sTemp[TBOILER].get_Temp();
+								if(d < 0 || HP.dRelay[RBOILER].get_Relay()) continue;
+#ifdef WR_Boiler_Substitution_INDEX
+								if(digitalReadDirect(PIN_WR_Boiler_Substitution) && d <= WR_Boiler_Hysteresis) continue; // Если работает замена бойлера и t меньше гистерезиса - пропускаем бойлер
+#endif
+
+							}
 #endif
 							int8_t availidx = 0;
 							if(!GETBIT(WR.PWM_Loads, i)) {
