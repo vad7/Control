@@ -183,7 +183,7 @@ struct {
 	uint8_t  WF_Hour;					// Час получения прогноза погоды
 	uint8_t  MinNetLoadSunDivider;		// Увеличение минимальной мощности из сети в зависимости от выработки MPPT (MinNetLoad += SunPower / n)
 	uint8_t  MinNetLoadHyst;			// Гистерезис минимальной мощности из сети, если находимся в нем (MinNetLoad .. MinNetLoad-Hyst), то ничего не делаем с нагрузкой, Вт
-	uint8_t  DeltaUbatmin;				// Разница Ubuf - Ubatmin, в этом диапазоне идет подкачка и определяется наличие свободного солнца
+	int8_t   DeltaUbatmin;				// Разница Ubuf - Ubatmin, в этом диапазоне идет подкачка и определяется наличие свободного солнца, десятые V
 	int16_t  LoadPower[WR_NumLoads];	// Мощности нагрузки, Вт
 } WR;
 
