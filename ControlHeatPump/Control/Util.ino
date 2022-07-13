@@ -1278,7 +1278,7 @@ int8_t WR_Check_MPPT(void)
 	fld = strstr(fld, HTTP_MAP_JSON_P_Out);
 	if(!fld) return WR_LastSunSign = 0;
 	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
-	if(WR_LastSunPowerOut == 0 && ++WR_LastSunPowerOutCnt > 10) return WR_LastSunSign = 1;
+	if((WR_LastSunPowerOut == 0 || WR_LastSunPowerOut < WR_Pnet) && ++WR_LastSunPowerOutCnt > 10) return WR_LastSunSign = 1;
 	WR_LastSunPowerOutCnt = 0;
 	fld = strstr(fld, HTTP_MAP_JSON_Mode);
 	if(!fld) return WR_LastSunSign = 0;
