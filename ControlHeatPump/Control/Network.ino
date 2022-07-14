@@ -793,7 +793,7 @@ xget_value_1:
 	SemaphoreGive(xWebThreadSemaphore);
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf(" Ret = %d\n", ret);
 	else if(ret < 0) {
-		if(Last_Error != ret + 2000000000) {
+		if(Last_Error != (int8_t)(ret + 2000000000)) {
 			journal.jprintf_time("Error %d send request to %s!", Last_Error = ret + 2000000000, server);
 			switch (ret)
 			{
