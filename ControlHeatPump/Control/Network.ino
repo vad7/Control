@@ -657,7 +657,7 @@ void pingW5200(boolean f)
 //             2 - вернуть значение после '=', 3 - проверить на "Ok"
 int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8_t fget_value)
 {
-	static int8_t Last_Error = 0;
+	static int8_t Last_Error[5];
 	if(server == NULL || request == NULL) return -2000000004;
 	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		return -2000000000;
@@ -671,6 +671,7 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 //		port = atoi(p + 1);
 //	}
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf_time("Send request: %s%s\n", server, request);
+	if(fget_value > 4) journal.jprintf("Wrong fget_value = %d: %s\n", fget_value, server);
 	uint8_t *buffer = (uint8_t *) Socket[MAIN_WEB_TASK].outBuf + sizeof(Socket[MAIN_WEB_TASK].outBuf)/2;
 	IPAddress ip(0, 0, 0, 0);
 	if(check_address((char*)server, ip) == 0) {
@@ -793,8 +794,8 @@ xget_value_1:
 	SemaphoreGive(xWebThreadSemaphore);
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf(" Ret = %d\n", ret);
 	else if(ret < 0) {
-		if(Last_Error != (int8_t)(ret + 2000000000)) {
-			journal.jprintf_time("Error %d send request to %s!", Last_Error = ret + 2000000000, server);
+		if(Last_Error[fget_value] != (int8_t)(ret + 2000000000)) {
+			journal.jprintf_time("Error %d send request to %s!", Last_Error[fget_value] = ret + 2000000000, server);
 			switch (ret)
 			{
 			case -2000000001:
@@ -804,7 +805,7 @@ xget_value_1:
 				journal.jprintf(" Address wrong");
 				break;
 			case -2000000003:
-				journal.jprintf(" Connect fail");
+				journal.jprintf(" Connect fail, SnSR:%d", tTCP.status());
 				break;
 			case -2000000011:
 				journal.jprintf(" Send error");
@@ -821,7 +822,7 @@ xget_value_1:
 			}
 			journal.jprintf("\n");
 		}
-	} else Last_Error = 0;
+	} else Last_Error[fget_value] = 0;
 	return ret;
 }
 

@@ -1394,7 +1394,10 @@ xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управл
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
 					if(err != 0) {
-						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || (rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 49)) journal.jprintf_time("WF: Request Error %d\n", err);
+						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || (rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 49)) {
+							journal.jprintf_time("WF: Request Error %d\n", err);
+							HP.message.setMessage(pMESSAGE_ERROR,(char*)"Ошибка получения прогноза погоды", err);
+						}
 					} else if(WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf) == OK) {
 						WF_Day = rtcSAM3X8.get_days();
 					}
