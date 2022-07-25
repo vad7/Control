@@ -2847,15 +2847,43 @@ MODE_COMP HeatPump::UpdateCool()
 			set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
 			return pCOMP_NONE;
 		}
-//#ifdef R4WAY
-//		if(!dRelay[R4WAY].get_Relay()) { // 4-х ходовой в другом положении - ошибка
-//			set_Error(ERR_WRONG_HARD_STATE, (char*)__FUNCTION__);
-//			return pCOMP_NONE;
-//		}
-//#endif
+#ifdef R4WAY
+		if(!dRelay[R4WAY].get_Relay()) { // 4-х ходовой в другом положении - ошибка
+			set_Error(ERR_WRONG_HARD_STATE, (char*)__FUNCTION__);
+			return pCOMP_NONE;
+		}
+#endif
 	}
-	t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp(); // вычислить температуры для сравнения Prof.Heat.Target 0-дом   1-обратка
-	target = get_targetTempCool();
+
+	target = t1 = -STARTTEMP;
+	if(GETBIT(Prof.Cool.flags, fUseAdditionalTargets) && (((Prof.Heat.HeatTargetSchedulerH<<16) | Prof.Heat.HeatTargetSchedulerL) & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
+		for(uint8_t i = 0; i < TNUMBER; i++) {
+			if(GETBIT(HP.Prof.SaveON.bTIN, i) && sTemp[i].get_setup_flag(fTEMP_HeatTarget)) {
+				t1 = sTemp[i].get_Temp();
+				target = get_TempAlarmMin(i);
+				if(sTemp[i].get_flag(fActive)) {
+					if(t1 >= target) break; else t1 = STARTTEMP;
+				} else if(t1 > target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp)) {
+					sTemp[i].set_flag(fActive, 1);
+					break;
+				} else t1 = STARTTEMP;
+			}
+		}
+	}
+	if(t1 == -STARTTEMP) {
+		t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
+		target = get_targetTempHeat();
+	} else {
+		int16_t t2 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
+		int16_t target2 = get_targetTempCool() + Prof.Cool.MaxTargetRise * 10;
+		if(t2 > target2) {
+			t1 = t2;
+			target = target2;
+		}
+	}
+
+	//t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp(); // вычислить температуры для сравнения Prof.Heat.Target 0-дом   1-обратка
+	//target = get_targetTempCool();
 	switch (Prof.Cool.Rule)   // в зависмости от алгоритма
 	{
 	case pHYSTERESIS:  // Гистерезис охлаждение.

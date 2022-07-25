@@ -2078,8 +2078,15 @@ xGetOptionHP:
 			} else if (strcmp(str,"set_Cool")==0)           // Функция set_paramCoolHP - установить значение паремтра охлаждения ТН
 			{
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
-					if (HP.Prof.set_paramCoolHP(x,pm))  HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
-					else  strcat(strReturn,"E16") ; // ошибка преобразования строки
+					if(HP.Prof.set_paramCoolHP(x,pm)) {
+xset_Cool_get:			HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
+					} else  strcat(strReturn,"E16") ; // ошибка преобразования строки
+				} else if(strcmp(x, option_HeatTargetScheduler) == 0) {
+					z[24] = '\0';
+					HP.Prof.Cool.HeatTargetSchedulerL = 0; HP.Prof.Cool.HeatTargetSchedulerH = 0;
+					for(i = 0; i < 16; i++) if(*z++ == '1') HP.Prof.Cool.HeatTargetSchedulerL |= (1<<i);
+					for(i = 0; i < 8; i++) if(*z++ == '1') HP.Prof.Cool.HeatTargetSchedulerH |= (1<<i);
+					goto xset_Cool_get;
 				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"get_Heat")==0)           // Функция get_paramHeatHP - получить значение параметра отопления ТН

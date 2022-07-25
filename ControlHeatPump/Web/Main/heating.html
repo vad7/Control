@@ -44,6 +44,10 @@ function loadParam_after(paramid) {
 	if(paramid.indexOf("(KW")!=-1 || paramid.indexOf("(TEMP")!=-1) {
 		loadParam("get_TrgT,get_Cool(TP),get_Heat(TP)");
 	}
+	if(paramid.indexOf("get_modeHP")!=-1) {
+		var el = document.getElementById('get_modehp').options;
+		if(el[el.selectedIndex] == 2) loadParam("get_Cool(SCHEDULER)"); else loadParam("get_Heat(SCHEDULER)");
+	}
 }
 </script>
 </head>
@@ -80,7 +84,7 @@ function loadParam_after(paramid) {
 	<tr>
 		<td>Использовать дополнительные целевые датчики температуры</td>
 		<td><input type="checkbox" id="get_heat-at" onchange="setParam('get_Heat(AT)');"></td>
-		<td></td>
+		<td><input type="checkbox" id="get_cool-at" onchange="setParam('get_Cool(AT)');"></td>
 	</tr>
 		<tr>
 			<td nowrap>
@@ -104,7 +108,7 @@ function loadParam_after(paramid) {
 	<tr>
 		<td>Максимальное превышение цели температуры при контроле доп. датчиков, C°</td>
 		<td nowrap><input id="get_heat-mtr" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(MTR)');"></td>
-		<td></td>
+		<td nowrap><input id="get_cool-mtr" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(MTR)');"></td>
 	</tr>
 	<tr>
 		<td>Минимальная/максимальная температура обратки для вкл. °C [-10..70] [0..40]</td>

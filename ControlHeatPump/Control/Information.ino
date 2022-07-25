@@ -502,6 +502,8 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_HEAT_FLOOR)==0) { Cool.flags = (Cool.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
  if(strcmp(var,hp_SUN)==0) { Cool.flags = (Cool.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
  if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Cool.delayOffPump = x; return true; } else
+ if(strcmp(var,hp_MaxTargetRise)==0){ Cool.MaxTargetRise = rd(x, 10); return true; }else
+ if(strcmp(var,hp_fUseAdditionalTargets)==0) { Cool.flags = (Cool.flags & ~(1<<fUseAdditionalTargets)) | ((x!=0)<<fUseAdditionalTargets); return true; }else
  if(strcmp(var,hp_K_WEATHER)==0){ Cool.kWeatherPID=rd(x, 1000); return true; }             // Коэффициент погодозависимости
  return false; 
 }
@@ -536,6 +538,14 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Cool.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID(Cool),2); return ret;      } else
    if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Cool.delayOffPump, ret); } else
+   if(strcmp(var,hp_MaxTargetRise)==0) { _dtoa(ret, Cool.MaxTargetRise, 1); return ret; } else
+   if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Cool.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
+   if(strcmp(var, option_HeatTargetScheduler) == 0){
+		ret += strlen(ret);
+		for(uint8_t i = 0; i < 24; i++) *ret++ = (((Cool.HeatTargetSchedulerH<<16) | Cool.HeatTargetSchedulerL) & (1<<i)) ? '1' : '0';
+		*ret = '\0';
+		return ret;
+   } else
    if(strcmp(var,hp_K_WEATHER)==0){_dtoa(ret,Cool.kWeatherPID,3); return ret;            }                 // Коэффициент погодозависимости
  return  strcat(ret,(char*)cInvalid);   
 }
