@@ -503,6 +503,7 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_SUN)==0) { Cool.flags = (Cool.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
  if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Cool.delayOffPump = x; return true; } else
  if(strcmp(var,hp_MaxTargetRise)==0){ Cool.MaxTargetRise = rd(x, 10); return true; }else
+ if(strcmp(var,hp_CompressorPause)==0){ if(x >= 0) {Cool.CompressorPause = x * 60; return true; } else return false; } else
  if(strcmp(var,hp_fUseAdditionalTargets)==0) { Cool.flags = (Cool.flags & ~(1<<fUseAdditionalTargets)) | ((x!=0)<<fUseAdditionalTargets); return true; }else
  if(strcmp(var,hp_K_WEATHER)==0){ Cool.kWeatherPID=rd(x, 1000); return true; }             // Коэффициент погодозависимости
  return false; 
@@ -539,6 +540,7 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID(Cool),2); return ret;      } else
    if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Cool.delayOffPump, ret); } else
    if(strcmp(var,hp_MaxTargetRise)==0) { _dtoa(ret, Cool.MaxTargetRise, 1); return ret; } else
+   if(strcmp(var,hp_CompressorPause)==0) { _itoa(Cool.CompressorPause / 60, ret); return ret; } else
    if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Cool.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var, option_HeatTargetScheduler) == 0){
 		ret += strlen(ret);

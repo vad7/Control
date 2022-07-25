@@ -2097,7 +2097,7 @@ xset_Cool_get:			HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    /
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
 					if (HP.Prof.set_paramHeatHP(x,pm)) {
 xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
-					} else strcat(strReturn,"E16") ; // ошибка преобразования строки
+					} else strcat(strReturn,"E16"); // ошибка преобразования строки
 				} else if(strcmp(x, hp_FC_FreqLimitHour) == 0) {
 					int16_t buf[2];
 					if(!parseInt16_t(z, ':', buf, 2, 10)) strcat(strReturn,"E16"); // ошибка преобразования строки

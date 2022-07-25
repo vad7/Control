@@ -31,9 +31,9 @@ $(document).ready(function() {
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
-	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM)");
+	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM),get_Cool(CP)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Cool(KW),get_Heat(KW),get_Cool(W),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL),get_Heat(TRH),get_Heat(PW),get_Heat(PP),get_Heat(TMR)");
-	loadParam("get_Heat(MTR),get_Heat(AT),get_Heat(SCHEDULER),get_listDSR,get_tblPDS");
+	loadParam("get_Heat(MTR),get_Heat(AT),get_Cool(MTR),get_Cool(AT),get_listDSR,get_tblPDS");
 };
 function setDS(v, i) {
 	var val = document.getElementById("get_prof-ds" + v.toLowerCase() + i).value;
@@ -44,9 +44,8 @@ function loadParam_after(paramid) {
 	if(paramid.indexOf("(KW")!=-1 || paramid.indexOf("(TEMP")!=-1) {
 		loadParam("get_TrgT,get_Cool(TP),get_Heat(TP)");
 	}
-	if(paramid.indexOf("get_modeHP")!=-1) {
-		var el = document.getElementById('get_modehp').options;
-		if(el[el.selectedIndex] == 2) loadParam("get_Cool(SCHEDULER)"); else loadParam("get_Heat(SCHEDULER)");
+	if(paramid.indexOf("et_modeHP")!=-1) {
+		if(document.getElementById('get_modehp').options.selectedIndex == 2) loadParam("get_Cool(SCHEDULER)"); else loadParam("get_Heat(SCHEDULER)");
 	}
 }
 </script>
@@ -102,7 +101,7 @@ function loadParam_after(paramid) {
 					</tbody>
 				</table>
 			</td>
-			<td><input type="submit" value="Запомнить" onClick="setParam('get_Heat(SCHEDULER)');"></td>
+			<td><input type="submit" value="Запомнить" onClick="setParam(document.getElementById('get_modehp').options.selectedIndex == 2 ? 'get_Cool(SCHEDULER)' : 'get_Heat(SCHEDULER)');"></td>
 		</tr>
 	<tr>
 	<tr>
@@ -275,7 +274,7 @@ function loadParam_after(paramid) {
 	<tr>
 		<td>Минимальный простой компрессора (минуты)</td>
 		<td nowrap><input id="get_heat-cp" type="number" min="0" step="1"><input type="submit" value=">" onclick="setParam('get_Heat(CP)');"></td>
-		<td></td>
+		<td nowrap><input id="get_cool-cp" type="number" min="0" step="1"><input type="submit" value=">" onclick="setParam('get_Cool(CP)');"></td>
 	</tr>						
 	<tr>
 		<td>Максимальная/минимальная температура подачи °C [0..70] [0..30]</td>
