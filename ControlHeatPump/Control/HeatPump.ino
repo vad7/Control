@@ -4242,7 +4242,7 @@ void HeatPump::calculatePower()
 	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;
-#ifdef CORRECT_POWER220
+#ifdef CORRECT_POWER220 // Добавка мощности
 	{
 		int32_t corr = 0;
 		for(uint8_t i = 0; i < sizeof(correct_power220)/sizeof(correct_power220[0]); i++) if(dRelay[correct_power220[i].num].get_Relay()) corr += correct_power220[i].value;

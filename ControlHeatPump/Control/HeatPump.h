@@ -605,11 +605,11 @@ public:
 	uint8_t Chart_Flow_FLOWCON;
 	uint8_t Chart_Flow_FLOWEVA;
 
-	int32_t powerOUT;									// Мощность выходная, Вт
+	int32_t powerOUT;									// Мощность выходная, кроме реле бойлера, Вт
 	int32_t powerGEO;									// Мощность системы GEO, Вт
-	int32_t power220;									// Мощность системы 220, Вт
+	int32_t power220;									// Мощность системы 220, кроме тэна бойлера, Вт
 	int32_t power_RBOILER;								// Мощность нагрева бойлера тэном, Вт
-	int32_t power_BOILER;								// Мощность нагрева бойлера, Вт
+	int32_t power_BOILER;								// Мощность нагрева бойлера, итого, включая тэн, Вт
 	int32_t fullCOP;									// Полный СОР, сотые
 
 // Удаленные датчики
