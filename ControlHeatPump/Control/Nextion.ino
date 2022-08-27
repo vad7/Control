@@ -452,7 +452,7 @@ void Nextion::Update()
 			setComponentText("t1", ntemp);
 		}
 #ifdef WR_NEXTION_FULL_SUN
-		if(WR_LastSunPowerOutCnt <= 1) { // Если не 0
+		if(WR_LastSunPowerOutCnt <= 5 || WR_LastSunPowerOut != 0 || fUpdate == 2) { // Если не 0
 			setComponentText("b", WR_LastSunPowerOut == 0 ? (char*)"" : itoa(WR_LastSunPowerOut, ntemp, 10));
 		}
 		SETBIT1(WR_WorkFlags, WR_fWF_Read_MPPT);
