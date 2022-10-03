@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.178"				// Версия прошивки
+#define VERSION			"1.179"				// Версия прошивки
 #define VER_SAVE		156					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -156,7 +156,8 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #elif RADIO_SENSORS_PORT == 3
 	#define RADIO_SENSORS_SERIAL	Serial3	// Аппаратный порт
 #endif
-#define RADIO_LOST_TIMEOUT 30*60*1000		// через сколько считать, что связь потеряна с датчиком, мсек
+#define RADIO_LOST_TIMEOUT	30*60*1000		// через сколько считать, что связь потеряна с датчиком, мсек
+#define RADIO_BAT_MIN_V		21				// Минимальное напряжение батарейки датчика, десятые V
 
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
@@ -198,7 +199,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
 #define TIME_COMMAND      			500             // мсек. Период разбора команд управления ТН (скорее пауза перед обработкой команды)
 #define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
-#define TIME_MESSAGE_TEMP 			300			    // 1/10 секунды, Проверка граничных температур для уведомлений
+#define TIME_MESSAGE_TEMP 			30			    // секунд, Проверка граничных температур для уведомлений
 #define TIME_LED_OK       			1500            // Период мигания светодиода при ОК (мсек)
 #define TIME_LED_ERR      			200             // Период мигания светодиода при ошибке (мсек).
 #define TIME_BEEP_ERR     			1000            // Период звукового сигнала при ошибке, мсек

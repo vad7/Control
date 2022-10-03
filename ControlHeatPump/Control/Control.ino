@@ -2205,6 +2205,26 @@ void vServiceHP(void *)
 						if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK) journal.jprintf_time("ENERGY: %.3f\n", tmp);
 					}
 #endif
+#ifdef RADIO_SENSORS
+					// Проверка потерянных радиодатчиков
+					for(uint8_t i = 0; i < RADIO_SENSORS_MAX; i++) {
+						if(radio_received[i].RSSI != 255) continue;
+						for(uint8_t j = 0; j < TNUMBER; j++) {
+							if(HP.sTemp[j].get_flag(fErrorWasSend)) continue;
+							uint8_t *addr = HP.sTemp[j].get_address();
+							if(*addr == tRadio && memcmp(&radio_received[i].serial_num, addr + 1, sizeof(radio_received[0].serial_num)) == 0) {
+								if((HP.sTemp[j].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor)|(1<<fTEMP_as_TIN_min)|(1<<fTEMP_as_TIN_average))) || j == TOUT || j == TIN) {
+									if(HP.message.setMessage(pMESSAGE_WARNING, (char*) "Нет связи с радиодатчиком ", 0)) {
+										HP.message.setMessage_add_text(HP.sTemp[j].get_name());
+										HP.sTemp[j].set_flag(fErrorWasSend, 1);
+									}
+								}
+								break;
+							}
+						}
+					}
+#endif
+
 				} else if(m != task_dailyswitch_countm) {
 					task_dailyswitch_countm = m;
 					typeof(DailySwitch_on) _dson = 0;
@@ -2300,25 +2320,23 @@ void vServiceHP(void *)
 			// Проверки граничных температур для уведомлений, если разрешено!
 			static uint16_t countTEMP = 0;        // Для проверки критических температур для рассылки уведомлений
 			if(HP.message.get_fMessageTemp()) {
-				if(countTEMP > TIME_MESSAGE_TEMP) {
+				if(++countTEMP > TIME_MESSAGE_TEMP) {
 					countTEMP = 0;
-					if(HP.message.get_mTIN() > HP.sTemp[TIN].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP,
-							(char*) "Критическая температура в доме,", HP.sTemp[TIN].get_Temp());
-					if(HP.message.get_mTBOILER() > HP.sTemp[TBOILER].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP,
-							(char*) "Критическая температура ГВС,", HP.sTemp[TBOILER].get_Temp());
-					if(HP.message.get_mTCOMP() < HP.sTemp[TCOMP].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP,
-							(char*) "Критическая температура компрессора,", HP.sTemp[TCOMP].get_Temp());
-				} else countTEMP += TIME_READ_SENSOR / 100; // в 0.1 сек
+					if(HP.message.get_mTIN() > HP.sTemp[TIN].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура в доме,", HP.sTemp[TIN].get_Temp());
+					else if(HP.message.get_mTBOILER() > HP.sTemp[TBOILER].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура ГВС,", HP.sTemp[TBOILER].get_Temp());
+					else if(HP.message.get_mTCOMP() < HP.sTemp[TCOMP].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура компрессора,", HP.sTemp[TCOMP].get_Temp());
+				}
 			}
 			static uint8_t last_life_h = 255;
-			if(HP.message.get_fMessageLife()) // Подача сигнала жизни если разрешено!
-			{
-				uint8_t hour = rtcSAM3X8.get_hours();
-				if(hour == HOUR_SIGNAL_LIFE && hour != last_life_h) {
-					HP.message.setMessage(pMESSAGE_LIFE, (char*) "Контроллер работает . . .", 0);
+			uint8_t hour = rtcSAM3X8.get_hours();
+			if(hour == HOUR_SIGNAL_LIFE && hour != last_life_h) {
+				if(HP.message.get_fMessageLife()) { // Подача сигнала жизни если разрешено!
+					if(HP.message.setMessage(pMESSAGE_LIFE, (char*) "Контроллер работает . . .", 0)) last_life_h = hour;
+				} else last_life_h = hour;
+				for(uint8_t j = 0; j < TNUMBER; j++) { // Очистка флага отправки сообщений
+					HP.sTemp[j].set_flag(fErrorWasSend, 0);
 				}
-				last_life_h = hour;
-			}
+			} else last_life_h = hour;
 		}
 		STORE_DEBUG_INFO(77);
 #ifdef NEXTION

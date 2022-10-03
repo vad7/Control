@@ -463,6 +463,7 @@ boolean Message::setMessage(MESSAGE ms, char *c, int p1) // может запу�
 {
   // Проверка на необходимость посылки сообщения
   if (!(((GETBIT(messageSetting.flags, fMail)) || (GETBIT(messageSetting.flags, fSMS))) && ((messageData.ms != pMESSAGE_TESTMAIL) || (messageData.ms != pMESSAGE_TESTSMS)))) return true;	// посылать ненадо
+  if(waitSend) return false; // Есть активное сообщение - ждем отправку
   //  SerialDbg.print(c);SerialDbg.print(" : ");SerialDbg.print(ms);SerialDbg.println("-5");
   // Проверка необходимости отправки уведомления
   if (((GETBIT(messageSetting.flags, fMessageReset)) == 0) && (ms == pMESSAGE_RESET))       return true; // Попытка отправить не разрешенное сообщение, выходим без ошибок
@@ -474,7 +475,7 @@ boolean Message::setMessage(MESSAGE ms, char *c, int p1) // может запу�
   // else if (((messageSetting.GETBIT(fMessageTemp))&&(ms==pMESSAGE_TEMP))&&((sTemp[TIN].get_Temp()<messageSetting.mTIN)||(sTemp[TBOILER].get_Temp()<messageSetting.mTBOILER)||(sTemp[TCOMP].get_Temp()>messageSetting.mTCOMP)))  return true;  // выходим, температуры в границах!!
 
   // Проверка на дублирование сообщения. Тестовые сообщения и сообщения жизни  можно посылать многократно  подряд
-  if ((rtcSAM3X8.unixtime() - sendTime < REPEAT_TIME) && (messageData.ms == ms) && ((ms != pMESSAGE_TESTMAIL) && (ms != pMESSAGE_TESTSMS) && (ms != pMESSAGE_LIFE))) //дублирующие сообщения полылаются с интервалом
+  if ((rtcSAM3X8.unixtime() - sendTime < REPEAT_TIME) && (messageData.ms == ms) && ((ms != pMESSAGE_TESTMAIL) && (ms != pMESSAGE_TESTSMS) && (ms != pMESSAGE_LIFE))) //дублирующие сообщения поcылаются с интервалом
   {
     //JOURNAL("Ignore repeat msg: #%d\n", ms);
     return false;
@@ -487,13 +488,22 @@ boolean Message::setMessage(MESSAGE ms, char *c, int p1) // может запу�
   sendTime = rtcSAM3X8.unixtime(); // запомнить время отправки
   strcpy(messageData.data, c);
   // в сообщение pMESSAGE_TEMP добавить значение температуры
-  if (ms == pMESSAGE_TEMP) {
+  if(ms == pMESSAGE_TEMP) {
     strcat(messageData.data, " t=");
     _dtoa(messageData.data, p1, 2);
+  } else if(p1){
+	  strcat(messageData.data, " ");
+	  _itoa(p1, messageData.data);
   }
   messageData.p1 = p1;
   waitSend = true;                // выставить флаг необходимости отправки Уведомления
   return true;
+}
+
+// Добавить текст в конец уведомления
+void Message::setMessage_add_text(char *c)
+{
+	strcat(messageData.data, c);
 }
 
 // Установить (сформировать) тестовое письмо, отправка sendMessage();

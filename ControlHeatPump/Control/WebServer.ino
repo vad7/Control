@@ -2379,8 +2379,14 @@ x_get_aTemp:
 								if(HP.sTemp[p].get_bus() == tRadio_Bus) {
 									i = HP.sTemp[p].get_radio_received_idx();
 									if(i >= 0) {
-										m_snprintf(strReturn + strlen(strReturn), 20, " \xF0\x9F\x93\xB6%c", Radio_RSSI_to_Level(radio_received[i].RSSI));
-										if(str[5] == '2') m_snprintf(strReturn + strlen(strReturn), 20, ", %.1dV", radio_received[i].battery);
+										strReturn += m_snprintf(strReturn + strlen(strReturn), 20, " \xF0\x9F\x93\xB6%c", Radio_RSSI_to_Level(radio_received[i].RSSI));
+										uint8_t showV = str[5] == '2';
+										if(radio_received[i].battery <= RADIO_BAT_MIN_V) {
+											strcat(strReturn, ", ");
+											showV = 2;
+										}
+										if(showV) strReturn += m_snprintf(strReturn + m_strlen(strReturn), 20, ", %.1dV", radio_received[i].battery);
+										if(showV == 2) strcat(strReturn, "!");
 									} else strcat(strReturn, " \xF0\x9F\x93\xB6");
 								}
 								if(HP.sTemp[p].get_setup_flag(fTEMP_HeatFloor)) { // добавка t c учетом погодозависимости
