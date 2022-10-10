@@ -234,6 +234,14 @@ void HeatPump::scan_OneWire(char *result_str)
 //			_result_str += l > PRINTF_BUF-1 ? PRINTF_BUF-1 : l;
 //		}
 #ifdef RADIO_SENSORS
+		if(testMode != NORMAL) {
+	    	  radio_received[0].serial_num = 11111111;
+	    	  radio_received[0].timecnt = radio_timecnt;
+	    	  radio_received[0].battery = 31;
+	    	  radio_received[0].Temp = 2350;
+	    	  radio_received[0].RSSI = 50;
+	    	  radio_received_num = 1;
+		}
 		journal.jprintf("Radio found(%d): ", radio_received_num);
 		for(uint8_t i = 0; i < radio_received_num; i++) {
 			OW_scanTable[OW_scanTableIdx].num = OW_scanTableIdx + 1;

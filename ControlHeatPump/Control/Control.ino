@@ -538,6 +538,7 @@ x_I2C_init_std_message:
 
 	// 10. Сетевые настройки
 	journal.jprintf("8. Setting Network . . .\n");
+
 	if(initW5200(true)) {   // Инициализация сети с выводом инфы в консоль
 		W5100.getMACAddress((uint8_t *)Socket[0].outBuf);
 		journal.jprintf(" MAC: %s\n", MAC2String((uint8_t *)Socket[0].outBuf));
@@ -2211,15 +2212,15 @@ void vServiceHP(void *)
 						if(radio_received[i].RSSI != 255) continue;
 						for(uint8_t j = 0; j < TNUMBER; j++) {
 							if(HP.sTemp[j].get_flag(fErrorWasSend)) continue;
-							uint8_t *addr = HP.sTemp[j].get_address();
-							if(*addr == tRadio && memcmp(&radio_received[i].serial_num, addr + 1, sizeof(radio_received[0].serial_num)) == 0) {
-								if((HP.sTemp[j].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor)|(1<<fTEMP_as_TIN_min)|(1<<fTEMP_as_TIN_average))) || j == TOUT || j == TIN) {
+							if((HP.sTemp[j].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor)|(1<<fTEMP_as_TIN_min)|(1<<fTEMP_as_TIN_average))) || j == TOUT || j == TIN) {
+								uint8_t *addr = HP.sTemp[j].get_address();
+								if(*addr == tRadio && memcmp(&radio_received[i].serial_num, addr + 1, sizeof(radio_received[0].serial_num)) == 0) {
 									if(HP.message.setMessage(pMESSAGE_WARNING, (char*) "Нет связи с радиодатчиком ", 0)) {
 										HP.message.setMessage_add_text(HP.sTemp[j].get_name());
 										HP.sTemp[j].set_flag(fErrorWasSend, 1);
 									}
+									break;
 								}
-								break;
 							}
 						}
 					}
@@ -2322,9 +2323,9 @@ void vServiceHP(void *)
 			if(HP.message.get_fMessageTemp()) {
 				if(++countTEMP > TIME_MESSAGE_TEMP) {
 					countTEMP = 0;
-					if(HP.message.get_mTIN() > HP.sTemp[TIN].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура в доме,", HP.sTemp[TIN].get_Temp());
-					else if(HP.message.get_mTBOILER() > HP.sTemp[TBOILER].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура ГВС,", HP.sTemp[TBOILER].get_Temp());
-					else if(HP.message.get_mTCOMP() < HP.sTemp[TCOMP].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура компрессора,", HP.sTemp[TCOMP].get_Temp());
+					if(HP.sTemp[TIN].get_Temp() != STARTTEMP && HP.message.get_mTIN() > HP.sTemp[TIN].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура в доме,", HP.sTemp[TIN].get_Temp());
+					else if(HP.sTemp[TBOILER].get_Temp() != STARTTEMP && HP.message.get_mTBOILER() > HP.sTemp[TBOILER].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура ГВС,", HP.sTemp[TBOILER].get_Temp());
+					else if(HP.sTemp[TCOMP].get_Temp() != STARTTEMP && HP.message.get_mTCOMP() < HP.sTemp[TCOMP].get_Temp()) HP.message.setMessage(pMESSAGE_TEMP, (char*) "Критическая температура компрессора,", HP.sTemp[TCOMP].get_Temp());
 				}
 			}
 			static uint8_t last_life_h = 255;

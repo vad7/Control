@@ -175,7 +175,7 @@ class sensorTemp
 #if (T_NUMSAMLES > 1)
    int32_t sum;                                         // Накопленная сумма
    uint8_t last;                                        // указатель на последнее (самое старое) значение в буфере диапазон от 0 до T_NUMSAMLES-1
-   int16_t t[T_NUMSAMLES];                              // буфер для усреднения показаний температуры
+   int16_t t_buf[T_NUMSAMLES];                              // буфер для усреднения показаний температуры
 #endif
    byte    flags;                                       // флаги  датчика
    struct { // Save GROUP, firth number

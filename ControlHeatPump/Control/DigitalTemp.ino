@@ -28,21 +28,20 @@ void sensorTemp::initTemp(int sensor)
       errTemp=ERRTEMP[sensor];                 // статическая ошибка датчика
       testTemp=TESTTEMP[sensor];               // Значение при тестировании
       lastTemp=STARTTEMP;                      // последняя считанная температура с датчика по умолчанию абсолютный ноль
-      Temp=0;                                  // температура датчика (обработанная)
+      Temp=STARTTEMP;                                  // температура датчика (обработанная)
       flags=0x00;                              // Сбросить все флаги
 
       if(SENSORTEMP[sensor]) SETBIT1(flags, fPresent); // наличие датчика в текушей конфигурации
       memset(address, 0, sizeof(address));	   // обнуление адресс датчика
       busOneWire = NULL;
 #if T_NUMSAMLES > 1
-      memset(t, 0, sizeof(t));	   			   // обнуление буффера значений
+      memset(t_buf, 0, sizeof(t_buf));	   			   // обнуление буффера значений
       sum=0;
       last=0;
 #endif
       nGap=0;                                  // Счечик "разорванных" данных  - требуется для фильтрации помехи
       note=(char*)noteTemp[sensor];            // присвоить наименование датчика
       name=(char*)nameTemp[sensor];            // присвоить имя датчика
-
      // Удаленные устройства  #ifdef SENSOR_IP
      #ifdef SENSOR_IP
       devIP=NULL;                             // Ссылка на привязаный датчик (класс) если NULL привявязки нет
@@ -170,8 +169,8 @@ int8_t sensorTemp::Read()
   #if T_NUMSAMLES == 1         // При 1 - без усреднения
 	Temp = lastTemp + errTemp;
   #else                        // буфер может быть не полным
-	sum = sum-t[last];           // Убрать самое старое значение из суммы
-	t[last] = lastTemp;          // Запомить новое значение
+	sum = sum-t_buf[last];           // Убрать самое старое значение из суммы
+	t_buf[last] = lastTemp;          // Запомить новое значение
 	sum = sum + lastTemp;          // Добавить новое значение
 
 	if (last<(T_NUMSAMLES-1)) last++; else { last=0; SETBIT1(flags,fFull);}  // Установить признак буфер полный при T_NUMSAMLES=1 буфер всегда полный (придупреждение компилятора)
@@ -505,7 +504,7 @@ void check_radio_sensors(void)
 
 void radio_sensor_send(char *cmd)
 {
-	journal.jprintf("Radio cmd: %s", cmd);
+	journal.jprintf("Radio cmd: %s\n", cmd);
 	while(rs_serial_idx && rs_serial_idx) _delay(1); // Ждем принятия сообщения
 	memcpy(rs_serial_buf, rs_serial_header, sizeof(rs_serial_header));
 	rs_serial_buf[sizeof(rs_serial_header)] = 0; // адрес приёмника 1 байт (0 – широковещат кадр)

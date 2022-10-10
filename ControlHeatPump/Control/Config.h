@@ -2734,7 +2734,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define SUN_MIN_WORKTIME	120000	// минимальное время работы, после которого будут проверятся границы, мсек.
 	#define SUN_MIN_PAUSE		900000	// минимальное время паузы после останова СК, мсек.
 
-//	#define RADIO_SENSORS			// Радиодатчики через ZONT МЛ‑489.
+	#define RADIO_SENSORS			// Радиодатчики через ZONT МЛ‑489.
     // Подключение через плату UART - K-line или через 4 платы UART-RS485 отдельно на RX и TX, на стороне МЛ-489 : питание 5V, через диод K-line >--TX--|>|--RX
     // Новый датчик ждем в течении 2-х минут после старта НК (нажать кнопку датчика пока не загорится его светодиод)
 	#define RADIO_SENSORS_PORT		2				// Номер Serial
@@ -2755,7 +2755,7 @@ const char *noteTemp[] = {"Температура улицы",
 	//#define WEB_STATUS_SHOW_OVERHEAT		// Показывать перегрев в строке статуса (запрос get_status)
 
 	#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
-//	#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
+	#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
 //	#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
 //	#define DEBUG_PID				// Отладка ПИДа
 //	#define I2C_EEPROM_64KB	        // Использование памяти I2C для записи журнала при коментарии используется оперативка
@@ -3029,7 +3029,9 @@ const char *noteTemp[] = {"Температура улицы",
   #define TNTC        9		// Количество датчиков NTC на DUE
   #define TNTC_EXT    4		// Количество датчиков NTC на внешнем АЦП
   #define IPNUMBER    0       // Максимальное число удаленных датчиков, запрет использования: заремарить SENSOR_IP, IPNUMBER = 0
-//  #define RADIO_SENSORS_MAX 5
+#ifdef RADIO_SENSORS
+  #define RADIO_SENSORS_MAX 5
+#endif
 
     #define TOUT        0    // Температура улицы
     #define TIN         1    // Температура в доме
