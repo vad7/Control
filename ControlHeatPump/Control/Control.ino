@@ -1741,18 +1741,7 @@ void vReadSensor_delay1ms(int32_t ms)
 #ifdef USE_UPS
 		HP.sInput[SPOWER].Read(true);
 		if(HP.sInput[SPOWER].is_alarm()) { // Электричество кончилось
-			if(!HP.NO_Power) {
-				HP.NO_Power = 1;
-				HP.save_motoHour();
-				Stats.SaveStats(0);
-				Stats.SaveHistory(0);
-				journal.jprintf_date("POWER LOST!\n");
-				if(HP.get_State() == pSTARTING_HP || HP.get_State() == pWORK_HP) {
-					HP.sendCommand(pWAIT);
-					HP.NO_Power = 2;
-				}
-			}
-			HP.NO_Power_delay = NO_POWER_ON_DELAY_CNT;
+			HP.HandleNoPower();
 		}
 #endif
 #ifdef SGENERATOR

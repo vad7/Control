@@ -3956,6 +3956,23 @@ xWait:
 	return error;
 }
 
+// Обработать пропадание питания
+void	HeatPump::HandleNoPower(void)
+{
+	if(!NO_Power) {
+		NO_Power = 1;
+		save_motoHour();
+		Stats.SaveStats(0);
+		Stats.SaveHistory(0);
+		journal.jprintf_date("POWER LOST!\n");
+		if(get_State() == pSTARTING_HP || get_State() == pWORK_HP) {
+			sendCommand(pWAIT);
+			NO_Power = 2;
+		}
+	}
+	NO_Power_delay = NO_POWER_ON_DELAY_CNT;
+}
+
 // Возвращает 1, если ТН в паузе
 uint8_t HeatPump::is_pause()
 {

@@ -376,26 +376,27 @@ public:
 	void process_error(void);
 
 	__attribute__((always_inline)) inline int8_t get_errcode(){return error;} // Получить код последней ошибки
-	char    *get_lastErr(){return note_error;} // Получить описание последней ошибки, которая вызвала останов ТН, при удачном запуске обнуляется
-	void     scan_OneWire(char *result_str); // Сканирование шины OneWire на предмет датчиков
+	char    *get_lastErr(){return note_error;}// Получить описание последней ошибки, которая вызвала останов ТН, при удачном запуске обнуляется
+	void     scan_OneWire(char *result_str);  // Сканирование шины OneWire на предмет датчиков
 	boolean  get_onBoiler(){return onBoiler;} // Получить состояние трехходового точнее если true то идет нагрев бойлера
-	uint8_t  get_fSD() { return fSD;}        // Получить флаг наличия РАБОТАЮЩЕЙ СД карты
+	uint8_t  get_fSD() { return fSD;}         // Получить флаг наличия РАБОТАЮЩЕЙ СД карты
 	void     set_fSD(uint8_t f) { fSD=f; }    // Установить флаг наличия РАБОТАЮЩЕЙ СД карты
-	uint8_t  get_fSPIFlash() { return fSPIFlash;}     // Получить флаг наличия РАБОТАЮЩЕГО флеш диска
-	void     set_fSPIFlash(uint8_t f) {fSPIFlash=f;}    // Установить флаг наличия РАБОТАЮЩЕГО флеш диска
-	TYPE_SOURSE_WEB get_SourceWeb();                    // Получить источник загрузки веб морды
+	uint8_t  get_fSPIFlash() { return fSPIFlash;}    // Получить флаг наличия РАБОТАЮЩЕГО флеш диска
+	void     set_fSPIFlash(uint8_t f) {fSPIFlash=f;} // Установить флаг наличия РАБОТАЮЩЕГО флеш диска
+	TYPE_SOURSE_WEB get_SourceWeb();                 // Получить источник загрузки веб морды
 	uint32_t get_errorReadDS18B20();    // Получить число ошибок чтения датчиков температуры
 	void     Reset_TempErrors();		// Сбросить счетчик ошибок всех датчиков
 	void     resetPID();				// Инициализировать переменные ПИД регулятора
 
-	void     sendCommand(TYPE_COMMAND c);   // Послать команду на управление ТН
+	void     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
-	int8_t   runCommand();               // Выполнить команду по управлению ТН
+	int8_t   runCommand();              // Выполнить команду по управлению ТН
 	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pEND14 ? c : pEND14]; }
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
-	void relayAllOFF();                   // Все реле выключить
+	void 	relayAllOFF();              // Все реле выключить
+	void	HandleNoPower(void);		// Обработать пропадание питания
 
 // Строковые функции
 	char *StateToStr();                 // Получить состояние ТН в виде строки

@@ -425,6 +425,16 @@ bool devVaconFC::check_blockFC()
 #ifndef FC_ANALOG_CONTROL // Не аналоговое управление
     if(err != OK) {
         if(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED || ++number_err >= FC_NUM_READ) { // если не запущена free rtos то блокируем с первого раза
+#ifdef USE_UPS
+			if(HP.NO_Power) return true;
+	#if defined(SPOWER)
+			HP.sInput[SPOWER].Read(true);
+			if(HP.sInput[SPOWER].is_alarm()) {
+				HP.HandleNoPower();
+				return true;
+			}
+	#endif
+#endif
             SETBIT1(flags, fErrFC); // Установить флаг
             note = (char*)noteFC_NO;
             set_Error(err, (char*)name); // Подъем ошибки на верх и останов ТН
