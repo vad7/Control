@@ -866,7 +866,8 @@ void vWeb0(void *)
 #endif //HTTP_MAP_Read_MAP
 						if(Vd != -32768) {
 							if(Vd <= WR.DeltaUbatmin) { // Можно нагружать
-								if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target) { // Нужно греть бойлер
+#ifdef WR_Load_pins_Boiler_INDEX
+								if(HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target && GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX)) { // Нужно греть бойлер
 									if(Vd <= 0) { // Можно увеличивать нагрузку
 										if(WR_LoadRun[WR_Load_pins_Boiler_INDEX] > 0 || HP.sTemp[TBOILER].get_Temp() <= HP.Prof.Boiler.WR_Target - WR_Boiler_Hysteresis) {
 											if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, WR.LoadAdd);
@@ -882,11 +883,20 @@ void vWeb0(void *)
 										if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, -32768);
 										else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, 0);
 									}
-xNOPWR_OtherLoad:					for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
-										if(i == WR_Load_pins_Boiler_INDEX) continue;
+#else
+								{
+#endif
+xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
+									for(uint8_t i = 0; i < WR_NumLoads; i++) { // Управляем еще одной нагрузкой
+										if(i == WR_Load_pins_Boiler_INDEX || !GETBIT(WR_Loads, i)) continue;
 										if(Vd <= 0) { // Можно увеличивать нагрузку
 											if(WR_LoadRun[i] < WR.LoadPower[i]) {
-												if(GETBIT(WR.PWM_Loads, i)) WR_Change_Load_PWM(i, WR.LoadAdd); else WR_Switch_Load(i, 1);
+												if(GETBIT(WR.PWM_Loads, i)) {
+													WR_Change_Load_PWM(i, WR.LoadAdd);
+												} else if(Vd < 0) { // +0.1V на АКБ для реле
+													if(WR_SwitchTime[i] && t - WR_SwitchTime[i] <= WR.TurnOnPause) continue;
+													WR_Switch_Load(i, 1);
+												}
 											}
 										} else if(Vd > WR_NO_POWER_WORK_DELTA_Uacc) { // Уменьшаем или выключаем
 											if(WR_LoadRun[i] > 0) {
