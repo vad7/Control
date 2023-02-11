@@ -505,10 +505,18 @@ void devRelay::initRelay(int sensor)
 	#endif
 #else
 	#ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
-   	   digitalWriteDirect(pin, number == R4WAY);  // Установить значение
-	#else
-   	   digitalWriteDirect(pin, false);  // Установить значение
+   	   if(number == R4WAY) digitalWriteDirect(pin, true);  // Установить значение
+   	   else
 	#endif
+#ifdef RPUMPO_INVERT              // Признак инвертирования
+	   if(number == RPUMPO) digitalWriteDirect(pin, true);  // Установить значение
+	   else
+#endif
+#ifdef RPUMPI_INVERT              // Признак инвертирования
+	   if(number == RPUMPO) digitalWriteDirect(pin, true);  // Установить значение
+	   else
+#endif
+   digitalWriteDirect(pin, false);  // Установить значение
 #endif
    note=(char*)noteRelay[sensor];  // присвоить описание реле
    name=(char*)nameRelay[sensor];  // присвоить имя реле
