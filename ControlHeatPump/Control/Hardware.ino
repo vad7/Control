@@ -536,6 +536,12 @@ int8_t devRelay::set_Relay(int8_t r)
 #ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
 		if(number == R4WAY) r = !r;
 #endif
+#ifdef RPUMPO_INVERT              // Признак инвертирования
+		if(number == RPUMPO) r = !r;
+#endif
+#ifdef RPUMPI_INVERT              // Признак инвертирования
+		if(number == RPUMPI) r = !r;
+#endif
 #ifdef RBOILER
 		if(number == RBOILER) {
 			Calc_COP_skip_timer = 2;	// Пропустить расчет COP на время переключения (*TIME_READ_SENSOR)
