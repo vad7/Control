@@ -487,37 +487,32 @@ void sensorFrequency::set_minValue(float f)
 // ------------------------------------------------------------------------------------------
 // Исполнительное устройство РЕЛЕ (есть 2 состяния 0 и 1) --------------------------------------
 // Relay = true - это означает включение исполнительного механизама. 
-// При этом реальный выход и состояние (физическое реле) определяется дефайнами RELAY_INVERT и R4WAY_INVERT
-// ВНИМАНИЕ: По умолчанию (не определен RELAY_INVERT) выход инвертируется - Влючение реле (Relay=true) соответствует НИЗКИЙ уровень на выходе МК
+// При этом реальный выход и состояние (физическое реле) определяется дефайнами RELAY_HIGH_LEVEL и R4WAY_INVERT
+// ВНИМАНИЕ: По умолчанию (не определен RELAY_HIGH_LEVEL) - Включение реле (Relay=true) соответствует НИЗКИЙ уровень на выходе МК
 void devRelay::initRelay(int sensor)
 {
    flags=0x00;
    number = sensor;
-   flags=0x01;                     // наличие датчика в текушей конфигурации (отстатки прошлого, реле сейчас есть всегда)  флаги  0 - наличие датчика,  1- режим теста
+   flags=0x01;						// наличие датчика в текушей конфигурации (отстатки прошлого, реле сейчас есть всегда)  флаги  0 - наличие датчика,  1- режим теста
    pin=pinsRelay[sensor];  
-   pinMode(pin, OUTPUT);           // Настроить ножку на выход
-   Relay=false;                    // Состояние реле - выключено
-#ifndef RELAY_INVERT            // Нет инвертирования реле -  Влючение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
-	#ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
-   	   digitalWriteDirect(pin, number != R4WAY);  // Установить значение
-	#else
-   	   digitalWriteDirect(pin, true);  // Установить значение
-	#endif
+   pinMode(pin, OUTPUT);			// Настроить ножку на выход
+   Relay=false;						// Состояние реле - выключено
+   uint8_t r;
+#ifdef RELAY_HIGH_LEVEL
+   r = 0; 							// Включение реле (Relay=true) соответсвует ВЫСОКИЙ уровень на выходе МК
 #else
-	#ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
-   	   if(number == R4WAY) digitalWriteDirect(pin, true);  // Установить значение
-   	   else
-	#endif
+   r = 1;							// Включение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
+#endif
+#ifdef R4WAY_INVERT              	// Признак инвертирования 4х ходового
+   if(number == R4WAY) r = !r;
+#endif
 #ifdef RPUMPO_INVERT              // Признак инвертирования
-	   if(number == RPUMPO) digitalWriteDirect(pin, true);  // Установить значение
-	   else
+   if(number == RPUMPO) r = !r;
 #endif
 #ifdef RPUMPI_INVERT              // Признак инвертирования
-	   if(number == RPUMPO) digitalWriteDirect(pin, true);  // Установить значение
-	   else
+   if(number == RPUMPO) r = !r;
 #endif
-   digitalWriteDirect(pin, false);  // Установить значение
-#endif
+   digitalWriteDirect(pin, r);  // Установить значение
    note=(char*)noteRelay[sensor];  // присвоить описание реле
    name=(char*)nameRelay[sensor];  // присвоить имя реле
 }
@@ -538,7 +533,7 @@ int8_t devRelay::set_Relay(int8_t r)
 	if(Relay == r) return OK;   // Ничего менять не надо выходим
     Relay = r;                  // Все удачно, сохранить
 	if(testMode == NORMAL || testMode == HARD_TEST || (testMode == TEST && number != RCOMP)) {
-#ifndef RELAY_INVERT            // Нет инвертирования реле -  Влючение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
+#ifndef RELAY_HIGH_LEVEL            // Включение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
 		r = !r;
 #endif
 #ifdef R4WAY_INVERT              // Признак инвертирования 4х ходового
