@@ -2706,7 +2706,7 @@ MODE_COMP HeatPump::UpdateHeat()
 				Status.ret = pHh4;
 				return pCOMP_ON;
 			} else return pCOMP_OFF; // Бойлер нагрет и отопление не нужно
-		} else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED>Prof.Heat.tempInLim)) {Status.ret=pHp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__);return pCOMP_OFF;}  // Достижение максимальной температуры подачи - это ошибка ПИД не работает (есть задержка срабатывания для переключения с ГВС)
+		} else if((rtcSAM3X8.unixtime()-offBoiler>Option.delayBoilerOff)&&(FEED>Prof.Heat.tempInLim)) {Status.ret=pHp1; /* set_Error(ERR_PID_FEED,(char*)__FUNCTION__); */ return pCOMP_OFF;}  // Достижение максимальной температуры подачи - это ошибка ПИД не работает /работает, но низёханько/ (есть задержка срабатывания для переключения с ГВС)
        
         // Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
 	    else if((GETBIT(Option.flags,fBackupPower))&&(getPower()>get_maxBackupPower())) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту
