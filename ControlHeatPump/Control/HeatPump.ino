@@ -3087,13 +3087,13 @@ void HeatPump::vUpdate()
 
 	Status.modWork = get_Work();                                       // определяем что делаем
 	if(error) return;
-	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev) {
-		journal.jprintf_time("modWork:%X[%s]\n", Status.modWork, codeRet[Status.ret]);
-	} else {
 #ifdef DEBUG_MODWORK
 	save_DumpJournal(false);                                           // Вывод строки состояния
-#endif
+#else
+	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev && (Status.ret < 10 || Status.ret > 12)) {
+		journal.jprintf_time("mW:%X[%s]\n", Status.modWork, codeRet[Status.ret]);
 	}
+#endif
 	//  реализуем требуемый режим
 	if(!(Status.modWork & pHEAT)) {
 		for(uint8_t i = 0; i < TNUMBER; i++) sTemp[i].set_flag(fActive, 0);
