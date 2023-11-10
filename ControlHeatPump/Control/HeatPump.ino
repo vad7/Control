@@ -1075,6 +1075,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_NEXT_DIM)==0)         {if ((n>=1)&&(n<=100)) {Option.dim=n; myNextion.set_dim(Option.dim); return true;} else return false; }else       // Якрость % NEXTION
 	if(strcmp(var,option_f2NextionLog)==0)     {if (n==0) {SETBIT0(Option.flags2, f2NextionLog); return true;} else if (n==1) {SETBIT1(Option.flags2, f2NextionLog); return true;} else return false; }else
 #endif
+	if(strcmp(var,option_f2modWorkLog)==0)     {if (n==0) {SETBIT0(Option.flags2, f2modWorkLog); return true;} else if (n==1) {SETBIT1(Option.flags2, f2modWorkLog); return true;} else return false; }else
 	if(strcmp(var,option_History)==0)          {if (n==0) {SETBIT0(Option.flags,fHistory); return true;} else if (n==1) {SETBIT1(Option.flags,fHistory); return true;} else return false;       }else       // Сбрасывать статистику на карту
 	if(strcmp(var,option_SDM_LOG_ERR)==0)      {if (n==0) {SETBIT0(Option.flags,fModbusLogErrors); return true;} else if (n==1) {SETBIT1(Option.flags,fModbusLogErrors); return true;} else return false;       }else
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { Option.flags = (Option.flags & ~(1<<fWebStoreOnSPIFlash)) | ((n!=0)<<fWebStoreOnSPIFlash); return true; } else
@@ -1223,6 +1224,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_NEXTION)==0)          { return strcat(ret, (char*)(GETBIT(Option.flags,fNextion) ? cOne : cZero)); } else         // использование дисплея nextion
 	if(strcmp(var,option_NEXTION_WORK)==0)     { return strcat(ret, (char*)(GETBIT(Option.flags,fNextionOnWhileWork) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2NextionLog)==0)     { return strcat(ret, (char*)(GETBIT(Option.flags2, f2NextionLog) ? cOne : cZero)); } else
+	if(strcmp(var,option_f2modWorkLog)==0)     { return strcat(ret, (char*)(GETBIT(Option.flags2, f2modWorkLog) ? cOne : cZero)); } else
 	if(strcmp(var,option_History)==0)          {if(GETBIT(Option.flags,fHistory)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else            // Сбрасывать статистику на карту
 	if(strcmp(var,option_SDM_LOG_ERR)==0)      {if(GETBIT(Option.flags,fModbusLogErrors)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { return strcat(ret, (char*)(GETBIT(Option.flags,fWebStoreOnSPIFlash) ? cOne : cZero)); } else
@@ -3084,10 +3086,14 @@ void HeatPump::vUpdate()
 	}
 
 	Status.modWork = get_Work();                                       // определяем что делаем
+	if(error) return;
+	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev) {
+		journal.jprintf_time("modWork:%X[%s]\n", Status.modWork, codeRet[Status.ret]);
+	} else {
 #ifdef DEBUG_MODWORK
 	save_DumpJournal(false);                                           // Вывод строки состояния
 #endif
-	if(error) return;
+	}
 	//  реализуем требуемый режим
 	if(!(Status.modWork & pHEAT)) {
 		for(uint8_t i = 0; i < TNUMBER; i++) sTemp[i].set_flag(fActive, 0);

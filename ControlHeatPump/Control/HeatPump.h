@@ -236,6 +236,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define f2NextionGenFlashing	1				// Моргать картинкой на дисплее, если работаем от генератора
 #define f2AutoStartGenerator	2				// Автозапуск генератора по специальному гистерезису генератора
 #define f2NextionLog			3				// Логировать обмен Nextion
+#define f2modWorkLog			4				// Логировать обмен modWork
 
 // Структура для хранения опций теплового насоса.
 struct type_optionHP
