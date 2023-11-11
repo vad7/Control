@@ -570,8 +570,8 @@ int8_t devRelay::set_Relay(int8_t r)
 	delay(RELAY_WAIT_SWITCH);
 	if(tasks_suspended) xTaskResumeAll();
 #endif
-	if(Relay)	journal.jprintf_time("[%X] Relay %s: ON\n", __builtin_return_address(0), name);
-	else 		journal.jprintf_time("[%X] Relay %s: OFF\n", __builtin_return_address(0), name);
+	if(Relay)	journal.jprintf_time("%X Rel %s On\n", __builtin_return_address(0), name);
+	else 		journal.jprintf_time("%X Rel %s Off\n", __builtin_return_address(0), name);
 	return OK;
 }
 
