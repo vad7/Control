@@ -3090,8 +3090,14 @@ void HeatPump::vUpdate()
 #ifdef DEBUG_MODWORK
 	save_DumpJournal(false);                                           // Вывод строки состояния
 #else
-	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev && ((Status.ret < 10 && Status.ret * Status.prev != 15) || Status.ret > 12)) {
-		journal.jprintf_time("mW:%X[%s]\n", Status.modWork, codeRet[Status.ret]);
+	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev) {
+		const char* _cr = codeRet[Status.ret];
+		uint8_t _sr = atoi(_cr + 2);
+		if(_sr < 10 || _sr > 12) {
+			const char* _crp = codeRet[Status.prev];
+			uint8_t _srp = atoi(_crp + 2);
+			if(_sr * _srp != 15) journal.jprintf_time("mW:%X[%s]\n", Status.modWork, _cr);
+		}
 	}
 #endif
 	//  реализуем требуемый режим
