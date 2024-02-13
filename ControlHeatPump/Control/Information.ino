@@ -519,8 +519,8 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_TEMP2)==0)    {_dtoa(ret,Cool.Temp2/10,1); return ret;               } else             // целевая температура обратки
    if(strcmp(var,hp_TARGET)==0)   {if (!(GETBIT(Cool.flags,fTarget))) return strcat(ret,(char*)"Дом:1;Обратка:0;");
                                   else return strcat(ret,(char*)"Дом:0;Обратка:1;");           } else             // что является целью значения  0 (температура в доме), 1 (температура обратки).
-   if(strcmp(var,hp_DTEMP)==0)    {_dtoa(ret,Cool.dTemp/10,1); return ret;               } else             // гистерезис целевой температуры
-   if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Cool.dTempGen / 10, 1); return ret; } else
+   if(strcmp(var,hp_DTEMP)==0)    {_dtoa(ret,Cool.dTemp, 2); return ret;               } else             // гистерезис целевой температуры
+   if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Cool.dTempGen, 2); return ret; } else
    if(strcmp(var,hp_HP_TIME)==0)  {return  _itoa(Cool.pid_time,ret);                               } else             // Постоянная интегрирования времени в секундах ПИД ТН
    if(strcmp(var,hp_HP_PRO)==0)   {_dtoa(ret,Cool.pid.Kp,3); return ret;              } else             // Пропорциональная составляющая ПИД ТН
 #ifdef PID_FORMULA2
@@ -622,7 +622,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 									  return web_fill_tag_select(ret, "HYSTERESIS:0;PID:0;", Heat.Rule); // было "HYSTERESIS:0;PID:0;HYBRID:0;"
 									else { Heat.Rule=pHYSTERESIS;return strcat(ret,(char*)"HYSTERESIS:1;");}} else             // частотника нет единсвенный алгоритм гистрезис
 	if(strcmp(var,hp_TEMP1)==0)    { _dtoa(ret,Heat.Temp1/10,1); return ret;                } else             // целевая температура в доме
-	if(strcmp(var,ADD_DELTA_TEMP)==0) 	{  _dtoa(ret,Heat.add_delta_temp/10, 1); return ret;}else
+	if(strcmp(var,ADD_DELTA_TEMP)==0) 	{  _dtoa(ret,Heat.add_delta_temp, 2); return ret;}else
 	if(strcmp(var,ADD_DELTA_HOUR)==0) 	{  _itoa(Heat.add_delta_hour, ret); return ret;         }else
 	if(strcmp(var,ADD_DELTA_END_HOUR)==0){  _itoa(Heat.add_delta_end_hour, ret); return ret;    	}else
 	if(strcmp(var,hp_TEMP2)==0)    { _dtoa(ret,Heat.Temp2/10,1); return ret;                } else            // целевая температура обратки
@@ -632,8 +632,8 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,option_TEMP_RHEAT)==0){_dtoa(ret, Heat.tempRHEAT, 2); return ret; }else           // температура управления RHEAT (градусы)
 	if(strcmp(var,option_PUMP_WORK)==0) {return _itoa(Heat.workPump,ret);}else
 	if(strcmp(var,option_PUMP_PAUSE)==0){return _itoa(Heat.pausePump,ret);}else
-	if(strcmp(var,hp_DTEMP)==0)    { _dtoa(ret,Heat.dTemp/10,1); return ret;                } else             // гистерезис целевой температуры
-	if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Heat.dTempGen / 10, 1); return ret; } else
+	if(strcmp(var,hp_DTEMP)==0)    { _dtoa(ret,Heat.dTemp,2); return ret;                } else             // гистерезис целевой температуры
+	if(strcmp(var,hp_dTempGen)==0) { _dtoa(ret, Heat.dTempGen,2); return ret; } else
 	if(strcmp(var,hp_MaxTargetRise)==0) { _dtoa(ret, Heat.MaxTargetRise, 1); return ret; } else
 	if(strcmp(var,hp_HP_TIME)==0)  { return _itoa(Heat.pid_time,ret);                                } else             // Постоянная интегрирования времени в секундах ПИД ТН
 	if(strcmp(var,hp_HP_PRO)==0)   { _dtoa(ret,Heat.pid.Kp,3); return ret;               } else             // Пропорциональная составляющая ПИД ТН

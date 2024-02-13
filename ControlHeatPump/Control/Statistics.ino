@@ -393,7 +393,12 @@ void Statistics::Update()
 		//uint8_t skip_value = 0;
 		switch(Stats_data[i].object) {
 		case STATS_OBJ_Temp:
+#ifdef STATS_TOUT_MIN_OTHER
+			if(Stats_data[i].number == TOUT) newval = MIN(HP.sTemp[TOUT].get_Temp(), HP.sTemp[STATS_TOUT_MIN_OTHER].get_Temp());
+			else newval = HP.sTemp[Stats_data[i].number].get_Temp();
+#else
 			newval = HP.sTemp[Stats_data[i].number].get_Temp();
+#endif
 			break;
 		case STATS_OBJ_Press:
 			newval = HP.sADC[Stats_data[i].number].get_Value();

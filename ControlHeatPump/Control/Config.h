@@ -5862,6 +5862,7 @@ const char *noteTemp[] = {"Температура улицы",
 	};
 
 	// История (графики) на SD карте
+	#define STATS_TOUT_MIN_OTHER	TSUN	// Датчик минимальной температуры улицы = MIN(TOUT, x)
 	const History_setup HistorySetup[] = {
 		{ STATS_OBJ_Compressor, 0, "Компрессор, Гц" },
 		{ STATS_OBJ_Temp, TOUT, noteTemp[TOUT] },
