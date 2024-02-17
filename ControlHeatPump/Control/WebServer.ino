@@ -1036,7 +1036,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 					journal.jprintf("$RESET All Сounters. . .\n");
 					strcat(strReturn,"Сброс ВСЕХ счетчиков");
 					HP.resetCount(true);  // Полный сброс
-				} else {								// RESET_CNT_
+				} else if(strcmp(str, "S") == 0) {		// RESET_CNT_S
 					journal.jprintf("$RESET Season Counters. . .\n");
 					strcat(strReturn,"Сброс счетчиков за сезон");
 					HP.resetCount(false);
