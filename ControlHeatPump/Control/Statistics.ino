@@ -751,14 +751,17 @@ void Statistics::SendFileData(uint8_t thread, SdFile *File, char *filename)
 	}
 	uint32_t bst, bend;
 	if(!File->contiguousRange(&bst, &bend)) {
-		journal.jprintf(" Error get blocks %s\n", filename);
+		journal.jprintf("Error get blocks %s\n", filename);
 		File->close();
 		return;
 	}
+	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
+		journal.jprintf("Read %s: %u\n", filename, File->fileSize());
+	}
 	File->close();
-	uint32_t readed = m_strlen((char*)_buffer_);
+	uint32_t readed = strlen((char*)_buffer_);
 	if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
-		journal.jprintf(" Error sendh %s\n", filename);
+		journal.jprintf("Error sendh %s\n", filename);
 		return;
 	}
 	readed = 0;
@@ -781,7 +784,7 @@ void Statistics::SendFileData(uint8_t thread, SdFile *File, char *filename)
 			if(readed <= W5200_MAX_LEN - SD_BLOCK) continue;
 		}
 		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
-			journal.jprintf(" Error send %s\n", filename);
+			journal.jprintf("Error send %s\n", filename);
 			break;
 		}
 		readed = 0;
@@ -802,14 +805,17 @@ void Statistics::SendFileDataByPeriod(uint8_t thread, SdFile *File, char *Prefix
 		return;
 	}
 	if(sendPacketRTOS(thread, _buffer_, bendfile, 0) != bendfile) {
-		journal.jprintf(" Error sendh %s\n", Prefix);
+		journal.jprintf("Error sendh %s\n", Prefix);
 		return;
 	}
 	uint32_t bstfile;
 	if(!File->contiguousRange(&bstfile, &bendfile)) {
-		journal.jprintf(" Error get blocks %s\n", filename);
+		journal.jprintf("Error get blocks %s\n", filename);
 		File->close();
 		return;
+	}
+	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
+		journal.jprintf("Read %s: %u\n", filename, File->fileSize());
 	}
 	File->close();
 	uint32_t bst = bstfile, bend = bendfile;
