@@ -925,7 +925,7 @@ xFoundStart:
 			} else if(readed <= W5200_MAX_LEN - SD_BLOCK) continue;
 		} else bendfile = 0;
 		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
-			journal.jprintf(" Error send %s\n", filename);
+			journal.jprintf("Error send %s\n", filename);
 			return;
 		}
 		if(++packcnt == 50) { // 100kb send
@@ -941,7 +941,7 @@ xFoundStart:
 	}
 	if(readed) {
 		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
-			journal.jprintf(" Error send %s\n", filename);
+			journal.jprintf("Error send %s\n", filename);
 		}
 	}
 }
