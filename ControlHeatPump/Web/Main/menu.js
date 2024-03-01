@@ -1,5 +1,4 @@
-﻿document.write('<a href="index.html" class="logo"></a>');
-document.write('\
+﻿document.getElementById("menu").innerHTML= '<a href="index.html" class="logo"></a>\
 <div class="swich"><span>HP OFF</span>\
 <div class="onoffswitch">\
 	<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoffswitch" onchange="swich(\'onoffswitch\')">\
@@ -9,8 +8,7 @@ document.write('\
 	<span id="get_mode" style="color: red">-</span><br>\
 	<span id="SCH-PR"></span><br>\
 	<select id="get_listprof" onchange="setParam(\'get_listProf\',\'get_listprof\');"></select>\
-</div>');
-document.write('\
+</div>\
 <ul class="cd-accordion-menu">\
 <li class="index"><a href="index.html"><i></i>Состояние</a></li>\
 <li class="plan"><a href="plan.html"><i></i>Схема ТН</a></li>\
@@ -72,11 +70,10 @@ document.write('\
 <li class="wattrouter"><a href="wattrouter.html"><i></i>Ваттроутер</a></li>\
 <li class="about"><a href="about.html"><i></i>О контроллере</a></li>\
 <li name="USR" id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=0"><i></i>Логин</a></li>\
-</ul>');
-document.write('\
+</ul>\
 <div class="dateinfo">\
 	<div id="get_status"></div>\
-</div>');
+</div>';
 var extract = new RegExp('[a-z0-9-]+\.html'); 
 var pathname = location.pathname;
 pathmath = pathname.match(extract);
