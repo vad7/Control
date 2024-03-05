@@ -5157,10 +5157,10 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_PORT_SPEED       9600        // Скорость порта куда прицеплен частотник и счетчик
 	#define MODBUS_PORT_CONFIG      SERIAL_8N1  // Конфигурация порта куда прицеплен частотник и счетчик
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
-	#define MODBUS_TIMEOUT			80			// Таймаут ожидания ответа, мсек
-	#define MODBUS_MIN_TIME_BETWEEN_TRNS 40		// Минимальная пауза между транзакциями, мсек
-	//#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
-	//#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
+	#define MODBUS_TIMEOUT			100			// Таймаут ожидания ответа, мсек
+	#define MODBUS_MIN_TIME_BETWEEN_TRNS 50		// Минимальная пауза между транзакциями, мсек
+	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
+	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
 	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки
 	//#define PIN_MODBUS_RSE          22          // Не используется из-за платы UART-RS485! Управление направлением передачи 485 для связи с инвертором по Modbus (1-передача 0-прием)
 	#define SDM_READ_PERIOD     	30000       // Время опроса счетчика, не важных параметров (0 - нет), в ms
@@ -5816,7 +5816,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WF_ForecastAfterSunrise		2*60*60 		// Через сколько времени после восхода смотреть прогноз, сек
 	#define WF_BOILER_MAX_CLOUDS		98				// Ниже этой облачности начинаем корректировать температуру бойлера, %
 	//                                   янв, фев, мар, апр, май, июн, июл, авг, сен, окт, ноя, дек
-	const uint8_t WF_SunByMonth[12] = 	{ 60,  40,  10,   0,   0,   0,   0,   0,  10,  30,  40,  60 };	// + к облачности, %
+	const uint8_t WF_SunByMonth[12] = 	{ 60,  30,  7,   0,   0,   0,   0,   0,  10,  30,  40,  60 };	// + к облачности, %
 
 	// Графики в памяти
 	Charts_Mod_setup ChartsModSetup[] = {
