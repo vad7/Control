@@ -2125,9 +2125,9 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    /
 				STORE_DEBUG_INFO(38);
 				if(str[11] == 'p') { // set_modbus_p(n=x) - установить параметры протокола Modbus
 					l_i32 = pm;
-					if(strcmp(x, "timeout")) { // Таймаут
+					if(strcmp(x, "timeout")==0) { // Таймаут
 						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32; else l_i32 = Modbus.RS485.ModbusResponseTimeout;
-					} else if(strcmp(x, "pause")) { // Пауза между транзакциями
+					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
 						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32; else l_i32 = Modbus.RS485.ModbusMinTimeBetweenTransaction;
 					} else goto x_FunctionNotFound;
 					_itoa(l_i32, strReturn);
