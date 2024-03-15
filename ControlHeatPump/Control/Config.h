@@ -5157,8 +5157,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_PORT_SPEED       9600        // Скорость порта куда прицеплен частотник и счетчик
 	#define MODBUS_PORT_CONFIG      SERIAL_8N1  // Конфигурация порта куда прицеплен частотник и счетчик
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
-	#define MODBUS_TIMEOUT			80			// Таймаут ожидания ответа, мсек
-	#define MODBUS_MIN_TIME_BETWEEN_TRNS 50		// Минимальная пауза между транзакциями, мсек
+	#define MODBUS_TIMEOUT			50			// Таймаут ожидания ответа, мсек
+	#define MODBUS_MIN_TIME_BETWEEN_TRNS 10		// Минимальная пауза между транзакциями, мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
 	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
 	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки
