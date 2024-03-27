@@ -191,7 +191,7 @@ struct {
 uint8_t WF_BoilerTargetPercent = 100;
 #endif
 #ifdef WR_LOG_DAYS_POWER_EXCESS
-int32_t WR_Power_Excess = 0;
+int32_t WR_Power_Excess = 0;			// Излишки ваттроутера
 #endif
 #endif //WATTROUTER
 #ifdef WR_PowerMeter_Modbus

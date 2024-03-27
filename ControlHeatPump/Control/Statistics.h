@@ -108,6 +108,9 @@ Stats_Data Stats_data[] = {
 #if defined(RBOILER) || defined(RPUMPBH) || defined(R3WAY)
 	,{ 0, STATS_OBJ_Power_BOILER, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
 #endif
+#ifdef WATTROUTER
+	,{ 0, STATS_OBJ_WattRouter_Excess, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
+#endif
 };
 
 const char stats_file_start[] = "stats_";

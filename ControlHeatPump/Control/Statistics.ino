@@ -264,6 +264,7 @@ void Statistics::Init(uint8_t newyear)
 										}
 										break;
 									case STATS_OBJ_WattRouter_Out:
+									case STATS_OBJ_WattRouter_Excess:
 										Stats_data[i].value = val * 10000000;
 										break;
 									case STATS_OBJ_COP_Full:
@@ -476,12 +477,17 @@ void Statistics::Update()
 					newval += WR_LoadRun[j];
 			}
 #if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
-			WR_Power_Excess += newval2 * tm / 360; // в мВтч*10;
+			if(WR_Pnet != -32768 && newval2 > WR_Pnet) {
+				WR_Power_Excess += (newval2 - WR_Pnet) * tm / 360; // в мВтч*10;
+			}
 #endif
 			newval = newval * tm / 360; // в мВтч*10
 			WR_LoadRunStats += newval;
 			break;
 		}
+		case STATS_OBJ_WattRouter_Excess:
+			newval = WR_Power_Excess; // в мВтч*10
+			break;
 #endif //WATTROUTER
 		case STATS_OBJ_COP_Full:
 			if(Stats_data[i].type == STATS_TYPE_AVG) continue; // COP средний считается в конце дня
@@ -553,6 +559,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 			case STATS_OBJ_Power_RBOILER:
 			case STATS_OBJ_Power_BOILER:
 			case STATS_OBJ_WattRouter_Out:
+			case STATS_OBJ_WattRouter_Excess:
 				strcat(ret, "W");		// ось мощность
 				break;
 			case STATS_OBJ_COP_Full:
@@ -627,6 +634,10 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 	case STATS_OBJ_WattRouter_Out:
 		if(flag) strcat(ret, "W"); // ось мощность
 		strcat(ret, "Ваттроутер, кВтч");
+		break;
+	case STATS_OBJ_WattRouter_Excess:
+		if(flag) strcat(ret, "W"); // ось мощность
+		strcat(ret, "Ваттроутер излишки, кВтч");
 		break;
 	case STATS_OBJ_COP_Full:
 		if(flag) strcat(ret, "C"); // ось COP
@@ -705,6 +716,7 @@ xSkipEmpty:
 		}
 		break;
 	case STATS_OBJ_WattRouter_Out:
+	case STATS_OBJ_WattRouter_Excess:
 		int_to_dec_str(val / 10000, 1000, ret, 3);
 		break;
 	case STATS_OBJ_COP_Full:

@@ -57,6 +57,7 @@ enum {
 	STATS_OBJ_Relay,		//= 20,
 	STATS_OBJ_WattRouter_In,//= 21,
 	STATS_OBJ_WattRouter_Out,//= 22
+	STATS_OBJ_WattRouter_Excess,//= 23
 	STATS_OBJ_Power_BOILER	// кВт*ч, потрачено на нагрев ГВС всего, включая ваттроутер
 };
 
