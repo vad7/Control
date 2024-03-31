@@ -464,7 +464,7 @@ void Statistics::Update()
 			int32_t newval2 = 0;
 #endif
 			for(int8_t j = 0; j < WR_NumLoads; j++) {
-#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+#ifdef WR_LOG_DAYS_POWER_EXCESS
 				if(j != WR_LOG_DAYS_POWER_EXCESS
 	#ifdef WR_Load_pins_Boiler_INDEX
 					&& j != WR_Load_pins_Boiler_INDEX
@@ -476,7 +476,7 @@ void Statistics::Update()
 #endif
 					newval += WR_LoadRun[j];
 			}
-#if defined(WATTROUTER) && defined(WR_LOG_DAYS_POWER_EXCESS)
+#ifdef WR_LOG_DAYS_POWER_EXCESS
 			if(WR_Pnet != -32768 && newval2 > WR_Pnet) {
 				WR_Power_Excess += (newval2 - WR_Pnet) * tm / 360; // в мВтч*10;
 			}

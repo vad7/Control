@@ -109,7 +109,7 @@ Stats_Data Stats_data[] = {
 	,{ 0, STATS_OBJ_Power_BOILER, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
 #endif
 #ifdef WATTROUTER
-	,{ 0, STATS_OBJ_WattRouter_Excess, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
+	,{ 0, STATS_OBJ_WattRouter_Excess, STATS_TYPE_MAX, STATS_WHEN_ALWAYS, 0 }
 #endif
 };
 
