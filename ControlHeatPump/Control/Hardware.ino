@@ -1903,8 +1903,8 @@ int8_t devModbus::initModbus()
         MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED,MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
         //MODBUS_PORT_NUM.setInterruptPriority(1);
         RS485.begin(1, MODBUS_PORT_NUM);                                              // Привязать к сериал
-        RS485.ModbusMinTimeBetweenTransaction = MODBUS_TIMEOUT;
-        RS485.ModbusResponseTimeout = MODBUS_MIN_TIME_BETWEEN_TRNS;
+        RS485.ModbusMinTimeBetweenTransaction = MODBUS_MIN_TIME_BETWEEN_TRNS;
+        RS485.ModbusResponseTimeout = MODBUS_TIMEOUT;
         // Назначение функций обратного вызова
 #ifdef MODBUS_TIME_TRANSMISION
         RS485.preTransmission(preTransmission);
