@@ -566,6 +566,16 @@ x_I2C_init_std_message:
 	if(HP.get_fSD()) {
 		journal.jprintf("writing on SD card\n");
 		Stats.Init();             // Инициализовать статистику
+#ifdef WR_LOG_DAYS_POWER_EXCESS
+		if(rtcSAM3X8.unixtime() < 1711904400) { // < Sun Mar 31 2024 20:00:00 GMT+0300
+			for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) {
+				if(Stats_data[i].object == STATS_OBJ_WattRouter_Excess) {
+					Stats_data[i].value = 0;
+					WR_Power_Excess = 0;
+				}
+			}
+		}
+#endif
 	} else journal.jprintf("not available\n");
 
 	int8_t _profile = HP.Schdlr.calc_active_profile();

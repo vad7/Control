@@ -265,6 +265,9 @@ void Statistics::Init(uint8_t newyear)
 										break;
 									case STATS_OBJ_WattRouter_Out:
 									case STATS_OBJ_WattRouter_Excess:
+#ifdef WR_LOG_DAYS_POWER_EXCESS
+										WR_Power_Excess =
+#endif
 										Stats_data[i].value = val * 10000000;
 										break;
 									case STATS_OBJ_COP_Full:
