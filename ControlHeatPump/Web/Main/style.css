@@ -137,6 +137,7 @@ body.test #get_tblrelay span{display:none}
 .visualization #get_relay-rsun		{margin-top:73px;margin-left:15px}.visualization #get_relay-rsun:after{content:""}
 .visualization #get_temp-tsun		{margin-top:85px;margin-left:115px}
 .visualization #get_temp-tsunoutg	{margin-top:167px;margin-left:25px}
+.visualization #get_wr-3			{margin-top:20px;margin-left:31px;border-color:yellow}.visualization #get_wr-3:after{content:""}
 
 .cd-accordion-menu input[type=checkbox] {position: absolute; opacity: 0;}
 .cd-accordion-menu label, .cd-accordion-menu a {position: relative;	display: block;}
