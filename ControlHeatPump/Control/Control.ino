@@ -1293,7 +1293,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					}
 					break;
 				}
-			} else {
+			} else { // NOT (GETBIT(WR.Flags, WR_fActive) || WR.PWM_FullPowerTime || WR_Refresh))
 				WR_Pnet = WR_PowerMeter_Power;
 				if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
 					WR_Check_MPPT();				// Чтение солнечного контроллера
@@ -1306,6 +1306,25 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					journal.jprintf(",%.1d(%.1d)\n", WR_MAP_Ubat, WR_MAP_Ubuf);
 				}
 			}
+	#ifdef RSOLINV
+			if(HP.dRelay[RSOLINV].get_Relay()) { 	// Relay is ON
+				if(rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR || WR_Invertor2_status > WR_INVERTOR2_SUN_OFF_CHARGE_TIMER) {
+					HP.dRelay[RSOLINV].set_OFF();
+					WR_Invertor2_status = 0;
+				} else if(GETBIT(HP.Option.flags, fBackupPower) && !HP.fBackupPowerOffDelay) {
+					WR_Invertor2_status = 1;
+				} else if(WR_Invertor2_status) {
+					if(WR_LastSunPowerOut <= 10 && WR_MAP_Ubat > WR_MAP_Ubuf - WR.DeltaUbatmin) WR_Invertor2_status++; // От солнца ничего не приходит, а набряжение на АКБ выше буферного, возможно заряд
+					else WR_Invertor2_status--;
+				}
+			} else { 								// Relay is OFF
+				if(WR_LastSunPowerOut > WR_Pnet && WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON) {
+					HP.dRelay[RSOLINV].set_ON();
+					WR_Invertor2_status = 0;
+				}
+			}
+	#endif
+			//
 #endif // WATTROUTER
 		}
 		if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)

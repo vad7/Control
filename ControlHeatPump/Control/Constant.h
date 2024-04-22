@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.187"				// Версия прошивки
+#define VERSION			"1.188"				// Версия прошивки
 #define VER_SAVE		156					// Версия формата сохраняемых данных в I2C память
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -334,8 +334,6 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define LEGIONELLA_TEMP   (70*100)       // Температура которая поддерживается для обеззараживания (сотые градуса)
 #define LEGIONELLA_TIME   (240*60)       // Максимальная продолжительность цикла (сек), что бы цикл не длился бесконечно при не возможности достижения LEGIONELLA_TEMP
 //#define LEGIONELLA_HARD                // Если определено то работает поддержание температуры LEGIONELLA_TEMP до окончания времени LEGIONELLA_TIME, если НЕ ОПРЕДЕЛЕНО то выключение сразу по достижению LEGIONELLA_TEMP но цикл не более LEGIONELLA_TIME 
-//#define NIGHT_START_HOUR  23           // Начало ночного тарифа
-//#define NIGHT_END_HOUR	  7              // Окончание точного тарифа
 // Сброс тепла при нагреве ГВС
 #ifndef BOILER_TEMP_COMP_RESET
 #define BOILER_TEMP_COMP_RESET  500      // На сколько температура нагнетания (TCOMP) меньше максимальной при нагреве ГВС, при котрой происходит сброс тепла в систему отопления

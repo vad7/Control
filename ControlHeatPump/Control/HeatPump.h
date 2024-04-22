@@ -147,12 +147,15 @@ uint32_t WR_LastSwitchTime = 0;
 uint8_t  WR_TestLoadStatus = 0; 		// >0 - идет тестирование нагрузки
 uint8_t  WR_TestLoadIndex;
 int32_t  WR_LastSunPowerOut = 0;		// Вт
-uint8_t  WR_LastSunPowerOutCnt = 0;
-uint8_t  WR_LastSunSign = 0;
+uint8_t  WR_LastSunPowerOutCnt = 0;		// Счетчик задержки отсутствия свободной энергии
+uint8_t  WR_LastSunSign = 0;			// 0 - Выключен или ошибка(!), 1 - мало или нет энергии(), 2 - сканирование MPPT(*), 3 - избыток энергии(+)
 #define WR_fWF_Read_MPPT	1			// Прочитать данные с солнечного контроллера MPPT
 uint8_t  WR_WorkFlags = 0;
 int16_t  WR_MAP_Ubat = 0;
 int16_t  WR_MAP_Ubuf = WR_DEFAULT_MAP_Ubuf;	// Буферное напряжение на АКБ, десятые V
+#ifdef RSOLINV
+uint8_t  WR_Invertor2_status = 0;		// 1 и больше - было выключение питания, проверять на включение зарядки АКБ от сети и если она идет - отключить инвертор подкачки
+#endif
 
 #ifdef PWM_CALC_POWER_ARRAY
 // Вычисление массива точного расчета мощности
