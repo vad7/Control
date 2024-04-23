@@ -1308,19 +1308,15 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 			}
 	#ifdef RSOLINV
 			if(HP.dRelay[RSOLINV].get_Relay()) { 	// Relay is ON
-				if(rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR || WR_Invertor2_status > WR_INVERTOR2_SUN_OFF_CHARGE_TIMER) {
+				if(WR_Invertor2_off_cnt > WR_INVERTOR2_SUN_OFF_TIMER || rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR || GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
 					HP.dRelay[RSOLINV].set_OFF();
-					WR_Invertor2_status = 0;
-				} else if(GETBIT(HP.Option.flags, fBackupPower) && !HP.fBackupPowerOffDelay) {
-					WR_Invertor2_status = 1;
-				} else if(WR_Invertor2_status) {
-					if(WR_LastSunPowerOut <= 10 && WR_MAP_Ubat > WR_MAP_Ubuf - WR.DeltaUbatmin) WR_Invertor2_status++; // От солнца ничего не приходит, а набряжение на АКБ выше буферного, возможно заряд
-					else WR_Invertor2_status--;
-				}
+					WR_Invertor2_off_cnt = 0;
+				} else if(WR_LastSunPowerOut <= 10) WR_Invertor2_off_cnt++;
+				else if(WR_Invertor2_off_cnt) WR_Invertor2_off_cnt--;
 			} else { 								// Relay is OFF
-				if(WR_LastSunPowerOut > WR_Pnet && WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON) {
+				if(WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON && WR_LastSunPowerOut > WR_Pnet && !GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
 					HP.dRelay[RSOLINV].set_ON();
-					WR_Invertor2_status = 0;
+					WR_Invertor2_off_cnt = 0;
 				}
 			}
 	#endif

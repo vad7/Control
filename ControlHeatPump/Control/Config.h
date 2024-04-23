@@ -5802,9 +5802,9 @@ const char *noteTemp[] = {"Температура улицы",
 #endif
 	//#define WR_SKIP_EXTREMUM		300								// Отбрасывать пиковое значение больше Вт
 
-	#define WR_INVERTOR2_SUN_OFF_HOUR			20		// час выключения дополнительного подкачивающего солнечного инвертора
-	#define WR_INVERTOR2_SUN_PWR_ON				300		// минимальная мощность от солнца для включения из выключенного состояния, Вт
-	#define WR_INVERTOR2_SUN_OFF_CHARGE_TIMER	10		// сколько периодов WR ожидать перед выключением
+	#define WR_INVERTOR2_SUN_OFF_HOUR	20		// час выключения дополнительного подкачивающего солнечного инвертора
+	#define WR_INVERTOR2_SUN_PWR_ON		300		// минимальная мощность от солнца для включения из выключенного состояния, Вт
+	#define WR_INVERTOR2_SUN_OFF_TIMER	30		// сколько периодов WR ожидать перед выключением
 
 	#define HTTP_MAP_Server			"192.168.0.9"					// Адрес системы мониторинга Malina2 инвертора МАП МикроАрт
 	#define HTTP_MAP_Server_Login	"admin"							// Пароль - HP.Option.Microart_pass

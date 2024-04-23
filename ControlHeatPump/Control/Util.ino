@@ -1278,12 +1278,14 @@ int8_t WR_Check_MPPT(void)
 	fld = strstr(fld, HTTP_MAP_JSON_P_Out);
 	if(!fld) return WR_LastSunSign = 0;
 	WR_LastSunPowerOut = strtol(fld + sizeof(HTTP_MAP_JSON_P_Out) + 1, NULL, 0);
+	fld = strstr(fld, HTTP_MAP_JSON_Mode);
+	if(!fld) return WR_LastSunSign = 0;
+	char _mode = *(fld + sizeof(HTTP_MAP_JSON_Mode) + 1);
+	if(_mode == 'i' || _mode == 'v') SETBIT1(WR_WorkFlags, WR_fWF_Charging_BAT); else SETBIT0(WR_WorkFlags, WR_fWF_Charging_BAT);
 	if(WR_LastSunPowerOut == 0 || WR_LastSunPowerOut < WR_Pnet) {
 		if(++WR_LastSunPowerOutCnt > 10) return WR_LastSunSign = 1;
 	} else WR_LastSunPowerOutCnt = 0;
-	fld = strstr(fld, HTTP_MAP_JSON_Mode);
-	if(!fld) return WR_LastSunSign = 0;
-	if(*(fld + sizeof(HTTP_MAP_JSON_Mode) + 1) == 'S') return WR_LastSunSign = 2;
+	if(_mode == 'S') return WR_LastSunSign = 2;
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
 	return WR_LastSunSign = WR_MAP_Ubuf - WR_MAP_Ubat <= WR.DeltaUbatmin ? 3 : 1;
 #else
