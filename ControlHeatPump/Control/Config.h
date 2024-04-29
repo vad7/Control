@@ -5379,7 +5379,7 @@ const char *noteTemp[] = {"Температура улицы",
 		#define PIN_DEVICE_RSUN_OFF    60 // X22.1 Реле выключение шарового крана солнечного коллектора, через доп реле.
 		#define SUN_VALVE_SWITCH_TIME  30000 // Время переключения крана, мсек
 	#endif
-	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> Relay(-12V)(+12V=X38.1) -> реле 12V -> пускатель
+	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> PC817C.2, +5V - 1k - PC817C.1 -> Relay board 220V
 	// Free: -
 	//#define PIN_DEVICE_GEN             34 // X37.1(EEV23) -> Relay(-12V)(+12V=X41.2)
 	//#define PIN_DEVICE_RSUPERBOILER    11 //[R_8] реле насоса супербойлера
