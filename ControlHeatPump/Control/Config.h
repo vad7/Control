@@ -5379,7 +5379,7 @@ const char *noteTemp[] = {"Температура улицы",
 		#define PIN_DEVICE_RSUN_OFF    60 // X22.1 Реле выключение шарового крана солнечного коллектора, через доп реле.
 		#define SUN_VALVE_SWITCH_TIME  30000 // Время переключения крана, мсек
 	#endif
-	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> PC817C.2, +5V - 1k - PC817C.1 -> Relay board 220V
+	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> PC817C.2, +12V - 1k - PC817C.1 -> Relay board 220V
 	// Free: -
 	//#define PIN_DEVICE_GEN             34 // X37.1(EEV23) -> Relay(-12V)(+12V=X41.2)
 	//#define PIN_DEVICE_RSUPERBOILER    11 //[R_8] реле насоса супербойлера
@@ -5802,9 +5802,9 @@ const char *noteTemp[] = {"Температура улицы",
 #endif
 	//#define WR_SKIP_EXTREMUM		300								// Отбрасывать пиковое значение больше Вт
 
-	#define WR_INVERTOR2_SUN_OFF_HOUR	20		// час выключения дополнительного подкачивающего солнечного инвертора
-	#define WR_INVERTOR2_SUN_PWR_ON		300		// минимальная мощность от солнца для включения из выключенного состояния, Вт
-	#define WR_INVERTOR2_SUN_OFF_TIMER	30		// сколько периодов WR ожидать перед выключением
+	#define WR_INVERTOR2_SUN_OFF_HOUR	21		// час выключения дополнительного подкачивающего солнечного инвертора
+	#define WR_INVERTOR2_SUN_PWR_ON		400		// минимальная мощность от солнца для включения из выключенного состояния, Вт
+	#define WR_INVERTOR2_SUN_OFF_TIMER	250		// сколько периодов WR ожидать перед выключением
 
 	#define HTTP_MAP_Server			"192.168.0.9"					// Адрес системы мониторинга Malina2 инвертора МАП МикроАрт
 	#define HTTP_MAP_Server_Login	"admin"							// Пароль - HP.Option.Microart_pass
