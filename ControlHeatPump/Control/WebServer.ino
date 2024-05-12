@@ -2372,7 +2372,8 @@ x_get_aTemp:
 								strcat(strReturn, GETBIT(HP.Prof.SaveON.bTIN, p) ? cOne : cZero);
 								ADD_WEBDELIM(strReturn); continue;
 							}
-							if(strncmp(str, "nTemp", 5) == 0) // Функция get_nTemp, если радиодатчик: добавляется уровень сигнала, если get_nTemp2 - +напряжение батарейки
+							if(strncmp(str, "nTemp", 5) == 0) // Функция get_nTemp,
+							// если радиодатчик: добавляется уровень сигнала, если get_nTemp2 - +напряжение батарейки и последнее время между передачами
 							{
 								strcat(strReturn, HP.sTemp[p].get_note());
 	#ifdef RADIO_SENSORS
@@ -2380,7 +2381,13 @@ x_get_aTemp:
 									i = HP.sTemp[p].get_radio_received_idx();
 									if(i >= 0) {
 										strReturn += m_snprintf(strReturn + strlen(strReturn), 20, " \xF0\x9F\x93\xB6%c", Radio_RSSI_to_Level(radio_received[i].RSSI));
-										uint8_t showV = str[5] == '2';
+										uint8_t showV;
+										if(str[5] == '2') {
+											strcat(strReturn, "(");
+											TimeIntervalToStr((radio_timecnt - radio_received[i].timecnt) * (uint16_t)(TIME_READ_SENSOR / 1000), strReturn);
+											strcat(strReturn, ")");
+											showV = 1;
+										} else showV = 0;
 										if(radio_received[i].battery <= RADIO_BAT_MIN_V) showV = 2;
 										if(showV) strReturn += m_snprintf(strReturn + m_strlen(strReturn), 20, ", %.1dV", radio_received[i].battery);
 										if(showV == 2) strcat(strReturn, "!");
