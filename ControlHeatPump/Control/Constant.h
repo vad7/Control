@@ -156,7 +156,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #elif RADIO_SENSORS_PORT == 3
 	#define RADIO_SENSORS_SERIAL	Serial3	// Аппаратный порт
 #endif
-#define RADIO_LOST_TIMEOUT	30*60*1000		// через сколько считать, что связь потеряна с датчиком, мсек
+#define RADIO_LOST_TIMEOUT	40*60*1000		// через сколько считать, что связь потеряна с датчиком, мсек
 #define RADIO_BAT_MIN_V		21				// Минимальное напряжение батарейки датчика, десятые V
 
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
