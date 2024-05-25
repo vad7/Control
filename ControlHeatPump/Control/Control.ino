@@ -1309,7 +1309,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 	#ifdef RSOLINV
 			if(HP.dRelay[RSOLINV].get_Relay()) { 	// Relay is ON
 #ifdef WR_INVERTOR2_SUN_OFF_WHEN_NO_WORK
-				if(!HP.is_compressor_on()) WR_Invertor2_off_cnt = 0;
+				if(HP.is_compressor_on()) WR_Invertor2_off_cnt = 0;
 #endif
 				if(WR_Invertor2_off_cnt > WR_INVERTOR2_SUN_OFF_TIMER || GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
 					HP.dRelay[RSOLINV].set_OFF();
