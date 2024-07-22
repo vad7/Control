@@ -1663,11 +1663,19 @@ void vReadSensor(void *)
 			} else temp = STARTTEMP;
 			int16_t temp2 = temp;
 			if(GETBIT(flags, fTEMP_as_TIN_min)) { // Выбор минимальной температуры для TIN
-				for(i = 0; i < TNUMBER; i++) {
-					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+				if(HP.get_modeHouse() == pCOOL) {
+					if(temp2 == STARTTEMP) temp2 = -STARTTEMP;
+					for(i = 0; i < TNUMBER; i++) {
+						if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 < HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+					}
+					if(temp2 != -STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
+				} else {
+					for(i = 0; i < TNUMBER; i++) {
+						if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+					}
+					if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 				}
-			}
-			if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
+			} else if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 		}
 
 		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
