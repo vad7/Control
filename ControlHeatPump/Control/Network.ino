@@ -795,29 +795,29 @@ xget_value_1:
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf(" Ret = %d\n", ret);
 	else if(ret < 0) {
 		if(Last_Error[fget_value] != (int8_t)(ret + 2000000000)) {
-			journal.jprintf_time("Error %d send request to %s!", Last_Error[fget_value] = ret + 2000000000, server);
+			journal.jprintf_time("Error %d GET %s ", Last_Error[fget_value] = ret + 2000000000, server);
 			switch (ret)
 			{
 			case -2000000001:
-				journal.jprintf(" Response timeout");
+				journal.jprintf("Timeout");
 				break;
 			case -2000000002:
-				journal.jprintf(" Address wrong");
+				journal.jprintf("Address wrong");
 				break;
 			case -2000000003:
-				journal.jprintf(" Connect fail, SnSR:%d", tTCP.status());
+				journal.jprintf("Connect fail, SnSR:%d", tTCP.status());
 				break;
 			case -2000000011:
-				journal.jprintf(" Send error");
+				journal.jprintf("Send error");
 				break;
 			case -2000000010:
-				journal.jprintf(" Empty response");
+				journal.jprintf("Empty response");
 				break;
 			case -2000000009:
-				journal.jprintf(" Response: %s", buffer);
+				journal.jprintf("Response: %s", buffer);
 				break;
 			case -2000000008:
-				journal.jprintf(" ERR %s", buffer);
+				journal.jprintf("ERR %s", buffer);
 				break;
 			}
 			journal.jprintf("\n");

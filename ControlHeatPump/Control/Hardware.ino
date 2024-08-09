@@ -564,14 +564,18 @@ int8_t devRelay::set_Relay(int8_t r)
 	#endif
 #endif
 		digitalWriteDirect(pin, r);
-	}
 #ifdef RELAY_WAIT_SWITCH
-	uint8_t tasks_suspended = TaskSuspendAll();
-	delay(RELAY_WAIT_SWITCH);
-	if(tasks_suspended) xTaskResumeAll();
+		uint8_t tasks_suspended = TaskSuspendAll();
+		delay(RELAY_WAIT_SWITCH);
+		if(tasks_suspended) xTaskResumeAll();
 #endif
-	if(Relay)	journal.jprintf_time("%X Rel:%s ON\n", __builtin_return_address(0), name);
-	else 		journal.jprintf_time("%X Rel:%s OFF\n", __builtin_return_address(0), name);
+		if(Relay)	journal.jprintf_time("RELAY %s ON\n", name);
+		else 		journal.jprintf_time("RELAY %s OFF\n", name);
+	} else {
+		journal.jprintf_time("%X RELAY ", __builtin_return_address(0));
+		if(Relay)	journal.jprintf("%s ON\n", name);
+		else 		journal.jprintf("%s OFF\n", name);
+	}
 	return OK;
 }
 

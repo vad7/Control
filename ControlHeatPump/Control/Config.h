@@ -5822,7 +5822,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WEB0_OTHER_JOB_PERIOD    	10000   		// Периодичность других функций внутри задачи WEB0, мс
 
 	#define WEATHER_FORECAST							// Корректировка ночного нагрева бойлера по прогнозу погоды
-	#define WF_ForecastHour				5				// Час, когда запрашивать прогноз
+	#define WF_ForecastHour				6				// Час, когда запрашивать прогноз
 	#define WF_ForecastAggregateHours	5				// За сколько часов брать среднее
 	#define WF_ForecastAfterSunrise		2*60*60 		// Через сколько времени после восхода смотреть прогноз, сек
 	#define WF_BOILER_MAX_CLOUDS		98				// Ниже этой облачности начинаем корректировать температуру бойлера, %
