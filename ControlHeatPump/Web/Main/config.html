@@ -7,8 +7,13 @@
 window.onload = function() {
 	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(ATTEMPT),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW),get_oHP(DSH)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH)");
 }; 
+function setTM(s) {
+	val = document.getElementById("get_ohp-" + s.toLowerCase()).value;
+	if(val[2] == ':') val = val.replace(":","").substr(0,3);
+	setParam("get_oHP(" + s + "=" + val + ")");
+}
 </script>
 </head>
 <body class="test">
@@ -216,6 +221,10 @@ window.onload = function() {
 		<tr>
 			<td><b>Внешние HTTP сервера</b></td>
 			<td></td>
+		</tr>
+		<tr>
+			<td>Время получения прогноза погоды</td>
+			<td nowrap><input id="get_ohp-wfh" type="text" size="6"><input type="submit" value=">" onclick="setTM('WFH')"></td>
 		</tr>
 		<tr>
 			<td>Имя или адрес сервера погоды, работающего на API openweathermap.org</td>

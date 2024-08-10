@@ -833,7 +833,7 @@ void HeatPump::resetSettingHP()
 	WR.LoadAdd = 150;
 	WR.LoadHist = 100;
 	WR.PWM_Freq = PWM_WRITE_OUT_FREQ_DEFAULT;
-	WR.WF_Hour = 5;
+	WR.WF_Time = 50;
 #endif
 
 }
@@ -1171,7 +1171,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var,option_WR_fAverage)==0)     { WR.Flags = (WR.Flags & ~(1<<WR_fAverage)) | ((n!=0)<<WR_fAverage); return true; }
 	else if(strcmp(var,option_WR_fMedianFilter)==0){ WR.Flags = (WR.Flags & ~(1<<WR_fMedianFilter)) | ((n!=0)<<WR_fMedianFilter); return true; }
 	else if(strcmp(var,option_WR_fPeriod_1sec)==0){ WR.Flags = (WR.Flags & ~(1<<WR_fPeriod_1sec)) | ((n!=0)<<WR_fPeriod_1sec); return true; }
-	else if(strcmp(var,option_WR_WF_Hour)==0)      { if(n >= 0 && n <= 23) { WR.WF_Hour = n; return true; } else return false; }
+	else if(strcmp(var,option_WR_WF_Time)==0)      { if(n >= 0 && n <= 235) { WR.WF_Time = n; return true; } else return false; }
 	else if(strcmp(var,option_WR_MinNetLoadSunDivider)==0){ WR.MinNetLoadSunDivider = n; return true; }
 	else if(strcmp(var,option_WR_DeltaUbatmin)==0){ WR.DeltaUbatmin = WR_MAP_Ubuf - rd(x, 10); return true; }
 	else if(strcmp(var,option_WR_PWM_Freq)==0)     {
@@ -1256,7 +1256,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_DELAY_DEFROST_OFF)==0){return _itoa(Option.delayDefrostOff,ret);}else   // ДЛЯ ВОЗДУШНОГО ТН Задержка перед выключением разморозки (секунды)
 	if(strcmp(var,option_DELAY_R4WAY)==0)      {return _itoa(Option.delayR4WAY,ret);}else        // Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
 	if(strcmp(var,option_DELAY_BOILER_SW)==0)  {return _itoa(Option.delayBoilerSW,ret);}else     // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
-	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);}        // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
+	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);} else   // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
 	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags,fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
 	if(strcmp(var, option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
 	if(strcmp(var,option_fBackupPowerInfo)==0) { // Работа от генератора
@@ -1325,7 +1325,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	else if(strcmp(var, option_WR_fAverage) == 0)  { if(GETBIT(WR.Flags, WR_fAverage)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_fMedianFilter) == 0){ if(GETBIT(WR.Flags, WR_fMedianFilter)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
 	else if(strcmp(var, option_WR_fPeriod_1sec) == 0){ if(GETBIT(WR.Flags, WR_fPeriod_1sec)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero); }
-	else if(strcmp(var, option_WR_WF_Hour) == 0)   { return _itoa(WR.WF_Hour, ret); }
+	else if(strcmp(var, option_WR_WF_Time) == 0)   { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", WR.WF_Time / 10, WR.WF_Time % 10); return ret; }
 	else if(strcmp(var, option_WR_MinNetLoadSunDivider) == 0){ return _itoa(WR.MinNetLoadSunDivider, ret); }
 	else if(strcmp(var, option_WR_DeltaUbatmin) == 0){ _dtoa(ret, WR_MAP_Ubuf - WR.DeltaUbatmin, 1); return ret; }
 #endif

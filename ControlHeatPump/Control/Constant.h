@@ -872,7 +872,7 @@ const char *option_WR_fPeriod_1sec	 	= {"W1"};
 const char *option_WR_PWM_Freq			= {"WF"};
 const char *option_WR_PWM_FullPowerTime = {"WFPT"};
 const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
-const char *option_WR_WF_Hour			= {"WFH"};
+const char *option_WR_WF_Time			= {"WFH"};
 const char *option_WR_MinNetLoadSunDivider={"WSD"};
 const char *option_WR_DeltaUbatmin		={"WB"};
 

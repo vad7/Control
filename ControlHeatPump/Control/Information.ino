@@ -1176,7 +1176,7 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 	if(strncmp(var, prof_DailySwitch, sizeof(prof_DailySwitch)-1) == 0) { // Дубль в WebServer.ino -> Функция get_tblPDS
 		var += sizeof(prof_DailySwitch)-1;
 		uint8_t i = *(var + 1) - '0';
-		if(i >= DAILY_SWITCH_MAX) return false;
+		if(i >= DAILY_SWITCH_MAX) return ret;
 		if(*var == prof_DailySwitchDevice) {
 			_itoa(DailySwitch[i].Device, ret);
 		} else if(*var == prof_DailySwitchState) { // get_Prof(DSO)

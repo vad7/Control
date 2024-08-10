@@ -185,7 +185,7 @@ struct {
 	uint16_t PWM_Freq;					// Гц
 	uint8_t  PWM_FullPowerTime;			// Время работы на максимальной мощности для PWM и время паузы после, 0 - выкл, минут
 	uint8_t  PWM_FullPowerLimit;		// Процент ограничения мощности после времени максимальной работы, %
-	uint8_t  WF_Hour;					// Час получения прогноза погоды
+	uint8_t  WF_Time;					// Время получения прогноза погоды, hh * 100 + mm / 10
 	uint8_t  MinNetLoadSunDivider;		// Увеличение минимальной мощности из сети в зависимости от выработки MPPT (MinNetLoad += SunPower / n)
 	uint8_t  MinNetLoadHyst;			// Гистерезис минимальной мощности из сети, если находимся в нем (MinNetLoad .. MinNetLoad-Hyst), то ничего не делаем с нагрузкой, Вт
 	int8_t   DeltaUbatmin;				// Разница Ubuf - Ubatmin, в этом диапазоне идет подкачка и определяется наличие свободного солнца, десятые V

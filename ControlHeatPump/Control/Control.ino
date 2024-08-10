@@ -1429,16 +1429,16 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 #ifdef WEATHER_FORECAST
 			if(active && rtcSAM3X8.get_days() != WF_Day) {
 				WF_BoilerTargetPercent = 100;
-				if(rtcSAM3X8.get_hours() == WR.WF_Hour && strlen(HP.Option.WF_ReqServer)) {
+				if(rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes() >= WR.WF_Time * 10 && strlen(HP.Option.WF_ReqServer)) {
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
-					if(err != 0) {
-						if((HP.get_NetworkFlags() & (1<<fWebFullLog)) || (rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 49)) {
+					if(err == OK) err = WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf);
+					if(err == OK) WF_Day = rtcSAM3X8.get_days();
+					else {
+						if(rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 59 - uint8_t(WEB0_OTHER_JOB_PERIOD / 1000)) {
 							journal.jprintf_time("WF: Request Error %d\n", err);
 							HP.message.setMessage(pMESSAGE_ERROR,(char*)"Ошибка получения прогноза погоды", err);
 						}
-					} else if(WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf) == OK) {
-						WF_Day = rtcSAM3X8.get_days();
 					}
 					active = false;
 				}

@@ -32,7 +32,7 @@ int WF_ProcessForecast(char *json)
 {
 	char *fld = strstr(json, WF_JSON_Sunrise);
 	if(!fld) {
-		/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: no data\n");
+		/*if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WF: no data\n");*/
 		WF_BoilerTargetPercent = 100;
 		return -2;
 	}
@@ -74,7 +74,7 @@ int WF_ProcessForecast(char *json)
 	if(i) {
 		if((avg_t /= i) > HP.Option.WF_MinTemp) {
 			avg_cl /= i;
-			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: Clouds(%d)=%d", i, avg_cl);
+			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf_time("WF: Clouds(%d)=%d", i, avg_cl);
 			if(avg_cl < 100) {
 				//avg = (avg - 66) * 3; // 66..99 -> 0..98
 				avg_cl = (avg_cl - 60) * 2; // 60..99 -> 0..98
@@ -85,12 +85,12 @@ int WF_ProcessForecast(char *json)
 			WF_BoilerTargetPercent = avg_cl;
 			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%, BoilerTrg=%.2d\n", avg_cl, HP.get_boilerTempTarget());
 		} else {
-			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: 100%, FeelTemp low: %d\n", avg_t);
+			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf_time("WF: 100%, FeelTemp low: %d\n", avg_t);
 			WF_BoilerTargetPercent = 100;
 		}
 		return OK;
 	}
-	/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf("WF: no data\n");
+	/*if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf_time("WF: no data\n");*/
 	WF_BoilerTargetPercent = 100;
 	return -1;
 }
