@@ -32,7 +32,7 @@ $(document).ready(function() {
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(TP)");
-	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS)");
+	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO)");
 };
 </script>
 </head>
@@ -138,6 +138,9 @@ window.onload = function() {
 	</tr><tr>
 		<td>Греть от генератора без ТЭНа</td>
 		<td><input type="checkbox" id="get_boiler-wg" onchange="setParam('get_Boiler(WG)');"></td>
+	</tr><tr>
+		<td>Задержка выключения насоса после выключения компрессора, сек.</td>
+		<td nowrap><input type="number" id="get_boiler-do"> <input type="submit" value=">" onclick="setParam('get_Boiler(DO)');"></td>
 	</tr><tr>
 		<td>Управление циркуляционным насосом ГВС<sup>7</sup></td>
 		<td><input type="checkbox" id="get_boiler-circ" onChange="setParam('get_Boiler(CIRC)');" ></td>

@@ -1798,7 +1798,10 @@ if(b && (get_modWork() & pBOILER)){
 		} else if(get_modeHouse() != pOFF && (!get_workPump() || get_pausePump())) {
 			journal.jprintf(" Delay: stop OUT pump.\n");
 			startPump = 4;
-			pump_in_pause_timer = onBoiler || error ? Option.delayOffPump : get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump : get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump;
+			pump_in_pause_timer = error ? Option.delayOffPump :
+				onBoiler ? Prof.Boiler.delayOffPump :
+				get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump :
+				get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump;
 			return;
 		}
 	} else {
@@ -2275,6 +2278,9 @@ boolean HeatPump::boilerAddHeat()
 			// ТЭН не используется (сняты все флажки)
 
 		} else if(GETBIT(Prof.Boiler.flags, fAddHeating) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
+#ifdef RPUMPBH	// насос бойлера
+		  if(!dRelay[RBOILER].get_Relay())  // Не включаем тэн во время работы насоса бойлера
+#endif
 			if(check_compressor_pause()) return true;
 		}
 	}

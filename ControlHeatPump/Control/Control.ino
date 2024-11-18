@@ -16,14 +16,8 @@
  * GNU General Public License for more details.
  */
 // Последние версии
-// https://github.com/pav2000/ControlHeatPump проект на гитхабе (рабочие сборки)
 // https://github.com/vad7/ControlHeatPump - последняя стабильная версия
-// http://77.50.254.24:25402/ последняя версия демо
-// http://77.50.254.24:25402/mob/index.html мобильная морда демо
 // Архивные ссылки
-// http://pumps.tk/webtn.zip  последняя вебморда
-// http://pumps.tk/v09/ демо версия (старая)
-// http://pumps.tk/v09/mob мобильная демо версия (старая)
 // https://github.com/vad7/Arduino-DUE-WireSam  библиотеки доработанные vad711 при релизе добавляются в архив
 
 #include "Arduino.h"
