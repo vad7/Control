@@ -2232,7 +2232,9 @@ void vServiceHP(void *)
 					uint8_t h = rtcSAM3X8.get_hours();
 					if(m == 0 && (h == 0 || h == TARIF_NIGHT_START || h == TARIF_NIGHT_END+1)) {
 						static float tmp;
-						if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK) journal.jprintf_time("ENERGY: %.3f\n", tmp);
+						if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK
+								|| Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
+							journal.jprintf_time("ENERGY: %.3f\n", tmp);
 					}
 #endif
 #ifdef RADIO_SENSORS
