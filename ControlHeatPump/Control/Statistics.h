@@ -111,6 +111,10 @@ Stats_Data Stats_data[] = {
 #ifdef WATTROUTER
 	,{ 0, STATS_OBJ_WattRouter_Excess, STATS_TYPE_MAX, STATS_WHEN_ALWAYS, 0 }
 #endif
+#ifdef USE_ELECTROMETER_SDM
+	,{ 0, STATS_OBJ_PowerDay, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
+	,{ 0, STATS_OBJ_PowerNight, STATS_TYPE_SUM, STATS_WHEN_ALWAYS, 0 }
+#endif
 };
 
 const char stats_file_start[] = "stats_";

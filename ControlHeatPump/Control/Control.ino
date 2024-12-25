@@ -2223,18 +2223,21 @@ void vServiceHP(void *)
 				if(m != task_updstat_countm) { 								// Через 1 минуту
 					task_updstat_countm = m;
 					STORE_DEBUG_INFO(73);
+					uint8_t h = rtcSAM3X8.get_hours();
+					TarifNightNow = h >= TARIF_NIGHT_START || h < TARIF_NIGHT_END;
 					HP.updateCount();                                       // Обновить счетчики моточасов
 					STORE_DEBUG_INFO(74);
 					if(task_updstat_countm == 59) HP.save_motoHour();		// сохранить раз в час
 					Stats.History();                                        // запись истории в файл
 					taskYIELD();
 #ifdef USE_ELECTROMETER_SDM
-					uint8_t h = rtcSAM3X8.get_hours();
-					if(m == 0 && (h == 0 || h == TARIF_NIGHT_START || h == TARIF_NIGHT_END+1)) {
-						static float tmp;
-						if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK
-								|| Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
-							journal.jprintf_time("ENERGY: %.3f\n", tmp);
+					if(GETBIT(HP.Option.flags2, f2LogEnergy)) {
+						if(m == 0 && (h == 0 || h == TARIF_NIGHT_START || h == TARIF_NIGHT_END)) {
+							static float tmp;
+							if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK
+									|| Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
+								journal.jprintf_time("ENERGY: %.3f\n", tmp);
+						}
 					}
 #endif
 #ifdef RADIO_SENSORS

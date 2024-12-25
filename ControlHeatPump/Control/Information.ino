@@ -1229,10 +1229,10 @@ int8_t Profile::check_DailySwitch(uint8_t idx, uint32_t hhmm)
 		if(st & 2) { // ночь
 			if(DailySwitch[idx].Device < RNUMBER) {
 				st = TARIF_NIGHT_START * 100 + 1;
-				end = TARIF_NIGHT_END * 100 + 59;
+				end = (TARIF_NIGHT_END-1) * 100 + 59;
 			} else { // HTTP relay
 				st = TARIF_NIGHT_START * 100 + 10;
-				end = TARIF_NIGHT_END * 100 + 50;
+				end = (TARIF_NIGHT_END-1) * 100 + 50;
 			}
 		} else goto xCheckTemp;
 	} else {

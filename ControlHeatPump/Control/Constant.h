@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.193"				// Версия прошивки
+#define VERSION			"1.194"				// Версия прошивки
 #define VER_SAVE		157					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -62,7 +62,7 @@ const char HEADER_BIN[] = "HP-SAVE-DATA";   // Заголовок (начало)
 #define TARIF_NIGHT_START 23				// Начальный час ночного тарифа электроэнергии
 #endif
 #ifndef TARIF_NIGHT_END
-#define TARIF_NIGHT_END   6					// Последний час ночного тарифа электроэнергии
+#define TARIF_NIGHT_END   7					// Ночной тариф электроэнергии заканчивается в
 #endif
 
 // СЕТЕВЫЕ НАСТРОЙКИ --------------------------------------------------------------
@@ -838,6 +838,7 @@ const char *option_f2NextionLog       ={"NL"};
 const char *option_f2AutoStartGenerator={"AG"};
 const char *option_f2modWorkLog       ={"MWL"};
 const char *option_f2RelayLog         ={"RL"};
+const char *option_f2LogEnergy        ={"LE"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
 const char *option_WF_MinTemp         = {"WMT"};

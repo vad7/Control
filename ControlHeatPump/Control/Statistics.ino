@@ -250,6 +250,8 @@ void Statistics::Init(uint8_t newyear)
 										Stats_data[i].value = val;
 										break;
 									case STATS_OBJ_Power:
+									case STATS_OBJ_PowerDay:
+									case STATS_OBJ_PowerNight:
 									case STATS_OBJ_Power_OUT:
 									case STATS_OBJ_Power_RBOILER:
 									case STATS_OBJ_Power_BOILER:
@@ -393,6 +395,7 @@ void Statistics::Update()
 	if(HP.is_compressor_on()) compressor_on_timer += tm; else compressor_on_timer = 0;
 	if(compressor_on_timer >= STATS_WORKD_TIME && !HP.dFC.isRetOilWork()) counts_work++;
 	counts++;
+	int32_t power_mWh = 0; // для оптимизации
 	for(uint8_t i = 0; i < sizeof(Stats_data) / sizeof(Stats_data[0]); i++) {
 		if(Stats_data[i].when == STATS_WHEN_WORKD && (compressor_on_timer < STATS_WORKD_TIME || HP.dFC.isRetOilWork())) continue;
 		//uint8_t skip_value = 0;
@@ -420,11 +423,17 @@ void Statistics::Update()
 			switch(Stats_data[i].type) {
 			case STATS_TYPE_SUM:
 			//case STATS_TYPE_AVG:
-				newval = newval * tm / 3600; // в мВтч
+				newval = power_mWh = newval * tm / 3600; // в мВтч
 				if(ptr) *ptr += newval; // для motoHour
 			}
 			break;
 		}
+		case STATS_OBJ_PowerDay:
+			if(!TarifNightNow) newval = power_mWh; // в мВтч
+			break;
+		case STATS_OBJ_PowerNight:
+			if(TarifNightNow) newval = power_mWh; // в мВтч
+			break;
 		case STATS_OBJ_Power_OUT: {
 			int32_t *ptr = &motohour_OUT_work;
 			newval = HP.powerOUT; // Вт
@@ -556,6 +565,8 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 				strcat(ret, "V");		// ось напряжение
 				break;
 			case STATS_OBJ_Power:
+			case STATS_OBJ_PowerDay:
+			case STATS_OBJ_PowerNight:
 			case STATS_OBJ_Power_OUT:
 			case STATS_OBJ_Power_GEO:
 			case STATS_OBJ_Power_FC:
@@ -616,6 +627,16 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 	case STATS_OBJ_Power:
 		if(flag) strcat(ret, "W"); // ось мощность
 		strcat(ret, "Потребление, кВт"); // хранится в Вт
+		if(Stats_data[i].type == STATS_TYPE_SUM) strcat(ret, "ч");
+		break;
+	case STATS_OBJ_PowerDay:
+		if(flag) strcat(ret, "W"); // ось мощность
+		strcat(ret, "Потребление днем, кВт"); // хранится в Вт
+		if(Stats_data[i].type == STATS_TYPE_SUM) strcat(ret, "ч");
+		break;
+	case STATS_OBJ_PowerNight:
+		if(flag) strcat(ret, "W"); // ось мощность
+		strcat(ret, "Потребление ночью, кВт"); // хранится в Вт
 		if(Stats_data[i].type == STATS_TYPE_SUM) strcat(ret, "ч");
 		break;
 	case STATS_OBJ_Power_GEO:
@@ -705,6 +726,8 @@ xSkipEmpty:
 		int_to_dec_str(val, 1, ret, 0);
 		break;
 	case STATS_OBJ_Power:					// кВт*ч
+	case STATS_OBJ_PowerDay:
+	case STATS_OBJ_PowerNight:
 	case STATS_OBJ_Power_OUT:
 	case STATS_OBJ_Power_RBOILER:
 	case STATS_OBJ_Power_BOILER:
