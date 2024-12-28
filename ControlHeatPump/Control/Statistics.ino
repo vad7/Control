@@ -429,10 +429,10 @@ void Statistics::Update()
 			break;
 		}
 		case STATS_OBJ_PowerDay:
-			if(!TarifNightNow) newval = power_mWh; // в мВтч
+			newval = TarifNightNow ? 0 : power_mWh;  // в мВтч
 			break;
 		case STATS_OBJ_PowerNight:
-			if(TarifNightNow) newval = power_mWh; // в мВтч
+			newval = TarifNightNow ? power_mWh : 0;  // в мВтч
 			break;
 		case STATS_OBJ_Power_OUT: {
 			int32_t *ptr = &motohour_OUT_work;
