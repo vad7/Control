@@ -5901,7 +5901,8 @@ const char *noteTemp[] = {"Температура улицы",
 		{ STATS_OBJ_Temp, TKITCHEN, noteTemp[TKITCHEN] },
 		{ STATS_OBJ_Temp, TFL2BEDR, noteTemp[TFL2BEDR] },
 		{ STATS_OBJ_Temp, TFL2TV, noteTemp[TFL2TV] },
-		{ STATS_OBJ_WattRouter_Out, 0, "Ваттроутер, кВт/ч"} // в кВт, НЕ кВт*ч!
+		{ STATS_OBJ_WattRouter_Out, 0, "Ваттроутер, кВт/ч"}, // в кВт, НЕ кВт*ч!
+		{ STATS_OBJ_Power_RBOILER, 0, "Тэн бойлера, кВт" }
 	};
 
 
