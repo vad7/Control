@@ -1622,6 +1622,8 @@ void vReadSensor(void *)
 
 		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
 
+		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
+
 		if(OW_scan_flags == 0) {
 			uint8_t flags = 0;
 			for(i = 0; i < TNUMBER; i++) {                                   // Прочитать данные с температурных датчиков
@@ -1672,7 +1674,6 @@ void vReadSensor(void *)
 			} else if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 		}
 
-		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 		HP.dSDM.get_readState(0); // Основная группа регистров
 #endif
@@ -1760,6 +1761,10 @@ void vReadSensor(void *)
 void vReadSensor_delay1ms(int32_t ms)
 {
 	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) return;
+	if(ms <= 2) {
+		vTaskDelay(ms);
+		return;
+	}
 	uint32_t tm = GetTickCount();
 	do {
 #ifdef  KEY_ON_OFF // Если надо проверяем кнопку включения ТН
