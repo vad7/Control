@@ -122,19 +122,19 @@ uint32_t DailySwitch_on = 0;		// Битовый массив включенны�
 #define  WR_fPeriod_1sec		6				// Период работы 1 сек, иначе TIME_READ_SENSOR
 #define  WR_fLoadMask			((1<<WR_NumLoads)-1) // для WR_Refresh
 #define  WR_fTYPE				uint8_t
-int16_t  WR_Pnet = -32768;
+int32_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus
 	#ifdef WR_PowerMeter_DDS238
-volatile int16_t WR_PowerMeter_Power = 0;		// W
+volatile int32_t WR_PowerMeter_Power = 0;		// W
 	#else
 volatile int32_t WR_PowerMeter_Power = 0;		// W
 	#endif
 volatile uint8_t WR_Error_Read_PowerMeter = 0;
 #endif
 #if WR_PNET_AVERAGE == 1
-int16_t  WR_Pnet_avg;
+int32_t  WR_Pnet_avg;
 #elif WR_PNET_AVERAGE > 1
-int16_t  WR_Pnet_avg[WR_PNET_AVERAGE];
+int32_t  WR_Pnet_avg[WR_PNET_AVERAGE];
 uint8_t  WR_Pnet_avg_idx = 0;
 int32_t  WR_Pnet_avg_sum = 0;
 #endif

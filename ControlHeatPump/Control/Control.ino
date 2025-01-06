@@ -991,9 +991,9 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 
 #ifdef WR_CurrentSensor_4_20mA
 					HP.sADC[IWR].Read();
-					int pnet = HP.sADC[IWR].get_Value() * HP.dSDM.get_voltage();
+					int32_t pnet = HP.sADC[IWR].get_Value() * HP.dSDM.get_voltage();
 #elif WR_PowerMeter_Modbus
-					int pnet = WR_PowerMeter_Power; //round_div_int32(WR_PowerMeter_Power, 10);
+					int32_t pnet = WR_PowerMeter_Power; //round_div_int32(WR_PowerMeter_Power, 10);
 					if(pnet == -1) break; // Ошибка
 #else
 					// HTTP power meter
@@ -1311,7 +1311,8 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 				} else if(WR_LastSunPowerOut <= 10 || rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR) WR_Invertor2_off_cnt++;
 				else if(WR_Invertor2_off_cnt) WR_Invertor2_off_cnt--;
 			} else { 								// Relay is OFF
-				if(WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON && WR_LastSunPowerOut > WR_Pnet && !GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
+				if(WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON && WR_Pnet > 0 && WR_LastSunPowerOut > WR_Pnet && !GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
+					if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Sun=%d, Net=%d\n", WR_LastSunPowerOut, WR_Pnet);
 					HP.dRelay[RSOLINV].set_ON();
 					WR_Invertor2_off_cnt = 0;
 				}

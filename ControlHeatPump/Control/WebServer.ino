@@ -1214,8 +1214,8 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"UART_SPEED|Скорость отладочного порта (бод)|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"WDT_TIME|Период сторожевого таймера, 0 - нет (сек)|");_itoa(WDT_TIME,strReturn);strcat(strReturn,";");
 			// Карта
-			m_snprintf(strReturn + strlen(strReturn), 128, "SD_FAT_VERSION|Версия библиотеки SdFat|%s;", SD_FAT_VERSION);
-			m_snprintf(strReturn + strlen(strReturn), 128, "USE_SD_CRC|SD - Использовать проверку CRC|%c;", USE_SD_CRC ? '0'+USE_SD_CRC : USE_SD_CRC_FOR_WRITE ? 'W' : '-');
+			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "SD_FAT_VERSION|Версия библиотеки SdFat|%s;", SD_FAT_VERSION);
+			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "USE_SD_CRC|SD - Использовать проверку CRC|%c;", USE_SD_CRC ? '0'+USE_SD_CRC : USE_SD_CRC_FOR_WRITE ? 'W' : '-');
 			strcat(strReturn,"SD_REPEAT|SD - Число попыток чтения, при неудаче переход на работу без карты|");_itoa(SD_REPEAT,strReturn);strcat(strReturn,";");
 
 			// W5200
@@ -1355,10 +1355,10 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				strcat(strReturn,"Контроль за работой драйвера ЭРВ |");
 				if (digitalReadDirect(PIN_STEP_DIAG))  strcat(strReturn,"Error L9333;"); else strcat(strReturn,"Normal;");
 	#endif
-				m_snprintf(strReturn+strlen(strReturn), 256, "Состояние FreeRTOS при старте (task+err_code) <sup>2</sup>|0x%04X;", lastErrorFreeRtosCode);
+				strReturn+=m_snprintf(strReturn+=strlen(strReturn), 256, "Состояние FreeRTOS при старте (task+err_code) <sup>2</sup>|0x%04X;", lastErrorFreeRtosCode);
 
 				startSupcStatusReg |= SUPC->SUPC_SR;                                  // Копим изменения
-				m_snprintf(strReturn += strlen(strReturn), 256, "Регистры контроллера питания (SUPC) SAM3X8E [SUPC_SMMR SUPC_MR SUPC_SR]|0x%08X %08X %08X", SUPC->SUPC_SMMR, SUPC->SUPC_MR, startSupcStatusReg);  // Регистры состояния контроллера питания
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Регистры контроллера питания (SUPC) SAM3X8E [SUPC_SMMR SUPC_MR SUPC_SR]|0x%08X %08X %08X", SUPC->SUPC_SMMR, SUPC->SUPC_MR, startSupcStatusReg);  // Регистры состояния контроллера питания
 				if((startSupcStatusReg|SUPC_SR_SMS)==SUPC_SR_SMS_PRESENT) strcat(strReturn," bad VDDIN!");
 				strcat(strReturn,";");
 
@@ -1572,7 +1572,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #ifdef CORRECT_POWER220
 			} else if(strcmp(str,"PwrC")==0) {    // Функция get_tblPwrC
 				for(i = 0; i < (int8_t)(sizeof(correct_power220)/sizeof(correct_power220[0])); i++) {
-					m_snprintf(strReturn + m_strlen(strReturn), 64, "%s;%d;", HP.dRelay[correct_power220[i].num].get_name(), correct_power220[i].value);
+					strReturn += m_snprintf(strReturn += m_strlen(strReturn), 64, "%s;%d;", HP.dRelay[correct_power220[i].num].get_name(), correct_power220[i].value);
 				}
 #endif
 #ifdef WATTROUTER
@@ -2542,7 +2542,7 @@ x_get_aTemp:
 							if(p == WR_Load_pins_Boiler_INDEX) strcat(strReturn, "(B)");
 #endif
 #ifdef WR_Boiler_Substitution_INDEX
-							if(p == WR_Boiler_Substitution_INDEX) m_snprintf(strReturn + strlen(strReturn), 20, "(D%d)", PIN_WR_Boiler_Substitution);
+							if(p == WR_Boiler_Substitution_INDEX) m_snprintf(strReturn += strlen(strReturn), 20, "(D%d)", PIN_WR_Boiler_Substitution);
 #endif
 						} else if(*str == 'C') { // get_WRC(n)
 							if(GETBIT(WR.PWM_Loads, p))	{
@@ -2624,8 +2624,15 @@ xget_WR:
 								ADD_WEBDELIM(strReturn) ;    continue;
 							}
 							if(strncmp(str, "nR", 2)==0)           // Функция get_nRelay (note)
-							{ strcat(strReturn,HP.dRelay[p].get_note()); ADD_WEBDELIM(strReturn); continue; }
-
+							{
+								strcat(strReturn,HP.dRelay[p].get_note());
+#ifdef RSOLINV
+								if(p == RSOLINV && HP.dRelay[p].get_Relay()) {
+									strReturn += m_snprintf(strReturn += strlen(strReturn), 64, " (%dc)", (int)WR_INVERTOR2_SUN_OFF_TIMER - WR_Invertor2_off_cnt);
+								}
+#endif
+								ADD_WEBDELIM(strReturn); continue;
+							}
 							if(strncmp(str, "pin", 3)==0)           // Функция get_pinRelay
 							{ strcat(strReturn,"D"); _itoa(HP.dRelay[p].get_pinD(),strReturn); ADD_WEBDELIM(strReturn); continue; }
 
@@ -2673,7 +2680,7 @@ xget_WR:
 									_dtoa(strReturn, HP.sADC[p].get_Value(), 2);
 	#ifdef EEV_DEF
 									if(p < 2) {
-										m_snprintf(strReturn + m_strlen(strReturn), 20, " [%.2d°]", PressToTemp(p));
+										m_snprintf(strReturn += m_strlen(strReturn), 20, " [%.2d°]", PressToTemp(p));
 									}
 	#endif
 								} else strcat(strReturn,"-");             // Датчика нет ставим прочерк
