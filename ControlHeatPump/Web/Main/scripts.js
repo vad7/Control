@@ -1,5 +1,5 @@
-// Copyright (c) 2016-2024 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.194";
+// Copyright (c) 2016-2025 by Vadim Kulakov vad7@yahoo.com, vad711
+var VER_WEB = "1.195";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
@@ -570,8 +570,9 @@ function loadParam(paramid, noretry, resultdiv) {
 												upsens += "get_WRL(" + j + "),get_WRT(" + j + "),";
 												content += '<tr><td>' + (j+1) + '</td><td><input type="checkbox" id="get_ohp-wl' + j + '" onchange="setParam(\'get_oHP(WL' + j + ')\')"></td>';
 												content += '<td><input type="checkbox" id="get_ohp-wp' + j + '" onchange="setParam(\'get_oHP(WP' + j + ')\')" disabled></td>';
-												content += '<td nowrap><input id="get_ohp-wr' + j + '" type="number"><input type="submit" value=">" onclick="setParam(\'get_oHP(WR' + j + ')\')"></td>';
-												content += '<td nowrap><input id="get_wrl-' + j + '" type="number"><input type="submit" value=">" onclick="setParam(\'get_WRL(' + j + ')\')"></td>';
+												content += '<td nowrap><input id="get_ohp-wr' + j + '" type="number">';
+												if(Settings) content += '<input type="submit" value=">" onclick="setParam(\'get_oHP(WR' + j + ')\')">';
+												content += '</td><td nowrap><input id="get_wrl-' + j + '" type="number"><input type="submit" value=">" onclick="setParam(\'get_WRL(' + j + ')\')"></td>';
                                                 content += '<td id="get_wrt-' + j + '"></td><td id="get_wrn-' + j + '"></td></tr>';
 											}
 											document.getElementById(valueid).innerHTML = content;
