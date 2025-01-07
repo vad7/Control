@@ -1306,7 +1306,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 				if(HP.is_compressor_on()) WR_Invertor2_off_cnt = 0;
 #endif
 				if(WR_Invertor2_off_cnt > WR_INVERTOR2_SUN_OFF_TIMER || GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
-					HP.dRelay[RSOLINV].set_OFF();
+					HP.dRelay[RSOLINV].set_Relay(fR_StatusAllOff);
 					WR_Invertor2_off_cnt = 0;
 				} else if(WR_LastSunPowerOut <= 10 || rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR) WR_Invertor2_off_cnt++;
 				else if(WR_Invertor2_off_cnt) WR_Invertor2_off_cnt--;
