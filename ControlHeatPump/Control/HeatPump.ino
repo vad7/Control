@@ -846,10 +846,10 @@ void HeatPump::resetSettingHP()
 boolean HeatPump::set_network(char *var, char *c)
 { 
  int32_t x = atoi(c);
- if(strcmp(var,net_IP)==0){          return parseIPAddress(c, '.', Network.ip);                 }else  
- if(strcmp(var,net_DNS)==0){        return parseIPAddress(c, '.', Network.sdns);               }else
- if(strcmp(var,net_GATEWAY)==0){     return parseIPAddress(c, '.', Network.gateway);            }else                
- if(strcmp(var,net_SUBNET)==0){      return parseIPAddress(c, '.', Network.subnet);             }else  
+ if(strcmp(var,net_IP)==0){          return parseIPAddress(c, Network.ip);                 }else
+ if(strcmp(var,net_DNS)==0){        return parseIPAddress(c, Network.sdns);               }else
+ if(strcmp(var,net_GATEWAY)==0){     return parseIPAddress(c, Network.gateway);            }else
+ if(strcmp(var,net_SUBNET)==0){      return parseIPAddress(c, Network.subnet);             }else
  if(strcmp(var,net_DHCP)==0){        if (strcmp(c,cZero)==0) { SETBIT0(Network.flags,fDHCP); return true;}
                                     else if (strcmp(c,cOne)==0) { SETBIT1(Network.flags,fDHCP);  return true;}
                                     else return false;  

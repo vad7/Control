@@ -293,7 +293,7 @@ uint8_t check_address(char *adr, IPAddress &ip)
 	DNSClient dns;
 	int8_t ret = 0;
 	// 1. Попытка преобразовать строку в IP (цифры, нам повезло DNS не нужен)
-	if(parseIPAddress(adr, '.', tempIP)) {
+	if(parseIPAddress(adr, tempIP)) {
 		ip = tempIP;
 		return 1;
 	} // Удачно выходим
@@ -302,14 +302,16 @@ uint8_t check_address(char *adr, IPAddress &ip)
 	ret = dns.getHostByName(adr, tempIP, W5200_SOCK_SYS); // adr должен быть в ОЗУ!
 	if(ret == 1) { // Адрес получен
 		SETBIT0(Logflags, fLog_DNS_Lookup);
-		if(xTaskGetSchedulerState() != taskSCHEDULER_RUNNING)
+		if(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
 			journal.jprintf(" Resolved %s using %s as %d.%d.%d.%d\n", adr, dns.get_protocol() ? "TCP" : "UDP", tempIP[0], tempIP[1], tempIP[2], tempIP[3]);
+		}
 		ip = tempIP;
 		return 2;
 	} else {
-		if(((HP.get_NetworkFlags() & (1<<fWebLogError)) && !GETBIT(Logflags, fLog_DNS_Lookup)) || xTaskGetSchedulerState() != taskSCHEDULER_RUNNING)
+		if(((HP.get_NetworkFlags() & (1<<fWebLogError)) && !GETBIT(Logflags, fLog_DNS_Lookup)) || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
 			SETBIT1(Logflags, fLog_DNS_Lookup);
 			journal.jprintf(" DNS lookup %s using %s failed! Code: %d\n", adr, dns.get_protocol() ? "TCP" : "UDP", ret);
+		}
 		ip = tempIP;
 		return 0;
 	}

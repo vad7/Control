@@ -94,24 +94,26 @@ boolean parseInt16_t(const char* str, char sep, int16_t* ints, int maxNum, int b
 }
 
 // Разбор строки в IP адрес, если удачно то возвращает true, если не удачно то возвращает false и адрес не меняет
-boolean parseIPAddress(const char* str, char sep, IPAddress &ip)
-{   int i,x;
-    char y;
-    byte tmp[4];
-    for (i = 0; i < 4; i++) 
-        {
-        y=str[0];  
-        x= strtoul(str, NULL, 10);             // Convert byte
-        if (x>255) return false;               // Значение байта не верно
-        if ((x==0)&&(y!='0')) return false;    // Значение байта не верно
-        tmp[i]=x;
-        str = strchr(str, sep);               // Find next separator
-        if (str == NULL || *str == '\0') {
-            break;                            // No more separators, exit
-        }
-        str++;                                // Point to next character after separator
-    }
- if (i<4-1) return false; else { ip=tmp;return true; }  
+boolean parseIPAddress(const char *str, IPAddress &ip)
+{
+	int i, x;
+	char y;
+	byte tmp[4];
+	for(i = 0; i < 4; i++) {
+		y = str[0];
+		x = strtoul(str, NULL, 10);             // Convert byte
+		if(x > 255) return false;               // Значение байта не верно
+		if((x == 0) && (y != '0')) return false;    // Значение байта не верно
+		tmp[i] = x;
+		str = strchr(str, '.');               // Find next separator
+		if(str == NULL) break;                // No more separators, exit
+		str++;                                // Point to next character after separator
+	}
+	if(i < 4 - 1) return false;
+	else {
+		ip = tmp;
+		return true;
+	}
 }
 
 // Замена символа в строке
