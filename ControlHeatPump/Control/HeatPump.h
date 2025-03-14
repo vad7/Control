@@ -219,6 +219,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_SunReady			3			// Солнечный коллектор открыт
 #define fHP_SunWork 			4			// Солнечный коллектор работает
 #define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания, если SGENERATOR == ALARM
+#define fHP_HeaterOn			6			// Идет работа котла
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define f_reserved_1			0				//
@@ -367,7 +368,7 @@ public:
 	__attribute__((always_inline)) inline int8_t get_ret()          {return Status.ret;}      // (переменная) Точка выхода из алгоритма регулирования (причина (условие) нахождения в текущем положении modWork)
 
 	__attribute__((always_inline)) inline  MODE_HP get_modeHouse()   {return Prof.SaveON.mode;}// (настройка) Получить режим работы ДОМА (охлаждение/отопление/выключено) ЭТО НАСТРОЙКА через веб морду!
-	inline  type_settingHP *get_modeHouseSettings() {return Prof.SaveON.mode == pCOOL ? &Prof.Cool : &Prof.Heat; } // Настройки для режима отопление или охлаждение
+	//inline  type_settingHP *get_modeHouseSettings() {return Prof.SaveON.mode == pCOOL ? &Prof.Cool : &Prof.Heat; } // Настройки для режима отопление или охлаждение
 	void set_mode(MODE_HP b) {Prof.SaveON.mode=b;}           // Установить режим работы отопления
 	void set_nextMode();                                     // Переключение на следующий режим работы отопления (последовательный перебор режимов)
 
@@ -404,6 +405,7 @@ public:
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
+	inline boolean is_heater_on() { return GETBIT(flags, fHP_SunWork) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
 	void 	relayAllOFF();              // Все реле выключить
 	void	HandleNoPower(void);		// Обработать пропадание питания
 
@@ -509,15 +511,16 @@ public:
 	void    getTargetTempStr2(char *rstr);					// Целевая температура в строку, 2 знака после запятой
 	int16_t setTargetTemp(int16_t dt);                      // ИЗМЕНИТЬ целевую температуру
 	int16_t setTempTargetBoiler(int16_t dt);                // ИЗМЕНИТЬ целевую температуру бойлера
-	int16_t CalcTargetPID(type_settingHP &settings);			// Рассчитать подачу для PID
+	int16_t CalcTargetPID_Heat();							// Рассчитать подачу для PID нагрева
+	int16_t CalcTargetPID_Cool();							// Рассчитать подачу для PID охлаждения
 	boolean scheduleBoiler();                               // Проверить расписание бойлера true - нужно греть false - греть не надо
 
 // Опции ТН
-	uint16_t get_pausePump() {return Prof.Heat.pausePump;};                // Время паузы  насоса при выключенном компрессоре, секунды
-	uint16_t get_workPump() {return Prof.Heat.workPump;};                  // Время работы  насоса при выключенном компрессоре, секунды
-	void     pump_in_pause_set(bool ONOFF);								// Переключение насосов при выключенном компрессоре
-	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);};           // подача звуковых сигналов
-	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}        // получить флаг записи состояния
+	uint16_t get_pausePump() { return Status.modWork & pCOOL ? Prof.Cool.pausePump : Prof.Heat.pausePump; }// Время паузы  насоса при выключенном компрессоре, секунды
+	uint16_t get_workPump() { return Status.modWork & pCOOL ? Prof.Cool.workPump : Prof.Heat.workPump; }  // Время работы  насоса при выключенном компрессоре, секунды
+	void     pump_in_pause_set(bool ONOFF);					// Переключение насосов при выключенном компрессоре
+	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);}    // подача звуковых сигналов
+	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}// получить флаг записи состояния
 	uint8_t  get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске
 	boolean  set_WebStoreOnSPIFlash(boolean f) {if(f)SETBIT1(Option.flags,fWebStoreOnSPIFlash);else SETBIT0(Option.flags,fWebStoreOnSPIFlash);return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// установить флаг хранения веб морды на флеш диске
 	uint16_t get_maxBackupPower() {return Option.maxBackupPower;};      // Максимальная мощность при питании от генератора (Вт)

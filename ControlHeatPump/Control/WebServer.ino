@@ -940,9 +940,9 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			if(HP.get_modeHouse() == pOFF) strcat(strReturn, "-");
 			else {
 				HP.getTargetTempStr2(strReturn + m_strlen(strReturn));
-				if(HP.get_modeHouseSettings()->Rule != pHYSTERESIS && str[8] != '(') {
+				if((HP.get_modeHouse() & pCOOL ? HP.get_ruleCool() : HP.get_ruleHeat()) != pHYSTERESIS && str[8] != '(') {
 					strcat(strReturn, " / ");
-					strReturn = dptoa(strReturn + m_strlen(strReturn), HP.CalcTargetPID(*HP.get_modeHouseSettings()), 2);
+					strReturn = dptoa(strReturn + m_strlen(strReturn), HP.get_modeHouse() & pCOOL ? HP.CalcTargetPID_Cool() : HP.CalcTargetPID_Heat(), 2);
 					//*--strReturn = '\0';
 				}
 			}
@@ -2079,14 +2079,8 @@ xGetOptionHP:
 			{
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
 					if(HP.Prof.set_paramCoolHP(x,pm)) {
-xset_Cool_get:			HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
+						HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
 					} else  strcat(strReturn,"E16") ; // ошибка преобразования строки
-				} else if(strcmp(x, option_HeatTargetScheduler) == 0) {
-					z[24] = '\0';
-					HP.Prof.Cool.HeatTargetSchedulerL = 0; HP.Prof.Cool.HeatTargetSchedulerH = 0;
-					for(i = 0; i < 16; i++) if(*z++ == '1') HP.Prof.Cool.HeatTargetSchedulerL |= (1<<i);
-					for(i = 0; i < 8; i++) if(*z++ == '1') HP.Prof.Cool.HeatTargetSchedulerH |= (1<<i);
-					goto xset_Cool_get;
 				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"get_Heat")==0)           // Функция get_paramHeatHP - получить значение параметра отопления ТН

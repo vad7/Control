@@ -197,7 +197,9 @@ void setup() {
 	pinMode(PIN_SPI_SS1,INPUT_PULLUP);          // SD Pin  87
 	pinMode(PIN_SPI_CS_SD,INPUT_PULLUP);        // сигнал CS управление SD картой
 	pinMode(PIN_SPI_CS_W5XXX,INPUT_PULLUP);     // сигнал CS управление сетевым чипом
-
+#ifdef USE_SERIAL4
+	PIO_Configure(PIOB,	PIO_PERIPH_A, PIO_PB20A_TXD2 | PIO_PB21A_RXD2, PIO_DEFAULT);	// Отключаются: A11(AD13)/D65 и D52(AD14)
+#endif
 #ifdef SPI_FLASH
 	pinMode(PIN_SPI_CS_FLASH,INPUT_PULLUP);     // сигнал CS управление чипом флеш памяти
 	pinMode(PIN_SPI_CS_FLASH,OUTPUT);           // сигнал CS управление чипом флеш памяти

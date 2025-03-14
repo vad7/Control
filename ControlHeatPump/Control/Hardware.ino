@@ -1903,16 +1903,21 @@ static inline void postTransmission() {
 // Инициализация Modbus без проверки связи связи
 int8_t devModbus::initModbus()    
      {
-#ifdef MODBUS_PORT_NUM
-        flags=0x00;
-        SETBIT1(flags,fModbus);                                                      // модбас присутствует
+    flags=0x00;
+#if defined(MODBUS_PORT_NUM) || defined(USE_HEATER)
 	#ifdef PIN_MODBUS_RSE
         pinMode(PIN_MODBUS_RSE , OUTPUT);                                            // Подготовка управлением полудуплексом
         digitalWriteDirect(PIN_MODBUS_RSE , LOW);
 	#endif
-        MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED,MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
+#ifdef MODBUS_PORT_NUM
+        MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED, MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
         //MODBUS_PORT_NUM.setInterruptPriority(1);
+#endif
+#ifdef USE_HEATER
+        HEATER_MODBUS_PORT.begin(HEATER_MODBUS_SPEED, HEATER_MODBUS_CONFIG);
+#else
         RS485.begin(1, MODBUS_PORT_NUM);                                              // Привязать к сериал
+#endif
         RS485.ModbusMinTimeBetweenTransaction = MODBUS_MIN_TIME_BETWEEN_TRNS;
         RS485.ModbusResponseTimeout = MODBUS_TIMEOUT;
         // Назначение функций обратного вызова
@@ -1921,10 +1926,10 @@ int8_t devModbus::initModbus()
         RS485.postTransmission(postTransmission);
 #endif
         RS485.idle(idle);
+        SETBIT1(flags,fModbus);                                                      // модбас присутствует
         err=OK;                                                                      // Связь есть
 #else
-        flags=0x00;
-        SETBIT0(flags,fModbus);                                                     // модбас отсутвует
+        // модбас отсутвует
         err=ERR_NO_MODBUS;
 #endif
         return err;                                                                 
@@ -1940,7 +1945,11 @@ int8_t devModbus::readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret)
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readInputRegisters(cmd, 2);                                               // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		err = OK;
@@ -1962,7 +1971,11 @@ int8_t devModbus::readInputRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret)
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readInputRegisters(cmd, 1);
 	if(result == RS485.ku8MBSuccess) {
 		*ret = RS485.getResponseBuffer(0);
@@ -1983,7 +1996,11 @@ int8_t devModbus::readInputRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret)
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readInputRegisters(cmd, 2);
 	if(result == RS485.ku8MBSuccess) {
 		*ret = (RS485.getResponseBuffer(1) << 16) | RS485.getResponseBuffer(0);
@@ -2004,7 +2021,11 @@ int8_t devModbus::readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readHoldingRegisters(cmd, 1);                                                   // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		*ret = RS485.getResponseBuffer(0);
@@ -2026,7 +2047,11 @@ int8_t devModbus::readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readHoldingRegisters(cmd, 2);                                             // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		*ret = (RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);
@@ -2048,7 +2073,11 @@ int8_t devModbus::readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readHoldingRegisters(cmd, 2);                                             // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		err = OK;
@@ -2071,7 +2100,11 @@ int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.readHoldingRegisters(cmd, num);                                           // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		for(int16_t i = 0; i < num; i++)
@@ -2096,7 +2129,11 @@ uint8_t result;
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	result = RS485.readCoils(cmd, 1);                                  // послать запрос, Нумерация регистров с НУЛЯ!!!!
 	if(result == RS485.ku8MBSuccess) {
 		err = OK;
@@ -2122,7 +2159,11 @@ int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	result = RS485.writeSingleCoil(cmd, u8State);                                         // послать запрос,
 	if(result == RS485.ku8MBSuccess) {
 		err = OK;
@@ -2144,12 +2185,14 @@ int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t dat
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
-
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	uint8_t result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
 	SemaphoreGive (xModbusSemaphore);
 	return err = translateErr(result);
-
 }
 
 // Записать 2 регистра подряд возвращает код ошибки
@@ -2162,7 +2205,11 @@ int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t dat
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	RS485.setTransmitBuffer(0, data >> 16);
 	RS485.setTransmitBuffer(1, data & 0xFFFF);
 	result = RS485.writeMultipleRegisters(cmd, 2);                                                 // послать запрос,
@@ -2184,15 +2231,17 @@ int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
-
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
 	RS485.set_slave(id);
+#endif
 	RS485.setTransmitBuffer(0, float_map.i[1]);
 	RS485.setTransmitBuffer(1, float_map.i[0]);
 	result = RS485.writeMultipleRegisters(cmd, 2);
 	//   result = RS485.writeSingleRegister(cmd,dat);                                               // послать запрос,
 	SemaphoreGive (xModbusSemaphore);
 	return err = translateErr(result);
-
 }
 
 // Тестирование связи возвращает код ошибки
@@ -2201,7 +2250,11 @@ int8_t devModbus::LinkTestOmronMX2()
 {
   uint16_t result, ret;
   err=OK;
-  RS485.set_slave(FC_MODBUS_ADR);
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
+	RS485.set_slave(id);
+#endif
   result = RS485.LinkTestOmronMX2Only(TEST_NUMBER);                                              // Послать команду проверки связи
   if (result == RS485.ku8MBSuccess) ret=RS485.getResponseBuffer(0);                              // Получить данные с ответа
   else return err=ERR_485_INIT;                                                                  // Ошибка инициализации

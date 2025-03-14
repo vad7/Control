@@ -5024,6 +5024,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// Danfoss HLP068T4LC6, Vacon 10 (VACON0020-3L-0012-4), ПТО: B3-052-46-HQ, РТО: HE 4.0, ЭРВ: ETS 6-25
 	// Геоконтур: 6x50м ПНД50/ПП20 коаксил, Солнечный Коллектор: 6х50м ПНД 20.
 	#define HP_SCHEME     3			// Номер схемы который выводится на морде, подмена файлов plan[HPscheme].png -> plan1.png
+	#define USE_HEATER				// Есть второй котел (электро или газовый)
 	#define UART_SPEED    250000	// Скорость отладочного порта
 	#define KEY_ON_OFF				// + KEY1 Наличие кнопки включения и переключения в safeNetwork (нажата при сбросе)
 	#define SPI_FLASH				// + Наличие чипа флеш памяти на шине SPI
@@ -5079,8 +5080,6 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RADIO_SENSORS_PORT		2				// Номер Serial
 	#define RADIO_SENSORS_PSPEED	115200			// Скорость порта
 	#define RADIO_SENSORS_PCONFIG	SERIAL_8N1		// Конфигурация порта
-
-	//#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D62(TXD2)
 
 	#ifdef TEST_BOARD
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
@@ -5152,13 +5151,22 @@ const char *noteTemp[] = {"Температура улицы",
 	// ЖЕЛЕЗО  - привязка к ногам контроллера  В зависимости от конкретной схемы и платы
 	// Для каждой конфигурации теперь свои определения!!!
 	// --------------------------------------------------------------------------------
+	#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D65(TXD2)
+	#ifdef USE_HEATER
+		#define HEATER_MODBUS_ID		10
+		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
+		#define HEATER_MODBUS_SPEED		19200
+		#define HEATER_MODBUS_CONFIG	SERIAL_8N1
+		#define MODBUS_HEATER_GE		HEATER_MODBUS_ID	// Переключение портов - если больше или равно, то HEATER_MODBUS_PORT иначе MODBUS_PORT_NUM
+	#endif
+
 	// Конфигурирование Modbus для инвертора и счетчика SDM
 	#define MODBUS_PORT_NUM	        Serial3     // Аппаратный порт куда прицеплен Modbus
 	#define MODBUS_PORT_SPEED       9600        // Скорость порта куда прицеплен частотник и счетчик
 	#define MODBUS_PORT_CONFIG      SERIAL_8N1  // Конфигурация порта куда прицеплен частотник и счетчик
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
-	#define MODBUS_TIMEOUT			50			// Таймаут ожидания ответа, мсек
-	#define MODBUS_MIN_TIME_BETWEEN_TRNS 15		// Минимальная пауза между транзакциями, мсек
+	#define MODBUS_TIMEOUT			80			// Таймаут ожидания ответа, мсек
+	#define MODBUS_MIN_TIME_BETWEEN_TRNS 20		// Минимальная пауза между транзакциями, мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
 	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
 	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки
@@ -5174,7 +5182,11 @@ const char *noteTemp[] = {"Температура улицы",
 	// SPI шина управление отдельными устройствами до 3-х устройств (активный уровень низкий)
 	#define PIN_SPI_CS_W5XXX   10			// ETH-CS   сигнал CS управление сетевым чипом w5500
 	#define PIN_SPI_CS_SD	   4			// SD-CS    сигнал CS управление SD картой
-	#define PIN_SPI_CS_FLASH   52			// (67) FLASH-CS сигнал CS управление чипом флеш памяти (D52 пересекается с Serial4!)
+#ifdef USE_SERIAL4
+	#define PIN_SPI_CS_FLASH   68			// FLASH-CS сигнал CS управление чипом флеш памяти
+#else
+	#define PIN_SPI_CS_FLASH   52			// FLASH-CS сигнал CS управление чипом флеш памяти (D52 пересекается с Serial4!)
+#endif
 
 	// Сервис
 	#define PIN_ETH_RES        8         // ETH-RES Сброс сетевого чипа w5500 активный low нормально high
@@ -5321,7 +5333,7 @@ const char *noteTemp[] = {"Температура улицы",
 							};
 
 	// Номера каналов АЦП, в нумерации SAM3X (AD*):
-	#define ADC_SENSOR_PEVA		13		// A11/PIN_65. X33. датчик давления испарителя
+	#define ADC_SENSOR_PEVA		11		// A9, X33. датчик давления испарителя (было 13(A11)/PIN_65)
 	#define ADC_SENSOR_PCON		12		// A10, X31. датчик давления конденсатора
 	#define ADC_SENSOR_PGEO		4		// A3, X19.1 датчик давления геоконтура - желтый, красный "+5V", черный "-".
 	#define ADC_SENSOR_POUT		5		// A2, X16.3 датчик давления отопления - желтый, красный "+5V", черный "-".

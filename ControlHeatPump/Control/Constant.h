@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.196"				// Версия прошивки
+#define VERSION			"1.200"				// Версия прошивки
 #define VER_SAVE		158					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -902,7 +902,7 @@ const char *hp_K_WEATHER = {"KW"}; 		        // Коэффициент пого�
 const char *hp_kWeatherTarget = {"KWT"};		// Коэффициент погодозависимости
 const char *hp_WeatherBase = {"KWB"};
 const char *hp_WeatherTargetRange = {"KWR"};
-const char *hp_CompressorPause = {"CP"};
+const char *hp_WorkPause = {"CP"};
 const char *hp_FC_FreqLimitHour = {"FLH"};
 const char *hp_FC_FreqLimit = {"FL"};
 const char *hp_fP_ContinueAfterBoiler = {"CAB"};

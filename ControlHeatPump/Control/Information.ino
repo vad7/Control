@@ -409,7 +409,6 @@ void Profile::initProfile()
   Cool.tempInLim=1000;                    // Tемпература подачи (минимальная)
   Cool.tempOutLim=3500;                   // Tемпература обратки (макс)
   Cool.dt=1500;                        // Максимальная разность температур конденсатора.
-  Cool.kWeatherPID=10;                    // Коэффициент погодозависимости в СОТЫХ градуса на градус
   
  // Cool.P1=0;
   
@@ -503,10 +502,8 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_HEAT_FLOOR)==0) { Cool.flags = (Cool.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
  if(strcmp(var,hp_SUN)==0) { Cool.flags = (Cool.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
  if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Cool.delayOffPump = x; return true; } else
- if(strcmp(var,hp_MaxTargetRise)==0){ Cool.MaxTargetRise = rd(x, 10); return true; }else
- if(strcmp(var,hp_CompressorPause)==0){ if(x >= 0) {Cool.CompressorPause = x * 60; return true; } else return false; } else
+ if(strcmp(var,hp_WorkPause)==0){ if(x >= 0) {Cool.WorkPause = x * 60; return true; } else return false; } else
  if(strcmp(var,hp_fUseAdditionalTargets)==0) { Cool.flags = (Cool.flags & ~(1<<fUseAdditionalTargets)) | ((x!=0)<<fUseAdditionalTargets); return true; }else
- if(strcmp(var,hp_K_WEATHER)==0){ Cool.kWeatherPID=rd(x, 1000); return true; }             // Коэффициент погодозависимости
  return false; 
 }
 
@@ -538,18 +535,10 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
    if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Cool.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
    if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Cool.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Cool.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
-   if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID(Cool),2); return ret;      } else
+   if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID_Cool(),2); return ret;      } else
    if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Cool.delayOffPump, ret); } else
-   if(strcmp(var,hp_MaxTargetRise)==0) { _dtoa(ret, Cool.MaxTargetRise, 1); return ret; } else
-   if(strcmp(var,hp_CompressorPause)==0) { _itoa(Cool.CompressorPause / 60, ret); return ret; } else
+   if(strcmp(var,hp_WorkPause)==0) { _itoa(Cool.WorkPause / 60, ret); return ret; } else
    if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Cool.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
-   if(strcmp(var, option_HeatTargetScheduler) == 0){
-		ret += strlen(ret);
-		for(uint8_t i = 0; i < 24; i++) *ret++ = (((Cool.HeatTargetSchedulerH<<16) | Cool.HeatTargetSchedulerL) & (1<<i)) ? '1' : '0';
-		*ret = '\0';
-		return ret;
-   } else
-   if(strcmp(var,hp_K_WEATHER)==0){_dtoa(ret,Cool.kWeatherPID,3); return ret;            }                 // Коэффициент погодозависимости
  return  strcat(ret,(char*)cInvalid);   
 }
 
@@ -595,7 +584,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_kWeatherTarget)==0){ Heat.kWeatherTarget=rd(x, 1000); return true; } else
 	if(strcmp(var,hp_WeatherBase)==0){ Heat.WeatherBase = x; return true; } else
 	if(strcmp(var,hp_WeatherTargetRange)==0){ Heat.WeatherTargetRange = rd(x, 10); return true; } else
-	if(strcmp(var,hp_CompressorPause)==0){ if(x >= 0) {Heat.CompressorPause = x * 60; return true; } else return false; } else
+	if(strcmp(var,hp_WorkPause)==0){ if(x >= 0) {Heat.WorkPause = x * 60; return true; } else return false; } else
 	if(strcmp(var,hp_FC_FreqLimit)==0){ Heat.FC_FreqLimit = rd(x, 100); if(Heat.FC_FreqLimit < HP.dFC.get_minFreq()) Heat.FC_FreqLimit = HP.dFC.get_minFreq(); return true; } else
 	if(strcmp(var,option_ADD_HEAT)==0) { Heat.flags = (Heat.flags & ~((1<<fAddHeat1)|(1<<fAddHeat2))) | ((int(x)<<fAddHeat1)&((1<<fAddHeat1)|(1<<fAddHeat2))); return true; } else
 	if(strcmp(var,hp_timeRHEAT)==0){ Heat.timeRHEAT = x; return true; } else
@@ -654,12 +643,12 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 	if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Heat.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_fP_ContinueAfterBoiler)==0){ if(GETBIT(Heat.flags,fP_ContinueAfterBoiler)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Heat.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
-	if(strcmp(var,hp_targetPID)==0){ _dtoa(ret,HP.CalcTargetPID(Heat),2); return ret;    } else
+	if(strcmp(var,hp_targetPID)==0){ _dtoa(ret,HP.CalcTargetPID_Heat(),2); return ret;    } else
 	if(strcmp(var,hp_K_WEATHER)==0){ _dtoa(ret,Heat.kWeatherPID,3); return ret;            } else                 // Коэффициент погодозависимости
 	if(strcmp(var,hp_kWeatherTarget)==0){ _dtoa(ret,Heat.kWeatherTarget,3); return ret;    } else
 	if(strcmp(var,hp_WeatherBase)==0){ _dtoa(ret,Heat.WeatherBase,0); return ret;    } else
 	if(strcmp(var,hp_WeatherTargetRange)==0){ _dtoa(ret,Heat.WeatherTargetRange,1); return ret;    } else
-	if(strcmp(var,hp_CompressorPause)==0) { _itoa(Heat.CompressorPause / 60, ret); return ret; } else
+	if(strcmp(var,hp_WorkPause)==0) { _itoa(Heat.WorkPause / 60, ret); return ret; } else
 	if(strcmp(var,hp_FC_FreqLimit)==0) { _dtoa(ret, Heat.FC_FreqLimit, 2); return ret; } else
 	if(strcmp(var,option_DELAY_OFF_PUMP)==0) { return _itoa(Heat.delayOffPump, ret); } else
 	if(strcmp(var,hp_FC_FreqLimitHour)==0) { strcat_time(ret, Heat.FC_FreqLimitHour * 10); return ret; } else
@@ -843,90 +832,87 @@ int8_t  Profile::convert_to_new_version(void)
 	  char checker(int);
 	  char checkSizeOfInt1[sizeof(dataProfile)]={checker(&checkSizeOfInt1)};
 	  char checkSizeOfInt2[sizeof(SaveON)]={checker(&checkSizeOfInt2)};
+	  char checkSizeOfInt3[sizeof(Cool)]={checker(&checkSizeOfInt3)};
 	  char checkSizeOfInt3[sizeof(Heat)]={checker(&checkSizeOfInt3)};
 	  char checkSizeOfInt4[sizeof(Boiler)]={checker(&checkSizeOfInt4)};
 	  char checkSizeOfInt5[sizeof(DailySwitch)]={checker(&checkSizeOfInt5)};
 	//*/
 	typeof(uint8_t) magic;
 	typeof(uint16_t) crc16;
-	uint16_t CNVPROF_SIZE_dataProfile, CNVPROF_SIZE_SaveON, CNVPROF_SIZE_HeatCool, CNVPROF_SIZE_Boiler, CNVPROF_SIZE_DailySwitch, CNVPROF_SIZE_ALL;
+	uint16_t CNVPROF_SIZE_dataProfile, CNVPROF_SIZE_SaveON, CNVPROF_SIZE_Heat, CNVPROF_SIZE_Cool, CNVPROF_SIZE_Boiler, CNVPROF_SIZE_DailySwitch, CNVPROF_SIZE_ALL;
 	if(HP.Option.ver < VER_SAVE) {
-		if(HP.Option.ver <= 135) {
+		if(HP.Option.ver <= 152) {
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	50;
-			CNVPROF_SIZE_Boiler			=	80;
-			CNVPROF_SIZE_DailySwitch    =   0;
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler);
-		} else if(HP.Option.ver <= 143) {
-			CNVPROF_SIZE_dataProfile	=	120;
-			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	36;
-			CNVPROF_SIZE_Boiler			=	64;
-			CNVPROF_SIZE_DailySwitch	=	30;
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
-		} else if(HP.Option.ver <= 146) {
-			CNVPROF_SIZE_dataProfile	=	120;
-			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	38;
-			CNVPROF_SIZE_Boiler			=	64;
-			CNVPROF_SIZE_DailySwitch	=	30;
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
-		} else if(HP.Option.ver <= 152) {
-			CNVPROF_SIZE_dataProfile	=	120;
-			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	38;
+			CNVPROF_SIZE_Cool			=	38;
+			CNVPROF_SIZE_Heat			=	38;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		} else if(HP.Option.ver <= 153) {
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	42;
+			CNVPROF_SIZE_Cool			=	42;
+			CNVPROF_SIZE_Heat			=	42;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		} else if(HP.Option.ver <= 154) {
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	48;
+			CNVPROF_SIZE_Cool			=	48;
+			CNVPROF_SIZE_Heat			=	48;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		} else if(HP.Option.ver <= 155) {
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	50;
+			CNVPROF_SIZE_Cool			=	50;
+			CNVPROF_SIZE_Heat			=	50;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+		} else if(HP.Option.ver <= 157) {
+			CNVPROF_SIZE_dataProfile	=	120;
+			CNVPROF_SIZE_SaveON			= 	12;
+			CNVPROF_SIZE_Cool			=	54;
+			CNVPROF_SIZE_Heat			=	54;
+			CNVPROF_SIZE_Boiler			=	68;
+#if I2C_SIZE_EEPROM >= 64
+			CNVPROF_SIZE_DailySwitch	=	30;
+#else
+			CNVPROF_SIZE_DailySwitch	=	15;
+#endif
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		} else  { // last ver
 			CNVPROF_SIZE_dataProfile	=	120;
 			CNVPROF_SIZE_SaveON			= 	12;
-			CNVPROF_SIZE_HeatCool		=	54;
+			CNVPROF_SIZE_Cool			=	36;
+			CNVPROF_SIZE_Heat			=	56;
 			CNVPROF_SIZE_Boiler			=	68;
 #if I2C_SIZE_EEPROM >= 64
 			CNVPROF_SIZE_DailySwitch	=	30;
 #else
 			CNVPROF_SIZE_DailySwitch	=	15;
 #endif
-			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_HeatCool + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
+			CNVPROF_SIZE_ALL = (sizeof(magic) + sizeof(crc16) + CNVPROF_SIZE_dataProfile + CNVPROF_SIZE_SaveON + CNVPROF_SIZE_Cool + CNVPROF_SIZE_Heat + CNVPROF_SIZE_Boiler + CNVPROF_SIZE_DailySwitch);
 		}
 		journal.jprintf("Converting Profiles to new version...\n");
 		if(readEEPROM_I2C(I2C_PROFILE_EEPROM, (byte*)&Socket[0].outBuf, CNVPROF_SIZE_ALL * I2C_PROFIL_NUM)) return ERR_LOAD_EEPROM;
@@ -938,16 +924,25 @@ int8_t  Profile::convert_to_new_version(void)
 			addr += CNVPROF_SIZE_dataProfile;
 			memcpy(&SaveON, addr, CNVPROF_SIZE_SaveON <= sizeof(SaveON) ? CNVPROF_SIZE_SaveON : sizeof(SaveON));
 			addr += CNVPROF_SIZE_SaveON;
-			memcpy(&Cool, addr, CNVPROF_SIZE_HeatCool <= sizeof(Cool) ? CNVPROF_SIZE_HeatCool : sizeof(Cool));
-			addr += CNVPROF_SIZE_HeatCool;
-			memcpy(&Heat, addr, CNVPROF_SIZE_HeatCool <= sizeof(Heat) ? CNVPROF_SIZE_HeatCool : sizeof(Heat));
-			addr += CNVPROF_SIZE_HeatCool;
+			memcpy(&Cool, addr, CNVPROF_SIZE_Cool <= sizeof(Cool) ? CNVPROF_SIZE_Cool : sizeof(Cool));
+			addr += CNVPROF_SIZE_Cool;
+			memcpy(&Heat, addr, CNVPROF_SIZE_Heat <= sizeof(Heat) ? CNVPROF_SIZE_Heat : sizeof(Heat));
+			addr += CNVPROF_SIZE_Heat;
 			memcpy(&Boiler, addr, CNVPROF_SIZE_Boiler <= sizeof(Boiler) ? CNVPROF_SIZE_Boiler : sizeof(Boiler));
 			addr += CNVPROF_SIZE_Boiler;
 			memcpy(&DailySwitch, addr, CNVPROF_SIZE_DailySwitch <= sizeof(DailySwitch) ? CNVPROF_SIZE_DailySwitch : sizeof(DailySwitch));
 			if(HP.Option.ver <= 156) {
 				Boiler.pid_time = Boiler.delayOffPump > 255 ? 255 : Boiler.delayOffPump;
 				Boiler.delayOffPump = HP.Option.delayOffPump;
+			} else if(HP.Option.ver <= 157) { // flags 1b -> 2b
+				memcpy(&Cool + 2, &Cool, sizeof(Cool) - 2);
+				Cool.flags = Cool.Rule;
+				Cool.Rule = (RULE_HP)Cool.ProfileNext;
+				memcpy(&Heat + 2, &Heat, sizeof(Heat) - 2);
+				Heat.flags = Heat.Rule;
+				Heat.Rule = (RULE_HP)Heat.ProfileNext;
+				SETBIT0(Boiler.flags, fBoilerPID); Boiler.flags |= (GETBIT(Boiler.flags, fUseHeater)<<fBoilerPID);
+				SETBIT0(Boiler.flags, fUseHeater);
 			}
 			if(save(i) < 0) return ERR_SAVE_EEPROM;
 		}
@@ -1274,38 +1269,52 @@ xCheckTemp:
 	return ret;
 }
 
-
-// Временные данные для профиля
-static type_dataProfile temp_prof;
-
 // ДОБАВЛЯЕТ к строке с - описание профиля num
-char *Profile::get_info(char *c,int8_t num)  
+char* Profile::get_info(char *c, int8_t num)
 {
-  byte magic;
-  uint16_t crc16temp;
-  int32_t adr=I2C_PROFILE_EEPROM+dataProfile.len*num;                                            // вычислить адрес начала профиля
-  if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) {strcat(c,"Error read profile"); return c; }     // прочитать заголовок
-  
-  if (magic==PROFILE_EMPTY)  {strcat(c,"Empty profile"); return c;}                                 // Данных нет
-  if (magic!=0xAA)  {strcat(c,"Bad format profile"); return c;}                                     // Заголовок не верен, данных нет
-    
-  adr=adr+sizeof(magic);
-  uint16_t crc16;
-  if (readEEPROM_I2C(adr, (byte*)&crc16temp,sizeof(crc16))) {strcat(c,"Error read profile");return c;} // прочитать crc16
-  adr=adr+sizeof(crc16);                                                                         // вычислить адрес начала данных
-
-    if (readEEPROM_I2C(adr, (byte*)&temp_prof, sizeof(temp_prof))) {strcat(c,"Error read profile");return c;}    // прочитать данные
-    // прочли формируем строку с описанием
-    if(GETBIT(temp_prof.flags, fEnabled)) strcat(c,"* ");                         // отметка об использовании в списке
-    strcat(c,temp_prof.name);
-    strcat(c,":  ");
-    strcat(c,temp_prof.note);
-    strcat(c," [");
-    DecodeTimeDate(temp_prof.saveTime,c);
-//    strcat(c," ");
-//    strcat(c,uint16ToHex(crc16temp));
-    strcat(c,"]");
-    return c;
+	byte b;
+	uint16_t crc16temp;
+	char *out;
+	out = c + strlen(c);
+	int32_t adr = I2C_PROFILE_EEPROM + dataProfile.len * num;                          // вычислить адрес начала профиля
+	if(readEEPROM_I2C(adr, (byte*) &b, sizeof(b))) {
+		strcpy(out, "ERROR READ PROFILE");
+		return c;
+	}
+	if(b == PROFILE_EMPTY) {
+		strcpy(out, "EMPTY PROFILE"); // Данных нет
+		return c;
+	}
+	if(b != 0xAA) {
+		strcpy(out, "BAD FORMAT PROFILE"); // Заголовок не верен, данных нет
+		return c;
+	}
+	adr = adr + sizeof(b);
+	uint16_t crc16;
+	if(readEEPROM_I2C(adr, (byte*) &crc16temp, sizeof(crc16))) {
+		strcpy(out, "ERROR READ PROFILE");
+		return c;
+	}
+	adr += sizeof(crc16);                                            // вычислить адрес начала данных
+	adr += (uint8_t *)&dataProfile.flags - (uint8_t *)&dataProfile;
+	if(readEEPROM_I2C(adr, &b, sizeof(b))) { strcpy(out, "ERROR READ PROFILE"); return c; }
+	// формируем строку с описанием
+	if(GETBIT(b, fEnabled)) strcat(out, "* ");                         // flags - отметка об использовании в списке
+	uint32_t u32;
+	adr += (uint8_t *)&dataProfile.saveTime - (uint8_t *)&dataProfile.flags;
+	if(readEEPROM_I2C(adr, (byte*) &u32, sizeof(u32))) { strcpy(out, "ERROR READ PROFILE"); return c; }
+	adr += (uint8_t *)&dataProfile.name - (uint8_t *)&dataProfile.saveTime;
+	if(readEEPROM_I2C(adr, (byte*) out, sizeof(dataProfile.name))) { strcpy(out, "ERROR READ PROFILE"); return c; }
+	strcat(out, ": ");
+	out += strlen(out);
+	adr += (uint8_t *)&dataProfile.note - (uint8_t *)&dataProfile.name;
+	if(readEEPROM_I2C(adr, (byte*) out, sizeof(dataProfile.note))) { strcpy(out, "ERROR READ PROFILE"); return c; }
+	strcat(out, " [");
+	DecodeTimeDate(u32, out);
+//    strcat(out," ");
+//    strcat(out, uint16ToHex(crc16temp));
+	strcat(out, "]");
+	return c;
 }
 
 // стереть профайл num из еепром  (ставится признак пусто, данные не стираются)
@@ -1337,30 +1346,31 @@ int8_t Profile::set_list(int8_t num)
 // такое будет догда когда текущйий профиль не отмечен что учасвует в списке
 int8_t Profile::update_list(int8_t num)
 {
-  byte magic;
-  uint16_t crc16;
-  uint8_t i;
-  int32_t adr;
-  strcpy(list,"");                                                                              // стереть список
-  char *p = list;
-  for (i=0;i<I2C_PROFIL_NUM;i++)                                                                // перебор по всем профилям
-  {
-    adr=I2C_PROFILE_EEPROM+ get_sizeProfile()*i;                                                // вычислить адрес начала профиля
-    if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { continue; }                              // прочитать заголовок
-    if (magic!=0xAA)   continue;                                                                   // Заголовок не верен, данных нет, пропускаем чтение профиля это не ошибка
-    adr=adr+sizeof(magic)+sizeof(crc16);                                                        // вычислить адрес начала данных
-    if (readEEPROM_I2C(adr, (byte*)&temp_prof, sizeof(temp_prof))) { continue; }                          // прочитать данные
-    if ((GETBIT(temp_prof.flags,fEnabled))||(i==num))                                                // Если разрешено использовать или ТЕКУЩИЙ профиль
-   // if (GETBIT(temp.flags,fEnabled)))                                                         // Если разрешено использовать
-     { 
-    	p = list + m_strlen(list);
-    	_itoa(i + 1, p);
-    	strcat(p, ". ");
-    	strcat(p, temp_prof.name);
-    	if (i==num) strcat(p,":1;"); else strcat(p,":0;");
-     }                    
-  }
- return OK;
+	byte b;
+	uint16_t crc16;
+	uint8_t i;
+	int32_t adr;
+	strcpy(list, "");                                                                              // стереть список
+	char *p = list;
+	for(i = 0; i < I2C_PROFIL_NUM; i++)                                                      // перебор по всем профилям
+	{
+		adr = I2C_PROFILE_EEPROM + get_sizeProfile() * i;                              // вычислить адрес начала профиля
+		if(readEEPROM_I2C(adr, (byte*) &b, sizeof(b))) continue;
+		if(b != 0xAA) continue;           // Заголовок не верен, данных нет, пропускаем чтение профиля это не ошибка
+		adr += sizeof(b) + sizeof(crc16);                                      // вычислить адрес начала данных
+		adr += (uint8_t *)&dataProfile.flags - (uint8_t *)&dataProfile;
+		if(readEEPROM_I2C(adr, &b, sizeof(b))) continue;
+		if((GETBIT(b, fEnabled)) || (i == num))         // Если разрешено использовать или ТЕКУЩИЙ профиль
+		{
+			p += strlen(p);
+			_itoa(i + 1, p);
+			strcat(p, ". ");
+			p += strlen(p);
+			readEEPROM_I2C(adr, (byte*) p, LEN_PROFILE_NAME);
+			if(i == num) strcat(p, ":1;"); else strcat(p, ":0;");
+		}
+	}
+	return OK;
 }
 
 // Прочитать из EEPROM структуру: режим работы ТН (SaveON), возврат OK - успешно

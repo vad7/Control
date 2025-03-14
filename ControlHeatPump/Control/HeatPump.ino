@@ -2593,16 +2593,21 @@ MODE_COMP  HeatPump::UpdateBoiler()
 
 }
 
-int16_t HeatPump::CalcTargetPID(type_settingHP &settings)
+int16_t HeatPump::CalcTargetPID_Heat()
 {
     int16_t  targetRealPID;				 // Цель подачи
-	if(GETBIT(settings.flags, fWeather)) { // включена погодозависимость
-		targetRealPID = settings.tempPID + (settings.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ результат в сотых градуса, определяем цель
-		if(targetRealPID > settings.tempInLim - 50) targetRealPID = settings.tempInLim - 50;  // ограничение целевой подачи = максимальная подача - 0.5 градуса
+	if(GETBIT(Prof.Heat.flags, fWeather)) { // включена погодозависимость
+		targetRealPID = Prof.Heat.tempPID + (Prof.Heat.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ результат в сотых градуса, определяем цель
+		if(targetRealPID > Prof.Heat.tempInLim - 50) targetRealPID = Prof.Heat.tempInLim - 50;  // ограничение целевой подачи = максимальная подача - 0.5 градуса
 		if(targetRealPID < MIN_WEATHER) targetRealPID = MIN_WEATHER;
 		if(targetRealPID > MAX_WEATHER) targetRealPID = MAX_WEATHER;
-	} else targetRealPID = settings.tempPID; // отключена погодозависмость
+	} else targetRealPID = Prof.Heat.tempPID; // отключена погодозависмость
 	return targetRealPID;
+}
+
+int16_t HeatPump::CalcTargetPID_Cool()
+{
+	return Prof.Cool.tempPID;
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -2807,7 +2812,7 @@ MODE_COMP HeatPump::UpdateHeat()
 
 		// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
 		updatePidTime=xTaskGetTickCount();
-		newFC = updatePID(CalcTargetPID(Prof.Heat) - FEED, Prof.Heat.pid, pidw);
+		newFC = updatePID(CalcTargetPID_Heat() - FEED, Prof.Heat.pid, pidw);
 #ifdef PID_FORMULA2
 		if(newFC > dFC.get_target() + dFC.get_PidFreqStep()) newFC = dFC.get_target() + dFC.get_PidFreqStep(); // На увеличение
 		else if(newFC < dFC.get_target() - dFC.get_PidMaxStep()) newFC = dFC.get_target() - dFC.get_PidMaxStep(); // На уменьшение
@@ -2875,40 +2880,11 @@ MODE_COMP HeatPump::UpdateCool()
 //#endif
 	}
 
-	target = t1 = -STARTTEMP;
-	if(GETBIT(Prof.Cool.flags, fUseAdditionalTargets) && (((Prof.Cool.HeatTargetSchedulerH<<16) | Prof.Cool.HeatTargetSchedulerL) & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
-		for(uint8_t i = 0; i < TNUMBER; i++) {
-			if(GETBIT(HP.Prof.SaveON.bTIN, i) && sTemp[i].get_setup_flag(fTEMP_HeatTarget)) {
-				t1 = sTemp[i].get_Temp();
-				target = get_TempAlarmMin(i);
-				if(sTemp[i].get_flag(fActive)) {
-					if(t1 >= target) break; else t1 = -STARTTEMP;
-				} else if(t1 > target + (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Cool.dTempGen : Prof.Cool.dTemp)) {
-					sTemp[i].set_flag(fActive, 1);
-					break;
-				} else t1 = -STARTTEMP;
-			}
-		}
-	}
+	t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Cool.Target 0-дом, 1-обратка
+	target = get_targetTempCool();
 #ifdef DEBUG_MODWORK
 	journal.printf("T1: %.2d, TRG: %.2d\n", t1, target);
 #endif
-	if(t1 == -STARTTEMP) {
-		t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
-		target = get_targetTempCool();
-	} else {
-		int16_t t2 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
-		int16_t target2 = get_targetTempCool() + Prof.Cool.MaxTargetRise * 10;
-		if(t2 > target2) {
-			t1 = t2;
-			target = target2;
-#ifdef DEBUG_MODWORK
-			journal.printf("T2: %.2d, TRG2: %.2d\n", t1, target);
-#endif
-		}
-	}
-	//t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp(); // вычислить температуры для сравнения Prof.Heat.Target 0-дом   1-обратка
-	//target = get_targetTempCool();
 	switch (Prof.Cool.Rule)   // в зависмости от алгоритма
 	{
 	case pHYSTERESIS:  // Гистерезис охлаждение.
@@ -2997,16 +2973,16 @@ MODE_COMP HeatPump::UpdateCool()
 
 #ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
 		if (sTemp[TCOMP].get_Temp()+SUPERBOILER_DT>sTemp[TBOILER].get_Temp())  dRelay[RSUPERBOILER].set_ON(); else dRelay[RSUPERBOILER].set_OFF();
-		if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)         { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		if(xTaskGetTickCount()-updatePidTime<get_timeCool()*1000UL)         { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		if (onBoiler) Status.ret=pCp15; else Status.ret=pCp12;                                          // если нужно показывем что бойлер греется от предкондесатора
 #else
-		else if(xTaskGetTickCount()-updatePidTime<get_timeHeat()*1000UL)    { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
+		else if(xTaskGetTickCount()-updatePidTime<get_timeCool()*1000UL)    { Status.ret=pCp11;   return pCOMP_NONE;}   // время обновления ПИДа еше не пришло
 		Status.ret=pCp12;   // Дошли до сюда - ПИД на подачу. Компресор работает
 #endif
 
 		// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
 		updatePidTime=xTaskGetTickCount();
-		newFC = updatePID(FEED - CalcTargetPID(Prof.Cool), Prof.Cool.pid, pidw);      // Одна итерация ПИД регулятора (на выходе ИЗМЕНЕНИЕ частоты)
+		newFC = updatePID(FEED - CalcTargetPID_Cool(), Prof.Cool.pid, pidw);      // Одна итерация ПИД регулятора (на выходе ИЗМЕНЕНИЕ частоты)
 #ifdef PID_FORMULA2
 		if(newFC > dFC.get_target() + dFC.get_PidFreqStep()) newFC = dFC.get_target() + dFC.get_PidFreqStep(); // На увеличение
 		else if(newFC < dFC.get_target() - dFC.get_PidMaxStep()) newFC = dFC.get_target() - dFC.get_PidMaxStep(); // На уменьшение
@@ -3420,7 +3396,7 @@ boolean HeatPump::check_compressor_pause()
 	if(is_compressor_on()) return false;
 	uint16_t pause = Option.pause;
 	if(Status.modWork & (pHEAT | pCOOL)) {
-		pause = (Status.modWork & pCOOL) ? Prof.Cool.CompressorPause : Prof.Heat.CompressorPause;
+		pause = (Status.modWork & pCOOL) ? Prof.Cool.WorkPause : Prof.Heat.WorkPause;
 	}
 	if(stopCompressor && rtcSAM3X8.unixtime() - stopCompressor < pause) {
 		if(!compressor_in_pause) journal.jprintf_time("Waiting compressor, pause %d s...\n", pause - (rtcSAM3X8.unixtime() - stopCompressor));
