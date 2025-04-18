@@ -28,6 +28,7 @@
 #include "OmronFC.h"
 #include "VaconFC.h"
 #include "Scheduler.h"
+#include "Heater.h"
 
 extern char *MAC2String(byte* mac);
 
@@ -66,35 +67,37 @@ struct type_status
 #endif
 struct type_motoHour_old
 {
-  byte Header;      // признак данных
-  uint8_t  flags;   // флаги
-  uint32_t H1;      // моточасы ТН ВСЕГО
-  uint32_t H2;      // моточасы ТН сбрасываемый счетчик (сезон)
-  uint32_t C1;      // моточасы компрессора ВСЕГО
-  uint32_t C2;      // моточасы компрессора сбрасываемый счетчик (сезон)
-  uint32_t E1;		// Значение потребленной энергии ВСЕГО
-  uint32_t E2;		// Значение потребленной энергии в начале сезона
-  uint32_t D1;      // Дата сброса общих счетчиков
-  uint32_t D2;      // дата сброса сезонных счетчиков
-  uint32_t P1;      // выработанное тепло  ВСЕГО
-  uint32_t P2;      // выработанное тепло  сбрасываемый счетчик (сезон)
-  uint32_t Z1;      // Резервный параметр 1
-  uint32_t Z2;      // Резервный параметр 2
+	  byte Header;      // признак данных
+	  uint8_t  flags;   // флаги
+	  uint32_t H1;      // моточасы ТН ВСЕГО  [минуты]
+	  uint32_t H2;      // моточасы ТН сбрасываемый счетчик (сезон) [минуты]
+	  uint32_t C1;      // моточасы компрессора ВСЕГО [минуты]
+	  uint32_t C2;      // моточасы компрессора сбрасываемый счетчик (сезон) [минуты]
+	  uint32_t D1;      // Дата сброса общих счетчиков [юникс формат]
+	  uint32_t D2;      // дата сброса сезонных счетчиков [юникс формат]
+	  uint64_t E1;		// Значение потребленной энергии ВСЕГО [ватт*ч * 1000 или кВт*ч * 1000000]
+	  uint64_t E2;		// Значение потребленной энергии в начале сезона [ватт*ч * 1000 или кВт*ч * 1000000]
+	  uint64_t P1;      // выработанное тепло  ВСЕГО [ватт*ч * 1000 или кВт*ч * 1000000]
+	  uint64_t P2;      // выработанное тепло  сбрасываемый счетчик (сезон) [ватт*ч * 1000 или кВт*ч * 1000000]
 };
 struct type_motoHour
 {
   byte Header;      // признак данных
+  uint32_t D1;      // Дата сброса общих счетчиков [юникс формат]
+  uint32_t D2;      // дата сброса сезонных счетчиков [юникс формат]
   uint8_t  flags;   // флаги
   uint32_t H1;      // моточасы ТН ВСЕГО  [минуты]
   uint32_t H2;      // моточасы ТН сбрасываемый счетчик (сезон) [минуты]
-  uint32_t C1;      // моточасы компрессора ВСЕГО [минуты]
-  uint32_t C2;      // моточасы компрессора сбрасываемый счетчик (сезон) [минуты]
-  uint32_t D1;      // Дата сброса общих счетчиков [юникс формат]
-  uint32_t D2;      // дата сброса сезонных счетчиков [юникс формат]
   uint64_t E1;		// Значение потребленной энергии ВСЕГО [ватт*ч * 1000 или кВт*ч * 1000000]
   uint64_t E2;		// Значение потребленной энергии в начале сезона [ватт*ч * 1000 или кВт*ч * 1000000]
   uint64_t P1;      // выработанное тепло  ВСЕГО [ватт*ч * 1000 или кВт*ч * 1000000]
   uint64_t P2;      // выработанное тепло  сбрасываемый счетчик (сезон) [ватт*ч * 1000 или кВт*ч * 1000000]
+  uint32_t C1;      // моточасы компрессора ВСЕГО [минуты]
+  uint32_t C2;      // моточасы компрессора сбрасываемый счетчик (сезон) [минуты]
+#ifdef USE_HEATER
+  uint32_t R1;      // моточасы котла ВСЕГО [минуты]
+  uint32_t R2;      // моточасы котла сбрасываемый счетчик (сезон) [минуты]
+#endif
 };
 
 TEST_MODE testMode;					// Значение режима тестирования
@@ -212,7 +215,7 @@ type_WebSecurity WebSec_admin;				// хеш паролей
 type_WebSecurity WebSec_Microart;			// хеш паролей
 #endif
 
-// Рабочие флаги ТН
+// Рабочие флаги ТН (work_flags)
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
 #define fHP_SunNotInited		1			// Солнечный коллектор не инициализирован
 #define fHP_SunSwitching		2			// Солнечный коллектор переключается
@@ -220,6 +223,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_SunWork 			4			// Солнечный коллектор работает
 #define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания, если SGENERATOR == ALARM
 #define fHP_HeaterOn			6			// Идет работа котла
+#define fHP_HeaterValveOn		7			// Положение крана Котла - ТН: 0 - ТН, 1 - Котел
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define f_reserved_1			0				//
@@ -292,6 +296,8 @@ struct type_optionHP
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
  uint16_t Generator_Start_Time;			// Время запуска генератора
+ uint8_t  SwitchHeaterHPTime;			// Время переключения Котел - ТН, сек
+ uint8_t  Modbus_Attempts;				// Modbus - попыток чтения/записи при ошибке (кроме инвертора и счетчика)
 };// __attribute__((packed));
 
 
@@ -356,6 +362,7 @@ struct type_statusHP
 #define IS_BOILER_HEATING false
 #endif
 
+#define HeaterNeedOn ((Status.modWork & pHEAT) && GETBIT(Prof.Heat.flags, fUseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.Boiler.flags, fUseHeater))
 
 // ------------------------- ОСНОВНОЙ КЛАСС --------------------------------------
 class HeatPump
@@ -373,9 +380,9 @@ public:
 	void set_nextMode();                                     // Переключение на следующий режим работы отопления (последовательный перебор режимов)
 
 	#ifdef R4WAY
-	__attribute__((always_inline)) inline  boolean is_heating() { return !dRelay[R4WAY].get_Relay(); } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
+	__attribute__((always_inline)) inline  boolean is_HP_Heating() { return !dRelay[R4WAY].get_Relay(); } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
 	#else
-	__attribute__((always_inline)) inline  boolean is_heating() { return true; } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
+	__attribute__((always_inline)) inline  boolean is_HP_Heating() { return true; } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
 	#endif
 	boolean IsWorkingNow() { return !(get_State() == pOFF_HP && PauseStart == 0); }				// Включен ТН или нет
 	boolean CheckAvailableWork();							// проверить есть ли работа для ТН
@@ -405,7 +412,8 @@ public:
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
-	inline boolean is_heater_on() { return GETBIT(flags, fHP_SunWork) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
+	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); }    // Проверка работает ли котел
+	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
 	void 	relayAllOFF();              // Все реле выключить
 	void	HandleNoPower(void);		// Обработать пропадание питания
 
@@ -426,26 +434,29 @@ public:
 // Датчики
 	sensorTemp sTemp[TNUMBER];          // Датчики температуры
 
-	#ifdef SENSOR_IP                    // Получение данных удаленного датчика
-	  sensorIP sIP[IPNUMBER];           // Массив удаленных датчиков
-	#endif
+#ifdef SENSOR_IP                    // Получение данных удаленного датчика
+	sensorIP sIP[IPNUMBER];           // Массив удаленных датчиков
+#endif
 	sensorADC sADC[ANUMBER];            // Датчик аналоговый
 	sensorDiditalInput sInput[INUMBER]; // Контактные датчики
 	sensorFrequency sFrequency[FNUMBER]; // Частотные датчики
 
 // Устройства  исполнительные
 	devRelay dRelay[RNUMBER];           // Реле
-	#ifdef EEV_DEF
+#ifdef EEV_DEF
 	devEEV dEEV;                        // ЭРВ
-	#endif
-	#ifdef FC_VACON
-		devVaconFC dFC;                // Частотник VACON
-	#else
-		devOmronMX2 dFC;               // Частотник OMRON
-	#endif
-	#ifdef USE_ELECTROMETER_SDM
-	  devSDM dSDM;                      // Счетчик
-	#endif
+#endif
+#ifdef FC_VACON
+	devVaconFC dFC;						// Частотник VACON
+#else
+	devOmronMX2 dFC;					// Частотник OMRON
+#endif
+#ifdef USE_ELECTROMETER_SDM
+	devSDM dSDM;						// Счетчик
+#endif
+#ifdef USE_HEATER
+	devHeater dHeater;					// Котел
+#endif
 
 // Сервис
 	Message message;                     // Класс уведомления
@@ -659,7 +670,7 @@ public:
 	void Pump_HeatFloor(boolean On);	  // Включить/выключить насос ТП
 	void Sun_ON(void);					  // Включить СК
 	void Sun_OFF(void);					  // Выключить СК
-	uint8_t flags;						  // Рабочие флаги ТН
+	uint8_t work_flags;					  // Рабочие флаги ТН
 
 	int16_t get_temp_condensing(void);	    // Расчитать температуру конденсации
 	int16_t get_temp_evaporating(void);		// Получить температуру кипения
@@ -679,6 +690,10 @@ public:
 	uint16_t RHEAT_timer = 0;
 	int16_t  RHEAT_prev_temp = STARTTEMP;
 #endif
+	uint32_t startCompressor;             // время пуска компрессора (для обеспечения минимального времени работы)
+	uint32_t stopCompressor;              // время останова компрессора (для опеспечения паузы)
+	uint32_t startHeater;                 // время включения котла
+	uint32_t stopHeater;                  // время выключения котла
 
 private:
 	void    StartResume(boolean start);    // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки
@@ -698,11 +713,14 @@ private:
 	MODE_COMP UpdateHeat();               // Итерация нагрев  вход true - делаем, false - ТОЛЬКО проверяем выход что сделано или надо сделать
 	MODE_COMP UpdateCool();               // Итерация охлаждение вход true - делаем, false - ТОЛЬКО проверяем выход что сделано или надо сделать
 	MODE_COMP UpdateBoiler();             // Итерация управления бойлером возвращает что делать компрессору
-	void compressorON();                  // попытка включить компрессор  с учетом всех защит
-	void compressorOFF();                 // попытка выключить компрессор  с учетом всех защит
-	boolean check_compressor_pause();     // проверка на паузу между включениями
+	void compressorON();                  // попытка включить компрессор с учетом всех защит
+	void compressorOFF();                 // попытка выключить компрессор с учетом всех защит
+	void heaterON();                      // попытка включить котел с учетом всех защит
+	void heaterOFF();                     // попытка выключить котел с учетом всех защит
+	boolean check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса
+	void set_target_performance();        // установить целевую производительность (обороты компрессора или выходную мощность котла)
 
 	type_motoHour motoHour;               // Структура для хранения счетчиков запись каждый час
 	type_motoHour motoHour_saved;
@@ -721,13 +739,12 @@ private:
 	type_DateTimeHP DateTime;             // структура где хранится все что касается времени и даты
 	uint32_t timeON;                      // время включения контроллера для вычисления UPTIME
 	uint32_t countNTP;                    // число секунд с последнего обновления по NTP
-	uint32_t startCompressor;             // время пуска компрессора (для обеспечения минимального времени работы)
-	uint32_t stopCompressor;              // время останова компрессора (для опеспечения паузы)
 	uint32_t offBoiler;                   // время выключения нагрева ГВС ТН (необходимо для переключения на другие режимы на ходу)
 	uint32_t startDefrost;                // время срабатывания датчика разморозки
 	uint32_t startLegionella;             // время начала обеззараживания
 	uint32_t command_completed;			  // Время отработки команды
 	boolean  compressor_in_pause;         // Компрессор в паузе
+	boolean  heater_in_pause;             // Котел в паузе
 
 // Сетевые настройки
 	type_NetworkHP Network;                 // Структура для хранения сетевых настроек

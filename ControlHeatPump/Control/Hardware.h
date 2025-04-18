@@ -542,7 +542,7 @@ class devSDM
 };
 
 
-// Класс устройство Модбас  -----------------------------------------------------------------------------------------------
+// Класс устройство Modbus RTU -----------------------------------------------------------------------------------------------
 #define fModbus    			0               // флаг наличие modbus
 class devModbus
   {
@@ -552,14 +552,18 @@ class devModbus
     int8_t readInputRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret);
     int8_t readInputRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret);				   // LITTLE-ENDIAN!
     int8_t readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret);                  // Получить значение 2-x (Modbus function 0x04 Read Input Registers) регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret);                 // Получить значение регистра (2 байта) МХ2 в виде целого  числа возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret);                // Получить значение 2-x регистров (4 байта) МХ2 в виде целого числа возвращает код ошибки данные кладутся в ret
+    int8_t readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret);                // Получить значение регистра (2 байта) в виде целого  числа возвращает код ошибки данные кладутся в ret
+    int8_t readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret);                // Получить значение 2-x регистров (4 байта) в виде целого числа возвращает код ошибки данные кладутся в ret
     int8_t readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret);                // Получить значение 2-x регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,uint16_t *buf);   // Получить значение N регистров (2*N байта) МХ2 (положить в buf) возвращает код ошибки
+    int8_t readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,uint16_t *buf);   // Получить значение N регистров (2*N байта) (положить в buf) возвращает код ошибки
+    int8_t readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf); // Получить значение N регистров в buf, повторное чтение при ошибках, возвращает код ошибки
     int8_t writeSingleCoil(uint8_t id,uint16_t cmd, uint8_t u8State);                      // установить битовый вход, возвращает код ошибки Modbus function 0x05 Write Single Coil.
+    int8_t writeSingleCoilR(uint8_t id,uint16_t cmd, uint8_t u8State);                     // (Повторное чтение при ошибке) установить битовый вход, возвращает код ошибки Modbus function 0x05 Write Single Coil.
     int8_t readCoil(uint8_t id,uint16_t cmd, boolean *ret);                                // прочитать отдельный бит, возвращает ошибку Modbus function 0x01 Read Coils.
-    int8_t writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data);               // Установить значение регистра (2 байта) МХ2 в виде целого  числа возвращает код ошибки данные data
-    int8_t writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat);                // Записать float как 2 регистра числа возвращает код ошибки данные data
+    int8_t writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data);               // Установить значение регистра (2 байта) в виде целого  числа возвращает код ошибки данные data
+    int8_t writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat);                // Записать float как 2 регистра числа возращает код ошибки данные data
+    int8_t writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data);              // Записать 2b с повтором при ошибке (WriteMultipleRegisters = 0x10)
+    int8_t writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);// Записать буфер с повтором при ошибке (WriteMultipleRegisters = 0x10)
     #ifndef FC_VACON
     int8_t LinkTestOmronMX2();                                                             // Тестирование связи c МХ2 (актуально только с omronom) возвращает код ошибки
     #endif

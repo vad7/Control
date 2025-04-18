@@ -397,7 +397,7 @@ int16_t TempToEEV(int16_t teva, int16_t tcon)
 
 	// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
 #ifdef R4WAY 
-	if (HP.is_heating())
+	if (HP.is_HP_Heating())
 		return  tableEEVHeat[y][x];  // нагрев
 	else return  tableEEVCool[y][x];  // охлаждение
 #else

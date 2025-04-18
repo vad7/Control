@@ -1698,7 +1698,7 @@ void vReadSensor(void *)
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
 #ifdef EEV_DEF
-		HP.dEEV.set_Overheat(HP.is_heating()); // нагрев(1) или охлаждение(0)
+		HP.dEEV.set_Overheat(HP.is_HP_Heating()); // нагрев(1) или охлаждение(0)
 #endif
 
 		//  Опрос состояния инвертора
@@ -1735,7 +1735,7 @@ void vReadSensor(void *)
 #endif
 
 #ifdef FLOW_CONTROL                // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
-	if(HP.is_compressor_on())      // Только если компрессор включен 
+	if(HP.is_comp_or_heater_on())      // Только если компрессор включен
 		for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 		#ifdef SUPERBOILER   // Если определен супер бойлер
 			#ifdef FLOWCON   // если определен датчик потока конденсатора
@@ -1802,8 +1802,8 @@ void vReadSensor_delay1ms(int32_t ms)
 				if(--HP.fBackupPowerOffDelay == 0) {
 					journal.jprintf_time("Switched to Normal power!\n");
 					HP.Option.flags &= ~(1<<fBackupPower);
-					if(GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
-						HP.flags &= ~(1<<fHP_BackupNoPwrWAIT);
+					if(GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
+						HP.work_flags &= ~(1<<fHP_BackupNoPwrWAIT);
 						HP.sendCommand(pRESUME);
 					}
 				}
@@ -1878,7 +1878,7 @@ void vReadSensor_delay1ms(int32_t ms)
 					{ HP.dRelay[RPUMPB].set_ON(); }
 					else
 #endif  // #ifndef SUPERBOILER 
-						if (HP.get_Circulation() && (!GETBIT(HP.Prof.Boiler.flags, fBoilerCircSchedule) || HP.scheduleBoiler()))   // Циркуляция разрешена
+						if (HP.get_Circulation() && (!GETBIT(HP.Prof.Boiler.work_flags, fBoilerCircSchedule) || HP.scheduleBoiler()))   // Циркуляция разрешена
 						{
 #ifdef SUPERBOILER
 							if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler() || (HP.dRelay[RSUPERBOILER].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay()))) {
@@ -1970,7 +1970,7 @@ void vReadSensor_delay1ms(int32_t ms)
 							journal.jprintf_time("Profile changed to #%d\n", _profile);
 							if(frestart) HP.sendCommand(pRESUME);
 						}
-					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
+					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 						HP.sendCommand(pRESUME);
 					}
 				}
@@ -2004,7 +2004,7 @@ delayTask:	// чтобы задача отдавала часть времени
 			}
 			break;
 		case pWAIT_HP:                          // 4 Ожидание ТН (расписание - пустое место)   проверям раз в 5 сек
-			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.flags, fHP_BackupNoPwrWAIT)) {
+			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 				if(HP.get_modeHouse() == pHEAT) {
 					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
 						HP.sendCommand(pRESUME);
@@ -2028,11 +2028,11 @@ delayTask:	// чтобы задача отдавала часть времени
 		if(!HP.Task_vUpdate_run) continue;
 		// Солнечный коллектор
 #ifdef USE_SUN_COLLECTOR
-		if(HP.flags & (1<<fHP_SunSwitching)) {
+		if(HP.work_flags & (1<<fHP_SunSwitching)) {
 			if(GetTickCount() - HP.time_Sun > SUN_VALVE_SWITCH_TIME) {
-				HP.flags = (HP.flags & ~((1<<fHP_SunSwitching) | (1<<fHP_SunReady)));
+				HP.work_flags = (HP.work_flags & ~((1<<fHP_SunSwitching) | (1<<fHP_SunReady)));
 				if(HP.dRelay[RSUNON].get_Relay()) {
-					HP.flags |= (1<<fHP_SunReady);
+					HP.work_flags |= (1<<fHP_SunReady);
 					HP.time_Sun -= uint32_t(HP.Option.SunMinPause * 1000);
 				}
 				HP.dRelay[RSUNON].set_OFF();
@@ -2044,7 +2044,7 @@ delayTask:	// чтобы задача отдавала часть времени
 			if(((!HP.is_pause()	&& (((HP.get_modWork() & pHEAT) && GETBIT(HP.Prof.Heat.flags, fUseSun)) || ((HP.get_modWork() & pCOOL) && GETBIT(HP.Prof.Cool.flags, fUseSun))
 									|| (HP.get_onBoiler() && GETBIT(HP.Prof.Boiler.flags, fBoilerUseSun)))) || fregen)
 				 && HP.get_State() != pERROR_HP && (HP.get_State() != pOFF_HP || HP.PauseStart != 0)) {
-				if((HP.flags & (1<<fHP_SunWork))) {
+				if((HP.work_flags & (1<<fHP_SunWork))) {
 					if(GetTickCount() - HP.time_Sun > uint32_t(HP.Option.SunMinWorktime * 1000)) {
 						if(fregen) {
 							if(tsun < HP.Option.SunRegGeoTemp || HP.sTemp[TSUNOUTG].get_Temp() < HP.Option.SunRegGeoTempGOff) HP.Sun_OFF();
@@ -2057,9 +2057,9 @@ delayTask:	// чтобы задача отдавала часть времени
 				HP.Sun_OFF();
 				HP.time_Sun = GetTickCount() - uint32_t(HP.Option.SunMinPause * 1000);	// выключить задержку последующего включения
 			}
-			uint8_t fl = HP.flags & ((1<<fHP_SunNotInited) | (1<<fHP_SunReady) | (1<<fHP_SunSwitching) | (1<<fHP_SunWork));
+			uint8_t fl = HP.work_flags & ((1<<fHP_SunNotInited) | (1<<fHP_SunReady) | (1<<fHP_SunSwitching) | (1<<fHP_SunWork));
 			if((fl == (1<<fHP_SunReady) || fl == (1<<fHP_SunNotInited)) && tsun < HP.Option.SunTempOff) {
-				HP.flags = (HP.flags & ~((1<<fHP_SunReady) | (1<<fHP_SunNotInited))) | (1<<fHP_SunSwitching);
+				HP.work_flags = (HP.work_flags & ~((1<<fHP_SunReady) | (1<<fHP_SunNotInited))) | (1<<fHP_SunSwitching);
 				HP.dRelay[RSUNON].set_OFF();
 				HP.dRelay[RSUNOFF].set_ON();
 				HP.time_Sun = GetTickCount();
@@ -2086,10 +2086,7 @@ void vUpdateEEV(void *)
 		HP.dEEV.resetPID();
 xContinue:
 		if(!HP.is_compressor_on()) {
-			switch((uint8_t)HP.get_State()) {
-			case pOFF_HP:
-			case pSTOPING_HP:
-			case pWAIT_HP:
+			if(HP.is_heater_on() || HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_State() == pWAIT_HP) {
 				// Если компрессор не работает, то остановить задачу Обновления ЭРВ
 				journal.jprintf((const char*) " Stop task UpdateEEV\n");
 				vTaskSuspend(NULL);				// Stop vUpdateEEV
@@ -2213,7 +2210,7 @@ void vServiceHP(void *)
 #endif
 				if(++task_updstat_chars >= HP.get_tChart()) {
 					task_updstat_chars = 0;
-					if((Charts_when_comp_on && HP.is_compressor_on()) || (!Charts_when_comp_on && HP.get_State() != pOFF_HP)) { // пришло время
+					if((Charts_when_comp_on && HP.is_comp_or_heater_on()) || (!Charts_when_comp_on && HP.get_State() != pOFF_HP)) { // пришло время
 						STORE_DEBUG_INFO(71);
 						HP.updateChart();                                       // Обновить графики
 						STORE_DEBUG_INFO(72);

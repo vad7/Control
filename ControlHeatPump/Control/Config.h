@@ -5153,11 +5153,15 @@ const char *noteTemp[] = {"Температура улицы",
 	// --------------------------------------------------------------------------------
 	#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D65(TXD2)
 	#ifdef USE_HEATER
-		#define HEATER_MODBUS_ID		10
 		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
 		#define HEATER_MODBUS_SPEED		19200
 		#define HEATER_MODBUS_CONFIG	SERIAL_8N1
-		#define MODBUS_HEATER_GE		HEATER_MODBUS_ID	// Переключение портов - если больше или равно, то HEATER_MODBUS_PORT иначе MODBUS_PORT_NUM
+		#define MODBUS_HEATER_GE		HEATER_MODBUS_ADDR	// Переключение портов - если больше или равно, то HEATER_MODBUS_PORT иначе MODBUS_PORT_NUM
+		#define HEATER_MODBUS_ADDR		10		// Адаптер Opentherm - RS485(Modbus)
+		//#define HEATER_MODBUS_RELAY_ADDR	11	// Адрес Modbus Реле включения нагревателя
+		//#define HEATER_MODBUS_RELAY_ID	0	// Номер Реле включения нагревателя (нумерация с 0)
+		//#define HEATER_MODBUS_3WAY_ADDR	11	// Адрес Modbus Реле трехходового клапана: нагреватель - ТН
+		//#define HEATER_MODBUS_3WAY_ID		1	// Номер Реле трехходового клапана: нагреватель - ТН
 	#endif
 
 	// Конфигурирование Modbus для инвертора и счетчика SDM
@@ -5166,6 +5170,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_PORT_CONFIG      SERIAL_8N1  // Конфигурация порта куда прицеплен частотник и счетчик
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
 	#define MODBUS_TIMEOUT			80			// Таймаут ожидания ответа, мсек
+	#define MODBUS_REPEAT_DELAY		100			// Задержка перед повторным чтением, мс
 	#define MODBUS_MIN_TIME_BETWEEN_TRNS 20		// Минимальная пауза между транзакциями, мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
 	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
@@ -5230,9 +5235,9 @@ const char *noteTemp[] = {"Температура улицы",
 	#define INUMBER               3   // Максимальное число контактных датчиков цифровые входы (то что поддерживается)
 	//  Ноги куда прицепленны контактные датчики
 	#define PIN_SENSOR_SHIGHP    37  // [X4(S2)] Датчик высокого давления (X4.1 + X4.2)
-	#define PIN_SENSOR_POWER	 63	// [X24.1] Датчик наличия высокого напряжения, через делитель <--20кОм--БП12V--6.8кОм--GND[X24.2]
-	#define PIN_SENSOR_GENERATOR 36	// [X3(S1)] Датчик работы от резервного источника питания - реле NO, (X3.1 + X3.2)
-	//#define PIN_SENSOR_SLOWP      //         // Датчик низкого давления
+	#define PIN_SENSOR_POWER	 63	 // [X24.1] Датчик наличия высокого напряжения, через делитель <--20кОм--БП12V--6.8кОм--GND[X24.2]
+	#define PIN_SENSOR_GENERATOR 36	 // [X3(S1)] Датчик работы от резервного источника питания - реле NO, (X3.1 + X3.2)
+	//#define PIN_SENSOR_SLOWP       //         // Датчик низкого давления
 	//#define PIN_SENSOR_SERRFC   38  //[X5]     // Сигнал ошибка инвертора
 	//#define PIN_SENSOR_SFLOWCON 39             // Датчик потока по кондесатору
 	//#define PIN_SENSOR_SFLOWEVA 40             // Датчик потока по испарителю
@@ -5333,10 +5338,10 @@ const char *noteTemp[] = {"Температура улицы",
 							};
 
 	// Номера каналов АЦП, в нумерации SAM3X (AD*):
-	#define ADC_SENSOR_PEVA		11		// A9, X33. датчик давления испарителя (было 13(A11)/PIN_65)
-	#define ADC_SENSOR_PCON		12		// A10, X31. датчик давления конденсатора
-	#define ADC_SENSOR_PGEO		4		// A3, X19.1 датчик давления геоконтура - желтый, красный "+5V", черный "-".
-	#define ADC_SENSOR_POUT		5		// A2, X16.3 датчик давления отопления - желтый, красный "+5V", черный "-".
+	#define ADC_SENSOR_PEVA		11		// A9(D65), X33. датчик давления испарителя (было 13(A11)/PIN_65)
+	#define ADC_SENSOR_PCON		12		// A10(D64), X31. датчик давления конденсатора
+	#define ADC_SENSOR_PGEO		4		// A3(D57), X19.1 датчик давления геоконтура - желтый, красный "+5V", черный "-".
+	#define ADC_SENSOR_POUT		5		// A2(D56), X16.3 датчик давления отопления - желтый, красный "+5V", черный "-".
 	//#define ADC_SENSOR_IWR		3		// A4, X19.2 датчик тока (4-20мА), + резистор 150 Ом на GND
 	// Коэффициент преобразования отсчеты АЦП-давление, тысячные
 	const uint16_t TRANsADC[ANUMBER]  = {   373, 1380,  181,  181};
@@ -5369,7 +5374,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// Исполнительные устройства (реле и сухие контакты) ВНИМАТЕЛЬНО ПРОВЕРЯЕМ СООТВЕТСВИЕ ВСЕХ МАССИВОВ!!! ------------------------------------------------------------------
 	// Проверочный regexp: "PIN_[a-zA-Z0-9_]+[\s\t]+\d+"
 	#define RELAY_HIGH_LEVEL			// Реле выходов: включение высоким уровнем (High Level trigger)
-	#define RNUMBER                    13 // Число исполнительных устройств (всех)
+	#define RNUMBER                    15 // Число исполнительных устройств (всех)
 	// устройства DC 24V
 	#define PIN_DEVICE_RCOMP           61 // через FOD852(p1..4); X31.3->p2, X22.2->R680->(p1): 24V(6)->p4, DI1(8)->p3. Реле включения компрессора. P5.1=1
 	//#define PIN_FC_RESET             53 // -> DI3(10) Выход для сброса инвертора
@@ -5392,6 +5397,8 @@ const char *noteTemp[] = {"Температура улицы",
 		#define SUN_VALVE_SWITCH_TIME  30000 // Время переключения крана, мсек
 	#endif
 	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> PC817C.2, +12V - 1k - PC817C.1 -> Relay board 220V
+	#define PIN_HEATER_ON              69 // Включение котла на нагрев
+	#define PIN_HEATER_3WAY            32 // 3-х ходовое реле ТН, X41.3(EEV22) -> RELAY 12V SWITCH [-] -> 3WAY 220V, ВКЛ - работа ТН(компрессора), иначе котла.
 	// Free: -
 	//#define PIN_DEVICE_GEN             34 // X37.1(EEV23) -> Relay(-12V)(+12V=X41.2)
 	//#define PIN_DEVICE_RSUPERBOILER    11 //[R_8] реле насоса супербойлера
@@ -5400,7 +5407,6 @@ const char *noteTemp[] = {"Температура улицы",
 	//#define PIN_DEVICE_RFAN1           11        // Реле включения вентилятора испарителя №1
 	//#define PIN_DEVICE_RFAN2           11        // Реле включения вентилятора испарителя №2
 	//#define PIN_DEVICE_REVI            11        // Соленойд для EVI. (испаритель ниже +3гр и конденсатор выше +40гр)
-	//  Пины DUE 68, 69 не подключены к плате!
 
 	// Имена индексов ВАЖЕН ПОРЯДОК!
 	#define RCOMP              0          // Реле включения компрессора (через пускатель)
@@ -5418,6 +5424,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RSUNOFF            10         // Реле закрытия шарового крана солнечного коллектора
 	#define RGEN               11         // Реле запуска генератора (ATS), также не дает остановить его, если он уже запущен
 	#define RSOLINV            12         // Реле включения дополнительного солнечного инвертора для подкачки
+	#define RHEATER            13         // Включение котла на нагрев
+	#define RH_3WAY            14         // Трех ходовой кран котла
 
 	//#define RRESET             6          // Выход для сброса инвертора
 	//#define R3WAY              7          // Трех ходовой кран. Переключение системы СО — ГВС (что сейчас греть)
@@ -5454,7 +5462,9 @@ const char *noteTemp[] = {"Температура улицы",
 										PIN_DEVICE_RSUN_ON,
 										PIN_DEVICE_RSUN_OFF,
 										PIN_DEVICE_GEN,
-										PIN_SUN_INVERTOR2_EN
+										PIN_SUN_INVERTOR2_EN,
+										PIN_HEATER_ON,
+										PIN_HEATER_3WAY
 									  };
 	// Описание реле
 	const char *noteRelay[RNUMBER] = { "Реле включения компрессора",
@@ -5469,7 +5479,9 @@ const char *noteTemp[] = {"Температура улицы",
 									 "Реле открытия СК",
 									 "Реле закрытия СК",
 									 "Реле генератора",
-									 "Реле солнечного инвертора"
+									 "Реле солнечного инвертора",
+									 "Реле Котла",
+									 "Реле 3-х ходового крана ТН"
 								   };
 	//  Имя реле
 	const char *nameRelay[RNUMBER] = { "RCOMP",          // Реле включения компрессора
@@ -5484,7 +5496,9 @@ const char *noteTemp[] = {"Температура улицы",
 									 "RSUNON",
 									 "RSUNOFF",
 									 "RGEN",
-									 "RSOLINV"
+									 "RSOLINV",
+									 "RHEATER",
+									 "RH_3WAY"
 								   } ;
 	// #define R4WAY_INVERT     // Инвертирование четырехходового при этом получается: охлаждение - реле выключено, нагрев - включено (если дефайна нет то на оборот)
 

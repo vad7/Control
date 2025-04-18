@@ -208,7 +208,7 @@ int8_t devVaconFC::get_readState()
 			HP.sInput[SGENERATOR].Read(true);
 			if(HP.sInput[SGENERATOR].get_Input() == HP.sInput[SGENERATOR].get_alarmInput()) {
 				HP.sendCommand(pWAIT);
-				SETBIT1(HP.flags, fHP_BackupNoPwrWAIT);
+				SETBIT1(HP.work_flags, fHP_BackupNoPwrWAIT);
 				return err;
 			}
 #endif

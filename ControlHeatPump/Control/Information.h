@@ -121,7 +121,7 @@ struct type_SaveON {
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
 #define fBoilerHeatElemSchPri 12		// Приоритет нагрева бойлера тэном по расписанию
 #define fBoilerCircSchedule 13		  	// флаг Рециркуляция ГВС по расписанию
-#define fBoilerPID			14			// ПИД
+#define fBoilerPID			14			// Использовать ПИД
 
 struct type_boilerHP {
 	uint8_t DischargeDelta;            // Сброс тепла в отопление, если температура подачи/конденсации приблизилась к максимуму/догреву, в десятых градуса
@@ -168,7 +168,7 @@ struct type_DailySwitch {
 struct type_setting_heat {
 	uint16_t flags;					// Флаги опций
 	RULE_HP Rule;					// алгоритм работы отопления.
-	uint8_t ProfileNext;			// Профиль на который будет переключение при ошибке
+	uint8_t _reserved_;				//
 	int16_t Temp1;					// Целевая температура дома
 	int16_t Temp2;					// Целевая температура обратки
 	int16_t dTemp;					// Гистерезис целевой температуры
@@ -178,7 +178,7 @@ struct type_setting_heat {
 	int16_t tempInLim;				// Tемпература подачи (минимальная для охлажления или максимальная для нагрева)
 	int16_t tempOutLim;				// Tемпература обратки (максимальная для охлажления или минимальная для нагрева)
 	uint16_t WorkPause;				// Минимальное время простоя, секунды
-	int16_t dt;						// Максимальная разность температур конденсатора.
+	int16_t MaxDeltaTempOut;		// Максимальная разность температур входа-выхода отопления.
 	int16_t kWeatherPID;			// Коэффициент погодозависимости PID, в ТЫСЯЧНЫХ градуса на градус
 	int8_t WeatherBase;				// Базовая температура для погодозависимости, градусы
 	uint8_t WeatherTargetRange;		// Предел изменения цели, десятые градусы
@@ -201,7 +201,7 @@ struct type_setting_heat {
 struct type_setting_cool {
 	uint16_t flags;					// Флаги опций
 	RULE_HP Rule;					// алгоритм работы отопления.
-	uint8_t ProfileNext;			// Профиль на который будет переключение при ошибке
+	uint8_t _reserved_;				//
 	int16_t Temp1;					// Целевая температура дома
 	int16_t Temp2;					// Целевая температура обратки
 	int16_t dTemp;					// Гистерезис целевой температуры
@@ -211,7 +211,7 @@ struct type_setting_cool {
 	int16_t tempInLim;				// Tемпература подачи (минимальная для охлажления или максимальная для нагрева)
 	int16_t tempOutLim;				// Tемпература обратки (максимальная для охлажления или минимальная для нагрева)
 	uint16_t WorkPause;				// Минимальное время простоя, секунды
-	int16_t dt;						// Максимальная разность температур конденсатора.
+	int16_t MaxDeltaTempOut;		// Максимальная разность температур входа-выхода отопления.
 	//int16_t kWeatherPID;			// Коэффициент погодозависимости PID, в ТЫСЯЧНЫХ градуса на градус
 	//int8_t WeatherBase;				// Базовая температура для погодозависимости, градусы
 	//uint8_t WeatherTargetRange;		// Предел изменения цели, десятые градусы
@@ -232,17 +232,23 @@ struct type_setting_cool {
 	//uint8_t MaxTargetRise;			// Максимальное превышение цели температуры, десятые градуса
 };
 
-#define LEN_PROFILE_NAME        25  // Длина имени профиля + 1 (конец строки)
-#define fEnabled                0   // Разрешение данного профайла использоваться в коротком списке
-#define fPro_Main				1	// Основной профиль (нельзя авто-переключаться по расписанию)
+#define LEN_PROFILE_NAME        	26  // Длина имени профиля + 1 (конец строки)
+// dataprofile.flags, биты:
+#define fEnabled                	0   // Разрешение данного профайла использоваться в коротком списке
+#define fPro_Main					1	// Основной профиль (нельзя авто-переключаться по расписанию)
+#define fSwitchProfileNext_OnError	2	// Переключать на ProfileNext при ошибке
+#define fSwitchProfileNext_ByTime	3	// Переключать на ProfileNext по времени (когда не рабочее время профиля)
+
 struct type_dataProfile               // Хранение общих данных
 {
-	int8_t id;                          // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!)
-	uint8_t flags;                      // Флаги профайла (2 элемент структуры!)
-	uint16_t len;                       // Длина данных
-	uint32_t saveTime;                  // Время сохранения профиля
-	char name[LEN_PROFILE_NAME];        // Имя профайла
-	char note[85]; // Описание профайла кодирование описания профиля 40 русских букв (одна буква 6 байт (двойное кодирование) это входная строка)  описание переводится и хранится в utf8 по 2 байта символ
+	int8_t 		id;                     // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!)
+	uint8_t 	flags;                  // Флаги профайла (2 элемент структуры!)
+	uint8_t 	ProfileNext;			// Профиль на который будет переключение при ошибке или по времени
+	uint8_t 	TimeStart;             	// Время начала работы профиля, если TimeStart == 0 и TimeEnd == 0, то выключено.
+	uint32_t 	saveTime;               // Время сохранения профиля
+	char 		name[LEN_PROFILE_NAME]; // Имя профайла
+	char 		note[85]; // Описание профайла кодирование описания профиля 40 русских букв (одна буква 6 байт (двойное кодирование) это входная строка)  описание переводится и хранится в utf8 по 2 байта символ
+	uint8_t 	TimeEnd;             	// Время окончания работы профиля
 };
 
 
@@ -266,12 +272,11 @@ class Profile                         // Класс профиль
     char *get_info(char *c,int8_t num);                     // ДОБАВЛЯЕТ к строке с - описание профиля num
     int16_t save(int8_t num);                               // Записать профайл в еепром под номерм num
     int32_t load(int8_t num);                               // загрузить профайл num из еепром память
-    int8_t  loadFromBuf(int32_t adr,byte *buf);             // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
+    int8_t  loadFromBuf(uint32_t adr,byte *buf);            // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
     int8_t  convert_to_new_version(void);
     int32_t erase(int8_t num);                              // стереть профайл num из еепром  (ставится признак пусто)
     boolean set_paramProfile(char *var,char *c);            // Профиль Установить параметры ТН из строки
     char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр второй параметр - наличие частотника
-    int16_t get_lenProfile(){return dataProfile.len;}       // получить длину профиля при записи
     int8_t  get_idProfile(){return dataProfile.id;}         // получить номер текущего профиля
     int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
 
@@ -285,7 +290,7 @@ class Profile                         // Класс профиль
     int32_t load_from_EEPROM_SaveON_mode(int8_t id);	    // Прочитать из EEPROM режим работы ТН (SaveON)
  
     char list[I2C_PROFIL_NUM*(LEN_PROFILE_NAME+6-1)+1];       // текущий список конфигураций + "n. " + ":?;"
-    inline int32_t get_sizeProfile() { // определить длину данных
+    inline uint32_t get_sizeProfile() { // определить длину данных
     	return 1 + 2 + //sizeof(magic) + sizeof(crc16) +
 				// данные контрольная сумма считается с этого места
 				sizeof(dataProfile) + sizeof(SaveON) + sizeof(Cool) + sizeof(Heat) + sizeof(Boiler)	+ sizeof(DailySwitch);

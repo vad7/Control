@@ -1364,7 +1364,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 				// Вывод строки статуса
 				WEB_STORE_DEBUG_INFO(46);
-				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>4</sup>|State:%d modWork:%X[%s] fHP:%X", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.flags);
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>4</sup>|State:%d modWork:%X[%s] fHP:%X", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
 				//for(i = 0; i < RNUMBER; i++) strReturn += m_snprintf(strReturn, 32, " %s:%d", HP.dRelay[i].get_name(), HP.dRelay[i].get_Relay());
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
 				//if(HP.dFC.get_present())  {strcat(strReturn," Power:"); _ftoa(strReturn,(float)HP.dFC.get_power()/1000.0,3);  }
@@ -1465,7 +1465,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #ifdef TCONIN
 			if(HP.dEEV.get_ruleEEV() != TCOMPIN_PEVA) {
 #else
-			if(HP.dEEV.get_ruleEEV() != TCOMPIN_PEVA && HP.is_heating()) {
+			if(HP.dEEV.get_ruleEEV() != TCOMPIN_PEVA && HP.is_HP_Heating()) {
 #endif
 				strcat(strReturn, " / ");
 				_dtoa(strReturn, HP.dEEV.OverheatTCOMP, 2);

@@ -289,6 +289,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define SAVE_TYPE_PwrCorr		-9
 #define SAVE_TYPE_Wattrouter	-10
 #define SAVE_TYPE_TempAlarm		-11
+#define SAVE_TYPE_Heater		-12
 #define SAVE_TYPE_LIMIT			-100
 
 // ------------------- EEV ----------------------------------
@@ -482,8 +483,9 @@ const char *cError={"error"};
 const char *cInvalid={"---"};
 const char *cStrEnd={"\n"};
 const char *cErrorRS485={"%s: %s(%d) error %d\n"};  			// имя, функция, ячейка, код
-const char *cErrorMutex={" %s: %s, mutex is buzy\n"};   // функция, мютекс
-const char *cErrorMutexRS485={"MODBUS %s(0x%X), mutex is buzy\n"};   // функция, мютекс, func((id << 16) + cmd)
+const char *cErrorModbus={"MODBUS %X Error. ID %d, #%d: %d\n"};	// № функции, адресс, ячейка, ошибка
+const char *cErrorMutex={" %s: %s, mutex is buzy\n"};   		// функция, мютекс
+const char *cErrorMutexRS485={"MODBUS %s(0x%X), mutex is buzy\n"};// функция, мютекс, func((id << 16) + cmd)
 const char *cAddHeat = {"+"};                                   // Значек нагрева ГВС ТЭНом
 const char http_get_str1[] = "GET ";
 const char http_get_str2[] = " HTTP/1.0\r\nHost: ";
@@ -1027,7 +1029,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_MODBUS_0xe1      -46         // Modbus 0xe1 Master invalid response function exception
 #define ERR_MODBUS_0xe2      -47         // Modbus 0xe2 Master response timed out exception
 #define ERR_MODBUS_0xe3      -48         // Modbus 0xe3 Master invalid response CRC exception
-#ifdef FC_VACON // Спицифические ошибки Vocon 10
+#ifdef FC_VACON // Специфические ошибки Vocon 10
   #define ERR_MODBUS_VACON_0x05 -49       // Ведомое устройство приняло запрос и обрабатывает его, но это требует много времени. Этот ответ предохраняет ведущее устройство от генерации ошибки тайм-аута.
   #define ERR_MODBUS_VACON_0x06 -50       // Ведомое устройство занято обработкой команды. Ведущее устройство должно повторить сообщение позже, когда ведомое освободится.
   #define ERR_MODBUS_VACON_0x07 -51       // Ведомое устройство не может выполнить программную функцию, заданную в запросе.
@@ -1035,7 +1037,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
   #define ERR_MODBUS_VACON_TEMP -53       // Перегрев радиатора инвертора
   #define ERR_MODBUS_VACON_0001 -54       // пусто для сохранения нумерации
   #define ERR_MODBUS_VACON_0002 -55       // пусто для сохранения нумерации
-#else           // Спицифические ошибки OMRON
+#else           // Специфические ошибки OMRON
   #define ERR_MODBUS_MX2_0x01  -49        // Omron mx2 Код исключения 0x01 Указанная функция не поддерживается
   #define ERR_MODBUS_MX2_0x02  -50        // Omron mx2 Код исключения 0x02 Указанная функция не обнаружена.
   #define ERR_MODBUS_MX2_0x03  -51        // Omron mx2 Код исключения 0x03 Неприемлемый формат указанных данных
@@ -1083,8 +1085,9 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_FC_RCOMP		-91			// Не возможно остановить инвертор с помошью RCOMP
 #define ERR_FC_NO_LINK		-92			// Нет связи с инвертором по MODBUS
 #define ERR_NO_POWER_WHILE_WORK -93		// Пропало электричество во время работы
+#define ERR_HEATER_LINK		-94			// Ошибка связи с котлом
 
-#define ERR_ERRMAX			-93 		// Последняя ошибка
+#define ERR_ERRMAX			-94 		// Последняя ошибка
 
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
 const int8_t CRITICAL_ERRORS[] = { ERR_COMP_ERR };
@@ -1195,7 +1198,8 @@ const char *noteError[] = {"Ok",                                                
                            "Не возможно остановить инвертор с помошью RCOMP",                                   //-91
 						   "Нет связи с инвертором по MODBUS",													//-92
 						   "Пропало электричество во время работы",												//-93
-                           
+						   "Ошибка связи с котлом",																//-94
+
                            "NULL"
                            };
 // --------------------------------- ПЕРЕЧИСЛЯЕМЫЕ ТИПЫ ---------------------------------------------

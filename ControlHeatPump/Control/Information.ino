@@ -382,7 +382,6 @@ void Profile::initProfile()
   strcpy(dataProfile.name,"unknow");
   strcpy(dataProfile.note,"default profile");
   dataProfile.flags=0x00;
-  dataProfile.len=get_sizeProfile();
   dataProfile.id=0;
   
   // Состояние ТН структура SaveON
@@ -408,7 +407,7 @@ void Profile::initProfile()
  // Защиты
   Cool.tempInLim=1000;                    // Tемпература подачи (минимальная)
   Cool.tempOutLim=3500;                   // Tемпература обратки (макс)
-  Cool.dt=1500;                        // Максимальная разность температур конденсатора.
+  Cool.MaxDeltaTempOut=1500;                        // Максимальная разность температур конденсатора.
   
  // Cool.P1=0;
   
@@ -429,7 +428,7 @@ void Profile::initProfile()
   Heat.add_delta_end_hour = 6;         // Конечный Час добавки температуры к установке
   Heat.tempInLim=4700;                    // Tемпература подачи (макс)
   Heat.tempOutLim=-5;                      // Tемпература обратки (минимальная)
-  Heat.dt=1500;                        // Максимальная разность температур конденсатора.
+  Heat.MaxDeltaTempOut=1500;                        // Максимальная разность температур конденсатора.
   Heat.kWeatherPID=0;                    // Коэффициент погодозависимости в СОТЫХ градуса на градус
   Heat.WeatherBase = 0;
   Heat.WeatherTargetRange = 0;
@@ -496,7 +495,7 @@ boolean Profile::set_paramCoolHP(char *var, float x)
 #endif
  if(strcmp(var,hp_TEMP_IN)==0) { if ((x>=0)&&(x<=30))  {Cool.tempInLim=rd(x, 100); return true;} else return false;  }else             // температура подачи (минимальная)
  if(strcmp(var,hp_TEMP_OUT)==0){ if ((x>=0)&&(x<=40))  {Cool.tempOutLim=rd(x, 100); return true;} else return false; }else             // температура обратки (максимальная)
- if(strcmp(var,hp_D_TEMP)==0) {  if ((x>=0)&&(x<=40))  {Cool.dt=rd(x, 100); return true;} else return false;      }else             // максимальная разность температур конденсатора.
+ if(strcmp(var,hp_D_TEMP)==0) {  if ((x>=0)&&(x<=40))  {Cool.MaxDeltaTempOut=rd(x, 100); return true;} else return false;      }else             // максимальная разность температур конденсатора.
  if(strcmp(var,hp_TEMP_PID)==0){ if ((x>=0)&&(x<=30))  {Cool.tempPID=rd(x, 100); return true;} else return false; }else             // Целевая темпеартура ПИД
  if(strcmp(var,hp_WEATHER)==0) { Cool.flags = (Cool.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else     // Использование погодозависимости
  if(strcmp(var,hp_HEAT_FLOOR)==0) { Cool.flags = (Cool.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
@@ -530,7 +529,7 @@ char* Profile::get_paramCoolHP(char *var, char *ret, boolean fc)
 #endif
    if(strcmp(var,hp_TEMP_IN)==0)  {_dtoa(ret,Cool.tempInLim/10,1); return ret;              } else             // температура подачи (минимальная)
    if(strcmp(var,hp_TEMP_OUT)==0) {_dtoa(ret,Cool.tempOutLim/10,1); return ret;             } else             // температура обратки (максимальная)
-   if(strcmp(var,hp_D_TEMP)==0)   {_dtoa(ret,Cool.dt/10,1); return ret;                  } else             // максимальная разность температур конденсатора.
+   if(strcmp(var,hp_D_TEMP)==0)   {_dtoa(ret,Cool.MaxDeltaTempOut/10,1); return ret;                  } else             // максимальная разность температур конденсатора.
    if(strcmp(var,hp_TEMP_PID)==0) {_dtoa(ret,Cool.tempPID/10,1); return ret;          } else             // Целевая темпеартура ПИД
    if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Cool.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
    if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Cool.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
@@ -573,7 +572,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 #endif
 	if(strcmp(var,hp_TEMP_IN)==0) { if((x>=0)&&(x<=70))  {Heat.tempInLim=rd(x, 100); return true;} else return false;     }else             // температура подачи (минимальная)
 	if(strcmp(var,hp_TEMP_OUT)==0){ if((x>=-10)&&(x<=70)){Heat.tempOutLim=rd(x, 100); return true;} else return false;    }else             // температура обратки (максимальная)
-	if(strcmp(var,hp_D_TEMP)==0) {  if((x>=0)&&(x<=40))  {Heat.dt=rd(x, 100); return true;} else return false;  }else                  // максимальная разность температур конденсатора.
+	if(strcmp(var,hp_D_TEMP)==0) {  if((x>=0)&&(x<=40))  {Heat.MaxDeltaTempOut=rd(x, 100); return true;} else return false;  }else                  // максимальная разность температур конденсатора.
 	if(strcmp(var,hp_TEMP_PID)==0){ if((x>=10)&&(x<=50)) {Heat.tempPID=rd(x, 100); return true;} else return false;  }else             // Целевая темпеартура ПИД
 	if(strcmp(var,hp_WEATHER)==0) { Heat.flags = (Heat.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else                     // Использование погодозависимости
 	if(strcmp(var,hp_HEAT_FLOOR)==0) { Heat.flags = (Heat.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
@@ -636,7 +635,7 @@ char* Profile::get_paramHeatHP(char *var,char *ret, boolean fc)
 #endif
 	if(strcmp(var,hp_TEMP_IN)==0)  { _dtoa(ret,Heat.tempInLim/10,1); return ret;               } else             // температура подачи (минимальная)
 	if(strcmp(var,hp_TEMP_OUT)==0) { _dtoa(ret,Heat.tempOutLim/10,1); return ret;              } else             // температура обратки (максимальная)
-	if(strcmp(var,hp_D_TEMP)==0)   { _dtoa(ret,Heat.dt/10,1); return ret;                   } else             // максимальная разность температур конденсатора.
+	if(strcmp(var,hp_D_TEMP)==0)   { _dtoa(ret,Heat.MaxDeltaTempOut/10,1); return ret;                   } else             // максимальная разность температур конденсатора.
 	if(strcmp(var,hp_TEMP_PID)==0) { _dtoa(ret,Heat.tempPID/10,1); return ret;              } else             // Целевая темпеартура ПИД
 	if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Heat.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
 	if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Heat.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
@@ -800,14 +799,14 @@ int8_t Profile::check_crc16_eeprom(int8_t num)
   uint16_t i, crc16tmp;
   byte x;
   uint16_t crc= 0xFFFF;
-  int32_t adr=I2C_PROFILE_EEPROM+dataProfile.len*num;     // вычислить адрес начала данных
+  int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;     // вычислить адрес начала данных
   
   if (readEEPROM_I2C(adr, (byte*)&x, sizeof(x))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_SAVE_PROFILE;}  adr=adr+sizeof(x);              // прочитать заголовок
   if (x==!0xaa)   return OK;                                                                                                                              // профиль пустой, или его вообще нет, контрольная сумма не актуальна
 //  if (x!=0xaa)  { set_Error(ERR_HEADER_PROFILE,(char*)nameHeatPump); return ERR_HEADER_PROFILE;}                                                       // Заголовок не верен, данных нет
   if (readEEPROM_I2C(adr, (byte*)&crc16tmp, sizeof(crc16tmp))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_SAVE_PROFILE;}  adr=adr+sizeof(crc16tmp);        // прочитать crc16
   
-  for (i=0;i<dataProfile.len-1-2;i++) {if (readEEPROM_I2C(adr+i, (byte*)&x, sizeof(x))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  crc=_crc16(crc,x);} // расчет - записанной в еепром сумму за вычетом заголовка
+  for (i=0;i<get_sizeProfile()-1-2;i++) {if (readEEPROM_I2C(adr+i, (byte*)&x, sizeof(x))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  crc=_crc16(crc,x);} // расчет - записанной в еепром сумму за вычетом заголовка
   if (crc==crc16tmp) return OK; 
   else            return err=ERR_CRC16_PROFILE;
 }
@@ -821,7 +820,7 @@ int8_t  Profile::check_crc16_buf(int32_t adr, byte* buf)
  // if (x!=0xaa)   { set_Error(ERR_HEADER_PROFILE,(char*)nameHeatPump); return ERR_HEADER_PROFILE;}    // Заголовок не верен, данных нет
   memcpy((byte*)&readCRC,buf+adr,sizeof(readCRC)); adr=adr+sizeof(readCRC);                            // прочитать crc16
   // Расчет контрольной суммы
-  for (i=0;i<dataProfile.len-1-2;i++) crc=_crc16(crc,buf[adr+i]);                                      // расчет -2 за вычетом CRC16 из длины и заголовка один байт
+  for (i=0;i<get_sizeProfile()-1-2;i++) crc=_crc16(crc,buf[adr+i]);                                      // расчет -2 за вычетом CRC16 из длины и заголовка один байт
   if (crc==readCRC) return OK; 
   else              return err=ERR_CRC16_EEPROM;
 }
@@ -937,10 +936,10 @@ int8_t  Profile::convert_to_new_version(void)
 			} else if(HP.Option.ver <= 157) { // flags 1b -> 2b
 				memcpy(&Cool + 2, &Cool, sizeof(Cool) - 2);
 				Cool.flags = Cool.Rule;
-				Cool.Rule = (RULE_HP)Cool.ProfileNext;
+				Cool.Rule = (RULE_HP)Cool._reserved_;
 				memcpy(&Heat + 2, &Heat, sizeof(Heat) - 2);
 				Heat.flags = Heat.Rule;
-				Heat.Rule = (RULE_HP)Heat.ProfileNext;
+				Heat.Rule = (RULE_HP)Heat._reserved_;
 				SETBIT0(Boiler.flags, fBoilerPID); Boiler.flags |= (GETBIT(Boiler.flags, fUseHeater)<<fBoilerPID);
 				SETBIT0(Boiler.flags, fUseHeater);
 			}
@@ -956,13 +955,12 @@ int8_t  Profile::convert_to_new_version(void)
 int16_t  Profile::save(int8_t num)
 {
   uint16_t crc16;
-  dataProfile.len=get_sizeProfile();            // вычислить адрес начала данных
   dataProfile.saveTime=rtcSAM3X8.unixtime();    // запомнить время сохранения профиля
 #ifdef WATTROUTER
   SaveON.WR_Loads = WR_Loads;
 #endif
 
-  int32_t adr=I2C_PROFILE_EEPROM+dataProfile.len*num;
+  int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;
   
   uint8_t magic = 0xAA;                         // заголовок
   if (writeEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { set_Error(ERR_SAVE_PROFILE,(char*)nameHeatPump); return ERR_SAVE_PROFILE;}  adr=adr+sizeof(magic);       // записать заголовок
@@ -979,16 +977,16 @@ int16_t  Profile::save(int8_t num)
   if (writeEEPROM_I2C(adrCRC16, (byte*)&crc16, sizeof(crc16))) {set_Error(ERR_SAVE_PROFILE,(char*)nameHeatPump); return err=ERR_SAVE_PROFILE;} 
 
   if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf("- Verify Error!\n"); return (int16_t) err;}                            // ВЕРИФИКАЦИЯ Контрольные суммы не совпали
-  journal.jprintf(" Save profile #%d OK, wrote: %d bytes, crc: %04x\n",num,dataProfile.len,crc16);                                                        // дошли до конца значит ошибок нет
+  journal.jprintf(" Save profile #%d OK, wrote: %d bytes, crc: %04x\n",num,get_sizeProfile(),crc16);                                                        // дошли до конца значит ошибок нет
   update_list(num);                                                                                                                                                  // обновить список
-  return dataProfile.len;
+  return get_sizeProfile();
 }
 
 // загрузить профайл num из еепром память
 int32_t Profile::load(int8_t num)
 {
   byte magic;
-  int32_t adr=I2C_PROFILE_EEPROM+dataProfile.len*num;     // вычислить адрес начала данных
+  int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;     // вычислить адрес начала данных
    
   if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return err=ERR_LOAD_PROFILE;}  adr=adr+sizeof(magic); // прочитать заголовок
  
@@ -1003,9 +1001,9 @@ int32_t Profile::load(int8_t num)
   if (readEEPROM_I2C(adr, (byte*)&crc16, sizeof(crc16))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(crc16); // прочитать crc16
   if (readEEPROM_I2C(adr, (byte*)&dataProfile, sizeof(dataProfile))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(dataProfile); // прочитать данные
   
-  #ifdef LOAD_VERIFICATION
-  if (dataProfile.len!=get_sizeProfile())  { set_Error(ERR_BAD_LEN_PROFILE,(char*)nameHeatPump); return err=ERR_BAD_LEN_PROFILE;}   // длины не совпали
-  #endif
+//  #ifdef LOAD_VERIFICATION
+//  if (dataProfile.len!=get_sizeProfile())  { set_Error(ERR_BAD_LEN_PROFILE,(char*)nameHeatPump); return err=ERR_BAD_LEN_PROFILE;}   // длины не совпали
+//  #endif
   
   // Выключение дневных реле, кроме HTTP!
   if(DailySwitch_on & ~DailySwitch_on_MASK_OFF) {
@@ -1039,10 +1037,10 @@ int32_t Profile::load(int8_t num)
    #ifdef LOAD_VERIFICATION
   // проверка контрольной суммы
   if(crc16!=get_crc16_mem()) { set_Error(ERR_CRC16_PROFILE,(char*)nameHeatPump); return err=ERR_CRC16_PROFILE;}                                                           // прочитать crc16
-  if (dataProfile.len!=adr-(I2C_PROFILE_EEPROM+dataProfile.len*num))  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;} // Проверка длины
-    journal.jprintf(" Load profile #%d OK, read: %d bytes, crc: %04x\n",num,adr-(I2C_PROFILE_EEPROM+dataProfile.len*num),crc16);
+  if (get_sizeProfile() != adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num))  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;} // Проверка длины
+    journal.jprintf(" Load profile #%d OK, read: %d bytes, crc: %04x\n",num,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num),crc16);
   #else
-    journal.jprintf(" Load profile #%d OK, read: %d bytes VERIFICATION OFF!\n",num,adr-(I2C_PROFILE_EEPROM+dataProfile.len*num));
+    journal.jprintf(" Load profile #%d OK, read: %d bytes VERIFICATION OFF!\n",num,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num));
   #endif
   update_list(num); 
    
@@ -1066,7 +1064,7 @@ int32_t Profile::load(int8_t num)
  }
 
 // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
-int8_t Profile::loadFromBuf(int32_t adr,byte *buf)  
+int8_t Profile::loadFromBuf(uint32_t adr,byte *buf)
 {
   uint16_t i;
   byte magic;
@@ -1093,7 +1091,7 @@ int8_t Profile::loadFromBuf(int32_t adr,byte *buf)
    memcpy((byte*)&DailySwitch,buf+adr,sizeof(DailySwitch)); adr=adr+sizeof(DailySwitch);                              // прочитать параметры DailySwitch
 
    #ifdef LOAD_VERIFICATION
-    if (dataProfile.len!=adr-aStart)  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;}    // Проверка длины
+    if (get_sizeProfile() != adr - aStart)  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;}    // Проверка длины
     journal.jprintf(" Load profile from file OK, read: %d bytes, crc: %04x\n",adr-aStart,i);                                                                    // ВСЕ ОК
   #else
     journal.jprintf(" Load setting from file OK, read: %d bytes VERIFICATION OFF!\n",adr-aStart);
@@ -1276,7 +1274,7 @@ char* Profile::get_info(char *c, int8_t num)
 	uint16_t crc16temp;
 	char *out;
 	out = c + strlen(c);
-	int32_t adr = I2C_PROFILE_EEPROM + dataProfile.len * num;                          // вычислить адрес начала профиля
+	int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;                          // вычислить адрес начала профиля
 	if(readEEPROM_I2C(adr, (byte*) &b, sizeof(b))) {
 		strcpy(out, "ERROR READ PROFILE");
 		return c;
@@ -1320,10 +1318,10 @@ char* Profile::get_info(char *c, int8_t num)
 // стереть профайл num из еепром  (ставится признак пусто, данные не стираются)
 int32_t Profile::erase(int8_t num)
 {
-   int32_t adr=I2C_PROFILE_EEPROM+dataProfile.len*num;                                             // вычислить адрес начала профиля
+   int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;                                             // вычислить адрес начала профиля
    byte xx=PROFILE_EMPTY;                                                                          // признак стертого профайла
    if (writeEEPROM_I2C(adr, (byte*)&xx, sizeof(xx))) { set_Error(ERR_SAVE_PROFILE,(char*)nameHeatPump); return ERR_SAVE_PROFILE;}  // записать заголовок
-   return dataProfile.len;                                                                         // вернуть длину профиля
+   return get_sizeProfile();                                                                         // вернуть длину профиля
 }
 
 // ДОБАВЛЯЕТ к строке с - список возможных конфигураций num - текущий профиль,
@@ -1381,7 +1379,7 @@ int32_t Profile::load_from_EEPROM_SaveON_mode(int8_t id)
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		return ERR_LOAD_PROFILE;
 	} else {
-		MODE_HP _mode = eepromI2C.read(I2C_PROFILE_EEPROM + dataProfile.len * id + sizeof(SaveON.magic) + sizeof(crc16) + sizeof(dataProfile) + (&SaveON.mode - &SaveON.magic));
+		MODE_HP _mode = eepromI2C.read(I2C_PROFILE_EEPROM + get_sizeProfile() * id + sizeof(SaveON.magic) + sizeof(crc16) + sizeof(dataProfile) + (&SaveON.mode - &SaveON.magic));
 		SemaphoreGive(xI2CSemaphore);
 		return _mode;
 	}

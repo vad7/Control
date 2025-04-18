@@ -777,7 +777,7 @@ uint16_t devEEV::get_StartPos()
 {
 	if(GETBIT(_data.flags, fEEV_StartPosByTemp)) { // По температурам подачи и геоконтура
 		int16_t t;
-		if(HP.is_heating()) {
+		if(HP.is_HP_Heating()) {
 			t = HP.sTemp[TCONOUTG].get_Temp() - HP.sTemp[TEVAING].get_Temp();
 		} else {
 			t = HP.sTemp[TEVAOUTG].get_Temp() - HP.sTemp[TCONING].get_Temp();
@@ -2038,6 +2038,25 @@ int8_t devModbus::readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret
 	return err;
 }
     
+// Установить значение регистра (2 байта) МХ2 в виде целого  числа возвращает код ошибки данные data
+int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data)
+{
+	// Если шедулер запущен то захватываем семафор
+	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+	{
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+		return err = ERR_485_BUZY;
+	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
+	RS485.set_slave(id);
+#endif
+	uint8_t result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
+	SemaphoreGive (xModbusSemaphore);
+	return err = translateErr(result);
+}
+
 // Получить значение 2-x регистров (4 байта) в виде целого  числа возвращает код ошибки данные кладутся в ret
 int8_t devModbus::readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret)
 {
@@ -2062,6 +2081,28 @@ int8_t devModbus::readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret
 	}
 	SemaphoreGive(xModbusSemaphore);
 	return err;
+}
+
+// Записать 2 регистра подряд возвращает код ошибки
+int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t data)
+{
+	uint8_t result;
+	// Если шедулер запущен то захватываем семафор
+	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+	{
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+		return err = ERR_485_BUZY;
+	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
+	RS485.set_slave(id);
+#endif
+	RS485.setTransmitBuffer(0, data >> 16);
+	RS485.setTransmitBuffer(1, data & 0xFFFF);
+	result = RS485.writeMultipleRegisters(cmd, 2);                                                 // послать запрос,
+	SemaphoreGive (xModbusSemaphore);
+	return err = translateErr(result);
 }
       
 // Получить значение 2-x регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
@@ -2090,8 +2131,34 @@ int8_t devModbus::readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret
 	return err;
 }
 
+// Записать float как 2 регистра числа возвращает код ошибки данные dat
+int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat)
+{
+	union {
+		float f;
+		uint16_t i[2];
+	} float_map = { .f = dat };
+	uint8_t result;
+	// Если шедулер запущен то захватываем семафор
+	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+	{
+		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+		return err = ERR_485_BUZY;
+	}
+#ifdef USE_HEATER
+	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+#else
+	RS485.set_slave(id);
+#endif
+	RS485.setTransmitBuffer(0, float_map.i[1]);
+	RS485.setTransmitBuffer(1, float_map.i[0]);
+	result = RS485.writeMultipleRegisters(cmd, 2);
+	//   result = RS485.writeSingleRegister(cmd,dat);                                               // послать запрос,
+	SemaphoreGive (xModbusSemaphore);
+	return err = translateErr(result);
+}
 
-// Получить значение N регистров c cmd (2*N байта) МХ2 в виде целого  числа (uint16_t *buf) при ошибке возвращает err
+// Получить значение N регистров c cmd (2*N байта) в виде целого  числа (uint16_t *buf) при ошибке возвращает err
 int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
 {
 	// Если шедулер запущен то захватываем семафор
@@ -2117,6 +2184,106 @@ int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,
 		SemaphoreGive (xModbusSemaphore);
 		return err;
 	}
+}
+
+// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
+{
+	int8_t cnt = HP.Option.Modbus_Attempts;
+	while(1) {
+		// Если шедулер запущен то захватываем семафор
+		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+		{
+			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+			return err = ERR_485_BUZY;
+		}
+	#ifdef USE_HEATER
+		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+	#else
+		RS485.set_slave(id);
+	#endif
+		uint8_t result = RS485.readHoldingRegisters(cmd, num);                                           // послать запрос,
+		SemaphoreGive(xModbusSemaphore);
+		if(result == RS485.ku8MBSuccess) {
+			for(int16_t i = 0; i < num; i++)
+				buf[i] = RS485.getResponseBuffer(i);
+			err = OK;
+			break;
+		} else err = translateErr(result);
+		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
+			journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
+			if(cnt == 1) break;
+		}
+		_delay(MODBUS_REPEAT_DELAY);
+		cnt--;
+	}
+	return err;
+}
+
+// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
+{
+	int8_t cnt = HP.Option.Modbus_Attempts;
+	while(1) {
+		// Если шедулер запущен то захватываем семафор
+		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+		{
+			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+			return err = ERR_485_BUZY;
+		}
+	#ifdef USE_HEATER
+		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+	#else
+		RS485.set_slave(id);
+	#endif
+		for(uint16_t i = 0; i < num; i++) RS485.send(buf[i]);
+		uint8_t result = RS485.writeMultipleRegisters(cmd, num);
+		SemaphoreGive(xModbusSemaphore);
+		if(result == RS485.ku8MBSuccess) {
+			err = OK;
+			break;
+		} else err = translateErr(result);
+		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
+			journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
+			if(cnt == 1) break;
+		}
+		_delay(MODBUS_REPEAT_DELAY);
+		cnt--;
+	}
+	return err;
+}
+
+// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data)
+{
+	int8_t cnt = HP.Option.Modbus_Attempts;
+	while(1) {
+		// Если шедулер запущен то захватываем семафор
+		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+		{
+			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+			return err = ERR_485_BUZY;
+		}
+	#ifdef USE_HEATER
+		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+	#else
+		RS485.set_slave(id);
+	#endif
+		RS485.send(data);
+		uint8_t result = RS485.writeMultipleRegisters(cmd, 1);
+		SemaphoreGive(xModbusSemaphore);
+		if(result == RS485.ku8MBSuccess) {
+			err = OK;
+			break;
+		} else err = translateErr(result);
+		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
+			journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
+			if(cnt == 1) break;
+		}
+		_delay(MODBUS_REPEAT_DELAY);
+		cnt--;
+	}
+	return err;
 }
 
 // прочитать отдельный бит возвращает ошибку Modbus function 0x01 Read Coils.
@@ -2176,72 +2343,36 @@ int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
 	}
 }
 
-// Установить значение регистра (2 байта) МХ2 в виде целого  числа возвращает код ошибки данные data
-int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data)
+// установить битовый вход функция Modbus function 0x05 Write Single Coil, при ошибке повторить Modbus_Attempts раз
+int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 {
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
+	int8_t cnt = HP.Option.Modbus_Attempts;
+	while(1) {
+		// Если шедулер запущен то захватываем семафор
+		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
+		{
+			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
+			return err = ERR_485_BUZY;
+		}
+	#ifdef USE_HEATER
+		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+	#else
+		RS485.set_slave(id);
+	#endif
+		uint8_t result = RS485.writeSingleCoil(cmd, u8State);
+		SemaphoreGive(xModbusSemaphore);
+		if(result == RS485.ku8MBSuccess) {
+			err = OK;
+			break;
+		} else err = translateErr(result);
+		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
+			journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
+			if(cnt == 1) break;
+		}
+		_delay(MODBUS_REPEAT_DELAY);
+		cnt--;
 	}
-#ifdef USE_HEATER
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
-}
-
-// Записать 2 регистра подряд возвращает код ошибки
-int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t data)
-{
-	uint8_t result;
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	RS485.setTransmitBuffer(0, data >> 16);
-	RS485.setTransmitBuffer(1, data & 0xFFFF);
-	result = RS485.writeMultipleRegisters(cmd, 2);                                                 // послать запрос,
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
-}
-
-// Записать float как 2 регистра числа возвращает код ошибки данные dat
-int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat)
-{
-	union {
-		float f;
-		uint16_t i[2];
-	} float_map = { .f = dat };
-	uint8_t result;
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	RS485.setTransmitBuffer(0, float_map.i[1]);
-	RS485.setTransmitBuffer(1, float_map.i[0]);
-	result = RS485.writeMultipleRegisters(cmd, 2);
-	//   result = RS485.writeSingleRegister(cmd,dat);                                               // послать запрос,
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
+	return err;
 }
 
 // Тестирование связи возвращает код ошибки
