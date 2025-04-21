@@ -2162,7 +2162,9 @@ void HeatPump::StopWait(boolean stop)
   }
 
   journal.jprintf(" modWork: %X[%s]\n", get_modWork(), codeRet[Status.ret]);
+#ifdef USE_HEATER
   if(is_heater_on()) dHeater.Heater_Stop();				// Выкл. котла
+#endif
   if(is_compressor_on()) compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
 
   if (stop) //Обновление ТН отключаем только при останове
@@ -3507,7 +3509,9 @@ xNextStop:
 		journal.jprintf_time("compressorON > modWork:%X[%s], now %s\n",get_modWork(),codeRet[Status.ret], is_compressor_on() ? "ON" : "OFF");
 #endif
 	//}
+#ifdef USE_HEATER
 	dHeater.HeaterValve_Off();		// Переключиться на ТН
+#endif
 
 	// 2. Задержка перед включением компрессора
 #ifdef DEFROST

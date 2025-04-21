@@ -160,7 +160,7 @@ uint8_t  WR_WorkFlags = 0;
 int16_t  WR_MAP_Ubat = 0;
 int16_t  WR_MAP_Ubuf = WR_DEFAULT_MAP_Ubuf;	// Буферное напряжение на АКБ, десятые V
 #ifdef RSOLINV
-uint8_t  WR_Invertor2_off_cnt = 0;		// Счетчик до выключения
+uint16_t  WR_Invertor2_off_cnt = 0;		// Счетчик до выключения
 #endif
 
 #ifdef PWM_CALC_POWER_ARRAY

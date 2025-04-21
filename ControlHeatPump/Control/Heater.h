@@ -120,8 +120,8 @@ public:
 	int8_t	stop();									// Команда останова нагрева
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
-	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_pFC('x')
-	boolean	set_param(char *var, float p);			// Установить параметр из строки - set_pFC('x')
+	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
+	boolean	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
 	void 	get_info(char* buf);					// Получить информацию
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
 

@@ -386,29 +386,6 @@ int8_t devHeater::stop()
 	return err;
 }
 
-// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret
-void devHeater::get_param(char *var, char *ret)
-{
-
-	ret += m_strlen(ret);
-    if(strcmp(var,fc_ON_OFF)==0)                { if (GETBIT(flags,fOnOff))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
-
-    strcat(ret,(char*)cInvalid);
-}
-
-// Установить параметр из строки
-boolean devHeater::set_param(char *var, float f)
-{
-	int16_t x = f;
-    if(strcmp(var, fc_ON_OFF)==0)                { if(x == 0) stop(); else start(); return true; } else
-
-	x = rd(f, 100);
-//    	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){set.setup_flags=x;return true; } else return false; } else // градусы
-
-
-    return false;
-}
-
 // Получить информацию
 void devHeater::get_info(char* buf)
 {
@@ -438,5 +415,88 @@ void devHeater::get_info(char* buf)
 		m_snprintf(buf, 256, "|Режим тестирования!|;");
 	}
 }
+
+// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret
+void devHeater::get_param(char *var, char *ret)
+{
+
+	ret += m_strlen(ret);
+/*
+    if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else
+    if(strcmp(var,fc_NOTE)==0)                  {  strcat(ret,note);             } else
+    if(strcmp(var,fc_PRESENT)==0)               { if (GETBIT(flags,fFC))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
+    if(strcmp(var,fc_STATE)==0)                 {  _itoa(state,ret);   } else
+    if(strcmp(var,fc_FC)==0)                    {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
+    if(strcmp(var,fc_INFO1)==0)                 {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
+    if(strcmp(var,fc_cFC)==0)                   {  _dtoa(ret, FC_curr_freq, 2); strcat(ret, " Гц"); } else // Текущая частота!
+    if(strcmp(var,fc_cPOWER)==0)                {  _itoa(get_power(), ret); } else
+    if(strcmp(var,fc_cCURRENT)==0)              {  _dtoa(ret, get_current(), 2); } else
+    if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      {  strcat(ret,(char*)(GETBIT(_data.setup_flags,fAutoResetFault) ? cOne : cZero)); } else
+    if(strcmp(var,fc_LogWork)==0)      			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fLogWork) ? cOne : cZero)); } else
+    if(strcmp(var,fc_fFC_RetOil)==0)   			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fFC_RetOil) ? cOne : cZero)); } else
+    if(strcmp(var,fc_ReturnOilPeriod)==0)       {  _itoa(_data.ReturnOilPeriod * (FC_TIME_READ/1000), ret); } else
+    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     {  _itoa(_data.ReturnOilPerDivHz * (FC_TIME_READ/1000), ret); } else
+    if(strcmp(var,fc_ReturnOilMinFreq)==0)      {  _dtoa(ret, _data.ReturnOilMinFreq, 2); } else
+    if(strcmp(var,fc_ReturnOilFreq)==0)         {  _dtoa(ret, _data.ReturnOilFreq, 2); } else
+    if(strcmp(var,fc_ReturnOilTime)==0)         {  _itoa(_data.ReturnOilTime * (FC_TIME_READ/1000), ret); } else
+    if(strcmp(var,fc_ANALOG)==0)                { // Флаг аналогового управления
+    if(strcmp(var,fc_BLOCK)==0)                 { if (GETBIT(flags,fErrFC))  strcat(ret,(char*)cYes); } else
+    if(strcmp(var,fc_ERROR)==0)                 {  _itoa(err,ret);          } else
+    if(strcmp(var,fc_UPTIME)==0)                {  _itoa(_data.Uptime,ret); } else   // вывод в секундах
+    if(strcmp(var,fc_PID_STOP)==0)              {  _itoa(_data.PidStop,ret);          } else
+    if(strcmp(var,fc_DT_COMP_TEMP)==0)          {  _dtoa(ret, _data.dtCompTemp, 2); } else // градусы
+
+	if(strcmp(var,fc_PID_FREQ_STEP)==0)         {  _dtoa(ret, _data.PidFreqStep,2); } else // %
+	if(strcmp(var,fc_START_FREQ)==0)            {  _dtoa(ret, _data.startFreq,2); } else // %
+    if(strcmp(var,fc_DT_TEMP)==0)               {  _dtoa(ret, _data.dtTemp,2); } else // градусы
+    if(strcmp(var,fc_DT_TEMP_BOILER)==0)        {  _dtoa(ret, _data.dtTempBoiler,2); } else // градусы
+    if(strcmp(var,fc_MB_ERR)==0)        		{  _itoa(numErr, ret); } else
+   	if(strcmp(var, fc_FC_TIME_READ)==0)   		{  _itoa(FC_TIME_READ, ret); } else
+   	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
+    if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
+    if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
+   	if(strcmp(var, fc_MaxPower)==0)  			{  _itoa(_data.MaxPower, ret); } else
+   	if(strcmp(var, fc_MaxPowerBoiler)==0)		{  _itoa(_data.MaxPowerBoiler, ret); } else
+   	if(strcmp(var, fc_FC_MaxTemp)==0)  			{  _itoa(_data.FC_MaxTemp, ret); } else
+   	if(strcmp(var, fc_FC_TargetTemp)==0) 		{  _itoa(_data.FC_TargetTemp, ret); } else
+   	if(strcmp(var, fc_FC_C_COOLER_FAN_STR)==0)	{  strcat(ret, FC_C_COOLER_FAN_STR); } else
+*/
+    strcat(ret,(char*)cInvalid);
+}
+
+// Установить параметр из строки
+boolean devHeater::set_param(char *var, float f)
+{
+	int16_t x = f;
+/*
+    if(strcmp(var,fc_LogWork)==0)               { _data.setup_flags = (_data.setup_flags & ~(1<<fLogWork)) | ((x!=0)<<fLogWork); return true;  } else
+    if(strcmp(var,fc_fFC_RetOil)==0)            { _data.setup_flags = (_data.setup_flags & ~(1<<fFC_RetOil)) | ((x!=0)<<fFC_RetOil); return true;  } else
+    if(strcmp(var,fc_ReturnOilPeriod)==0)       { _data.ReturnOilPeriod = (int16_t) x / (FC_TIME_READ/1000); return true; } else
+    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
+    if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
+    if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
+    if(strcmp(var,fc_MaxPower)==0)  		    { _data.MaxPower = x; return true; } else
+    if(strcmp(var,fc_MaxPowerBoiler)==0)	    { _data.MaxPowerBoiler = x; return true; } else
+    if(strcmp(var,fc_FC_MaxTemp)==0)  		    { _data.FC_MaxTemp = x; return true; } else
+    if(strcmp(var,fc_FC_TargetTemp)==0)  	    { _data.FC_TargetTemp = x; return true; } else
+
+	x = rd(f, 100);
+    	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){_data.dtCompTemp=x;return true; } else return false; } else // градусы
+		if(strcmp(var,fc_FC)==0)                    { if(x>=_data.minFreqUser && x<=_data.maxFreqUser){set_target(x,true, _data.minFreqUser, _data.maxFreqUser); return true; } } else
+		if(strcmp(var,fc_DT_TEMP)==0)               { if(x>=0 && x<1000){_data.dtTemp=x;return true; } } else // градусы
+		if(strcmp(var,fc_DT_TEMP_BOILER)==0)        { if(x>=0 && x<1000){_data.dtTempBoiler=x;return true; } } else // градусы
+		if(strcmp(var,fc_MAX_FREQ_GEN)==0)          { if(x>=0){_data.maxFreqGen=x;return true; } } else // %
+		if(strcmp(var,fc_PID_FREQ_STEP)==0)         { if(x>=0 && x<=_data.PidMaxStep){ _data.PidFreqStep=x; return true; } } else // %
+		if(strcmp(var,fc_STEP_FREQ)==0)             { if(x>=0 && x<10000){_data.stepFreq=x;return true; } } else // %
+		if(strcmp(var,fc_PidMaxStep)==0)            { if(x>=0 && x<10000){_data.PidMaxStep=x; return true; } } else // %
+		if(strcmp(var,fc_ReturnOilMinFreq)==0)      { _data.ReturnOilMinFreq = x; return true; } else
+		if(strcmp(var,fc_ReturnOilFreq)==0)         { _data.ReturnOilFreq = x; return true; } else
+		if(strcmp(var,fc_AdjustEEV_k)==0)           { _data.AdjustEEV_k = x; return true; } else
+		if(strcmp(var,fc_ReturnOil_AdjustEEV_k)==0) { _data.ReturnOil_AdjustEEV_k = x; return true; } else
+		if(strcmp(var,fc_STEP_FREQ_BOILER)==0)      { if(x>=0 && x<10000){_data.stepFreqBoiler=x;return true; } } // %
+*/
+    return false;
+}
+
 
 #endif

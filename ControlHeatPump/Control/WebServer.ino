@@ -2009,13 +2009,13 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			}
 
 			//12.  Частотный преобразователь -----------------------------------------------------------------
-			if (strcmp(str,"get_pFC")==0)           // Функция get_paramFC - получить значение параметра FC
+			if (strcmp(str,"get_pFC")==0)           // Функция get_pFC - получить значение параметра FC
 			{
 				WEB_STORE_DEBUG_INFO(35);
 				HP.dFC.get_paramFC(x,strReturn);
 				ADD_WEBDELIM(strReturn);
 				continue;
-			} else if (strcmp(str,"set_pFC")==0)           // Функция set_paramFC - установить значение паремтра FC
+			} else if (strcmp(str,"set_pFC")==0)    // Функция set_pFC - установить значение паремтра FC
 			{
 				WEB_STORE_DEBUG_INFO(36);
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
@@ -2025,6 +2025,25 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				ADD_WEBDELIM(strReturn);
 				continue;
 			}
+			// Котел
+#ifdef USE_HEATER
+			else if(strcmp(str,"get_HT")==0)            // Функция get_HT - Котел, получить значение
+			{
+				WEB_STORE_DEBUG_INFO(35);
+				HP.dHeater.get_param(x,strReturn);
+				ADD_WEBDELIM(strReturn);
+				continue;
+			} else if(strcmp(str,"set_pFC")==0)    // Функция set_HT - Котел, установить значение
+			{
+				WEB_STORE_DEBUG_INFO(36);
+				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
+					if (HP.dHeater.set_param(x,pm)) HP.dHeater.get_param(x,strReturn);
+					else  strcat(strReturn,"E27");  // выход за диапазон зна\чений
+				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
+				ADD_WEBDELIM(strReturn);
+				continue;
+			}
+#endif
 
 			// 13 Опции теплового насоса
 			if(strcmp(str, "get_oHP") == 0)           // Функция get_optionHP - получить значение параметра отопления ТН
