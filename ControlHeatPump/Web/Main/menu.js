@@ -30,7 +30,7 @@
 		<li class="history"><a href="history.html">Детально</a></li>\
 	</ul>\
 </li>\
-<li name="USR" class="setsensors sensorst sensorsp eev relay invertor wattrouter has-children">\
+<li name="USR" class="setsensors sensorst sensorsp eev relay invertor heater has-children">\
 	<input type="checkbox" name="group-3" id="group-3">\
 	<label for="group-3"><i></i>Конфигурация ТН</label>\
 	<ul>\
@@ -40,6 +40,7 @@
 		<li class="eev"><a href="eev.html">ЭРВ</a></li>\
 		<li class="relay"><a href="relay.html">Реле</a></li>\
 		<li class="invertor"><a href="invertor.html"><i></i>Инвертор</a></li>\
+		<li class="heater"><a href="heater.html"><i></i>Котел</a></li>\
 	</ul>\
 </li>\
 <li name="USR" class="lan config system files time notice mqtt const has-children">\

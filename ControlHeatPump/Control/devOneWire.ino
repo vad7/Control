@@ -333,24 +333,3 @@ int8_t  deviceOneWire::PrepareTemp()
 	release_I2C_bus();
 	return OK;
 }
-
-// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
-void Recover_I2C_bus(void)
-{
-	// https://forum.arduino.cc/index.php?topic=288573.0
-	pinMode(PIN_WIRE_SCL, OUTPUT);
-	for(uint8_t i = 0; i < 8; i++) {
-		digitalWriteDirect(PIN_WIRE_SCL, HIGH); delayMicroseconds(3);
-		digitalWriteDirect(PIN_WIRE_SCL, LOW);  delayMicroseconds(3);
-	}
-	//pinMode(PIN_WIRE_SCL, INPUT);
-	PIO_Configure(
-			g_APinDescription[PIN_WIRE_SCL].pPort,
-			g_APinDescription[PIN_WIRE_SCL].ulPinType,
-			g_APinDescription[PIN_WIRE_SCL].ulPin,
-			g_APinDescription[PIN_WIRE_SCL].ulPinConfiguration);
-	delayMicroseconds(10);
-	Wire.begin();
-	delayMicroseconds(10);
-	Wire.Stop();
-}

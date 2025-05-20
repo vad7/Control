@@ -620,7 +620,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   // assemble Modbus Request Application Data Unit (ADU)
   // Сборка блока запроса Modbus Application Data (ADU)
   u8ModbusADU[u8ModbusADUSize++] = _u8MBSlave;     // номер устройства (Slave)
-  u8ModbusADU[u8ModbusADUSize++] = u8MBFunction;   // номер функции  Modbus
+  if(u8MBFunction != ku8MBCustomRequest) u8ModbusADU[u8ModbusADUSize++] = u8MBFunction;   // номер функции  Modbus
 
   // ЧТЕНИЕ ДАННЫХ в зависимости от функции Modbus поместить адрес регистра и длину данных
   switch(u8MBFunction)
@@ -729,6 +729,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
    while((c = _serial->read()) != -1) {
 	   Serial.print(c, HEX); Serial.print("h ");
    }
+   Serial.print('=');
 #else
 
   // flush receive buffer before transmitting request
@@ -743,6 +744,9 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   for (i = 0; i < u8ModbusADUSize; i++)
   {
     _serial->write(u8ModbusADU[i]);
+#ifdef MODBUSMASTER_DEBUG
+    Serial.print(u8ModbusADU[i], HEX); Serial.print(' ');
+#endif
   }
   //_serial->flush();           // Очистить передающий буфер -> теперь в _postTransmission()
   if (_postTransmission)  { _postTransmission(); }
@@ -763,13 +767,16 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 	   {
 #ifdef MODBUSMASTER_DEBUG
 		   if(u8ModbusADUSize == 0) {
-			   Serial.print(" 1: "); Serial.print(millis() - MBDEBUGTM); Serial.print(" ");
+			   Serial.print(" R: "); Serial.print(millis() - MBDEBUGTM); Serial.print(" =");
 			   MBDEBUGTM = millis();
 		   }
 #endif
 		   u8ModbusADU[u8ModbusADUSize++] = _serial->read();
 		   u8BytesLeft--;   // байт прочли уменьшили счетчик
 		   u32StartTime = millis();   // время продолжения
+#ifdef MODBUSMASTER_DEBUG
+		   Serial.print(u8ModbusADU[u8ModbusADUSize - 1], HEX); Serial.print(' ');
+#endif
 	   } else {                        // нет символов во входном буфере
 		   if(_idle) {  _idle();  }      // если разрешено - операция ожидания
 	   }

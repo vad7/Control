@@ -5017,13 +5017,13 @@ const char *noteTemp[] = {"Температура улицы",
 // =============================================== C O N F I G   7 ===================================================================
 // -----------------------------------------------------------------------------------------------------------------------------------
 #ifdef CONFIG_7    // Имя и описание конфигурации и ОСОБЕННОСТИ конфигурации ---------------------------------------------------------
-//	#define TEST_BOARD 				// Тестовая плата!
+	#define TEST_BOARD 				// Тестовая плата!
 
 	#define CONFIG_NAME   "vad7"
 	#define CONFIG_NOTE   "Частотник,охлаждение,ЭРВ,РТО,ТП,СК,ВаттРоутер. (Vacon 10,HLP068T4LC6,B3-052-46-HQ,HE 4.0,ETS 6-25)"
 	// Danfoss HLP068T4LC6, Vacon 10 (VACON0020-3L-0012-4), ПТО: B3-052-46-HQ, РТО: HE 4.0, ЭРВ: ETS 6-25
 	// Геоконтур: 6x50м ПНД50/ПП20 коаксил, Солнечный Коллектор: 6х50м ПНД 20.
-	#define HP_SCHEME     3			// Номер схемы который выводится на морде, подмена файлов plan[HPscheme].png -> plan1.png
+	#define HP_SCHEME     3			// Номер схемы который выводится на веб-морде по умолчанию, подмена файлов plan[HPscheme].png -> plan1.png
 	#define USE_HEATER				// Есть второй котел (электро или газовый)
 	#define UART_SPEED    250000	// Скорость отладочного порта
 	#define KEY_ON_OFF				// + KEY1 Наличие кнопки включения и переключения в safeNetwork (нажата при сбросе)
@@ -5084,7 +5084,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#ifdef TEST_BOARD
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
 //		#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
-//		#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
+		#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
 //		#define NEXTION_DEBUG 			// Отладка дисплея Nextion - отправка
 //		#define NEXTION_DEBUG2 			// Отладка дисплея Nextion - прием
 //		#define DEBUG_PID				// Отладка ПИДа
@@ -5095,7 +5095,9 @@ const char *noteTemp[] = {"Температура улицы",
 		#undef ONEWIRE_DS2482_THIRD
 		#undef ONEWIRE_DS2482_FOURTH
 		#undef ONEWIRE_DS2482_2WAY
+		#define TIME_I2C_UPDATE    (5*60)*1000
 		#define PIN_ONE_WIRE_BUS   69   // нога с интерфейсом программный 1-Wire - ВСЕ температурные датчики
+
 	#else
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
 		//#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
@@ -5152,7 +5154,8 @@ const char *noteTemp[] = {"Температура улицы",
 	// Для каждой конфигурации теперь свои определения!!!
 	// --------------------------------------------------------------------------------
 	#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D65(TXD2)
-	#ifdef USE_HEATER
+	#ifdef USE_HEATER							// Используется Котел
+		#define HP_SCHEME_HEATER		5		// Номер схемы который выводится на веб-морде при активном Котле
 		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
 		#define HEATER_MODBUS_SPEED		19200
 		#define HEATER_MODBUS_CONFIG	SERIAL_8N1
@@ -5205,7 +5208,7 @@ const char *noteTemp[] = {"Температура улицы",
 #endif
 	#define PIN_KEY1           44        // KEY1 Первая кнопка (ТН вкл/вкл) Нажатие при включении - режим safeNetwork (настрока сети по умолчанию 192.168.0.177  шлюз 192.168.0.1, не спрашивает пароль на вход в веб морду)
 	#define PIN_BEEP           45        // Выход на пищалку
-
+	#define PIN_REPOWER        35        // Сброс питания на десять секунд, если зависли шины I2C. [High current pin] -> R360 -> Repower board
 	// EEV куда подключено общий СИНИЙ
 	#define PIN_EEV1_D24       29  //[X40.1(от надписи)] // 1 нога ЭРВ +А ОРАНЖЕВЫЙ - коричневый
 	#define PIN_EEV2_D25       30  //[X40.2]             // 2 нога ЭРВ +B КРАСНЫЙ - желтый
@@ -5829,8 +5832,10 @@ const char *noteTemp[] = {"Температура улицы",
 	//#define WR_SKIP_EXTREMUM		300								// Отбрасывать пиковое значение больше Вт
 
 	#define WR_INVERTOR2_SUN_OFF_HOUR	21		// час выключения дополнительного подкачивающего солнечного инвертора
-	#define WR_INVERTOR2_SUN_PWR_ON		400		// минимальная мощность от солнца для включения из выключенного состояния, Вт
+	#define WR_INVERTOR2_SUN_PWR_ON		500		// минимальная мощность от солнца для включения из выключенного состояния, Вт
+	#define WR_INVERTOR2_SUN_PWR_OFF	10		// от солнца ниже которой начинает работать счетчик выключения, Вт
 	#define WR_INVERTOR2_SUN_OFF_TIMER	250		// сколько периодов WR ожидать перед выключением
+	#define WR_INVERTOR2_SUN_ON_TIMER	20		// сколько периодов WR ожидать перед включением
 	#define WR_INVERTOR2_SUN_OFF_WHEN_NO_WORK	// выключать только когда компрессор остановлен
 
 	#define HTTP_MAP_Server			"192.168.0.9"					// Адрес системы мониторинга Malina2 инвертора МАП МикроАрт

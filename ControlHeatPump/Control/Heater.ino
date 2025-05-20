@@ -26,7 +26,15 @@ int8_t devHeater::init()
 	err_num = 0;
 	err_num_total = 0;
 	Target = 0;
-	flags = 0;
+	work_flags = 0;
+
+	set.setup_flags = (0<<fHeater_Opentherm) | (1<<fHeater_USE_Relay_RHEATER) | (1<<fHeater_USE_Relay_RH_3WAY) | (0<<fHeater_USE_Relay_Modbus) | (0<<fHeater_USE_Relay_Modbus_3WAY);
+	set.power_start = 100;
+	set.power_max = 100;
+	set.power_boiler_start = 100;
+	set.power_boiler_max = 100;
+	set.pump_work_time_after_stop = 18;			// 3 минуты
+
 	/*
 	state = 0;
 	CheckLinkStatus();
@@ -50,22 +58,13 @@ int8_t devHeater::init()
 void devHeater::Heater_Stop()
 {
 #ifdef USE_HEATER
-
-	HP.stopHeater = rtcSAM3X8.unixtime();
-#endif
-}
-
-void devHeater::Heater_Start()
-{
-#ifdef USE_HEATER
-	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) HeaterValve_On();
 #ifdef RHEATER
-	if(set.setup_flags & fHeater_USE_Relay_RHEATER) HP.dRelay[RHEATER].set_ON();
+	HP.dRelay[RHEATER].set_OFF();
 #endif
 #ifdef HEATER_MODBUS_RELAY_ID
-	if(!(work_flags & fHP_HeaterOn)) {
-		if(dHeater.set.setup_flags & fHeater_USE_Relay_Modbus) {
-			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 1);
+	if(GETBIT(work_flags, fHP_HeaterOn)) {
+		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus)) {
+			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 0);
 			if(err) {
 				set_Error(err, (char*)__FUNCTION__);
 				return;
@@ -73,8 +72,9 @@ void devHeater::Heater_Start()
 		}
 	}
 #endif
-	if((set.setup_flags & fHeater_Opentherm)) {
-		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, HM_SET_FLAGS_HEATING);
+#ifdef HEATER_MODBUS_ADDR
+	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
+		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 0);
 		if(err) {
 			set_Error(err, (char*)__FUNCTION__);
 			return;
@@ -86,11 +86,55 @@ void devHeater::Heater_Start()
 			return;
 		}
 		if(status != 0) {
-			journal.jprintf("OT write err: %d", status);
+			journal.jprintf("OT write err: %d\n", status);
 			set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
 			return;
 		}
 	}
+#endif
+	HP.work_flags = (HP.work_flags & ~((1<<fHP_HeaterOn) | (1<<fHP_HeaterWasOn) | (1<<fHP_CompressorWasOn))) | (GETBIT(HP.work_flags, fHP_HeaterOn)<<fHP_HeaterWasOn);
+	HP.stopHeater = rtcSAM3X8.unixtime();
+#endif
+}
+
+void devHeater::Heater_Start()
+{
+#ifdef USE_HEATER
+	HeaterValve_On();
+#ifdef RHEATER
+	HP.dRelay[RHEATER].set_ON();
+#endif
+#ifdef HEATER_MODBUS_RELAY_ID
+	if(!(GETBIT(work_flags, fHP_HeaterOn)) {
+		if(dHeater.set.setup_flags & fHeater_USE_Relay_Modbus) {
+			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 1);
+			if(err) {
+				set_Error(err, (char*)__FUNCTION__);
+				return;
+			}
+		}
+	}
+#endif
+#ifdef HEATER_MODBUS_ADDR
+	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
+		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 1<<HM_SET_FLAGS_HEATING);
+		if(err) {
+			set_Error(err, (char*)__FUNCTION__);
+			return;
+		}
+		int16_t status;
+		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);
+		if(err) {
+			set_Error(err, (char*)__FUNCTION__);
+			return;
+		}
+		if(status != 0) {
+			journal.jprintf("OT write err: %d\n", status);
+			set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
+			return;
+		}
+	}
+#endif
 	SETBIT1(HP.work_flags, fHP_HeaterOn);
 	HP.startHeater = rtcSAM3X8.unixtime();
 #endif
@@ -99,12 +143,13 @@ void devHeater::Heater_Start()
 // Переключиться на котел, если еще нет
 void devHeater::HeaterValve_On()
 {
+#ifdef USE_HEATER
 #ifdef RH_3WAY
-	if(set.setup_flags & fHeater_USE_Relay_RH_3WAY) HP.dRelay[RH_3WAY].set_ON();
+	HP.dRelay[RH_3WAY].set_ON();
 #endif
 #ifdef HEATER_MODBUS_3WAY_ID
-	if(!(work_flags & fHP_HeaterValveOn)) {
-		if(dHeater.set.setup_flags & fHeater_USE_Relay_Modbus_3WAY) {
+	if(!GETBIT(work_flags, fHP_HeaterValveOn)) {
+		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_3WAY_ADDR, HEATER_MODBUS_3WAY_ID, 1);
 			if(err) {
 				set_Error(err, (char*)__FUNCTION__);
@@ -114,7 +159,11 @@ void devHeater::HeaterValve_On()
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
-	_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
+	if(!GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) {
+		journal.jprintf("Heater valve ON, wait\n");
+		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
+	}
+#endif
 	SETBIT1(HP.work_flags, fHP_HeaterValveOn);
 #endif
 }
@@ -123,24 +172,17 @@ void devHeater::HeaterValve_On()
 void devHeater::HeaterValve_Off()
 {
 #ifdef USE_HEATER
-	int32_t d = set.pump_work_time_after_stop * 10;
 	if(HP.is_heater_on()) {
 		Heater_Stop();
-		journal.jprintf("Heater is ON -> Turn off");
-	} else {
-		d = set.pump_work_time_after_stop * 10 - (rtcSAM3X8.unixtime() - HP.stopHeater);
-		if(d > 0) journal.jprintf("Wait Heater pump stop");
+		journal.jprintf("Heater is ON -> Turn OFF\n");
 	}
-	for(; d > 0; d--) { // задержка перед включением компрессора
-		_delay(1000);
-		if(HP.get_errcode() || HP.is_next_command_stop() || HP.get_State() == pSTOPING_HP) return; // прерваться по ошибке или по команде
-	}
+	WaitPumpOff();
 #ifdef RH_3WAY
-	if(set.setup_flags & fHeater_USE_Relay_RH_3WAY) HP.dRelay[RH_3WAY].set_OFF();
+	HP.dRelay[RH_3WAY].set_OFF();
 #endif
 #ifdef HEATER_MODBUS_3WAY_ID
-	if(work_flags & fHP_HeaterValveOn) {
-		if(dHeater.set.setup_flags & fHeater_USE_Relay_Modbus_3WAY) {
+	if(GETBIT(work_flags, fHP_HeaterValveOn)) {
+		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_3WAY_ADDR, HEATER_MODBUS_3WAY_ID, 0);
 			if(err) {
 				set_Error(err, (char*)__FUNCTION__);
@@ -150,10 +192,25 @@ void devHeater::HeaterValve_Off()
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
-	_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
+	if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) {
+		journal.jprintf("Heater valve OFF, wait\n");
+		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
+	}
+#endif
 	SETBIT0(HP.work_flags, fHP_HeaterValveOn);
 #endif
-#endif
+}
+
+// Ожидать постциркуляцию насоса
+void devHeater::WaitPumpOff()
+{
+	int32_t d = set.pump_work_time_after_stop * 10;
+	if(GETBIT(HP.work_flags, fHP_HeaterWasOn)) d -= rtcSAM3X8.unixtime() - HP.stopHeater;
+	if(d > 0) journal.jprintf("Wait Heater pump stop: %ds\n", d);
+	for(; d > 0; d--) { // задержка после выкл котла (постциркуляция насоса)
+		_delay(1000);
+		if(HP.get_errcode() || HP.is_next_command_stop() || HP.get_State() == pSTOPING_HP) return; // прерваться по ошибке или по команде
+	}
 }
 
 // Прочитать (внутренние переменные обновляются) состояние Котла, возвращает или ОК или ошибку
@@ -302,7 +359,7 @@ int8_t devHeater::start()
     if(err == OK) {
 xStarted:
     	SETBIT1(flags, fOnOff);
-        startCompressor = rtcSAM3X8.unixtime();
+        set_startCompressor();
         journal.jprintf(" %s[%s] ON\n", name, (char *)codeRet[HP.get_ret()]);
     } else {
         SETBIT1(flags, fErrFC);
@@ -325,7 +382,7 @@ xStarted:
     }
 xStarted:
     SETBIT1(flags, fOnOff);
-    startCompressor = rtcSAM3X8.unixtime();
+        set_startCompressor();
     journal.jprintf(" %s ON\n", name);
     */
     return err;
@@ -389,114 +446,58 @@ int8_t devHeater::stop()
 // Получить информацию
 void devHeater::get_info(char* buf)
 {
-	buf += m_strlen(buf);
-	if(testMode == NORMAL || testMode == HARD_TEST) {
-		if(!GETBIT(flags, fHeater_LinkOk)) {   // Нет связи
-			strcat(buf, "|Данные не доступны - нет связи|;");
-		} else {
-			/*
-			strcat(buf, "16-00|Состояние инвертора: ");
-			get_infoFC_status(buf + m_strlen(buf), state);
-			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
-			if(err == OK) {
-				buf += m_snprintf(buf, 256, "16-01|Фактическая скорость|%d%%;16-10|Выходная мощность (кВт)|%d;", read_0x03_16(FC_SPEED), get_power());
-				buf += m_snprintf(buf, 256, "16-17|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
-				buf += m_snprintf(buf, 256, "16-22|Крутящий момент|%d%%;", (int16_t)read_0x03_16(FC_TORQUE));
-				buf += m_snprintf(buf, 256, "16-12|Выходное напряжение (В)|%.1d;", (int16_t)read_0x03_16(FC_VOLTAGE));
-				buf += m_snprintf(buf, 256, "16-30|Напряжение шины постоянного тока (В)|%d;", (int16_t)read_0x03_16(FC_VOLTAGE_DC));
-				buf += m_snprintf(buf, 256, "16-34|Температура радиатора (°С)|%d;", read_tempFC());
-				buf += m_snprintf(buf, 256, "15-00|Время включения инвертора (часов)|%d;", read_0x03_32(FC_POWER_HOURS));
-				buf += m_snprintf(buf, 256, "15-01|Время работы компрессора (часов)|%d;", read_0x03_32(FC_RUN_HOURS));
-				buf += m_snprintf(buf, 256, "15-02|Итого выход кВтч|%d;", read_0x03_16(FC_CNT_POWER));
-			}
-			*/
-		}
+	buf += strlen(buf);
+	if(!GETBIT(work_flags, fHeater_LinkOk)) {   // Нет связи
+		strcat(buf, "|Данные не доступны - нет связи|;");
 	} else {
-		m_snprintf(buf, 256, "|Режим тестирования!|;");
+		buf += m_snprintf(buf, 256, "1D|Статус: %X|%s %s %s;", data.Status, (data.Status & 1) ? "Вкл" : "", (data.Status & 2) ? "Отопление" : "", (data.Status & 4) ? "ГВС" : "");
+		buf += m_snprintf(buf, 256, "1E|Код ошибки (дополнительный)|%d(%d);", data.Error, data.Error2);
+		//HM_HEATER_ERRORS
+		buf += m_snprintf(buf, 256, "1A|Давление в контуре, бар|%.1d;", data.P_OUT);
 	}
 }
 
 // Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret
 void devHeater::get_param(char *var, char *ret)
 {
+	ret += strlen(ret);
+	if(strcmp(var, Wheater_power_on)==0) 					{ _itoa( GETBIT(set.setup_flags, fHeater_Opentherm) ? GETBIT(work_flags, fHeater_PowerOn) : 1, ret); } else
+	if(strcmp(var, Wheater_is_on)==0) 					    { _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
+	if(strcmp(var, Wheater_3way)==0) 					    { strcat(ret, GETBIT(HP.work_flags, fHP_HeaterValveOn) ? "Котел" : "ТН"); } else
+	if(strcmp(var, Wheater_T_Flow)==0) 					    { if(GETBIT(work_flags, fHeater_LinkOk)) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_Power)==0) 					    { if(GETBIT(work_flags, fHeater_LinkOk)) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_Errors)==0) 					    { _itoa(err_num_total, ret); } else
+	if(strcmp(var, Wheater_fHeater_Opentherm)==0)			{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0)	{ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0)	{ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0)	{ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_power_start)==0) 				{ _itoa(set.power_start, ret); } else
+	if(strcmp(var, Wheater_power_max)==0) 					{ _itoa(set.power_max, ret); } else
+	if(strcmp(var, Wheater_power_boiler_start)==0)			{ _itoa(set.power_boiler_start, ret); } else
+	if(strcmp(var, Wheater_power_boiler_max)==0) 			{ _itoa(set.power_boiler_max, ret); } else
+	if(strcmp(var, Wheater_pump_work_time_after_stop)==0) 	{ _itoa(set.pump_work_time_after_stop * 10, ret); } else
+	if(strcmp(var, "INFO")==0) 					    		get_info(ret); else
 
-	ret += m_strlen(ret);
-/*
-    if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else
-    if(strcmp(var,fc_NOTE)==0)                  {  strcat(ret,note);             } else
-    if(strcmp(var,fc_PRESENT)==0)               { if (GETBIT(flags,fFC))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
-    if(strcmp(var,fc_STATE)==0)                 {  _itoa(state,ret);   } else
-    if(strcmp(var,fc_FC)==0)                    {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
-    if(strcmp(var,fc_INFO1)==0)                 {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
-    if(strcmp(var,fc_cFC)==0)                   {  _dtoa(ret, FC_curr_freq, 2); strcat(ret, " Гц"); } else // Текущая частота!
-    if(strcmp(var,fc_cPOWER)==0)                {  _itoa(get_power(), ret); } else
-    if(strcmp(var,fc_cCURRENT)==0)              {  _dtoa(ret, get_current(), 2); } else
-    if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      {  strcat(ret,(char*)(GETBIT(_data.setup_flags,fAutoResetFault) ? cOne : cZero)); } else
-    if(strcmp(var,fc_LogWork)==0)      			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fLogWork) ? cOne : cZero)); } else
-    if(strcmp(var,fc_fFC_RetOil)==0)   			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fFC_RetOil) ? cOne : cZero)); } else
-    if(strcmp(var,fc_ReturnOilPeriod)==0)       {  _itoa(_data.ReturnOilPeriod * (FC_TIME_READ/1000), ret); } else
-    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     {  _itoa(_data.ReturnOilPerDivHz * (FC_TIME_READ/1000), ret); } else
-    if(strcmp(var,fc_ReturnOilMinFreq)==0)      {  _dtoa(ret, _data.ReturnOilMinFreq, 2); } else
-    if(strcmp(var,fc_ReturnOilFreq)==0)         {  _dtoa(ret, _data.ReturnOilFreq, 2); } else
-    if(strcmp(var,fc_ReturnOilTime)==0)         {  _itoa(_data.ReturnOilTime * (FC_TIME_READ/1000), ret); } else
-    if(strcmp(var,fc_ANALOG)==0)                { // Флаг аналогового управления
-    if(strcmp(var,fc_BLOCK)==0)                 { if (GETBIT(flags,fErrFC))  strcat(ret,(char*)cYes); } else
-    if(strcmp(var,fc_ERROR)==0)                 {  _itoa(err,ret);          } else
-    if(strcmp(var,fc_UPTIME)==0)                {  _itoa(_data.Uptime,ret); } else   // вывод в секундах
-    if(strcmp(var,fc_PID_STOP)==0)              {  _itoa(_data.PidStop,ret);          } else
-    if(strcmp(var,fc_DT_COMP_TEMP)==0)          {  _dtoa(ret, _data.dtCompTemp, 2); } else // градусы
-
-	if(strcmp(var,fc_PID_FREQ_STEP)==0)         {  _dtoa(ret, _data.PidFreqStep,2); } else // %
-	if(strcmp(var,fc_START_FREQ)==0)            {  _dtoa(ret, _data.startFreq,2); } else // %
-    if(strcmp(var,fc_DT_TEMP)==0)               {  _dtoa(ret, _data.dtTemp,2); } else // градусы
-    if(strcmp(var,fc_DT_TEMP_BOILER)==0)        {  _dtoa(ret, _data.dtTempBoiler,2); } else // градусы
-    if(strcmp(var,fc_MB_ERR)==0)        		{  _itoa(numErr, ret); } else
-   	if(strcmp(var, fc_FC_TIME_READ)==0)   		{  _itoa(FC_TIME_READ, ret); } else
-   	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
-    if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
-    if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
-   	if(strcmp(var, fc_MaxPower)==0)  			{  _itoa(_data.MaxPower, ret); } else
-   	if(strcmp(var, fc_MaxPowerBoiler)==0)		{  _itoa(_data.MaxPowerBoiler, ret); } else
-   	if(strcmp(var, fc_FC_MaxTemp)==0)  			{  _itoa(_data.FC_MaxTemp, ret); } else
-   	if(strcmp(var, fc_FC_TargetTemp)==0) 		{  _itoa(_data.FC_TargetTemp, ret); } else
-   	if(strcmp(var, fc_FC_C_COOLER_FAN_STR)==0)	{  strcat(ret, FC_C_COOLER_FAN_STR); } else
-*/
     strcat(ret,(char*)cInvalid);
 }
 
 // Установить параметр из строки
 boolean devHeater::set_param(char *var, float f)
 {
-	int16_t x = f;
-/*
-    if(strcmp(var,fc_LogWork)==0)               { _data.setup_flags = (_data.setup_flags & ~(1<<fLogWork)) | ((x!=0)<<fLogWork); return true;  } else
-    if(strcmp(var,fc_fFC_RetOil)==0)            { _data.setup_flags = (_data.setup_flags & ~(1<<fFC_RetOil)) | ((x!=0)<<fFC_RetOil); return true;  } else
-    if(strcmp(var,fc_ReturnOilPeriod)==0)       { _data.ReturnOilPeriod = (int16_t) x / (FC_TIME_READ/1000); return true; } else
-    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
-    if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
-    if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
-    if(strcmp(var,fc_MaxPower)==0)  		    { _data.MaxPower = x; return true; } else
-    if(strcmp(var,fc_MaxPowerBoiler)==0)	    { _data.MaxPowerBoiler = x; return true; } else
-    if(strcmp(var,fc_FC_MaxTemp)==0)  		    { _data.FC_MaxTemp = x; return true; } else
-    if(strcmp(var,fc_FC_TargetTemp)==0)  	    { _data.FC_TargetTemp = x; return true; } else
+	int32_t x = f;
+	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(x) SETBIT1(set.setup_flags, fHeater_Opentherm); else SETBIT0(set.setup_flags, fHeater_Opentherm); return true;} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_RHEATER); else SETBIT0(set.setup_flags, fHeater_USE_Relay_RHEATER); return true;} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_RH_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_RH_3WAY); return true;} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus); return true;} else
+	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); return true;} else
+	if(strcmp(var, Wheater_power_start)==0)				{ if(x>=0 && x<=100){ set.power_start = x; return true; } } else
+	if(strcmp(var, Wheater_power_max)==0)				{ if(x>=0 && x<=100){ set.power_max = x; return true; } } else
+	if(strcmp(var, Wheater_power_boiler_start)==0)		{ if(x>=0 && x<=100){ set.power_boiler_start = x; return true; } } else
+	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.power_boiler_max = x; return true; } } else
+	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ if(x>=0 && x<=100){ set.pump_work_time_after_stop = x / 10; return true; } }
 
-	x = rd(f, 100);
-    	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){_data.dtCompTemp=x;return true; } else return false; } else // градусы
-		if(strcmp(var,fc_FC)==0)                    { if(x>=_data.minFreqUser && x<=_data.maxFreqUser){set_target(x,true, _data.minFreqUser, _data.maxFreqUser); return true; } } else
-		if(strcmp(var,fc_DT_TEMP)==0)               { if(x>=0 && x<1000){_data.dtTemp=x;return true; } } else // градусы
-		if(strcmp(var,fc_DT_TEMP_BOILER)==0)        { if(x>=0 && x<1000){_data.dtTempBoiler=x;return true; } } else // градусы
-		if(strcmp(var,fc_MAX_FREQ_GEN)==0)          { if(x>=0){_data.maxFreqGen=x;return true; } } else // %
-		if(strcmp(var,fc_PID_FREQ_STEP)==0)         { if(x>=0 && x<=_data.PidMaxStep){ _data.PidFreqStep=x; return true; } } else // %
-		if(strcmp(var,fc_STEP_FREQ)==0)             { if(x>=0 && x<10000){_data.stepFreq=x;return true; } } else // %
-		if(strcmp(var,fc_PidMaxStep)==0)            { if(x>=0 && x<10000){_data.PidMaxStep=x; return true; } } else // %
-		if(strcmp(var,fc_ReturnOilMinFreq)==0)      { _data.ReturnOilMinFreq = x; return true; } else
-		if(strcmp(var,fc_ReturnOilFreq)==0)         { _data.ReturnOilFreq = x; return true; } else
-		if(strcmp(var,fc_AdjustEEV_k)==0)           { _data.AdjustEEV_k = x; return true; } else
-		if(strcmp(var,fc_ReturnOil_AdjustEEV_k)==0) { _data.ReturnOil_AdjustEEV_k = x; return true; } else
-		if(strcmp(var,fc_STEP_FREQ_BOILER)==0)      { if(x>=0 && x<10000){_data.stepFreqBoiler=x;return true; } } // %
-*/
     return false;
 }
-
 
 #endif

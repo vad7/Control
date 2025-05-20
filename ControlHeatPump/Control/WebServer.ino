@@ -258,7 +258,11 @@ void readFileSD(char *filename, uint8_t thread)
 		if(strncmp(str + 1, filename_subst_scheme, sizeof(filename_subst_scheme)-1) == 0) // найден аргумент (схема ТН) надо подменять на значение HP_SHEME
 		{
 			if(*(str + 1 + sizeof(filename_subst_scheme)-1) == ']') {
+#ifdef HP_SCHEME_HEATER
+				itoa(GETBIT(HP.work_flags, fHP_HeaterValveOn) ? HP_SCHEME_HEATER : HP_SCHEME, str, 10); // вставить номер схемы
+#else
 				itoa(HP_SCHEME, str, 10); // вставить номер схемы
+#endif
 				strcat(filename, str + 1 + sizeof(filename_subst_scheme)-1 + 1);
 			} else journal.jprintf("Not found ] in: %s", filename); // нет закрывающейся скобки
 		}
@@ -565,15 +569,10 @@ void parserGET(uint8_t thread, int8_t )
 			ADD_WEBDELIM(strReturn) ;
 			continue;
 		}
-		if (strcmp(str,"get_config")==0)  // Функция get_config
-		{
-			strcat(strReturn,CONFIG_NAME);
-			ADD_WEBDELIM(strReturn);
-			continue;
-		}
-		if (strcmp(str,"get_configNote")==0)  // Функция get_configNote
-		{
-			strcat(strReturn,CONFIG_NOTE);
+		if (strncmp(str, "get_config", 10)==0) {
+			if (strcmp(str + 10, "Note")==0)  // Функция get_configNote
+				strcat(strReturn,CONFIG_NOTE);
+			else strcat(strReturn,CONFIG_NAME);	 // Функция get_config
 			ADD_WEBDELIM(strReturn);
 			continue;
 		}
@@ -589,15 +588,12 @@ void parserGET(uint8_t thread, int8_t )
 			strcat(strReturn,"%" WEBDELIM);
 			continue;
 		}
-		if (strcmp(str,"get_socketInfo")==0)  // Функция  get_socketInfo
-		{
-			socketInfo(strReturn);    // Информация  о сокетах
-			ADD_WEBDELIM(strReturn);
-			continue;
-		}
-		if (strcmp(str,"get_socketRes")==0)  // Функция  get_socketRes
-		{
-			_itoa(HP.socketRes(),strReturn);
+		if (strncmp(str, "get_socket", 10)==0) {
+			str += 10;
+			if(strcmp(str, "Info")==0)     // Функция  get_socketInfo
+				socketInfo(strReturn);     // Информация  о сокетах
+			else if(strcmp(str,"Res")==0)  // Функция  get_socketRes
+				_itoa(HP.socketRes(),strReturn);
 			ADD_WEBDELIM(strReturn);
 			continue;
 		}
@@ -671,21 +667,20 @@ void parserGET(uint8_t thread, int8_t )
 			ADD_WEBDELIM(strReturn);
 			continue;
 		}
-		if(strcmp(str, "get_NTP") == 0)  // тип NTP
+		if(strncmp(str, "get_NTP", 7) == 0)  // тип NTP
 		{
+			if(str[7] == 'r') {
 #ifdef HTTP_TIME_REQUEST
-			strcat(strReturn, "TCP" WEBDELIM);
+				strcat(strReturn, (char *)&HTTP_TIME_REQ);
+#endif
+				ADD_WEBDELIM(strReturn);
+			} else if(str[7] == '\0')
+#ifdef HTTP_TIME_REQUEST
+				strcat(strReturn, "TCP" WEBDELIM);
 #else
-			strcat(strReturn, "NTP" WEBDELIM);
+				strcat(strReturn, "NTP" WEBDELIM);
 #endif
 			continue;
-		}
-		if(strcmp(str, "get_NTPr") == 0)  // Запрос
-		{
-#ifdef HTTP_TIME_REQUEST
-			strcat(strReturn, (char *)&HTTP_TIME_REQ);
-#endif
-			ADD_WEBDELIM(strReturn);
 		}
 		if ((strcmp(str,"set_updateNet")==0)||(strcmp(str,"RESET_NET")==0))  // Функция Сброс w5200 и применение сетевых настроек, подождите 5 сек . . .
 		{
@@ -699,18 +694,25 @@ void parserGET(uint8_t thread, int8_t )
 		{
 			strcat(strReturn, HP.IsWorkingNow() ? "ON" : "OFF"); ADD_WEBDELIM(strReturn); continue;
 		}
-		if (strcmp(str,"get_MODE")==0)  // Функция get_MODE в каком состояниии находится сейчас насос
+		if (strncmp(str, "get_MODE", 8)==0)
 		{
-			strcat(strReturn,HP.StateToStr());
-			ADD_WEBDELIM(strReturn) ;    continue;
+			if(str[8] == 'S') { 		// get_MODES - Номер схемы для planN.png
+#ifdef HP_SCHEME_HEATER
+				_itoa(GETBIT(HP.work_flags, fHP_HeaterValveOn) ? HP_SCHEME_HEATER : HP_SCHEME, strReturn);
+#else
+				_itoa(HP_SCHEME, strReturn);
+#endif
+				ADD_WEBDELIM(strReturn); continue;
+			} else if(str[8] == '\0') {	  // Функция get_MODE - в каком состоянии находится сейчас ТН
+				strcat(strReturn, HP.StateToStr());
+				ADD_WEBDELIM(strReturn); continue;
+			}
 		}
-
 		if (strcmp(str,"get_modeHP")==0)           // Функция get_modeHP - получить режим отопления ТН
 		{
 			web_fill_tag_select(strReturn, MODE_HOUSE_WEBSTR, HP.get_modeHouse());
-			ADD_WEBDELIM(strReturn) ; continue;
+			ADD_WEBDELIM(strReturn); continue;
 		}
-
 		if (strcmp(str,"get_relayOut")==0)  // Функция Строка выходных насосов: RPUMPO = Вкл, RPUMPBH = Бойлер
 		{
 #ifdef RPUMPBH
@@ -777,14 +779,20 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 					if(HP.dEEV.EEV != -1) HP.dEEV.set_EEV(HP.dEEV.get_maxEEV());
 					goto xSaveStats;
 				}
-			} else {
-				l_i32 = HP.save();   // записать настройки в еепром, а потом будем их писать и получить размер записываемых данных
+			} else if(strcmp(str, "_PROF") == 0) { // Записать текущий профиль в еепром
+				l_i32 = HP.Prof.save(HP.Prof.get_idProfile());
+				_itoa(l_i32, strReturn);
+			} else if(strcmp(str, "_ALL") == 0) { // Сохранение всех настроек
+				l_i32 = HP.save();   // записать настройки в еепром
 				if(l_i32 > 0) {
 					int16_t len2 = HP.Prof.save(HP.Prof.get_idProfile());
 					if(len2 > 0) l_i32 += len2; else l_i32 = len2;
 				}
 				_itoa(l_i32, strReturn); // сохранение настроек ВСЕХ!
-				HP.save_motoHour();
+				//HP.save_motoHour();
+			} else if(str[0] == '\0') { // Сохранение настроек, кромер профиля
+				l_i32 = HP.save();   // записать настройки в еепром
+				_itoa(l_i32, strReturn);
 			}
 			ADD_WEBDELIM(strReturn);
 			continue;
@@ -850,25 +858,22 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		{
 			if (HP.fullCOP!=-1000) _dtoa(strReturn, HP.fullCOP, 2); else strcat(strReturn,"-"); ADD_WEBDELIM(strReturn); continue;
 		}
-		if (strcmp(str,"get_PowerCO") == 0)
+		if(strncmp(str, "get_Power", 9) == 0)
 		{
-			_dtoa(strReturn, HP.powerOUT, 3); ADD_WEBDELIM(strReturn); continue;
-		}
-		if (strcmp(str,"get_PowerGEO") == 0)
-		{
-			_dtoa(strReturn, HP.powerGEO, 3); ADD_WEBDELIM(strReturn); continue;
-		}
-		if (strcmp(str,"get_Power220") == 0)
-		{
+			str += 9;
+			if(strcmp(str, "CO") == 0) _dtoa(strReturn, HP.powerOUT, 3);		// get_PowerCO
+			else if(strcmp(str, "GEO") == 0) _dtoa(strReturn, HP.powerGEO, 3);	// get_PowerGEO
+			else if(strcmp(str, "220") == 0) {									// get_Power220
 #ifdef USE_UPS
-			if(HP.NO_Power) strcat(strReturn,"*.***");
-			else
+				if(HP.NO_Power) strcat(strReturn,"*.***");
+				else
 #endif
-			{
-				_dtoa(strReturn, HP.power220, 3);
-				if(HP.power_RBOILER) {
-					strcat(strReturn,"+");
-					_dtoa(strReturn, HP.power_RBOILER / 100, 1);
+				{
+					_dtoa(strReturn, HP.power220, 3);
+					if(HP.power_RBOILER) {
+						strcat(strReturn,"+");
+						_dtoa(strReturn, HP.power_RBOILER / 100, 1);
+					}
 				}
 			}
 			ADD_WEBDELIM(strReturn); continue;
@@ -1160,6 +1165,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			WEB_STORE_DEBUG_INFO(25);
 			strcat(strReturn,"VERSION|Версия прошивки|");strcat(strReturn,VERSION);strcat(strReturn,";");
 			strcat(strReturn,"__DATE__ __TIME__|Дата и время сборки прошивки|");strcat(strReturn,__DATE__);strcat(strReturn," ");strcat(strReturn,__TIME__) ;strcat(strReturn,";");
+			strcat(strReturn,"VER_SAVE|Версия формата сохраненных данных в I2C памяти|"); _itoa(VER_SAVE,strReturn); strcat(strReturn,";");
 			strcat(strReturn,"CONFIG_NAME|Имя конфигурации|");strcat(strReturn,CONFIG_NAME);strcat(strReturn,";");
 			strcat(strReturn,"CONFIG_NOTE|");strcat(strReturn,CONFIG_NOTE);strcat(strReturn,"|;");
 			strcat(strReturn,"TIME_READ_SENSOR|Период опроса датчиков (мсек)|");_itoa(TIME_READ_SENSOR,strReturn);strcat(strReturn,";");
@@ -1292,10 +1298,6 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #else
 			strcat(strReturn,"OFF;");
 #endif
-			strcat(strReturn,"VER_SAVE|Версия формата сохраненных данных в I2C памяти|");
-			_itoa(VER_SAVE,strReturn);
-			//if(VER_SAVE != HP.Option.ver) { strcat(strReturn," ("); _itoa(HP.Option.ver, strReturn); strcat(strReturn,")"); }
-			strcat(strReturn,";");
 			strcat(strReturn,"DEBUG|Вывод в порт отладочных сообщений|");
 #ifdef DEBUG
 			strcat(strReturn,"ON;");
@@ -1373,7 +1375,6 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				WEB_STORE_DEBUG_INFO(47);
 				strcat(strReturn,"<b> Времена</b>|;");
 				strcat(strReturn,"Текущее время|"); DecodeTimeDate(rtcSAM3X8.unixtime(),strReturn); strcat(strReturn,";");
-				strcat(strReturn,"Время последнего включения ТН|");DecodeTimeDate(HP.get_startTime(),strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Время текущего состояния ТН|");DecodeTimeDate(HP.get_command_completed(),strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Время старта компрессора|");DecodeTimeDate(HP.get_startCompressor(),strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Время останова компрессора|");DecodeTimeDate(HP.get_stopCompressor(),strReturn);strcat(strReturn,";");
@@ -2027,21 +2028,18 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			}
 			// Котел
 #ifdef USE_HEATER
-			else if(strcmp(str,"get_HT")==0)            // Функция get_HT - Котел, получить значение
-			{
-				WEB_STORE_DEBUG_INFO(35);
-				HP.dHeater.get_param(x,strReturn);
-				ADD_WEBDELIM(strReturn);
-				continue;
-			} else if(strcmp(str,"set_pFC")==0)    // Функция set_HT - Котел, установить значение
-			{
-				WEB_STORE_DEBUG_INFO(36);
-				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
-					if (HP.dHeater.set_param(x,pm)) HP.dHeater.get_param(x,strReturn);
-					else  strcat(strReturn,"E27");  // выход за диапазон зна\чений
-				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
-				ADD_WEBDELIM(strReturn);
-				continue;
+			else if(strcmp(str + 1,"et_HT")==0) {
+				if(*str == 'g') {                   // Функция get_HT - Котел, получить значение
+					WEB_STORE_DEBUG_INFO(35);
+					HP.dHeater.get_param(x,strReturn);
+				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение
+					WEB_STORE_DEBUG_INFO(36);
+					if(pm!=ATOF_ERROR) {   		// нет ошибки преобразования
+						if(HP.dHeater.set_param(x,pm)) HP.dHeater.get_param(x,strReturn);
+						else strcat(strReturn,"E27");  // выход за диапазон значений
+					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
+				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 #endif
 
@@ -2093,23 +2091,23 @@ xGetOptionHP:
 			//14.  Параметры  отопления и охлаждения ТН
 			if (strcmp(str,"get_Cool")==0)           // Функция get_paramCoolHP - получить значение параметра охлаждения ТН
 			{
-				HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present()); ADD_WEBDELIM(strReturn) ; continue;
+				HP.Prof.get_paramCoolHP(x,strReturn); ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"set_Cool")==0)           // Функция set_paramCoolHP - установить значение паремтра охлаждения ТН
 			{
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
 					if(HP.Prof.set_paramCoolHP(x,pm)) {
-						HP.Prof.get_paramCoolHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
+						HP.Prof.get_paramCoolHP(x,strReturn);    // преобразование удачно
 					} else  strcat(strReturn,"E16") ; // ошибка преобразования строки
 				} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"get_Heat")==0)           // Функция get_paramHeatHP - получить значение параметра отопления ТН
 			{
-				HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present()); ADD_WEBDELIM(strReturn) ; continue;
+				HP.Prof.get_paramHeatHP(x,strReturn); ADD_WEBDELIM(strReturn) ; continue;
 			} else if (strcmp(str,"set_Heat")==0)           // Функция set_paramHeatHP - установить значение паремтра отопления ТН
 			{
 				if (pm!=ATOF_ERROR) {   // нет ошибки преобразования
 					if (HP.Prof.set_paramHeatHP(x,pm)) {
-xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn,HP.dFC.get_present());    // преобразование удачно
+xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразование удачно
 					} else strcat(strReturn,"E16"); // ошибка преобразования строки
 				} else if(strcmp(x, hp_FC_FreqLimitHour) == 0) {
 					int16_t buf[2];

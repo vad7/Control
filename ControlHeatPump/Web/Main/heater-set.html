@@ -1,0 +1,39 @@
+<html lang="ru">
+<head> 
+	<title>Настройки Котла. Народный контроллер ТН</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type='text/javascript' src='scripts.js'></script>
+	<script type="text/javascript">
+		window.onload = function() {
+		loadParam("get_HT(OT),get_HT(R),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(P),get_HT(PM),get_HT(B),get_HT(BM),get_HT(PA),get_oHP(SH)");
+		};
+	</script>
+</head>
+<body class="actuators">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+ <h1>Настройки Котла <input style="float:none;" type="submit" value="Назад" onclick='history.back();'> <input type="submit" value="Записать в EEPROM" onclick='loadParam("set_SAVE")'></h1>
+ <div class="row1">
+	<table border="1" rules="rows">
+	<thead><tr><th>Описание</th><th>Значение</th></tr></thead>
+	<tbody>
+	<tr><td>Обмен с котлом по Opentherm (через Modbus)</td><td><input type="checkbox" id="get_ht-ot" onchange="setParam('get_HT(OT)')"></td></tr>
+	<tr><td>Использовать обычное реле RHEATER для запуска Котла</td><td><input type="checkbox" id="get_ht-r" onchange="setParam('get_HT(R)')"></td></tr>
+	<tr><td>Использовать обычное реле RH_3WAY для переключения Котел - ТН</td><td><input type="checkbox" id="get_ht-r3" onchange="setParam('get_HT(R3)')"></td></tr>
+	<tr><td>Использовать Modbus реле для запуска Котла</td><td><input type="checkbox" id="get_ht-rm" onchange="setParam('get_HT(RM)')"></td></tr>
+	<tr><td>Использовать Modbus реле для переключения Котел - ТН</td><td><input type="checkbox" id="get_ht-rw" onchange="setParam('get_HT(RW)')"></td></tr>
+    <tr><td>Время работы циркуляцонного насоса котла после останова, сек.</td><td><input type="number" id="get_ht-pa"> <input type="submit" value=">" onclick="setParam('get_HT(PA)')"></td></tr>
+    <tr><td>Время переключения Котел - ТН, сек.</td><td><input type="number" id="get_ohp-sh"> <input type="submit" value=">" onclick="setParam('get_oHP(SH)')"></td></tr>
+	<tr><td><b>Настройка граничных мощностей</b></td><td></td></tr>
+    <tr><td>Стартовая мощность для отопления, %</td><td><input type="number" id="get_ht-p"> <input type="submit" value=">" onclick="setParam('get_HT(P)')"></td></tr>
+    <tr><td>Максимальная мощность для отопления, %</td><td><input type="number" id="get_ht-pm"> <input type="submit" value=">" onclick="setParam('get_HT(PM)')"></td></tr>
+    <tr><td>Стартовая мощность нагрева бойлера, %</td><td><input type="number" id="get_ht-b"> <input type="submit" value=">" onclick="setParam('get_HT(B)')"></td></tr>
+    <tr><td>Максимальная мощность нагрева бойлера, %</td><td><input type="number" id="get_ht-bm"> <input type="submit" value=">" onclick="setParam('get_HT(BM)')"></td></tr>
+	</tbody>
+	</table>
+ </div>
+</div>
+</body>
+</html>

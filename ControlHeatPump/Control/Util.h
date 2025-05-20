@@ -80,4 +80,9 @@ void WR_ReadPowerMeter(void);
 
 #endif //WATTROUTER
 
+
+bool Check_I2C_bus(void);						// Проверка I2C на зависание, Возврат true если OK
+void Recover_I2C_bus(void);						// Борьба с зависшими устройствами на шине  I2C
+void repower(void);								// Сброс питания на несколько секунд
+
 #endif

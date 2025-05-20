@@ -94,14 +94,16 @@ private:
 // --------- внутренние структуры --------------
 // Структура для хранения статуса работы ТН EEPROM  - часть профиля!!!
 //  Определение флагов в  type_SaveON
-#define fBoilerON 				1		// флаг Включения бойлера  true - включено
+#define fBoilerON 				1		// флаг Включения бойлера, true - работает нагрев бойлера
 #define fAutoSwitchProf_mode	2		// флаг автопереключения Отопление/Охлаждение по температуре, если цель температура дома
+#define fHeat_UseHeater			3		// флаг Использовать Котел для отопления
+#define fBoiler_UseHeater		4		// флаг Использовать Котел для нагрева бойлера
 struct type_SaveON {
 	byte magic;							// признак данных, должно быть  0x55
 	uint8_t flags;						// флаги состояния ТН
-	MODE_HP mode;						// режим работы отопление|охлаждение
+	MODE_HP mode;						// текущий и сохраненный режим работы отопление|охлаждение
 	uint8_t WR_Loads;					// Биты активирования нагрузки ваттроутера
-	uint32_t startTime;					// дата и время включения ТН
+	uint32_t reserved;					//
 	uint32_t bTIN;						// Разрешения для датчиков температуры участвовать в расчете температуры дома (TIN), максимально кол-во датчиков = 32!
 };
 
@@ -115,7 +117,7 @@ struct type_SaveON {
 #define fTurboBoiler     	5           // флаг Ускоренный нагрев бойлера (ТН + ТЭН)
 #define fAddHeating      	6           // флаг ДОГРЕВА ГВС ТЭНом
 #define fBoilerTogetherHeat	7			// флаг одновременного нагрева бойлера с отоплением до температуры догрева
-#define fUseHeater			8			// Использовать Котел (вместо ТН)
+#define fBoiler_reserved	8			// резерв
 #define fBoilerUseSun		9		  	// флаг использования солнечного коллектора
 #define fAddHeatingForce	10			// флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
@@ -124,12 +126,12 @@ struct type_SaveON {
 #define fBoilerPID			14			// Использовать ПИД
 
 struct type_boilerHP {
+	uint16_t flags;                    // Флаги
 	uint8_t DischargeDelta;            // Сброс тепла в отопление, если температура подачи/конденсации приблизилась к максимуму/догреву, в десятых градуса
 	uint8_t pid_time; 				   // Период расчета ПИД в секундах
 	int16_t TempTarget;                // Целевая температура бойлера
 	int16_t dTemp;                     // гистерезис целевой температуры
 	int16_t tempInLim;                 // Tемпература подачи максимальная/минимальная если охлаждение ЗАЩИТА
-	uint16_t flags;                    // Флаги
 	uint32_t Schedule[7];              // Расписание бойлера
 	uint16_t Circul_Work;              // Время  работы насоса ГВС секунды (fCirculation)
 	uint16_t Circul_Pause;             // Пауза в работе насоса ГВС  секунды (fCirculation)
@@ -144,6 +146,7 @@ struct type_boilerHP {
 	int16_t tempPID;                   // Целевая температура ПИД
 	int16_t WF_MinTarget;              // Температура цели при нулевой облачности, сотые градуса
 	int16_t WR_Target;                 // Температура цели при нагреве от ваттроутера (солнца), сотые градуса
+	uint16_t WorkPause;                // Минимальное время простоя, секунды
 };
 
 // Структуры для хранения настроек Отопления и Охлаждения (одинаковые)
@@ -156,7 +159,7 @@ struct type_boilerHP {
 #define fAddHeat1				5	// Использование дополнительного тэна при нагреве (битовое поле)
 #define fAddHeat2				6	// 0 - нет, 1 - по дому, 2 - по улице, 3 - интеллектуально
 #define fUseAdditionalTargets	7	// Использовать дополнительные целевые датчики температуры
-#define fUseHeater				8	// Использовать Котел (вместо ТН)
+//#define f						8	// резерв
 
 #define DS_TimeOn_Extended 236
 struct type_DailySwitch {
@@ -241,14 +244,14 @@ struct type_setting_cool {
 
 struct type_dataProfile               // Хранение общих данных
 {
-	int8_t 		id;                     // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!)
+	int8_t 		id;                     // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!), todo: можно перенести в ОЗУ
 	uint8_t 	flags;                  // Флаги профайла (2 элемент структуры!)
-	uint8_t 	ProfileNext;			// Профиль на который будет переключение при ошибке или по времени
-	uint8_t 	TimeStart;             	// Время начала работы профиля, если TimeStart == 0 и TimeEnd == 0, то выключено.
+	uint8_t 	ProfileNext;			// Профиль на который будет переключение при ошибке или по времени [1..I2C_PROFIL_NUM], 0 - нет
+	uint8_t 	TimeStart;             	// Время начала работы профиля, hh:m0
 	uint32_t 	saveTime;               // Время сохранения профиля
 	char 		name[LEN_PROFILE_NAME]; // Имя профайла
 	char 		note[85]; // Описание профайла кодирование описания профиля 40 русских букв (одна буква 6 байт (двойное кодирование) это входная строка)  описание переводится и хранится в utf8 по 2 байта символ
-	uint8_t 	TimeEnd;             	// Время окончания работы профиля
+	uint8_t 	TimeEnd;             	// Время окончания работы профиля, hh:m0
 };
 
 
@@ -262,6 +265,7 @@ class Profile                         // Класс профиль
     type_boilerHP Boiler;                                   // Настройка бойлера
 	type_DailySwitch DailySwitch[DAILY_SWITCH_MAX]; 		// дневное периодическое включение
 	uint32_t DailySwitchStateT;
+    type_dataProfile dataProfile;                           // данные профиля
     
      // Функции работы с профилем
     void initProfile();                                     // инициализация профиля
@@ -276,18 +280,17 @@ class Profile                         // Класс профиль
     int8_t  convert_to_new_version(void);
     int32_t erase(int8_t num);                              // стереть профайл num из еепром  (ставится признак пусто)
     boolean set_paramProfile(char *var,char *c);            // Профиль Установить параметры ТН из строки
-    char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр второй параметр - наличие частотника
+    char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр
     int8_t  get_idProfile(){return dataProfile.id;}         // получить номер текущего профиля
     int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
 
     // Установка параметров
     boolean set_paramCoolHP(char *var, float x);            // Охлаждение Установить параметры ТН из числа (float)
-    char*   get_paramCoolHP(char *var, char *ret, boolean fc);// Охлаждение Получить параметр второй параметр - наличие частотника
+    char*   get_paramCoolHP(char *var, char *ret);          // Охлаждение Получить параметр
     boolean set_paramHeatHP(char *var, float x);            // Отопление  Установить параметры ТН из числа (float)
-    char*   get_paramHeatHP(char *var, char *ret,boolean fc);// отопление  Получить параметр  второй параметр - наличие частотника
+    char*   get_paramHeatHP(char *var, char *ret);          // отопление  Получить параметр
     boolean set_boiler(char *var, char *c);                 // Установить параметр из строки
     char*   get_boiler(char *var, char *ret);               // Получить параметр из строки по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
-    int32_t load_from_EEPROM_SaveON_mode(int8_t id);	    // Прочитать из EEPROM режим работы ТН (SaveON)
  
     char list[I2C_PROFIL_NUM*(LEN_PROFILE_NAME+6-1)+1];       // текущий список конфигураций + "n. " + ":?;"
     inline uint32_t get_sizeProfile() { // определить длину данных
@@ -300,7 +303,6 @@ class Profile                         // Класс профиль
     int8_t   check_crc16_eeprom(int8_t num);                // Проверить контрольную сумму ПРОФИЛЯ в EEPROM для данных на выходе ошибка, длина определяется из заголовка
     int8_t   check_crc16_buf(int32_t adr, byte* buf);       // Проверить контрольную сумму в буфере для данных на выходе ошибка, длина определяется из заголовка
     int8_t err;                                             // Ошибка
-    type_dataProfile dataProfile;                           // данные профиля
 };
 
 #endif

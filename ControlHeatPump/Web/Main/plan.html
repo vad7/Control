@@ -7,11 +7,18 @@ td, th { font-size: 1em; border: 0; text-align: left; }
 </style>
 <script src='scripts.js'></script>
 <script>
-	urlupdate = 2000;
-	window.onload = function() {
+SchemeOld = "";
+urlupdate = 2000;
+window.onload = function() {
 		loadParam("hide_tro_ei,hide_sun,get_tblTemp1");
-		updateParam("get_pFC(cFC),get_pFC(INFO1),get_pEEV(POSpp),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TBOILER),get_Temp(TOUT),get_Temp(TEVAOUT),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TIN),get_Temp(TEVAING),get_Temp(TEVAOUTG),get_Temp(TCONING),get_Temp(TCONOUTG),get_Temp(TCONOUT),get_Boiler(CT),get_Relay(RPUMPI),get_relayOut,get_Flow(FLOWEVA),get_Flow(FLOWCON),get_OverCool,get_Power220,get_fullCOP,get_PowerGEO,get_PowerCO,get_Relay(RBOILER),get_Relay(RSUN),get_Temp(TSUN),get_Temp(TSUNOUTG),get_TrgT,get_oHP(BP),get_Prof(ASM),get_modeHP,get_WR(3)");
+		updateParam("get_MODES,get_HT(ON),get_pFC(cFC),get_pFC(INFO1),get_pEEV(POSpp),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TBOILER),get_Temp(TOUT),get_Temp(TEVAOUT),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TIN),get_Temp(TEVAING),get_Temp(TEVAOUTG),get_Temp(TCONING),get_Temp(TCONOUTG),get_Temp(TCONOUT),get_Boiler(CT),get_Relay(RPUMPI),get_relayOut,get_Flow(FLOWEVA),get_Flow(FLOWCON),get_OverCool,get_Power220,get_fullCOP,get_PowerGEO,get_PowerCO,get_Relay(RBOILER),get_Relay(RSUN),get_Temp(TSUN),get_Temp(TSUNOUTG),get_TrgT,get_oHP(BP),get_Prof(ASM),get_modeHP,get_WR(3)");
 };
+function loadParam_after(paramid) {
+	if(paramid.indexOf("get_MODES")!=-1) {
+		if(SchemeOld != Scheme || SchemeOld == "") document.getElementsByClassName("visualization")[0].style ="background:url(\"plan" + Scheme + ".png\")";
+		SchemeOld = Scheme;
+	}
+}
 function set_bTIN(f,T) {
 	if(confirm((f.checked ? "Включить" : "Выключить") + " регулирование по этому датчику?")) setParam("get_inTemp(" +T+ ")"); else f.checked = !f.checked;
 }
@@ -50,6 +57,7 @@ function set_bTIN(f,T) {
 	<span id="get_temp-tsunoutg" class="red">-.-</span>
 </div>
 	<span id="get_wr-3"></span>
+	<div id="get_ht-on" style="display:none"></div>
 </div>
 <div class="row1">
 <table>

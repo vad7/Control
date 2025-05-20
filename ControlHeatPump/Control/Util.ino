@@ -1469,3 +1469,93 @@ void WR_ReadPowerMeter(void)
 
 #endif //WATTROUTER
 
+// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
+void Recover_I2C_bus(void)
+{
+	pinMode(PIN_WIRE_SDA, INPUT);
+	TWI0->TWI_CR = TWI_CR_SVDIS | TWI_CR_MSDIS;
+//	PMC->PMC_PCER0 = PMC_PCER0_PID12;  // PIOB power ON
+//	PIOB->PIO_PER |= PIO_PER_P12;      // TWCK1 pin (SCL) back to GPIO
+//	PIOB->PIO_OER |= PIO_OER_P12;
+//	PIOB->PIO_OWER |= PIO_OWER_P12;
+//	PIOB->PIO_PER |= PIO_PER_P13;      // TWD1 pin (SDA)  back to GPIO
+//	PIOB->PIO_OER |= PIO_OER_P13;
+//	PIOB->PIO_OWER |= PIO_OWER_P13;
+//  I2C#2 (TWI1)
+//  TWI1->TWI_CR = TWI_CR_SVDIS | TWI_CR_MSDIS;
+//	PMC->PMC_PCER0 = PMC_PCER0_PID11;  // PIOA power ON
+//	PIOA->PIO_PER |= PIO_PER_P18;      // TWCK0 pin (SCL1) back to GPIO
+//	PIOA->PIO_OER |= PIO_OER_P18;
+//	PIOA->PIO_OWER |= PIO_OWER_P18;
+//	PIOA->PIO_PER |= PIO_PER_P17;      // TWD0 pin (SDA1)  back to GPIO
+//	PIOA->PIO_OER |= PIO_OER_P17;
+//	PIOA->PIO_OWER |= PIO_OWER_P17;
+	pinMode(PIN_WIRE_SCL, OUTPUT);
+	// Generate 9 clock pulses
+	for (uint8_t i = 0; i < 10; i++) {
+		digitalWriteDirect(PIN_WIRE_SCL, HIGH);
+		delay(1);
+		digitalWriteDirect(PIN_WIRE_SCL, LOW);
+		delay(1);
+	}
+	if(!digitalReadDirect(PIN_WIRE_SDA)) repower();
+	journal.printf("I2C Resetted\n");
+	// Send a STOP
+	pinMode(PIN_WIRE_SCL, OUTPUT);
+	digitalWriteDirect(PIN_WIRE_SCL, LOW);
+	pinMode(PIN_WIRE_SDA, OUTPUT);
+	digitalWriteDirect(PIN_WIRE_SDA, LOW);
+	delay(1);
+	digitalWriteDirect(PIN_WIRE_SCL, HIGH);
+	delay(1);
+	digitalWriteDirect(PIN_WIRE_SDA, HIGH);
+	delay(1);
+	pinMode(PIN_WIRE_SCL, INPUT);
+	pinMode(PIN_WIRE_SDA, INPUT);
+	PIO_Configure(
+			g_APinDescription[PIN_WIRE_SCL].pPort,
+			g_APinDescription[PIN_WIRE_SCL].ulPinType,
+			g_APinDescription[PIN_WIRE_SCL].ulPin,
+			g_APinDescription[PIN_WIRE_SCL].ulPinConfiguration);
+	PIO_Configure(
+			g_APinDescription[PIN_WIRE_SDA].pPort,
+			g_APinDescription[PIN_WIRE_SDA].ulPinType,
+			g_APinDescription[PIN_WIRE_SDA].ulPin,
+			g_APinDescription[PIN_WIRE_SDA].ulPinConfiguration);
+	delayMicroseconds(10);
+}
+
+// Возврат true если OK
+bool Check_I2C_bus(void)
+{
+	bool ret;
+	pinMode(PIN_WIRE_SDA, INPUT);
+	if(digitalReadDirect(PIN_WIRE_SDA)) {
+		ret = true;
+	} else {
+		journal.printf("I2C LOCK UP!\n");
+		ret = false;
+	}
+	PIO_Configure(
+			g_APinDescription[PIN_WIRE_SDA].pPort,
+			g_APinDescription[PIN_WIRE_SDA].ulPinType,
+			g_APinDescription[PIN_WIRE_SDA].ulPin,
+			g_APinDescription[PIN_WIRE_SDA].ulPinConfiguration);
+	return ret;
+}
+
+// Сброс питания на несколько секунд
+void repower(void)
+{
+#ifdef PIN_REPOWER
+	journal.printf("POWER OFF - ON\n");
+	digitalWriteDirect(PIN_BEEP, HIGH);
+	for(uint8_t i = 0; i < 20; i++) {
+		digitalWriteDirect(PIN_LED_OK, i & 1);
+		delay(100);
+	}
+	pinMode(PIN_REPOWER, OUTPUT);
+	digitalWriteDirect(PIN_REPOWER, HIGH);
+	while(1) ;
+#endif
+}

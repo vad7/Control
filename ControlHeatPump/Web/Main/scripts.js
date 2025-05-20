@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2025 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.195";
+var VER_WEB = "1.200";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
@@ -131,9 +131,9 @@ function loadParam(paramid, noretry, resultdiv) {
 								var values = [arr[i].substring(0,j), arr[i].substring(j+1)];
 								var valueid = values[0].replace("(", "-").replace(")", "").replace("set_", "get_").toLowerCase();
 								var type, element;
-								if(/get_status|get_pFC[(]INFO|get_sys|^CONST|get_socketInfo/.test(values[0])) type = "const"; 
-								else if(/_list|et_modeHP|[(]RULE|et_testMode|[(]TARGET|NSL/.test(values[0])) type = "select"; // значения
-								else if(/Prof[(]NUM|get_tbl|listRelay|sensorIP|get_numberIP|TASK_/.test(values[0])) type = "table"; 
+								if(/get_status|get_.{2,3}\(INFO|get_sys|^CONST|get_socketInfo/.test(values[0])) type = "const"; 
+								else if(/_list|et_modeHP|\(RULE|et_testMode|\(TARGET|NSL/.test(values[0])) type = "select"; // значения
+								else if(/Prof\(NUM|get_tbl|listRelay|sensorIP|get_numberIP|TASK_/.test(values[0])) type = "table"; 
 								else if(values[0].indexOf("get_is")==0) type = "is"; // наличие датчика в конфигурации
 								else if(values[0].indexOf("scan_")!=-1) type = "scan"; // ответ на сканирование
 								else if(values[0].indexOf("hide_")==0) { // clear
@@ -162,6 +162,8 @@ function loadParam(paramid, noretry, resultdiv) {
 									location.reload();
 								} else if(values[0].indexOf("(DSD")!=-1) {
 									loadParam("get_tblPDS");
+								} else if(values[0]=="get_MODES"){
+									Scheme = values[1];
 								} else {
 									if((element = document.getElementById(valueid + "-ONOFF"))) { // Надпись
 										element.innerHTML = values[1] == 1 ? "Вкл" : "Выкл";
@@ -332,8 +334,6 @@ function loadParam(paramid, noretry, resultdiv) {
 															document.getElementById("get_cool-hp_in").disabled = onoff;
 															document.getElementById("get_cool-hp_dif").disabled = onoff;
 															document.getElementById("get_cool-temp_pid").disabled = onoff;
-															document.getElementById("get_cool-w").disabled = onoff;
-															document.getElementById("get_cool-kw").disabled = onoff;
 															document.getElementById("get_cool-hp_time").disabled = onoff;
 														} else if(idsel == "get_heat-rule") {
 															var onoff = k == 0;
@@ -556,7 +556,7 @@ function loadParam(paramid, noretry, resultdiv) {
 											for(var j = 0; j < trows.length - 1; j++) {
 												var tflds = trows[j].split(';');
 												upsens += 'get_Prof(DSO' + j + '),'; 
-												content += '<tr><td><select id="get_prof-dsd' + j + '" onchange="setParam(\'get_Prof(DSD' + j + ')\')">' + elem.innerHTML.replace('>' + tflds[0] + '<', ' selected>' + tflds[0] + '<') + '<\select></td><td>' + tflds[1] 
+												content += '<tr><td><select id="get_prof-dsd' + j + '" onchange="setParam(\'get_Prof(DSD' + j + ')\')">' + elem.innerHTML.replace('>' + tflds[0] + '<', ' selected>' + tflds[0] + '<') + '</select></td><td>' + tflds[1] 
 													+ '</td><td nowrap><input id="get_prof-dss' + j + '" type="text" size="6" value="' + tflds[2] + '"> <input type="submit" value=">" onclick="setDS(\'S\',' + j + ')"> <span id="get_prof-dso' + j + '" style="color:red"></span></td>'
 													+ '<td nowrap><input id="get_prof-dse' + j + '" type="text" size="6" value="' + tflds[3] + '"> <input type="submit" value=">" onclick="setDS(\'E\',' + j + ')"></td></tr>';
 											}
@@ -596,7 +596,9 @@ function loadParam(paramid, noretry, resultdiv) {
 									}
 									if(!(element = document.getElementById(valueid))) if(resultdiv) element = document.getElementById(resultdiv);
 									if(element) {
-										if(element.className == "charsw") {
+										if(element.nodeName == "DIV") { // css
+											if(values[1].replace(/[^\w\d]/g, "") == '0') element.style = "display:none"; else element.style = "display:default";
+										} else if(element.className == "charsw") {
 											element.innerHTML = element.title.substr(values[1].toLowerCase().replace(/[^\w\d]/g, ""), 1);
 										} else if(element.className == "InpHide") {
 											if(values[1]) element.className = "";

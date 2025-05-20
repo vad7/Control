@@ -64,6 +64,9 @@ const char HEADER_BIN[] = "HP-SAVE-DATA";   // Заголовок (начало)
 #ifndef TARIF_NIGHT_END
 #define TARIF_NIGHT_END   7					// Ночной тариф электроэнергии заканчивается в
 #endif
+#define ON				true
+#define OFF				false
+#define SEC_1970_TO_2000  946684800UL
 
 // СЕТЕВЫЕ НАСТРОЙКИ --------------------------------------------------------------
 // По умолчанию и в демо режиме (действуют там и там)
@@ -161,7 +164,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
-#define FC_TIME_READ       4000UL       // Время опроса инвертора в мс (было 8)
+#define FC_TIME_READ       4000UL        // Время опроса инвертора, котла (если оба устройства, через /2 и по-очередно), в мсек
 #define FC_NUM_READ        5             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке
 #define FC_DELAY_REPEAT    100           // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      10            // мсек Время между последовательными запросами было 20
@@ -198,7 +201,9 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_EEV          			(1*1000)        // мсек. Период задачи vUpdateEEV в переходных состояниях ТН
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
 #define TIME_COMMAND      			500             // мсек. Период разбора команд управления ТН (скорее пауза перед обработкой команды)
+#ifndef TIME_I2C_UPDATE
 #define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
+#endif
 #define TIME_MESSAGE_TEMP 			30			    // секунд, Проверка граничных температур для уведомлений
 #define TIME_LED_OK       			1500            // Период мигания светодиода при ОК (мсек)
 #define TIME_LED_ERR      			200             // Период мигания светодиода при ошибке (мсек).
@@ -620,22 +625,6 @@ const char *sdm_ACENERGY    = {"ACENERGY"};           // Суммарная ак
 const char *sdm_LINK        = {"LINK"};               // Cостояние связи со счетчиком
 const char *sdm_ERRORS  	= {"ERR"};                // Ошибок чтения Modbus
 
-// Описание имен параметров профиля для функций get_paramProfile set_paramProfile	
-const char *prof_NAME_PROFILE   = {"NAME"};       // Имя профиля до 10 русских букв
-const char *prof_ENABLE_PROFILE = {"ENABLE"};     // разрешение использовать в списке
-const char *prof_ID_PROFILE     = {"ID"};         // номер профиля, нумерация c 1
-const char *prof_NOTE_PROFILE   = {"NOTE"};       // описание профиля
-const char *prof_DATE_PROFILE   = {"DATE"};       // дата профиля
-const char *prof_NUM_PROFILE    = {"NUM"};        // максимальное число профилей
-const char *prof_SEL_PROFILE    = {"SEL"};        // список профилей (пока не используется)
-const char *prof_fAutoSwitchProf_mode={"ASM"};
-const char prof_DailySwitch[] 	= "DS";
-const char prof_DailySwitchDevice = 'D';		// DSD
-const char prof_DailySwitchOn  	= 'S';			// DSS
-const char prof_DailySwitchOff 	= 'E';			// DSE
-const char prof_DailySwitchState= 'O';			// DSO
-
-
 // Описание имен параметров уведомлений для функций set_messageSetting get_messageSetting
 const char *mess_MAIL         = {"MAIL"};                // флаг уведомления скидывать на почту
 const char *mess_MAIL_AUTH    = {"MAIL_AUTH"};           // флаг необходимости авторизации на почтовом сервере
@@ -666,43 +655,6 @@ const char *mess_MESS_TBOILER = {"MESS_TBOILER"};        // Критическа
 const char *mess_MESS_TCOMP   = {"MESS_TCOMP"};          // Критическая температура компрессора (если больше то генериться уведомление)
 const char *mess_MAIL_RET     = {"scan_MAIL"};           // Ответ на тестовую почту
 const char *mess_SMS_RET      = {"scan_SMS"};            // Ответ на тестовую  sms
-
-// Описание имен параметров бойлера для функций set_Boiler get_Boiler
-const char *boil_BOILER_ON    = {"ON"};                  // флаг Включения бойлера
-const char *boil_SCHEDULER_ON = {"SCH_ON"};        		 // флаг Использование расписания
-const char *boil_SCHEDULER_ADDHEAT = {"SCH_AH"};         // флаг Использование расписания только для ТЭНа
-const char *boil_TURBO_BOILER = {"TURBO"};               // флаг ТУРБО ГВС нагрев (нагрев=ТН+ТЭН)
-const char *boil_LEGIONELLA   = {"SLMN"};                // флаг легионелла раз в неделю греть бойлер
-const char *boil_CIRCULATION  = {"CIRC"};  		         // флаг Управления циркуляционным насосом ГВС
-const char *boil_fBoilerCircSchedule= {"CIRS"};
-const char *boil_TEMP_TARGET  = {"TRG"};                 // Целевая температура бойлера
-const char *boil_CurrentTarget= {"CT"};					 // Текущая + цель
-const char *boil_TargetTemp	  = {"TT"};					 // Цель, расчитанная
-const char *boil_WR_Target	  = {"W"};					 // Цель для ваттроутера
-const char *boil_DTARGET      = {"DTRG"};                // гистерезис целевой температуры
-const char *boil_TEMP_MAX     = {"MAX"};                 // Tемпература подачи максимальная
-const char *boil_SCHEDULER    = {"SCHEDULER"};           // Расписание
-const char *boil_CIRCUL_WORK  = {"CIRCW"};               // Время  работы насоса ГВС секунды (fCirculation)
-const char *boil_CIRCUL_PAUSE = {"CIRCP"};               // Пауза в работе насоса ГВС  секунды (fCirculation)
-const char *boil_RESET_HEAT   = {"RESH"};                // флаг Сброса лишнего тепла в СО
-const char *boil_RESET_TIME   = {"RESHT"};               // время сброса излишков тепла в СО в секундах (fResetHeat)
-const char *boil_BOIL_TIME    = {"PT"};                  // Постоянная интегрирования времени в секундах ПИД ТН
-const char *boil_BOIL_PRO     = {"PP"};                  // Пропорциональная составляющая ПИД ГВС
-const char *boil_BOIL_IN      = {"PI"};                  // Интегральная составляющая ПИД ГВС
-const char *boil_BOIL_DIF     = {"PD"};                  // Дифференциальная составляющая ПИД ГВС
-const char *boil_BOIL_TEMP    = {"TEMP"};                // Целевая температура ПИД ГВС
-const char *boil_ADD_HEATING  = {"ADDH"};                // флаг ДОГРЕВА ГВС ТЭНом
-const char *boil_fAddHeatingForce={"AHF"};               // флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
-const char *boil_TEMP_RBOILER = {"TEMPR"};               // температура включения догрева бойлера
-const char *boil_TOGETHER_HEAT= {"TGHEAT"};              // флаг Греть совместно с отоплением, если ТН работает на отопление
-const char *boil_fBoilerPID   = {"PID"};                 // флаг ПИД вкл/выкл
-const char *boil_dAddHeat     = {"dAH"};				 // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
-const char *boil_HeatUrgently = {"URG"};				 // флаг Срочно нужно ГВС
-const char *boil_DischargeDelta={"DD"};                  // Сброс тепла в отопление при приближении подачи к максимальной/догреву на °С
-const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть ГВС без ТЭНа при работе от генератора
-const char *boil_WF_MinTarget = {"WT"};
-const char *boil_fBoilerHeatElemSchPri={"TP"};
-const char *boil_delayOffPump = {"DO"};
 
 // Дата время
 const char *time_TIME       = {"TIME"};         // текущее время  12:45 без секунд
@@ -857,6 +809,8 @@ const char *option_DefrostTempEnd     = {"DFTE"};
 #endif
 const char *option_fHP_BackupNoPwrWAIT= {"FBNPW"};
 const char *option_HeatTargetScheduler= {"SCHEDULER"};           // Расписание
+const char *option_Modbus_Attempts    = {"MBA"};
+const char *option_SwitchHeaterHPTime = {"SH"};
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
@@ -880,6 +834,26 @@ const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
 const char *option_WR_WF_Time			= {"WFH"};
 const char *option_WR_MinNetLoadSunDivider={"WSD"};
 const char *option_WR_DeltaUbatmin		={"WB"};
+
+// Описание имен параметров профиля для функций get_paramProfile set_paramProfile
+const char *prof_NAME_PROFILE   = {"NAME"};       // Имя профиля до 10 русских букв
+const char *prof_ENABLE_PROFILE = {"ENABLE"};     // разрешение использовать в списке
+const char *prof_ID_PROFILE     = {"ID"};         // номер профиля, нумерация c 1
+const char *prof_NOTE_PROFILE   = {"NOTE"};       // описание профиля
+const char *prof_DATE_PROFILE   = {"DATE"};       // дата профиля
+const char *prof_NUM_PROFILE    = {"NUM"};        // максимальное число профилей
+const char *prof_SEL_PROFILE    = {"SEL"};        // список профилей (пока не используется)
+const char *prof_ProfileNext    = {"PN"};
+const char *prof_TimeStart      = {"TS"};
+const char *prof_TimeEnd        = {"TE"};
+const char *prof_fSwitchProfileNext_OnError= {"F2"};
+const char *prof_fSwitchProfileNext_ByTime= {"F3"};
+const char *prof_fAutoSwitchProf_mode={"ASM"};
+const char prof_DailySwitch[] 	= "DS";
+const char prof_DailySwitchDevice = 'D';		// DSD
+const char prof_DailySwitchOn  	= 'S';			// DSS
+const char prof_DailySwitchOff 	= 'E';			// DSE
+const char prof_DailySwitchState= 'O';			// DSO
 
 // Отопление/охлаждение параметры
 const char *hp_RULE      = {"RULE"};            // алгоритм работы
@@ -915,12 +889,68 @@ const char *hp_timeRHEAT		      = {"TMR"};
 const char *option_PUMP_WORK          = {"PW"};     // работа насоса конденсатора при выключенном компрессоре секунды
 const char *option_PUMP_PAUSE         = {"PP"};     // пауза между работой насоса конденсатора при выключенном компрессоре (секунды)
 const char *option_DELAY_OFF_PUMP     = {"DLOFP"};	// Задержка выключения насосов после выключения компрессора (сек).
-const char *hp_MaxTargetRise	= {"MTR"};
+const char *hp_MaxTargetRise          = {"MTR"};
+const char *hp_fUseHeater             = {"H"};		// Prof.SaveON.flags: fHeat_UseHeater, fBoiler_UseHeater
 
 // Действуют для отопления и ГВС
 const char *ADD_DELTA_TEMP     = {"ADT"};		// Добавка температуры к установке, в градусах
 const char *ADD_DELTA_HOUR     = {"ADH"};		// Начальный Час добавки температуры к установке
 const char *ADD_DELTA_END_HOUR = {"ADEH"};		// Конечный Час добавки температуры к установке
+
+// Описание имен параметров бойлера для функций set_Boiler get_Boiler
+const char *boil_BOILER_ON    = {"ON"};                  // флаг Включения бойлера
+const char *boil_SCHEDULER_ON = {"SCH_ON"};        		 // флаг Использование расписания
+const char *boil_SCHEDULER_ADDHEAT = {"SCH_AH"};         // флаг Использование расписания только для ТЭНа
+const char *boil_TURBO_BOILER = {"TURBO"};               // флаг ТУРБО ГВС нагрев (нагрев=ТН+ТЭН)
+const char *boil_LEGIONELLA   = {"SLMN"};                // флаг легионелла раз в неделю греть бойлер
+const char *boil_CIRCULATION  = {"CIRC"};  		         // флаг Управления циркуляционным насосом ГВС
+const char *boil_fBoilerCircSchedule= {"CIRS"};
+const char *boil_TEMP_TARGET  = {"TRG"};                 // Целевая температура бойлера
+const char *boil_CurrentTarget= {"CT"};					 // Текущая + цель
+const char *boil_TargetTemp	  = {"TT"};					 // Цель, расчитанная
+const char *boil_WR_Target	  = {"W"};					 // Цель для ваттроутера
+const char *boil_DTARGET      = {"DTRG"};                // гистерезис целевой температуры
+const char *boil_TEMP_MAX     = {"MAX"};                 // Tемпература подачи максимальная
+const char *boil_SCHEDULER    = {"SCHEDULER"};           // Расписание
+const char *boil_CIRCUL_WORK  = {"CIRCW"};               // Время  работы насоса ГВС секунды (fCirculation)
+const char *boil_CIRCUL_PAUSE = {"CIRCP"};               // Пауза в работе насоса ГВС  секунды (fCirculation)
+const char *boil_RESET_HEAT   = {"RESH"};                // флаг Сброса лишнего тепла в СО
+const char *boil_RESET_TIME   = {"RESHT"};               // время сброса излишков тепла в СО в секундах (fResetHeat)
+const char *boil_BOIL_TIME    = {"PT"};                  // Постоянная интегрирования времени в секундах ПИД ТН
+const char *boil_BOIL_PRO     = {"PP"};                  // Пропорциональная составляющая ПИД ГВС
+const char *boil_BOIL_IN      = {"PI"};                  // Интегральная составляющая ПИД ГВС
+const char *boil_BOIL_DIF     = {"PD"};                  // Дифференциальная составляющая ПИД ГВС
+const char *boil_BOIL_TEMP    = {"TEMP"};                // Целевая температура ПИД ГВС
+const char *boil_ADD_HEATING  = {"ADDH"};                // флаг ДОГРЕВА ГВС ТЭНом
+const char *boil_fAddHeatingForce={"AHF"};               // флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
+const char *boil_TEMP_RBOILER = {"TEMPR"};               // температура включения догрева бойлера
+const char *boil_TOGETHER_HEAT= {"TGHEAT"};              // флаг Греть совместно с отоплением, если ТН работает на отопление
+const char *boil_fBoilerPID   = {"PID"};                 // флаг ПИД вкл/выкл
+const char *boil_dAddHeat     = {"dAH"};				 // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
+const char *boil_HeatUrgently = {"URG"};				 // флаг Срочно нужно ГВС
+const char *boil_DischargeDelta={"DD"};                  // Сброс тепла в отопление при приближении подачи к максимальной/догреву на °С
+const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть ГВС без ТЭНа при работе от генератора
+const char *boil_WF_MinTarget = {"WT"};
+const char *boil_fBoilerHeatElemSchPri={"TP"};
+const char *boil_delayOffPump = {"DO"};
+
+// Heater
+const char *Wheater_fHeater_Opentherm 			= {"OT"};
+const char *Wheater_fHeater_USE_Relay_RHEATER	= {"R"};
+const char *Wheater_fHeater_USE_Relay_RH_3WAY	= {"R3"};
+const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
+const char *Wheater_fHeater_USE_Relay_Modbus_3WAY= {"RW"};
+const char *Wheater_power_start					= {"P"};
+const char *Wheater_power_max					= {"PM"};
+const char *Wheater_power_boiler_start			= {"B"};
+const char *Wheater_power_boiler_max			= {"BM"};
+const char *Wheater_pump_work_time_after_stop	= {"PA"};
+const char *Wheater_power_on 					= {"PWR"};
+const char *Wheater_is_on 						= {"ON"};
+const char *Wheater_3way 						= {"3W"};
+const char *Wheater_T_Flow 						= {"TF"};
+const char *Wheater_Power 						= {"M"};
+const char *Wheater_Errors 						= {"E"};
 
 
 #ifdef SENSOR_IP // параметры удаленного датчика get_sensorIP
@@ -998,7 +1028,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_LOAD_EEPROM    -16         // Ошибка чтения настроек из eeprom I2C
 #define ERR_CRC16_EEPROM   -17         // Ошибка контрольной суммы для настроек
 #define ERR_BAD_LEN_EEPROM -18         // Не совпадение размера данных при чтении настроек
-#define ERR_HEADER_EEPROM  -19         // Данные настроек не найдены  в eeprom I2C
+#define ERR_HEADER_EEPROM  -19         // Данные настроек не найдены в eeprom I2C
 #define ERR_SAVE1_EEPROM   -20         // Ошибка записи состояния в eeprom I2C
 #define ERR_LOAD1_EEPROM   -21         // Ошибка чтения состояния из eeprom I2C
 #define ERR_HEADER1_EEPROM -22         // Данные состояния не найдены в eeprom I2C
@@ -1011,7 +1041,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_PUMP_EVA       -29         // Отсутствует насос на испарителе, проверьте конфигурацию
 #define ERR_READ_PRESS     -30         // Ошибка чтения датчика давления (данные не готовы)
 #define ERR_NO_COMPRESS    -31         // Отсутствует компрессор, проверьте конфигурацию
-#define ERR_NO_WORK        -32         // Все выключено а ТН включается
+#define ERR_NO_WORK        -32         // Все выключено, а ТН включается
 #define ERR_COMP_ERR       -33         // Попытка включить компрессор при ошибке (обратитесь к разработчику)
 #define ERR_CONFIG         -34         // Сбой внутренней конфигурации (обратитесь к разработчику)
 #define ERR_SD_INIT        -35         // Ошибка инициализации SD карты

@@ -67,8 +67,8 @@ Arduino library for communicating with Modbus slaves over RS232/485 (via RTU pro
 #define ku8MBMaskWriteRegister          0x16 ///< Modbus function 0x16 Mask Write Register
 #define ku8MBReadWriteMultipleRegisters 0x17 ///< Modbus function 0x17 Read Write Multiple Registers
 #define ku8MBLinkTestOmronMX2Only       0x08 ///< Modbus function 0x08 Тест связи с инвертром Omron MX2 функция только для него
-// 8 bit
-#define ku8MBCustomRequest				0x09 // Custom request, prepare send buffer - send(uint8_t) //vad7
+//
+#define ku8MBCustomRequest				0x09 // Custom request, prepare send buffer //vad7
 
 /**
 Arduino class library for communicating with Modbus slaves over 

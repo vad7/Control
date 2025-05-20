@@ -7,7 +7,7 @@
 window.onload = function() {
 	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(ATTEMPT),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW),get_oHP(DSH)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH)");
 }; 
 function setTM(s) {
 	val = document.getElementById("get_ohp-" + s.toLowerCase()).value;
@@ -19,7 +19,7 @@ function setTM(s) {
 <body class="test">
 <div id="menu" class="menu"><script src='menu.js'></script></div>
 <div class="content">
-	<h1>Настройки теплового насоса <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'>
+	<h1>Настройки теплового насоса <input type="submit" value="Записать все в EEPROM"  onclick='loadParam("set_SAVE_ALL")'>
 	<input type="submit" value="?" onclick='location.assign("config-help.html")' style="float:none;"></h1>
 	<div class="row1">
 		<table border="1" rules="rows">
@@ -33,6 +33,7 @@ function setTM(s) {
 			<td>Сохранение состояния ТН в ЕЕПРОМ, для восстановления его после сброса</td>
 			<td><input type="checkbox" id="get_ohp-save_on" onChange="setParam('get_oHP(SAVE_ON)');"></td>
 		</tr>
+		<tr>
 			<td>Число повторных попыток пуска при ошибке [0..255]<sup>2</sup></td>
 			<td nowrap><input id="get_ohp-attempt" type="number" min="0" max="255" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(ATTEMPT)');"></td>
 		</tr>
@@ -52,67 +53,67 @@ function setTM(s) {
 			</td>
 		</tr>
 		<tr>
+			<td>Попыток чтения/записи по Modbus при ошибке (кроме инвертора и счетчика)</td>
+			<td nowrap><input id="get_ohp-mba" type="number" min="0" max="255" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(MBA)')"></td>
+		</tr>
+		<tr>
 			<td><b>Солнечный Коллектор</b></td><td></td>
 		</tr>
 		<tr>
 			<td>Температура воздуха (TSUN) выше которой открывается СК °C</td>
 			<td nowrap><input type="number" id="get_ohp-sto" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(STO)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Температура воздуха (TSUN) ниже которой закрывается СК °C</td>
 			<td nowrap><input type="number" id="get_ohp-stf" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(STF)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Минимальное время работы, после которого будут проверятся температуры (сек.)</td>
 			<td nowrap><input id="get_ohp-sw" type="number" min="0" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(SW)');"></td>
-		</tr>						
+		</tr>
 		<tr>
 			<td>Минимальное время паузы после останова СК (сек.)</td>
 			<td nowrap><input id="get_ohp-sp" type="number" min="0" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(SP)');"></td>
-		</tr>						
+		</tr>
 		<tr>
 			<td>Использовать СК для регенерации геоконтура в простое</td>
 			<td><input type="checkbox" id="get_ohp-scg" onchange="setParam('get_oHP(SCG)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Температура воздуха (TSUN) начала регенерации геоконтура с помощью СК (+Δ) °C</td>
 			<td nowrap><input type="number" id="get_ohp-scgt" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(SCGT)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Температура (TSUNOUTG) завершения регенерации геоконтура с помощью СК °C</td>
 			<td nowrap><input type="number" id="get_ohp-scgo" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(SCGO)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Разница (Δ) температур: TSUN и на выходе в геоконтур для включения СК °C</td>
 			<td nowrap><input type="number" id="get_ohp-std" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(STD)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Разница (Δ) температур на выходе из СК и на выходе в геоконтур для выключения СК °C</td>
 			<td nowrap><input type="number" id="get_ohp-sgd" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(SGD)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td><b>Времена и задержки</b></td><td></td>
 		</tr>
 		<tr>
 			<td>Задержка включения ТН после внезапного сброса контроллера (сек.) [0...6000]</td>
 			<td nowrap><input type="number" id="get_ohp-dlsr"> <input type="submit" value=">" onclick="setParam('get_oHP(DLSR)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Задержка перед повторным включением ТН при ошибке (попытке пуска) (сек.) [0...6000]</td>
 			<td nowrap><input type="number" id="get_ohp-dlrs"> <input type="submit" value=">" onclick="setParam('get_oHP(DLRS)');"></td>
-		</tr>	
-		<tr>
-			<td>Минимальный простой компрессора перед включением (мин.) [0..999]</td>
-			<td nowrap><input id="get_ohp-pause" type="number" min="0" max="999" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(PAUSE)');"></td>
-		</tr>						
+		</tr>
 		<tr>
 			<td>Минимальное время работы компрессора (сек.)</td>
 			<td nowrap><input id="get_ohp-mcon" type="number" min="0" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(MCON)');"></td>
-		</tr>						
+		</tr>
 		<tr>
-			<td>Задержка включения компрессора после включения насосов (сек.) [0...900]</td>
+			<td>Задержка включения компрессора/котла после включения насосов (сек.) [0...900]</td>
 			<td nowrap><input type="number" id="get_ohp-dlonp"> <input type="submit" value=">" onclick="setParam('get_oHP(DLONP)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Задержка между переключением реверсивного клапана и включением компрессора (сек.) [0...600]</td>
 			<td nowrap><input type="number" id="get_ohp-dltrv"> <input type="submit" value=">" onclick="setParam('get_oHP(DLTRV)');"></td>
@@ -120,11 +121,11 @@ function setTM(s) {
 		<tr>
 			<td>Задержка выключения насоса отопления после останова компрессора по ошибке (сек.)</td>
 			<td nowrap><input type="number" id="get_ohp-dlofp"> <input type="submit" value=">" onclick="setParam('get_oHP(DLOFP)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Пауза после переключения ГВС (сек.) [0...1200]</td>
 			<td nowrap><input type="number" id="get_ohp-dlbsw"> <input type="submit" value=">" onclick="setParam('get_oHP(DLBSW)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Время на сколько блокируются защиты при переходе с ГВС на отопление (сек.) [0...1200]</td>
 			<td nowrap><input type="number" id="get_ohp-dlboff"> <input type="submit" value=">" onclick="setParam('get_oHP(DLBOFF)');"></td>
@@ -132,6 +133,10 @@ function setTM(s) {
 		<tr>
 			<td>Время на запуск генератора (сек.)</td>
 			<td nowrap><input type="number" id="get_ohp-gst"> <input type="submit" value=">" onclick="setParam('get_oHP(GST)');"></td>
+		</tr>
+		<tr>
+			<td>Время переключения Котел - ТН (сек.)</td>
+			<td nowrap><input type="number" id="get_ohp-sh"> <input type="submit" value=">" onclick="setParam('get_oHP(SH)')"></td>
 		</tr>
 
 		<tr>
@@ -193,15 +198,15 @@ function setTM(s) {
 		<tr>
 			<td>На первой шине 1-Wire только один датчик температуры</td>
 			<td><input type="checkbox" id="get_ohp-sgl1w_1" onchange="setParam('get_oHP(SGL1W_1)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>На второй шине 1-Wire только один датчик температуры</td>
 			<td><input type="checkbox" id="get_ohp-sgl1w_2" onchange="setParam('get_oHP(SGL1W_2)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>На третьей шине 1-Wire только один датчик температуры</td>
 			<td><input type="checkbox" id="get_ohp-sgl1w_3" onchange="setParam('get_oHP(SGL1W_3)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>На четвертой шине 1-Wire только один датчик температуры</td>
 			<td><input type="checkbox" id="get_ohp-sgl1w_4" onchange="setParam('get_oHP(SGL1W_4)');"></td>
@@ -209,23 +214,23 @@ function setTM(s) {
 		<tr>
 			<td>Гистерезис температуры выключения ежесуточных реле °C</td>
 			<td nowrap><input type="number" id="get_ohp-dsh" step="0.1"> <input type="submit" value=">" onclick="setParam('get_oHP(DSH)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Минимальная прогнозируемая температура по ощущению для использования прогноза °C</td>
 			<td nowrap><input type="number" id="get_ohp-wmt" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(WMT)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Логировать modWork</td>
 			<td><input type="checkbox" id="get_ohp-mwl" onchange="setParam('get_oHP(MWL)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Логировать доп. инфу по реле</td>
 			<td><input type="checkbox" id="get_ohp-rl" onchange="setParam('get_oHP(RL)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td>Логировать потребленную энергию со счетчика при переходах тарифного плана и дня</td>
 			<td><input type="checkbox" id="get_ohp-le" onchange="setParam('get_oHP(LE)');"></td>
-		</tr>	
+		</tr>
 		<tr>
 			<td><b>Внешние HTTP сервера</b></td>
 			<td></td>

@@ -55,7 +55,7 @@ struct type_heater_read {
 	uint16_t P_OUT;								// 0x1A, Текущее Давление в контуре (0.0 - 5.0), десятые бара
 	uint16_t F_Boiler;							// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые литра
 	uint16_t Power;								// 0x1C, Модуляция (0 - 100%, 0xFF - неопределено)
-	uint16_t Status;							// 0x1D, биты статуса
+	uint16_t Status;							// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
 	uint16_t Error;								// 0x1E, ошибка котла
 	uint16_t Error2;							// 0x1F, ошибка котла дополнительная
 	int16_t  T_OUT;								// 0x20, Температура уличного датчика котла (-65 - 100), градусы
@@ -104,7 +104,7 @@ struct type_HeaterSettings {
 };												// Структура для сохранения настроек
 
 // Рабочие флаги (flags)
-#define fHeater_Work					0		// Котел работает
+#define fHeater_PowerOn					0		// Котел включен
 #define fHeater_LinkOk					1		// Есть связь по Modbus
 
 
@@ -121,23 +121,25 @@ public:
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
-	boolean	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
-	void 	get_info(char* buf);					// Получить информацию
+	bool	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
+	void	get_info(char* buf);					// Получить информацию
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
 
 	void 	Heater_Start();							// Включить котел
-	void 	Heater_Stop();								// Выключить котел
-	void 	HeaterValve_On();							// Переключиться на котел
-	void 	HeaterValve_Off();							// Переключиться на ТН
+	void 	Heater_Stop();							// Выключить котел
+	void 	HeaterValve_On();						// Переключиться на котел
+	void 	HeaterValve_Off();						// Переключиться на ТН
+	void	WaitPumpOff();							// Ожидать постциркуляцию насоса
 
 	int8_t   err;									// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint8_t  Target;								// Целевая мощность (модуляция), %
 	type_HeaterSettings set;						// Структура для сохранения настроек
+	type_heater_read data;							// Данные с котла
 
 private:
-	uint16_t flags;									// рабочие флаги
+	uint16_t work_flags;							// рабочие флаги
  };
 
 #endif

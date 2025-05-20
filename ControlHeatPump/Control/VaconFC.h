@@ -399,8 +399,8 @@ public:
   int16_t get_maxFreqUser(){return _data.maxFreqUser;}          // Максимальная частота инвертора РУЧНОЙ РЕЖИМ (см компрессор) в 0.01
   int16_t get_stepFreq(){return _data.stepFreq;}                // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока (см компрессор) в 0.01
   int16_t get_stepFreqBoiler(){return _data.stepFreqBoiler;}    // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока ГВС в 0.01
-  int16_t get_dtTemp(){return _data.dtTemp;}                    // Привышение температуры от уставок (подача) при которой срабатыват защита (уменьшается частота) в сотых градуса
-  int16_t get_dtTempBoiler(){return _data.dtTempBoiler;}        // Привышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
+  int16_t get_dtTemp(){return _data.dtTemp;}                    // Превышение температуры от уставок (подача) при которой срабатыват защита (уменьшается частота) в сотых градуса
+  int16_t get_dtTempBoiler(){return _data.dtTempBoiler;}        // Превышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
   int16_t get_maxFreqGen(){return _data.maxFreqGen;}            // Максимальная частота инвертора при работе от генератора в 0.01
   uint16_t get_PidMaxStep(){return _data.PidMaxStep;}
   uint16_t get_MaxPower() { return _data.MaxPower; }

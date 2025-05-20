@@ -1,0 +1,54 @@
+<html lang="ru">
+<head> 
+<title>Котел. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type="text/javascript" src="scripts.js"></script>
+<script type="text/javascript">
+window.onload = function() {
+	loadParam("get_HT(INFO)");
+	updateParam("get_HT(PWR),get_HT(ON),get_HT(3W),get_HT(TF),get_HT(M),get_HT(E)");
+}
+//function loadParam_after(paramid) {}
+</script>
+</head>
+<body class="actuators">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+<h1>Котел <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'></h1>
+<div class="row1">
+	<h2>Основные  <input style="float:right;margin-right:10px;" type="submit" value="Доп. настройки" onclick='location.assign("heater-set.html")'></h2>
+	<table style="width: 700">
+	<thead>
+	<tr><th>Состояние</th><th>Нагрев</th><th>3-х ходовой</th><th>Теплоноситель, °C</th><th>Мощность, %</th><th>Ошибок Modbus</th></tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td id="get_ht-pwr-ONOFF" style="text-align: center"></td>
+		<td id="get_ht-on-ONOFF" style="text-align: center"></td>
+		<td id="get_ht-3w" style="text-align: center"></td>
+		<td id="get_ht-tf" style="text-align: center"></td>
+		<td id="get_ht-m" style="text-align: center"></td>
+		<td id="get_ht-e" style="text-align: center"></td>
+	</tr>		
+	</tbody>
+	</table>
+</div>		
+<div class="row1">
+<h2>Состояние: <input type="submit" value="Обновить" onclick='loadParam("get_HT(INFO)")'></h2>
+		<table style="width: 700">
+		<thead>
+		<tr>
+			<th>Номер</th>
+			<th>Описание</th>
+			<th>Значение</th>
+		</tr>
+		</thead>
+		<tbody id="get_ht-info">
+		</tbody>
+		</table>						
+</div>
+</div>
+</body>
+</html>

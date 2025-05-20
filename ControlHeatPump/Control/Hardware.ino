@@ -426,7 +426,11 @@ int8_t sensorFrequency::Read()
 		if(number == FLOWEVA && !HP.dRelay[RPUMPI].get_Relay()) Value = 0;
 #endif
 #if defined(RPUMPO) && defined(FLOWCON)
-		if(number == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) Value = 0;
+		if(number == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()
+#ifdef RPUMPBH
+			&& !HP.dRelay[RPUMPBH].get_Relay()
+#endif
+			) Value = 0;
 #endif
 		Frequency = Value * kfValue / 360;
 		return 0;
@@ -2253,7 +2257,7 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 	return err;
 }
 
-// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+// Записать значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data)
 {
 	int8_t cnt = HP.Option.Modbus_Attempts;

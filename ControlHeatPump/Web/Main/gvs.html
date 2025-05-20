@@ -31,7 +31,7 @@ $(document).ready(function() {
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(TP)");
+	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(TP),get_Boiler(H),get_Boiler(CP)");
 	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO)");
 };
 </script>
@@ -39,10 +39,10 @@ window.onload = function() {
 <body class="test">
 <div id="menu" class="menu"><script src="menu.js"></script></div>
 <div class="content">
-<h1>Горячее водоснабжение<input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'>
+<h1>Горячее водоснабжение<input type="submit" value="Записать профиль" onclick='loadParam("set_SAVE_PROF")'>
 <input type="submit" value="?" onclick='location.assign("gvs-help.html")' style="float:none;">
 </h1><br>
-	<h2>Параметры ГВС</h2>
+	<table><tbody><tr><td><h2>Параметры ГВС</h2></td><td style="text-align:right" nowrap><span style="font-size:1em"><input type="checkbox" id="get_boiler-urg" onchange="setParam('get_Boiler(URG)');"> - Нагреть срочно <sup>11</sup></span></td></tr></tbody></table>
 	<table border="1" rules="rows"><thead>
 	<tr>
 		<th>Параметр</th>
@@ -53,8 +53,8 @@ window.onload = function() {
 		<td>Включение нагрева бойлера</td>
 		<td><input type="checkbox" id="get_boiler-on" onChange="setParam('get_Boiler(ON)');"></td>
 	</tr><tr>
-		<td>Нагреть срочно<sup>11</sup></td>
-		<td><input type="checkbox" id="get_boiler-urg" onchange="setParam('get_Boiler(URG)');"></td>
+		<td>Использовать Котел</td>
+		<td><input type="checkbox" id="get_boiler-h" onchange="setParam('get_Boiler(H)')"></td>
 	</tr><tr>
 		<td>Целевая температура бойлера °C [5..90], Текущая: <span id="get_boiler-tt">-</span></td>
 		<td nowrap><input id="get_boiler-trg" type="number" min="5" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TRG)');"></td>
@@ -107,7 +107,7 @@ window.onload = function() {
 		<td>Целевая температура подачи °C [5..70]</td>
 		<td nowrap><input id="get_boiler-temp" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMP)');"></td>
 	</tr><tr>
-		<td>Постоянная интегрирования времени (сек.) [5..600]</td>
+		<td>Постоянная интегрирования времени, сек. [5..600]</td>
 		<td nowrap><input id="get_boiler-pt" type="number" min="5" max="600" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(PT)');"></td>
 	</tr><tr>
 		<td>Пропорциональная составляющая [0..50]</td>
@@ -124,6 +124,9 @@ window.onload = function() {
 	</tr><tr>
 		<td>Максимальная температура подачи °C [5..70]</td>
 		<td nowrap><input id="get_boiler-max" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
+	</tr><tr>
+		<td>Минимальный простой перед началом работы, сек.</td>
+		<td nowrap><input id="get_boiler-cp" type="number" min="0" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(CP)');"></td>
 	</tr><tr>
 		<td><b>Опции</b></td><td></td>
 	</tr><tr>
@@ -148,16 +151,16 @@ window.onload = function() {
 		<td>Включение циркуляционного насоса ГВС по расписанию</td>
 		<td><input type="checkbox" id="get_boiler-cirs" onChange="setParam('get_Boiler(CIRS)');" ></td>
 	</tr><tr>
-		<td>Время работы циркуляционного насоса ГВС (мин.) [0...60]<sup>8</sup></td>
+		<td>Время работы циркуляционного насоса ГВС, мин. [0...60]<sup>8</sup></td>
 		<td nowrap><input id="get_boiler-circw" type="number" min="0" max="60" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(CIRCW)');"></td>
 	</tr><tr>
-		<td>Пауза между включениями насоса циркуляции (мин.) [0...60]<sup>9</sup></td>
+		<td>Пауза между включениями насоса циркуляции, мин. [0...60]<sup>9</sup></td>
 		<td nowrap><input id="get_boiler-circp" type="number" min="0" max="60" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(CIRCP)');"></td>
 	</tr><tr>
 		<td>При нагреве бойлера сбрасывать "избыточное" тепло<sup>10</sup> </td>
 		<td><input type="checkbox" id="get_boiler-resh" onChange="setParam('get_Boiler(RESH)');" ></td>
 	</tr><tr>
-		<td>Время сброса тепла (сек.) [1..10000]</td>
+		<td>Время сброса тепла, сек. [1..10000]</td>
 		<td nowrap><input id="get_boiler-resht" type="number" min="1" max="10000" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(RESHT)');"></td>
 	</tr><tr>
 	</tr><tr>

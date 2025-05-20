@@ -27,7 +27,7 @@
 byte packetBuffer[NTP_PACKET_SIZE+1];       // буфер, в котором будут храниться входящие и исходящие пакеты
 
 // Перевод формата времени Time в формат Unix (секунды с 1970 года)
-#define SEC_1970_TO_2000      946684800UL
+//#define SEC_1970_TO_2000      946684800UL
 static  const uint8_t dim[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 unsigned long TimeToUnixTime(tmElements_t *t) //[V]*
 {

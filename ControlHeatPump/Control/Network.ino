@@ -308,7 +308,7 @@ uint8_t check_address(char *adr, IPAddress &ip)
 		ip = tempIP;
 		return 2;
 	} else {
-		if(((HP.get_NetworkFlags() & (1<<fWebLogError)) && !GETBIT(Logflags, fLog_DNS_Lookup)) || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+		if((HP.get_NetworkFlags() & (1<<fWebLogError)) || !GETBIT(Logflags, fLog_DNS_Lookup) || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
 			SETBIT1(Logflags, fLog_DNS_Lookup);
 			journal.jprintf(" DNS lookup %s using %s failed! Code: %d\n", adr, dns.get_protocol() ? "TCP" : "UDP", ret);
 		}
@@ -625,7 +625,7 @@ boolean pingServer()
 			HP.num_resPing++;
 			HP.sendCommand(pNETWORK);                                                // Если связь потеряна то подать команду на сброс сетевого чипа
 			//     HP.num_resW5200++;                                                       // Добавить счетчик инициализаций
-		}
+		} else journal.jprintf("\n");
 		return false;
 	}
 	return false;

@@ -160,7 +160,7 @@ uint8_t  WR_WorkFlags = 0;
 int16_t  WR_MAP_Ubat = 0;
 int16_t  WR_MAP_Ubuf = WR_DEFAULT_MAP_Ubuf;	// Буферное напряжение на АКБ, десятые V
 #ifdef RSOLINV
-uint16_t  WR_Invertor2_off_cnt = 0;		// Счетчик до выключения
+int16_t  WR_Invertor2_off_cnt = 0;		// Счетчик до выключения
 #endif
 
 #ifdef PWM_CALC_POWER_ARRAY
@@ -224,6 +224,8 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_BackupNoPwrWAIT		5			// Нет 3-х фаз питания - ТН в режиме ожидания, если SGENERATOR == ALARM
 #define fHP_HeaterOn			6			// Идет работа котла
 #define fHP_HeaterValveOn		7			// Положение крана Котла - ТН: 0 - ТН, 1 - Котел
+#define fHP_CompressorWasOn		8			// Последний цикл работы - Компрессор
+#define fHP_HeaterWasOn			8			// Последний цикл работы - Котел
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define f_reserved_1			0				//
@@ -262,7 +264,7 @@ struct type_optionHP
  uint8_t dim;							// Яркость дисплея %
  uint8_t DailySwitchHysteresis;			// Гистерезис для переключения реле по температуре, десятые градуса
  uint16_t tChart;						// период сбора статистики в секундах!!
- uint16_t delayOnPump;					// Задержка включения компрессора после включения насосов (сек).
+ uint16_t delayOnPump;					// Задержка включения компрессора/котла после включения насосов (сек).
  uint16_t delayOffPump;					// Задержка выключения насосов отопления при ошибке или при нагреве бойлера, сек
  uint16_t delayStartRes;				// Задержка включения ТН после внезапного сброса контроллера (сек.)
  uint16_t delayRepeadStart;				// Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
@@ -272,7 +274,8 @@ struct type_optionHP
  uint16_t delayBoilerSW;                // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
  uint16_t delayBoilerOff;               // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
  int16_t  SunRegGeoTemp;				// Солнечный коллектор - Температура начала регенерации геоконтура с помощью СК, в сотых градуса
- uint16_t pause;                        // Минимальное время простоя компрессора в секундах
+ uint8_t  SwitchHeaterHPTime;			// Время переключения Котел - ТН, сек
+ uint8_t  Modbus_Attempts;				// Modbus - попыток чтения/записи при ошибке (кроме инвертора и счетчика)
  int16_t  SunTDelta;					// Солнечный коллектор - Дельта температур для включения, сотые градуса
  int16_t  SunGTDelta;					// Солнечный коллектор - Дельта температур жидкости для выключения, сотые градуса
  int16_t  SunRegGeoTempGOff;			// Температура жидкости для выключения регенерации
@@ -296,8 +299,6 @@ struct type_optionHP
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
  uint16_t Generator_Start_Time;			// Время запуска генератора
- uint8_t  SwitchHeaterHPTime;			// Время переключения Котел - ТН, сек
- uint8_t  Modbus_Attempts;				// Modbus - попыток чтения/записи при ошибке (кроме инвертора и счетчика)
 };// __attribute__((packed));
 
 
@@ -352,8 +353,6 @@ struct type_statusHP
  uint32_t pumpCO_OFF;                     // Время выключения насоса системы отопления
 };
 
-#define PUMPS_ON          Pumps(true, DELAY_AFTER_SWITCH_RELAY)               // Включить насосы
-#define PUMPS_OFF         Pumps(false, DELAY_AFTER_SWITCH_RELAY)              // Выключить насосы
 #if defined(R3WAY)
 #define BOILER_HEATING_NOW HP.dRelay[R3WAY].get_Relay()
 #elif defined(RPUMPBH)
@@ -362,7 +361,14 @@ struct type_statusHP
 #define IS_BOILER_HEATING false
 #endif
 
-#define HeaterNeedOn ((Status.modWork & pHEAT) && GETBIT(Prof.Heat.flags, fUseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.Boiler.flags, fUseHeater))
+// Признак запуска задачи насос:
+#define StartPump_Stop		0	// останов задачи
+#define StartPump_Start		1	// запуск
+#define StartPump_Work_Off	2	// в работе (выкл)
+#define StartPump_Work_On	3	// в работе (вкл)
+#define StartPump_AfterWork	4	// отработка после останова компрессора/котла (вкл)
+
+#define HeaterNeedOn (((Status.modWork & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)))
 
 // ------------------------- ОСНОВНОЙ КЛАСС --------------------------------------
 class HeatPump
@@ -507,6 +513,7 @@ public:
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
 	void set_profile();										// Установить рабочий профиль по текущему Prof
+	void SwitchToProfile(int8_t _profile);					// Переключиться на другой профиль
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения
 	RULE_HP get_ruleHeat(){return Prof.Heat.Rule;}           // Получить алгоритм отопления
@@ -530,6 +537,7 @@ public:
 	uint16_t get_pausePump() { return Status.modWork & pCOOL ? Prof.Cool.pausePump : Prof.Heat.pausePump; }// Время паузы  насоса при выключенном компрессоре, секунды
 	uint16_t get_workPump() { return Status.modWork & pCOOL ? Prof.Cool.workPump : Prof.Heat.workPump; }  // Время работы  насоса при выключенном компрессоре, секунды
 	void     pump_in_pause_set(bool ONOFF);					// Переключение насосов при выключенном компрессоре
+	void     pump_in_pause_wait_off();                      // ждем пока насосы остановятся
 	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);}    // подача звуковых сигналов
 	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}// получить флаг записи состояния
 	uint8_t  get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске
@@ -553,9 +561,7 @@ public:
 
 	void     set_BoilerOFF(){SETBIT0(Prof.SaveON.flags,fBoilerON);}          // Выключить бойлер
 	void     set_BoilerON() {SETBIT1(Prof.SaveON.flags,fBoilerON);}          // Включить бойлер
-	boolean  get_BoilerON() {return GETBIT(Prof.SaveON.flags,fBoilerON);}    // Получить флаг включения бойлера
-
-	void     set_startTime(uint32_t t){Prof.SaveON.startTime = t;}           // Запомить время включения ТН
+	bool     get_BoilerON() {return GETBIT(Prof.SaveON.flags,fBoilerON);}    // Получить флаг включения бойлера
 
 // Бойлер ТН
 	int16_t get_boilerTempTarget();					          // Получить целевую температуру бойлера с учетом корректировки
@@ -563,7 +569,6 @@ public:
 	boolean get_Circulation(){return GETBIT(Prof.Boiler.flags,fCirculation);} // Нужно ли управлять циркуляционным насосом болйлера
 	uint16_t get_CirculWork(){ return Prof.Boiler.Circul_Work; }            // Время  работы насоса ГВС секунды (fCirculation)
 	uint16_t get_CirculPause(){ return Prof.Boiler.Circul_Pause;}           // Пауза в работе насоса ГВС  секунды (fCirculation)
-
 
 // Времена
 	void set_countNTP(uint32_t b) {countNTP=b;}             // Установить текущее время обновления по NTP, (секундах)
@@ -580,8 +585,8 @@ public:
 	uint32_t get_startDT(){return timeON;}                  // Получить дату и время последеней перезагрузки
 	inline uint32_t get_startCompressor(){return startCompressor;} // Получить дату и время пуска компрессора! нужно для старта ЭРВ
 	inline uint32_t get_stopCompressor(){return stopCompressor;} // Получить дату и время останова компрессора!
-	void set_stopCompressor() { stopCompressor = rtcSAM3X8.unixtime(); }
-	uint32_t get_startTime(){return Prof.SaveON.startTime;} // Получить дату и время пуска ТН (не компрессора!)
+	inline void set_startCompressor() { startCompressor = rtcSAM3X8.unixtime(); SETBIT0(work_flags, fHP_HeaterWasOn); }
+	inline void set_stopCompressor() { stopCompressor = rtcSAM3X8.unixtime(); SETBIT0(work_flags, fHP_HeaterWasOn); SETBIT1(work_flags, fHP_CompressorWasOn); }
 	inline uint32_t get_command_completed(){ return command_completed; } // Время выполнения команды
 	inline type_motoHour *get_motoHour(){ return &motoHour; }// Получить счетчики
 
@@ -608,7 +613,7 @@ public:
 
 	uint8_t PauseStart;                                    // 1/2 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
 
-	uint8_t startPump;  // Признак запуска задачи насос 0 - останов задачи, 1 - запуск, 2 - в работе (выкл), 3 - в работе (вкл), 4 - отработка после останова компрессора (вкл)
+	uint8_t startPump;                                     // Признак запуска задачи насос - StartPump_*
 	boolean safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)
 
 
@@ -666,11 +671,11 @@ public:
 	SemaphoreHandle_t xCommandSemaphore;                // Семафор команды
 	boolean Task_vUpdate_run;							// задача vUpdate работает
 
-	void Pumps(boolean b, uint16_t d);    // Включение/выключение насосов, задержка после включения msec
-	void Pump_HeatFloor(boolean On);	  // Включить/выключить насос ТП
-	void Sun_ON(void);					  // Включить СК
-	void Sun_OFF(void);					  // Выключить СК
-	uint8_t work_flags;					  // Рабочие флаги ТН
+	void Pumps(boolean b);					// Включение/выключение насосов
+	void Pump_HeatFloor(boolean On);		// Включить/выключить насос ТП
+	void Sun_ON(void);						// Включить СК
+	void Sun_OFF(void);						// Выключить СК
+	uint16_t work_flags;					// Рабочие флаги ТН
 
 	int16_t get_temp_condensing(void);	    // Расчитать температуру конденсации
 	int16_t get_temp_evaporating(void);		// Получить температуру кипения
@@ -702,7 +707,7 @@ private:
 	int16_t getPower(void);               // Получить мощность потребления ТН (нужно при ограничении мощности при питании от резерва)
 
 	MODE_HP get_Work();                   // Что надо делать
-	boolean configHP(MODE_HP conf);       // Концигурация 4-х, 3-х ходового крана и включение насосов, выход - разрешение запуска компрессора
+	boolean configHP();                   // Концигурация 4-х, 3-х ходового крана и включение насосов, выход - разрешение запуска компрессора
 	boolean Switch_R4WAY(boolean fCool);  // Переключение реверсивного 4-х ходового клапана (true - охлаждение, false - нагрев), возврат true если переключили
 	void    defrost();                    // Все что касается разморозки воздушника
 
@@ -720,7 +725,6 @@ private:
 	boolean check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса
-	void set_target_performance();        // установить целевую производительность (обороты компрессора или выходную мощность котла)
 
 	type_motoHour motoHour;               // Структура для хранения счетчиков запись каждый час
 	type_motoHour motoHour_saved;

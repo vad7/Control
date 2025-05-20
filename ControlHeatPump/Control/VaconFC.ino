@@ -468,7 +468,7 @@ int8_t devVaconFC::start_FC()
   #endif // FC_USE_RCOMP
     if(err == OK) {
         SETBIT1(flags, fOnOff);
-        startCompressor = rtcSAM3X8.unixtime();
+        set_startCompressor();
         journal.jprintf(" %s ON\n", name);
     }
     else {
@@ -525,7 +525,7 @@ int8_t devVaconFC::start_FC()
     if(err == OK) {
 xStarted:
     	SETBIT1(flags, fOnOff);
-        startCompressor = rtcSAM3X8.unixtime();
+        HP.set_startCompressor();
         journal.jprintf(" %s[%s] ON\n", name, (char *)codeRet[HP.get_ret()]);
     } else {
         SETBIT1(flags, fErrFC);
@@ -538,7 +538,7 @@ xStarted:
   #endif // FC_USE_RCOMP
 xStarted:
     SETBIT1(flags, fOnOff);
-    startCompressor = rtcSAM3X8.unixtime();
+    set_startCompressor();
     journal.jprintf(" %s ON\n", name);
  #else // DEMO
     // Боевая часть
@@ -558,7 +558,7 @@ xStarted:
     }
 xStarted:
     SETBIT1(flags, fOnOff);
-    startCompressor = rtcSAM3X8.unixtime();
+    set_startCompressor();
     journal.jprintf(" %s ON\n", name);
 #endif //DEMO
 #endif //FC_ANALOG_CONTROL

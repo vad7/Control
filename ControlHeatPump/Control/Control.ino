@@ -193,15 +193,15 @@ void setup() {
 	// Баг разводки дуе (вероятность). Есть проблема с инициализацией spi.  Ручками прописываем
 	// https://groups.google.com/a/arduino.cc/forum/#!topic/developers/0PUzlnr7948
 	// http://forum.arduino.cc/index.php?topic=243778.0;nowap
-	pinMode(PIN_SPI_SS0,INPUT_PULLUP);          // Eth Pin 77
-	pinMode(PIN_SPI_SS1,INPUT_PULLUP);          // SD Pin  87
+	//pinMode(PIN_SPI_SS0,INPUT_PULLUP);          // Eth Pin 77
+	//pinMode(PIN_SPI_SS1,INPUT_PULLUP);          // SD Pin  87
 	pinMode(PIN_SPI_CS_SD,INPUT_PULLUP);        // сигнал CS управление SD картой
 	pinMode(PIN_SPI_CS_W5XXX,INPUT_PULLUP);     // сигнал CS управление сетевым чипом
 #ifdef USE_SERIAL4
 	PIO_Configure(PIOB,	PIO_PERIPH_A, PIO_PB20A_TXD2 | PIO_PB21A_RXD2, PIO_DEFAULT);	// Отключаются: A11(AD13)/D65 и D52(AD14)
 #endif
 #ifdef SPI_FLASH
-	pinMode(PIN_SPI_CS_FLASH,INPUT_PULLUP);     // сигнал CS управление чипом флеш памяти
+	//pinMode(PIN_SPI_CS_FLASH,INPUT_PULLUP);     // сигнал CS управление чипом флеш памяти
 	pinMode(PIN_SPI_CS_FLASH,OUTPUT);           // сигнал CS управление чипом флеш памяти
 #endif
 	SPI_switchAllOFF();                         // Выключить все устройства на SPI
@@ -216,16 +216,21 @@ void setup() {
 	digitalWriteDirect(PIN_POWER_ON, LOW);
 #endif
 
-	// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
-	Recover_I2C_bus();
-	delay(1);
-
 	// Настройка сервисных выводов
 	pinMode(PIN_KEY1, INPUT_PULLUP);        // Кнопка 1
 	pinMode(PIN_BEEP, OUTPUT);              // Выход на пищалку
 	pinMode(PIN_LED_OK, OUTPUT);            // Выход на светодиод мигает 0.5 герца - ОК  с частотой 2 герца ошибка
 	digitalWriteDirect(PIN_BEEP,LOW);       // Выключить пищалку
 	digitalWriteDirect(PIN_LED_OK,HIGH);    // Выключить светодиод
+#ifndef DEBUG
+	if(ret)
+#endif
+#ifndef DEBUG_NATIVE_USB
+	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
+#endif
+	// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
+	if(!Check_I2C_bus()) Recover_I2C_bus();
+	Wire.begin();
 
 	// 2. Инициализация журнала
 	uint8_t b;
@@ -238,12 +243,6 @@ void setup() {
 #endif
 		ret = 0xFF;
 	}
-#ifndef DEBUG
-	if(ret)
-#endif
-#ifndef DEBUG_NATIVE_USB
-	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
-#endif
 #ifdef LCD2004
 	lcd.begin(LCD_COLS, LCD_ROWS); // Setup: cols, rows
 	lcd.print("HeatPump v");
@@ -788,12 +787,15 @@ void vWeb0(void *)
  #ifdef PIN_WR_Boiler_Substitution
 	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
  #endif
+	journal.jprintf("WattRouter started");
+	if(GETBIT(WR.Flags, WR_fActive)) {
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-	if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
-	journal.jprintf("WattRouter started, Ubuf=%.1d\n", WR_MAP_Ubuf);
+		if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
+		journal.jprintf(", Ubuf=%.1d\n", WR_MAP_Ubuf);
 #else
-	journal.jprintf("WattRouter started\n");
+		journal.jprintf("\n");
 #endif
+	} else journal.jprintf(" - NOT ACTIVE\n");
 #endif
 
 	HP.timeNTP = thisTime = xTaskGetTickCount();        // В первый момент не обновляем
@@ -1311,13 +1313,16 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					HP.dRelay[RSOLINV].set_Relay(fR_StatusAllOff);
 					WR_Invertor2_off_cnt = 0;
 				} else if(GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT) && WR_LastSunPowerOut < WR_INVERTOR2_SUN_PWR_ON) WR_Invertor2_off_cnt += 10;
-				else if(WR_LastSunPowerOut <= 10 || rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR) WR_Invertor2_off_cnt++;
-				else if(WR_Invertor2_off_cnt) WR_Invertor2_off_cnt--;
+				else if(WR_LastSunPowerOut <= WR_INVERTOR2_SUN_PWR_OFF || rtcSAM3X8.get_hours() >= WR_INVERTOR2_SUN_OFF_HOUR) WR_Invertor2_off_cnt++;
+				else if(WR_Invertor2_off_cnt > 0) WR_Invertor2_off_cnt--;
 			} else { 								// Relay is OFF
 				if(WR_LastSunPowerOut > WR_INVERTOR2_SUN_PWR_ON && WR_Pnet > 0 && WR_LastSunPowerOut > WR_Pnet && !GETBIT(WR_WorkFlags, WR_fWF_Charging_BAT)) {
-					if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Sun=%d, Net=%d\n", WR_LastSunPowerOut, WR_Pnet);
-					HP.dRelay[RSOLINV].set_ON();
-					WR_Invertor2_off_cnt = 0;
+					if(--WR_Invertor2_off_cnt < -WR_INVERTOR2_SUN_ON_TIMER) {
+						WR_Invertor2_off_cnt = 0;
+						if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Sun=%d, Net=%d\n", WR_LastSunPowerOut, WR_Pnet);
+						HP.dRelay[RSOLINV].set_ON();
+						WR_Invertor2_off_cnt = 0;
+					}
 				}
 			}
 	#endif
@@ -1515,7 +1520,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					}
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-					WR_Read_MAP();
+					if(GETBIT(WR.Flags, WR_fActive)) WR_Read_MAP();
 #endif
 				}
 			}
@@ -1570,6 +1575,7 @@ void vReadSensor(void *)
 #endif
 	static uint32_t ttime;
 	static uint8_t  prtemp;
+	static uint8_t flags = 0;	// b0 - dFC/dHeater
 	
 	for(;;) {
 		int8_t i;
@@ -1722,9 +1728,15 @@ void vReadSensor(void *)
 			}
 		} else
 #endif
-			if(HP.dFC.get_present() && (GetTickCount() - readFC > FC_TIME_READ) && GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
+			if(GetTickCount() - readFC > FC_TIME_READ / 2
+					&& GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
 				readFC = GetTickCount();
-				HP.dFC.get_readState();
+				flags ^= 1;	// dFC / dHeater
+				if(flags & 1) {
+#ifdef USE_HEATER
+					if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state();
+#endif
+				} else if(HP.dFC.get_present()) HP.dFC.get_readState();
 			}
 
 #ifdef DRV_EEV_L9333  // Опрос состяния драйвера ЭРВ
@@ -1735,15 +1747,22 @@ void vReadSensor(void *)
 		}
 #endif
 
-#ifdef FLOW_CONTROL                // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
-	if(HP.is_comp_or_heater_on())      // Только если компрессор включен
+#ifdef FLOW_CONTROL               // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
+#ifdef FLOWCON                    // если определен датчик потока конденсатора
+	if(HP.is_comp_or_heater_on()) // Только если компрессор/котел включен
+#else
+	if(HP.is_comp_on())           // Только если компрессор включен
+#endif
 		for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
-		#ifdef SUPERBOILER   // Если определен супер бойлер
-			#ifdef FLOWCON   // если определен датчик потока конденсатора
-			   if ((i==FLOWCON)&&(!HP.dRelay[RPUMPO].get_Relay())) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
-			#endif
-		#endif
-			if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) {     // Поток меньше минимального ошибка осанавливаем ТН
+#ifdef FLOWCON                    // если определен датчик потока конденсатора
+			if(HP.is_heater_on() && i != FLOWCON) continue;
+	#ifdef SUPERBOILER            // Если определен супер бойлер
+				if(HP.is_compressor_on() {
+					if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
+				}
+	#endif
+#endif
+			if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка осанавливаем ТН
 				journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
 				set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
 			}
@@ -1787,7 +1806,7 @@ void vReadSensor_delay1ms(int32_t ms)
 			key_debounce = -1;
 		} else if(key_debounce) key_debounce--;
 #endif
-#ifdef USE_UPS
+#ifdef SPOWER
 		HP.sInput[SPOWER].Read(true);
 		if(HP.sInput[SPOWER].is_alarm()) { // Электричество кончилось
 			HP.HandleNoPower();
@@ -1814,7 +1833,7 @@ void vReadSensor_delay1ms(int32_t ms)
 		if(GETBIT(HP.Option.flags, fBackupPower)) {
 			if(!HP.fBackupPowerOffDelay) {			// Нужно уменьшить нагрузку
 #ifdef RBOILER
-				HP.dRelay[RBOILER].set_OFF();		// выключить тэн бойлера
+				if(!HP.HeatBoilerUrgently) HP.dRelay[RBOILER].set_OFF();		// выключить тэн бойлера
 #endif
 #ifdef WATTROUTER
 				for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -1954,23 +1973,8 @@ void vReadSensor_delay1ms(int32_t ms)
 					if(_profile == SCHDLR_Profile_off) {
 						HP.sendCommand(pWAIT);
 					} else if(HP.Prof.get_idProfile() != _profile) {
-						int32_t _mode;
-						if((_mode = HP.Prof.load_from_EEPROM_SaveON_mode(_profile)) >= 0) {
-							MODE_HP currmode = HP.get_modWork();
-							uint8_t frestart = _mode != pOFF && currmode != pOFF && (currmode & (pHEAT | pCOOL)) && (currmode & (pHEAT | pCOOL)) != (_mode & (pHEAT | pCOOL)); // Если направление работы ТН разное
-							if(frestart) {
-								HP.sendCommand(pWAIT);
-								uint8_t i = DELAY_BEFORE_STOP_IN_PUMP + (HP.get_modeHouse() == pCOOL ? HP.Prof.Cool.delayOffPump : HP.Prof.Heat.delayOffPump) + 1;
-								while(HP.isCommand()) {	_delay(1000); if(!--i) break; } // ждем отработки команды
-								if(!HP.Task_vUpdate_run) continue;
-							}
-							//vTaskSuspendAll();	// без проверки
-							HP.Prof.load(_profile);
-							HP.set_profile();
-							//xTaskResumeAll();
-							journal.jprintf_time("Profile changed to #%d\n", _profile);
-							if(frestart) HP.sendCommand(pRESUME);
-						}
+						HP.SwitchToProfile(_profile);
+						if(!HP.Task_vUpdate_run) continue;
 					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 						HP.sendCommand(pRESUME);
 					}
@@ -2311,27 +2315,27 @@ void vServiceHP(void *)
 					HP.sendCommand(pAUTOSTART);
 				}
 			}
-			if(HP.startPump) {  // Если разрешена работа насоса (0 - останов задачи, > 1 - работа)
-				if(HP.startPump == 4) { // Отработка после останова компрессора
+			if(HP.startPump > StartPump_Stop) {  // Если разрешена работа насоса (0 - останов задачи, > 1 - работа)
+				if(HP.startPump == StartPump_AfterWork) { // Отработка после останова компрессора/котла
 					if(HP.pump_in_pause_timer == 0) {
-						HP.PUMPS_OFF;
+						HP.Pumps(OFF);
 						if(HP.get_State() == pOFF_HP) {
-							HP.startPump = 0;							// Задача насосов в паузе выключена
+							HP.startPump = StartPump_Stop;				// Задача насосов в паузе выключена
 						} else if(HP.get_workPump()) {
 							HP.pump_in_pause_timer = HP.get_pausePump();
-							HP.startPump = 1;							// Поставить признак запуска задачи насос
+							HP.startPump = StartPump_Start;				// Поставить признак запуска задачи насос
 						}
 					} else HP.pump_in_pause_timer--;
 				} else if(HP.get_workPump()) {
 					if(HP.pump_in_pause_timer <= 1) {
-						if(HP.startPump <= 2) { 						// включить
+						if(HP.startPump <= StartPump_Work_Off) { 		// включить
 							HP.pump_in_pause_set(true);
 							HP.pump_in_pause_timer = HP.get_workPump();
-							HP.startPump = 3;
+							HP.startPump = StartPump_Work_On;
 						} else if(HP.get_pausePump()) { 				// выключить
 							HP.pump_in_pause_set(false);
 							HP.pump_in_pause_timer = HP.get_pausePump();
-							HP.startPump = 2;
+							HP.startPump = StartPump_Work_Off;
 						}
 					} else HP.pump_in_pause_timer--;
 				}
@@ -2341,21 +2345,22 @@ void vServiceHP(void *)
 			taskYIELD();
 
 			//  Синхронизация часов с I2C часами если стоит соответсвующий флаг
-			static uint32_t oldTime = GetTickCount();
+			static uint32_t _old_time = GetTickCount();
 			if(HP.get_updateI2C())  // если надо обновить часы из I2c
 			{
-				if(GetTickCount() - oldTime > (uint32_t)TIME_I2C_UPDATE) // время пришло обновляться надо Период синхронизации внутренних часов с I2C часами (сек)
+				if(GetTickCount() - _old_time > (uint32_t)TIME_I2C_UPDATE) // время пришло обновляться надо Период синхронизации внутренних часов с I2C часами (сек)
 				{
-					oldTime = rtcSAM3X8.unixtime();
-					uint32_t t = TimeToUnixTime(getTime_RtcI2C());       // Прочитать время из часов i2c тут проблема
-					if(t) {
+					_old_time = rtcSAM3X8.unixtime();
+					uint32_t t = TimeToUnixTime(getTime_RtcI2C());       // Прочитать время из часов i2c
+					if(t > SEC_1970_TO_2000 + 366*24*60*60 && (t > _old_time ? t - _old_time : _old_time - t) < 10 * 60) {
+						journal.jprintf_time("RTC Sync: ");
 						rtcSAM3X8.set_clock(t);                		 // Установить внутренние часы по i2c
-						HP.updateDateTime(t > oldTime ? t - oldTime : -(oldTime - t));  // Обновить переменные времени с новым значением часов
-						journal.jprintf((const char*) "Sync from I2C RTC: %s %s\n", NowDateToStr(), NowTimeToStr());
+						HP.updateDateTime(t > _old_time ? t - _old_time : -(_old_time - t));  // Обновить переменные времени с новым значением часов
+						journal.jprintf("%s %s\n", NowDateToStr(), NowTimeToStr());
 					} else {
-						journal.jprintf("Error read I2C RTC\n");
+						journal.jprintf_time("Error read I2C RTC: %u\n", t);
 					}
-					oldTime = GetTickCount();
+					_old_time = GetTickCount();
 				}
 			}
 			// Проверки граничных температур для уведомлений, если разрешено!
