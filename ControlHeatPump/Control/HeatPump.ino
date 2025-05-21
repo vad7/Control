@@ -1797,28 +1797,30 @@ void HeatPump::Pumps(boolean b)
 	journal.printf(" Pumps(%d), modWork: %X\n", b, get_modWork());
 #endif
 	int16_t delayed = 0;	// сек
-#ifdef R3WAY           // Если определен трехходовой то в начале переключаем его (при выключении что бы остыл теплообменник)
+#ifdef R3WAY                // Если определен трехходовой то в начале переключаем его (при выключении что бы остыл теплообменник)
 if(b && (get_modWork() & pBOILER)){
-        dRelay[R3WAY].set_Relay(true);             // скорее всего это пуск ТН (не переключение) по этому надо включить ГВС
+        dRelay[R3WAY].set_Relay(true);               // скорее всего это пуск ТН (не переключение) по этому надо включить ГВС
         _delay(DELAY_AFTER_SWITCH_RELAY);
 		onBoiler = true;
 		offBoiler = 0;
 	} else {
-		dRelay[R3WAY].set_Relay(false);            // скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС     
-	    if(onBoiler && get_State() == pWORK_HP) {  // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
+		dRelay[R3WAY].set_Relay(false);              // скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС
+	    if(onBoiler && get_State() == pWORK_HP) {    // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
 	    	journal.jprintf(" Pause %ds, Boiler->Pause\n", Option.delayBoilerSW);
 	    	_delay((delayed = Option.delayBoilerSW) * 1000);    // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	    }
 	}
 #endif
-	if(b && !HeaterNeedOn) {
-		dRelay[PUMP_IN].set_Relay(b);               // Реле включения насоса входного контура  (геоконтур)
-		_delay(DELAY_AFTER_SWITCH_RELAY);           // Задержка на d мсек
-#ifdef  TWO_PUMP_IN                                 // второй насос для воздушника если есть
-		if(sTemp[TEVAOUT].get_Temp() < 2500) dRelay[PUMP_IN1].set_ON(); // Реле включения второго насоса входного контура для  воздушника
-		else dRelay[PUMP_IN1].set_OFF();
-		_delay(DELAY_AFTER_SWITCH_RELAY);           // Задержка на d мсек
-#endif
+	if(b) {
+		if(!HeaterNeedOn) {
+			dRelay[PUMP_IN].set_Relay(b);            // Реле включения насоса входного контура  (геоконтур)
+			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
+	#ifdef  TWO_PUMP_IN                              // второй насос для воздушника если есть
+			if(sTemp[TEVAOUT].get_Temp() < 2500) dRelay[PUMP_IN1].set_ON(); // Реле включения второго насоса входного контура для  воздушника
+			else dRelay[PUMP_IN1].set_OFF();
+			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
+	#endif
+		}
 	} else {
 		if(GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain)) {
 			journal.jprintf(" Delay: stop IN pump.\n");
@@ -1827,10 +1829,11 @@ if(b && (get_modWork() & pBOILER)){
 				_delay(1000); // задержка перед выключение гео насоса после выключения компрессора (облегчение останова)
 				if(is_next_command_stop()) break;
 			}
+			dRelay[PUMP_IN].set_Relay(b);           // Реле включения насоса входного контура  (геоконтур)
 		}
-#ifdef  TWO_PUMP_IN                    // второй насос для воздушника если есть
-		dRelay[PUMP_IN1].set_OFF();    // если насососы выключаем то второй вентилятор ВСЕГДА выключается!!
-		_delay(DELAY_AFTER_SWITCH_RELAY);                                // Задержка на d мсек
+#ifdef  TWO_PUMP_IN                                 // второй насос для воздушника если есть
+		dRelay[PUMP_IN1].set_OFF();                 // если насосы выключаем, то второй вентилятор ВСЕГДА выключается
+		_delay(DELAY_AFTER_SWITCH_RELAY);           // Задержка на d мсек
 #endif
 	}
 	
@@ -1857,8 +1860,8 @@ if(b && (get_modWork() & pBOILER)){
 	}
 
 #ifdef R3WAY  
-	dRelay[PUMP_OUT].set_Relay(b);                 // Реле включения насоса выходного контура  (отопление и ГВС)
-	_delay(DELAY_AFTER_SWITCH_RELAY);                                     // Задержка на d мсек
+	dRelay[PUMP_OUT].set_Relay(b);                  // Реле включения насоса выходного контура  (отопление и ГВС)
+	_delay(DELAY_AFTER_SWITCH_RELAY);               // Задержка на d мсек
    	if(b || (!b && (!get_workPump() || get_pausePump() || get_modeHouse() == pOFF))) Pump_HeatFloor(b); // насос ТП
    	if(!b) {
    		onBoiler = false;
@@ -1870,22 +1873,22 @@ if(b && (get_modWork() & pBOILER)){
    		if((get_modWork() & pBOILER)) {
    		   	dRelay[RPUMPO].set_OFF();             	// насос отопления
 		   	Pump_HeatFloor(0); 						// насос ТП
-	   		_delay(DELAY_AFTER_SWITCH_RELAY);								// Задержка на d мсек
+	   		_delay(DELAY_AFTER_SWITCH_RELAY);		// Задержка на d мсек
    			dRelay[RPUMPBH].set_ON();
    			offBoiler = 0;
    			onBoiler = true;
    		} else {
    		   	dRelay[RPUMPO].set_ON();               	// насос отопления
 		   	Pump_HeatFloor(1); 						// насос ТП
-	   		_delay(DELAY_AFTER_SWITCH_RELAY);								// Задержка на d мсек
+	   		_delay(DELAY_AFTER_SWITCH_RELAY);		// Задержка на d мсек
    			dRelay[RPUMPBH].set_OFF();
    		   	onBoiler = false;
    		}
-   		_delay(DELAY_AFTER_SWITCH_RELAY);									// Задержка на d мсек
+   		_delay(DELAY_AFTER_SWITCH_RELAY);			// Задержка на d мсек
    	} else {
    		if(dRelay[RPUMPBH].get_Relay()) {
-   			dRelay[RPUMPBH].set_OFF();					// насос бойлера
-   			offBoiler = rtcSAM3X8.unixtime();			// запомнить время выключения ГВС (нужно для переключения)
+   			dRelay[RPUMPBH].set_OFF();				// насос бойлера
+   			offBoiler = rtcSAM3X8.unixtime();		// запомнить время выключения ГВС (нужно для переключения)
    			onBoiler = false;
    		}
 		if(!get_workPump() || get_pausePump() || get_modeHouse() == pOFF) {
@@ -1901,14 +1904,14 @@ if(b && (get_modWork() & pBOILER)){
    	   	_delay(DELAY_AFTER_SWITCH_RELAY);									// Задержка на d мсек
    	   	Pump_HeatFloor(b); // насос ТП
  	}
-   	_delay(DELAY_AFTER_SWITCH_RELAY);									// Задержка на d мсек
+   	_delay(DELAY_AFTER_SWITCH_RELAY);				// Задержка на d мсек
   #endif
 #endif // R3WAY
    	if(!b) {
    		SETBIT0(work_flags, fHP_BoilerTogetherHeat);
 #ifdef SUPERBOILER
 		dRelay[RSUPERBOILER].set_OFF();
-		_delay(DELAY_AFTER_SWITCH_RELAY);                                // Задержка на d мсек
+		_delay(DELAY_AFTER_SWITCH_RELAY);           // Задержка на d мсек
 #endif
    	}
 }

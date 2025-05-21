@@ -550,7 +550,7 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 							  }
 							  HP.resetPID(); return true; } else
 #ifdef USE_HEATER
-	if(strcmp(var,hp_fUseHeater)==0) { SaveON.flags = (SaveON.flags & ~(1<<fHeat_UseHeater)) | ((x!=0)<<fHeat_UseHeater); return true; }else
+	if(strcmp(var,hp_fUseHeater)==0) { if(!HP.IsWorkingNow()) SaveON.flags = (SaveON.flags & ~(1<<fHeat_UseHeater)) | ((x!=0)<<fHeat_UseHeater); return true; }else
 #else
 	if(strcmp(var,hp_fUseHeater)==0) { SaveON.flags = (SaveON.flags & ~(1<<fHeat_UseHeater)); return true; }else
 #endif
@@ -669,7 +669,7 @@ boolean Profile::set_boiler(char *var, char *c)
 	float x=my_atof(c);
 	if(x == ATOF_ERROR) return false;   // Ошибка преобразования короме расписания - это не число
 	if(strcmp(var,boil_BOILER_ON)==0)		{ if(x) SETBIT1(SaveON.flags,fBoilerON); else SETBIT0(SaveON.flags,fBoilerON); return true;} else
-	if(strcmp(var,hp_fUseHeater)==0)		{ if(x) SETBIT1(SaveON.flags,fBoiler_UseHeater); else SETBIT0(SaveON.flags,fBoiler_UseHeater); return true;} else
+	if(strcmp(var,hp_fUseHeater)==0)		{ if(!HP.IsWorkingNow()) { if(x) SETBIT1(SaveON.flags,fBoiler_UseHeater); else SETBIT0(SaveON.flags,fBoiler_UseHeater); } return true;} else
 	if(strcmp(var,boil_SCHEDULER_ON)==0)	{ if(x) SETBIT1(Boiler.flags,fSchedule); else { SETBIT0(Boiler.flags,fSchedule); SETBIT0(Boiler.flags,fScheduleAddHeat); } return true;} else
 	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){if(x) {SETBIT1(Boiler.flags,fScheduleAddHeat); SETBIT1(Boiler.flags,fSchedule); } else SETBIT0(Boiler.flags,fScheduleAddHeat); return true;} else
 	if(strcmp(var,boil_TOGETHER_HEAT)==0)	{ if(x) SETBIT1(Boiler.flags,fBoilerTogetherHeat); else {

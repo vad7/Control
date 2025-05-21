@@ -690,7 +690,7 @@ void parserGET(uint8_t thread, int8_t )
 			ADD_WEBDELIM(strReturn) ;
 			continue;
 		}
-		if (strcmp(str,"get_WORK")==0)  // Функция get_WORK  ТН включен если он работает или идет его пуск
+		if (strcmp(str,"get_WORK")==0)  // Функция get_WORK - ТН включен если он работает или идет его пуск
 		{
 			strcat(strReturn, HP.IsWorkingNow() ? "ON" : "OFF"); ADD_WEBDELIM(strReturn); continue;
 		}

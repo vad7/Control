@@ -59,14 +59,24 @@ struct type_heater_read {
 	uint16_t Error;								// 0x1E, ошибка котла
 	uint16_t Error2;							// 0x1F, ошибка котла дополнительная
 	int16_t  T_OUT;								// 0x20, Температура уличного датчика котла (-65 - 100), градусы
+	uint16_t ProductCode;						// 0x21, Код производителя котла
+	uint16_t ModelCode;							// 0x22, Код модели котла
+	uint16_t ErrorFlags;						// 0x23, Флаги ошибок
 } __attribute__((packed));
 
+// Флаги ошибок data.ErrorFlags
 #define HM_ERROR_SERVICE				0		// Необходимо обслуживание
 #define HM_ERROR_BLOCKED				1		// Котел заблокирован
 #define HM_ERROR_LOW_PRESSURE			2		// Низкое давление в отопительном контуре
 #define HM_ERROR_IGN_ERROR				3		// Ошибка розжига
 #define HM_ERROR_LOW_AIR				4		// Низкое давление воздуха
 #define HM_ERROR_OVERHEAT				5		// Перегрев теплоносителя в контуре
+#define HM_ERROR_SERVICE_S				"Необходимо обслуживание"
+#define HM_ERROR_BLOCKED_S				"Котел заблокирован"
+#define HM_ERROR_LOW_PRESSURE_S			"Низкое давление в контуре"
+#define HM_ERROR_IGN_ERROR_S			"Ошибка розжига"
+#define HM_ERROR_LOW_AIR_S				"Низкое давление воздуха"
+#define HM_ERROR_OVERHEAT_S				"Перегрев теплоносителя"
 
 #define HM_STATUS_BURNER				0		// горелка вкл/выкл
 #define HM_STATUS_HEATING				1		// отопление вкл/выкл
@@ -116,8 +126,6 @@ public:
 	int8_t	read_state();							// Текущее состояние
 	uint8_t	get_target() { return Target; }			// Получить целевую мощность
 	int8_t	set_target(uint8_t start, uint8_t max); // Установить целевую и максимальную мощность
-	int8_t	start();								// Команда начала нагрева
-	int8_t	stop();									// Команда останова нагрева
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
