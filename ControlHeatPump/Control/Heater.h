@@ -28,6 +28,7 @@
 // Регистры Modbus RTU адаптера ectoControl v2 (19200 bps)
 // Для чтения
 #define HM_ADAPTER_FLAGS				0x0010
+#define HM_ADAPTER_FLAGS_bLINK			3		// бит состояние связи с котлом, 0 - нет ответа на последнюю команду, 1 - есть ответ
 #define HM_ADAPTER_VER					0x0011
 #define HM_ADAPTER_TIME					0x0012	// 4 bytes
 #define HM_ADAPTER_RESET				0x0080	// 2  - перезагрузка адаптера, 3 - сброс ошибок котла
@@ -103,6 +104,7 @@ struct type_heater_read {
 #define fHeater_USE_Relay_RH_3WAY		2		// Использовать обычное реле RH_3WAY для переключения Котел - ТН
 #define fHeater_USE_Relay_Modbus		3		// Использовать Modbus реле для запуска Котла
 #define fHeater_USE_Relay_Modbus_3WAY	4		// Использовать Modbus реле для переключения Котел - ТН
+#define fHeater_BoilerInHeatingMode		5		// Греть бойлер в режиме отопления, иначе используются раздельные режимы котла - Отопление/ГВС.
 
 struct type_HeaterSettings {
 	uint16_t setup_flags;						// флаги настройки
@@ -114,18 +116,17 @@ struct type_HeaterSettings {
 };												// Структура для сохранения настроек
 
 // Рабочие флаги (flags)
-#define fHeater_PowerOn					0		// Котел включен
-#define fHeater_LinkOk					1		// Есть связь по Modbus
-
+#define fHeater_LinkAdapterOk			0		// Есть связь по Modbus с адаптером
+#define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом
 
 class devHeater
 {
 public:
-	int8_t	init();									// Инициализация
+	void	init();									// Инициализация
 	int16_t	CheckLinkStatus(void);					// Проверка связи
-	int8_t	read_state();							// Текущее состояние
+	int8_t	read_state(uint8_t group);				// Текущее состояние
 	uint8_t	get_target() { return Target; }			// Получить целевую мощность
-	int8_t	set_target(uint8_t start, uint8_t max); // Установить целевую и максимальную мощность
+	int8_t	set_target(uint8_t temp, uint8_t power_max); // Установить целевую температуру и максимальную мощность
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
@@ -148,6 +149,9 @@ public:
 
 private:
 	uint16_t work_flags;							// рабочие флаги
+	uint8_t prev_temp;
+	uint8_t prev_boiler_temp;
+	uint8_t prev_power;
  };
 
 #endif

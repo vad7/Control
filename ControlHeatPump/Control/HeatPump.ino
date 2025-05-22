@@ -170,16 +170,16 @@ void HeatPump::initHeatPump()
 		journal.jprintf(" not present config\r\n");
 	}         //  нет в конфигурации
 
+	message.initMessage(MAIN_WEB_TASK);                        // Инициализация Уведомлений, параметр - номер потока сервера в котором идет отправка
 	dFC.initFC();                                              // Инициализация FC
 #ifdef USE_ELECTROMETER_SDM
 	dSDM.initSDM();                                            // инициалаизация счетчика
 #endif
-	message.initMessage(MAIN_WEB_TASK);                        // Инициализация Уведомлений, параметр - номер потока сервера в котором идет отправка
-#ifdef MQTT
-	clMQTT.initMQTT(MAIN_WEB_TASK);                            // Инициализация MQTT, параметр - номер потока сервера в котором идет отправка
-#endif
 #ifdef USE_HEATER
 	dHeater.init();
+#endif
+#ifdef MQTT
+	clMQTT.initMQTT(MAIN_WEB_TASK);                            // Инициализация MQTT, параметр - номер потока сервера в котором идет отправка
 #endif
 
 	// Графики в памяти

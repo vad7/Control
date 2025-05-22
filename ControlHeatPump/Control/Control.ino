@@ -1630,6 +1630,9 @@ void vReadSensor(void *)
 #endif
 #endif // defined(WR_PowerMeter_Modbus)
 
+#ifdef USE_HEATER
+		if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(0);	// группа 1 - наличие связи
+#endif
 		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
 
 		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
@@ -1700,8 +1703,9 @@ void vReadSensor(void *)
 			}
 		} else //WR_PowerMeter_New = true;
 #endif
+		{
 			vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
-
+		}
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
 #ifdef EEV_DEF
@@ -1734,7 +1738,7 @@ void vReadSensor(void *)
 				flags ^= 1;	// dFC / dHeater
 				if(flags & 1) {
 #ifdef USE_HEATER
-					if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state();
+					if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(1);	// группа 2 - данные
 #endif
 				} else if(HP.dFC.get_present()) HP.dFC.get_readState();
 			}

@@ -8,9 +8,8 @@
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("get_HT(INFO)");
-	updateParam("get_HT(PWR),get_HT(ON),get_HT(3W),get_HT(TF),get_HT(M),get_HT(E)");
+	updateParam("get_HT(A),get_HT(L),get_HT(ON),get_HT(3W),get_HT(TF),get_HT(M),get_HT(E)");
 }
-//function loadParam_after(paramid) {}
 </script>
 </head>
 <body class="actuators">
@@ -21,13 +20,14 @@ window.onload = function() {
 	<h2>Основные  <input style="float:right;margin-right:10px;" type="submit" value="Доп. настройки" onclick='location.assign("heater-set.html")'></h2>
 	<table style="width: 700">
 	<thead>
-	<tr><th>Состояние</th><th>Нагрев</th><th>3-х ходовой</th><th>Теплоноситель, °C</th><th>Мощность, %</th><th>Ошибок Modbus</th></tr>
+	<tr><th>Адаптер</th><th>Связь</th><th>3-х ходовой</th><th>Нагрев</th><th>Теплоноситель, °C</th><th>Мощность, %</th><th>Ошибок Modbus</th></tr>
 	</thead>
 	<tbody>
 	<tr>
-		<td id="get_ht-pwr-ONOFF" style="text-align: center"></td>
-		<td id="get_ht-on-ONOFF" style="text-align: center"></td>
+		<td id="get_ht-a-ONOFF" style="text-align: center"></td>
+		<td id="get_ht-l-ONOFF" style="text-align: center"></td>
 		<td id="get_ht-3w" style="text-align: center"></td>
+		<td id="get_ht-on-ONOFF" style="text-align: center"></td>
 		<td id="get_ht-tf" style="text-align: center"></td>
 		<td id="get_ht-m" style="text-align: center"></td>
 		<td id="get_ht-e" style="text-align: center"></td>

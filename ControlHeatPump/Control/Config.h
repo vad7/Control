@@ -5165,6 +5165,8 @@ const char *noteTemp[] = {"Температура улицы",
 		//#define HEATER_MODBUS_RELAY_ID	0	// Номер Реле включения нагревателя (нумерация с 0)
 		//#define HEATER_MODBUS_3WAY_ADDR	11	// Адрес Modbus Реле трехходового клапана: нагреватель - ТН
 		//#define HEATER_MODBUS_3WAY_ID		1	// Номер Реле трехходового клапана: нагреватель - ТН
+		#define HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS	10
+		#define HEATER_MODBUS_TIMEOUT				30
 	#endif
 
 	// Конфигурирование Modbus для инвертора и счетчика SDM
