@@ -1,15 +1,20 @@
 <html lang="ru">
 <head> 
-	<title>Настройки Котла. Народный контроллер ТН</title>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="style.css">
-	<script type='text/javascript' src='scripts.js'></script>
-	<script type="text/javascript">
-		window.onload = function() {
-		loadParam("get_HT(OT),get_HT(R),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(P),get_HT(PM),get_HT(B),get_HT(BM),get_HT(PA),get_oHP(SH)");
-		};
-	</script>
+<title>Настройки Котла. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type='text/javascript' src='scripts.js'></script>
+<script type="text/javascript">
+window.onload = function() {
+	loadParam("get_HT(OT),get_HT(R),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(T),get_HT(PM),get_HT(TB),get_HT(BM),get_HT(PA),get_oHP(SH)");
+};
+function load_adapter_settings()
+{
+	loadParam("get_HT(W30),get_HT(W33),get_HT(W34)");
+}
+</script>
+
 </head>
 <body class="actuators">
 <div id="menu" class="menu"><script src="menu.js"></script></div>
@@ -27,10 +32,18 @@
     <tr><td>Время работы циркуляцонного насоса котла после останова, сек.</td><td><input type="number" id="get_ht-pa"> <input type="submit" value=">" onclick="setParam('get_HT(PA)')"></td></tr>
     <tr><td>Время переключения Котел - ТН, сек.</td><td><input type="number" id="get_ohp-sh"> <input type="submit" value=">" onclick="setParam('get_oHP(SH)')"></td></tr>
 	<tr><td><b>Настройка граничных мощностей</b></td><td></td></tr>
-    <tr><td>Стартовая мощность для отопления, %</td><td><input type="number" id="get_ht-p"> <input type="submit" value=">" onclick="setParam('get_HT(P)')"></td></tr>
-    <tr><td>Максимальная мощность для отопления, %</td><td><input type="number" id="get_ht-pm"> <input type="submit" value=">" onclick="setParam('get_HT(PM)')"></td></tr>
-    <tr><td>Стартовая мощность нагрева бойлера, %</td><td><input type="number" id="get_ht-b"> <input type="submit" value=">" onclick="setParam('get_HT(B)')"></td></tr>
-    <tr><td>Максимальная мощность нагрева бойлера, %</td><td><input type="number" id="get_ht-bm"> <input type="submit" value=">" onclick="setParam('get_HT(BM)')"></td></tr>
+    <tr><td>Целевая температура теплоносителя отопления, °C</td><td><input type="number" id="get_ht-t"> <input type="submit" value=">" onclick="setParam('get_HT(T)')"></td></tr>
+    <tr><td>Максимальная мощность (или модуляция) для отопления, %</td><td><input type="number" id="get_ht-pm"> <input type="submit" value=">" onclick="setParam('get_HT(PM)')"></td></tr>
+    <tr><td>Целевая температура теплоносителя бойлера, °C</td><td><input type="number" id="get_ht-tb"> <input type="submit" value=">" onclick="setParam('get_HT(TB)')"></td></tr>
+    <tr><td>Максимальная мощность (или модуляция) для бойлера, %</td><td><input type="number" id="get_ht-bm"> <input type="submit" value=">" onclick="setParam('get_HT(BM)')"></td></tr>
+	<tr><td><b>Настройка адаптера ectoControl Opentherm/eBus/Navien (значения пишутся сразу в адаптер)</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
+    <tr><td>Адаптер подключен (1), иначе подключен термостат или перемычка (0)</td><td><input type="number" id="get_ht-w30"> <input type="submit" value=">" onclick="setParam('get_HT(W30)')"></td></tr>
+    <tr><td>Уставка теплоносителя в аварийном режиме, десятые °C</td><td><input type="number" id="get_ht-w32"> <input type="submit" value=">" onclick="setParam('get_HT(W32)')"></td></tr>
+    <tr><td>Нижний предел уставки теплоносителя, °C</td><td><input type="number" id="get_ht-w33"> <input type="submit" value=">" onclick="setParam('get_HT(W33)')"></td></tr>
+    <tr><td>Верхний предел уставки теплоносителя, °C</td><td><input type="number" id="get_ht-w34"> <input type="submit" value=">" onclick="setParam('get_HT(W34)')"></td></tr>
+    <tr><td>Нижний предел уставки ГВС, °C</td><td><input type="number" id="get_ht-w35"> <input type="submit" value=">" onclick="setParam('get_HT(W35)')"></td></tr>
+    <tr><td>Верхний предел уставки ГВС, °C</td><td><input type="number" id="get_ht-w36"> <input type="submit" value=">" onclick="setParam('get_HT(W36)')"></td></tr>
+    <tr><td>Режим работы, биты (+1 - вкл. контур отопления, +2 - вкл котур ГВС, +4 - вкл. второй контур)</td><td><input type="number" id="get_ht-w36"> <input type="submit" value=">" onclick="setParam('get_HT(W36)')"></td></tr>
 	</tbody>
 	</table>
  </div>

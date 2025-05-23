@@ -32,10 +32,10 @@ void devHeater::init()
 	prev_power = -1;
 
 	set.setup_flags = (0<<fHeater_Opentherm) | (1<<fHeater_USE_Relay_RHEATER) | (1<<fHeater_USE_Relay_RH_3WAY) | (0<<fHeater_USE_Relay_Modbus) | (0<<fHeater_USE_Relay_Modbus_3WAY);
-	set.power_start = 100;
-	set.power_max = 100;
-	set.power_boiler_start = 100;
-	set.power_boiler_max = 100;
+	set.heat_tempout = 100;
+	set.heat_power_max = 100;
+	set.boiler_tempout = 100;
+	set.boiler_power_max = 100;
 	set.pump_work_time_after_stop = 18;			// 3 минуты
 }
 
@@ -314,18 +314,18 @@ void devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0)	{ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0)	{ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
-	if(strcmp(var, Wheater_power_start)==0) 				{ _itoa(set.power_start, ret); } else
-	if(strcmp(var, Wheater_power_max)==0) 					{ _itoa(set.power_max, ret); } else
-	if(strcmp(var, Wheater_power_boiler_start)==0)			{ _itoa(set.power_boiler_start, ret); } else
-	if(strcmp(var, Wheater_power_boiler_max)==0) 			{ _itoa(set.power_boiler_max, ret); } else
+	if(strcmp(var, Wheater_heat_tempout)==0) 				{ _itoa(set.heat_tempout, ret); } else
+	if(strcmp(var, Wheater_heat_power_max)==0) 					{ _itoa(set.heat_power_max, ret); } else
+	if(strcmp(var, Wheater_boiler_tempout)==0)			{ _itoa(set.boiler_tempout, ret); } else
+	if(strcmp(var, Wheater_power_boiler_max)==0) 			{ _itoa(set.boiler_power_max, ret); } else
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0) 	{ _itoa(set.pump_work_time_after_stop * 10, ret); } else
 	if(strcmp(var, "INFO")==0) 					    		get_info(ret); else
 
     strcat(ret,(char*)cInvalid);
 }
 
-// Установить параметр из строки
-boolean devHeater::set_param(char *var, float f)
+// Установить параметр из строки, возврат ошибки
+int8_t devHeater::set_param(char *var, float f)
 {
 	int32_t x = f;
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(x) SETBIT1(set.setup_flags, fHeater_Opentherm); else SETBIT0(set.setup_flags, fHeater_Opentherm); return true;} else
@@ -333,11 +333,22 @@ boolean devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_RH_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_RH_3WAY); return true;} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus); return true;} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); return true;} else
-	if(strcmp(var, Wheater_power_start)==0)				{ if(x>=0 && x<=100){ set.power_start = x; return true; } } else
-	if(strcmp(var, Wheater_power_max)==0)				{ if(x>=0 && x<=100){ set.power_max = x; return true; } } else
-	if(strcmp(var, Wheater_power_boiler_start)==0)		{ if(x>=0 && x<=100){ set.power_boiler_start = x; return true; } } else
-	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.power_boiler_max = x; return true; } } else
-	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ if(x>=0 && x<=100){ set.pump_work_time_after_stop = x / 10; return true; } }
+	if(strcmp(var, Wheater_heat_tempout)==0)				{ if(x>=0 && x<=100){ set.heat_tempout = x; return true; } } else
+	if(strcmp(var, Wheater_heat_power_max)==0)				{ if(x>=0 && x<=100){ set.heat_power_max = x; return true; } } else
+	if(strcmp(var, Wheater_boiler_tempout)==0)		{ if(x>=0 && x<=100){ set.boiler_tempout = x; return true; } } else
+	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return true; } } else
+	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ if(x>=0 && x<=100){ set.pump_work_time_after_stop = x / 10; return true; } } else
+	if(var[0] == 'W'){ // set_HT(Wn), где n номер регистра в HEX
+		uint16_t adr = strtol(var + 1, NULL, 16);
+		if(x != LONG_MAX) {
+			int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, adr, x);
+			if(err) return err;
+			int16_t status;
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + adr, 1, (uint16_t*)&status);	// Получить регистр состояния записи
+			if(err) return err;
+			return status;
+		}
+	}
 
     return false;
 }

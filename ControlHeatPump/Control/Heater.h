@@ -108,10 +108,10 @@ struct type_heater_read {
 
 struct type_HeaterSettings {
 	uint16_t setup_flags;						// флаги настройки
-	uint8_t  power_start;						// Стартовая мощность для отопления, %
-	uint8_t  power_max;							// Максимальная мощность для отопления, %
-	uint8_t  power_boiler_start;				// Стартовая мощность для бойлера, %
-	uint8_t  power_boiler_max;					// Максимальная мощность для бойлера, %
+	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления, C
+	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
+	uint8_t  boiler_tempout;					// Целевая температура теплоносителя бойлера, C
+	uint8_t  boiler_power_max;					// Максимальная мощность (или модуляция) для бойлера, %
 	uint8_t  pump_work_time_after_stop;			// Время работы циркуляцонного насоса котла после останова, /10 секунд
 };												// Структура для сохранения настроек
 
@@ -130,7 +130,7 @@ public:
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
-	bool	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
+	int8_t	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
 	void	get_info(char* buf);					// Получить информацию
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
 

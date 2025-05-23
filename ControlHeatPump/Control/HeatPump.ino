@@ -3378,7 +3378,7 @@ boolean HeatPump::configHP()
 			Pumps(ON);                                                     // включить насосы
 			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) {
 #ifdef USE_HEATER
-				dHeater.set_target(dHeater.get_settings()->power_start, dHeater.get_settings()->power_max);
+				dHeater.set_target(dHeater.get_settings()->heat_tempout, dHeater.get_settings()->heat_power_max);
 #endif
 			} else
 				dFC.set_target(dFC.get_startFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool());   // установить стартовую частоту
@@ -3412,7 +3412,7 @@ boolean HeatPump::configHP()
 					goto xStartCompOrHeater;
 				}
 #ifdef USE_HEATER
-				dHeater.set_target(dHeater.get_settings()->power_boiler_start, dHeater.get_settings()->power_boiler_max);
+				dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
 #endif
 				switchBoiler(true);                                        // включить бойлер
 			} else { // Компрессор
@@ -3472,7 +3472,7 @@ xStartCompOrHeater:
 			Pumps(ON);           										// включить насосы
 			if(Status.ret < pBp5) {
 	#ifdef USE_HEATER
-				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) dHeater.set_target(dHeater.get_settings()->power_boiler_start, dHeater.get_settings()->power_boiler_max);
+				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
 				else
 	#endif
 					dFC.set_target(dFC.get_startFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // установить стартовую частоту

@@ -940,9 +940,9 @@ const char *Wheater_fHeater_USE_Relay_RHEATER	= {"R"};
 const char *Wheater_fHeater_USE_Relay_RH_3WAY	= {"R3"};
 const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
 const char *Wheater_fHeater_USE_Relay_Modbus_3WAY= {"RW"};
-const char *Wheater_power_start					= {"P"};
-const char *Wheater_power_max					= {"PM"};
-const char *Wheater_power_boiler_start			= {"B"};
+const char *Wheater_heat_tempout				= {"T"};
+const char *Wheater_heat_power_max				= {"PM"};
+const char *Wheater_boiler_tempout				= {"TB"};
 const char *Wheater_power_boiler_max			= {"BM"};
 const char *Wheater_pump_work_time_after_stop	= {"PA"};
 const char *Wheater_LinkHeaterOk 				= {"L"};
@@ -952,6 +952,7 @@ const char *Wheater_3way 						= {"3W"};
 const char *Wheater_T_Flow 						= {"TF"};
 const char *Wheater_Power 						= {"M"};
 const char *Wheater_Errors 						= {"E"};
+const char *Wheater_WriteReg 					= {"W"};	// set_HT(Wn), где n номер регистра в HEX
 
 
 #ifdef SENSOR_IP // параметры удаленного датчика get_sensorIP
