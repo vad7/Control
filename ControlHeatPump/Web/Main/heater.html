@@ -17,37 +17,37 @@ window.onload = function() {
 <div class="content">
 <h1>Котел <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'></h1>
 <div class="row1">
-	<h2>Основные  <input style="float:right;margin-right:10px;" type="submit" value="Доп. настройки" onclick='location.assign("heater-set.html")'></h2>
-	<table style="width: 700">
-	<thead>
-	<tr><th>Адаптер</th><th>Связь</th><th>3-х ходовой</th><th>Нагрев</th><th>Теплоноситель, °C</th><th>Мощность, %</th><th>Ошибок Modbus</th></tr>
-	</thead>
-	<tbody>
-	<tr>
-		<td id="get_ht-a-ONOFF" style="text-align: center"></td>
-		<td id="get_ht-l-ONOFF" style="text-align: center"></td>
-		<td id="get_ht-3w" style="text-align: center"></td>
-		<td id="get_ht-on-ONOFF" style="text-align: center"></td>
-		<td id="get_ht-tf" style="text-align: center"></td>
-		<td id="get_ht-m" style="text-align: center"></td>
-		<td id="get_ht-e" style="text-align: center"></td>
-	</tr>		
-	</tbody>
-	</table>
+<h2>Основные  <input style="float:right;margin-right:10px;" type="submit" value="Доп. настройки" onclick='location.assign("heater-set.html")'></h2>
+<table style="width: 700">
+<thead>
+<tr><th>Адаптер</th><th>Связь</th><th>3-х ходовой</th><th>Нагрев</th><th>Теплоноситель, °C</th><th>Мощность, %</th><th>Ошибок Modbus</th></tr>
+</thead>
+<tbody>
+<tr>
+	<td id="get_ht-a-ONOFF" style="text-align: center"></td>
+	<td id="get_ht-l-ONOFF" style="text-align: center"></td>
+	<td id="get_ht-3w" style="text-align: center"></td>
+	<td id="get_ht-on-ONOFF" style="text-align: center"></td>
+	<td id="get_ht-tf" style="text-align: center"></td>
+	<td id="get_ht-m" style="text-align: center"></td>
+	<td id="get_ht-e" style="text-align: center"></td>
+</tr>		
+</tbody>
+</table>
 </div>		
 <div class="row1">
 <h2>Состояние: <input type="submit" value="Обновить" onclick='loadParam("get_HT(INFO)")'></h2>
-		<table style="width: 700">
-		<thead>
-		<tr>
-			<th>Номер</th>
-			<th>Описание</th>
-			<th>Значение</th>
-		</tr>
-		</thead>
-		<tbody id="get_ht-info">
-		</tbody>
-		</table>						
+<table style="width: 700">
+<thead>
+<tr>
+	<th>Адрес</th>
+	<th>Описание</th>
+	<th>Значение</th>
+</tr>
+</thead>
+<tbody id="get_ht-info">
+</tbody>
+</table>						
 </div>
 </div>
 </body>

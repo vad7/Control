@@ -603,7 +603,7 @@ function loadParam(paramid, noretry, resultdiv) {
 										} else if(element.className == "InpHide") {
 											if(values[1]) element.className = "";
 											element.value = values[1];
-										} else if(/^E\d+/.test(values[1])) {
+										} else if(values[1].match(/^E-?\d/)) {
 											if(element.getAttribute("type") == "submit") alert("Ошибка " + values[1]);
 											else element.placeholder = values[1];
 										} else if(element != document.activeElement) {
@@ -669,9 +669,10 @@ function loadParam(paramid, noretry, resultdiv) {
 									if(values[1] != "0") {
 										var elements = document.getElementsByName("USR");
 										for(var j = 0; j < elements.length; j++) {
-											if(elements[j].id == "mlogin") elements[j].hidden = false;
-											else elements[j].hidden = true; 
+											if(elements[j].id == "mlogin") elements[j].hidden = false; else { elements[j].remove(); j--; }
 										}
+										element = document.getElementById("MService");
+										element.innerHTML = '<a href="system.html"><i class="menu-icon menu-icon-service"></i>Сервис</a>';
 									}
 								} else if(values[0] == "get_uptime") {
 									if((element = document.getElementById("get_uptime"))) element.innerHTML = values[1];

@@ -14,7 +14,7 @@
 <body class="about">
 <div id="menu" class="menu"><script src="menu.js"></script></div>
 <div class="content">
-<h1>Система <input type="submit" value="Сохранить статистику (1)" onclick='loadParam("set_SAVE_STATS")'> <input type="submit" value="Подготовка к обновлению" onclick='loadParam("set_SAVE_UPD")' style="float:right;margin-right:10px;"></h1>
+<h1>Система</h1>
 <div class="row1">
 <table border="1" rules="rows">
 	<thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
@@ -29,14 +29,9 @@
 	</tbody>
 </table>
 <br>
-<input type="submit" value="Сброс контроллера" onclick='if(confirm("Перезагрузить контроллер?")) loadParam("RESET_DUE");'>
-<input type="submit" value="Сброс cети" onclick='loadParam("RESET_NET")'>
-<input type="submit" value="Сброс сезонных счетчиков" onclick='if(document.getElementById("reset_code").value=="RESET") loadParam("RESET_CNT_S,RELOAD")'> Введите RESET: <input id="reset_code" size="7">
-<p>Для сброса всех счетчиков используйте запрос RESET_CNT_ALL</p>
-1. Запись накопленных данных за последний день, нужно делать перед обновлением прошивки.<br>
-2. Старший байт номер задачи (номер см. на странице ОС RTOS), младший байт код ошибки (1-configASSERT fails, 2-malloc fails, 3-stack overflow, 4-hard fault, 5-bus fault, 6-usage fault, 7-crash data)<br>
-3. Установка флага: Сервис - Сеть - Ежеминутный контроль связи с сетью, и при необходимости его сброс<br>
-4. <b>State:</b> 0 - Выключен, 1 - Стартует, 2 - Останавливается, 3 - Работает, 4 - Ожидание, 5 - Ошибка.<br>
+1. Старший байт номер задачи (номер см. на странице ОС RTOS), младший байт код ошибки (1-configASSERT fails, 2-malloc fails, 3-stack overflow, 4-hard fault, 5-bus fault, 6-usage fault, 7-crash data)<br>
+2. Установка флага: Сервис - Сеть - Ежеминутный контроль связи с сетью, и при необходимости его сброс<br>
+3. <b>State:</b> 0 - Выключен, 1 - Стартует, 2 - Останавливается, 3 - Работает, 4 - Ожидание, 5 - Ошибка.<br>
 <br><a href="log-help.html">Перечень ошибок.</a><br><br>
 <b>modWork:</b>
 <br>&#8195; Перечисляемый тип - точка возврата из алгоритма управления (расшифровка состояния)

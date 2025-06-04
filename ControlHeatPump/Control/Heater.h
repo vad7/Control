@@ -45,11 +45,24 @@
 #define HM_LIMIT_HIGH					0x0015	// Верхний предел уставки теплоносителя (0 - 100 С)
 #define HM_LIMIT_BOILER_LOW				0x0016	// Нижний предел уставки ГВС (0 - 100 С)
 #define HM_LIMIT_BOILER_HIGH			0x0017	// Верхний предел уставки ГВС (0 - 100 С)
+#define HM_HEATER_T_OUT					0x0020	// Температура уличного датчика котла (-65 - 100), градусы
 #define HM_HEATER_MAKER					0x0021	// Код производителя котла
 #define HM_HEATER_MODEL					0x0022	// Код модели котла
-#define HM_HEATER_ERRORS				0x0023	// Флаги ошибок
-#define HM_START_DATA					0x0018
+#define HM_HEATER_ERRORS				0x0023	// Флаги ошибок (OpenTherm):
+	#define HM_ERROR_SERVICE			0		// Необходимо обслуживание
+	#define HM_ERROR_BLOCKED			1		// Котел заблокирован
+	#define HM_ERROR_LOW_PRESSURE		2		// Низкое давление в отопительном контуре
+	#define HM_ERROR_IGN_ERROR			3		// Ошибка розжига
+	#define HM_ERROR_LOW_AIR			4		// Низкое давление воздуха
+	#define HM_ERROR_OVERHEAT			5		// Перегрев теплоносителя в контуре
+	#define HM_ERROR_SERVICE_S			"Необходимо обслуживание"
+	#define HM_ERROR_BLOCKED_S			"Котел заблокирован"
+	#define HM_ERROR_LOW_PRESSURE_S		"Низкое давление в контуре"
+	#define HM_ERROR_IGN_ERROR_S		"Ошибка розжига"
+	#define HM_ERROR_LOW_AIR_S			"Низкое давление воздуха"
+	#define HM_ERROR_OVERHEAT_S			"Перегрев теплоносителя"
 
+#define HM_START_DATA					0x0018
 struct type_heater_read {
 	int16_t	 T_Flow;							// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
 	uint16_t T_Boiler;							// 0x19, Текущая температура ГВС (0.0 - 100.0), десятые градуса
@@ -59,25 +72,8 @@ struct type_heater_read {
 	uint16_t Status;							// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
 	uint16_t Error;								// 0x1E, ошибка котла
 	uint16_t Error2;							// 0x1F, ошибка котла дополнительная
-	int16_t  T_OUT;								// 0x20, Температура уличного датчика котла (-65 - 100), градусы
-	uint16_t ProductCode;						// 0x21, Код производителя котла
-	uint16_t ModelCode;							// 0x22, Код модели котла
-	uint16_t ErrorFlags;						// 0x23, Флаги ошибок
 } __attribute__((packed));
 
-// Флаги ошибок data.ErrorFlags
-#define HM_ERROR_SERVICE				0		// Необходимо обслуживание
-#define HM_ERROR_BLOCKED				1		// Котел заблокирован
-#define HM_ERROR_LOW_PRESSURE			2		// Низкое давление в отопительном контуре
-#define HM_ERROR_IGN_ERROR				3		// Ошибка розжига
-#define HM_ERROR_LOW_AIR				4		// Низкое давление воздуха
-#define HM_ERROR_OVERHEAT				5		// Перегрев теплоносителя в контуре
-#define HM_ERROR_SERVICE_S				"Необходимо обслуживание"
-#define HM_ERROR_BLOCKED_S				"Котел заблокирован"
-#define HM_ERROR_LOW_PRESSURE_S			"Низкое давление в контуре"
-#define HM_ERROR_IGN_ERROR_S			"Ошибка розжига"
-#define HM_ERROR_LOW_AIR_S				"Низкое давление воздуха"
-#define HM_ERROR_OVERHEAT_S				"Перегрев теплоносителя"
 
 #define HM_STATUS_BURNER				0		// горелка вкл/выкл
 #define HM_STATUS_HEATING				1		// отопление вкл/выкл
@@ -148,7 +144,7 @@ public:
 	type_heater_read data;							// Данные с котла
 
 private:
-	uint16_t work_flags;							// рабочие флаги
+	uint8_t work;									// рабочие флаги
 	uint8_t prev_temp;
 	uint8_t prev_boiler_temp;
 	uint8_t prev_power;

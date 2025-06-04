@@ -5,7 +5,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_modbus_p(timeout),get_modbus_p(pause)");
+	loadParam("get_modbus_p(timeout),get_modbus_p(pause),get_modbus_p(heater)");
 };
 function set_param(e) {
 	var els = e.parentElement.parentElement.getElementsByClassName("mdb");
@@ -114,7 +114,7 @@ function modbus_write_all()
 <div class="content">
 <h1>Modbus RTU</h1>
 <br>
-<span style="font-size: larger;"><b>Адрес на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> Частотник: 1, Счетчик: 2.
+<span style="font-size: larger;"><b>Адрес на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> (Частотник: 1, Счетчик: 2, Котел: <span id="get_modbus_p-heater">-</span>).
  <b>Таймаут:</b> <input id="get_modbus_p-timeout" type="number"><input type="submit" value=">" onclick="setParam('get_modbus_p(timeout)');"> <b>Пауза:</b> <input id="get_modbus_p-pause" type="number"><input type="submit" value=">" onclick="setParam('get_modbus_p(pause)');">
 <br>
 <h3><b>Дамп в файл с ячейки:</b> <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>

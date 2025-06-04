@@ -747,7 +747,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     strcat(ret,(char*)cInvalid);
 }
 
-// Установить параметр инвертора из строки
+// Установить параметр инвертора из строки, возврат true - OK
 boolean devVaconFC::set_paramFC(char *var, float f)
 {
 	int16_t x = f;

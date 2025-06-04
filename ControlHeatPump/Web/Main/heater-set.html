@@ -7,14 +7,13 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_HT(OT),get_HT(R),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(T),get_HT(PM),get_HT(TB),get_HT(BM),get_HT(PA),get_oHP(SH)");
+	loadParam("get_HT(OT),get_HT(R),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(T),get_HT(PM),get_HT(TB),get_HT(BM),get_HT(PA),get_oHP(SH),get_modbus_p(heater),get_modbus_p(heater_s)");
 };
 function load_adapter_settings()
 {
-	loadParam("get_HT(W30),get_HT(W33),get_HT(W34)");
+	loadParam("get_HT(W30)"); loadParam("get_HT(W32)"); loadParam("get_HT(W33)"); loadParam("get_HT(W34)"); loadParam("get_HT(W35)"); loadParam("get_HT(W36)");
 }
 </script>
-
 </head>
 <body class="actuators">
 <div id="menu" class="menu"><script src="menu.js"></script></div>
@@ -22,9 +21,9 @@ function load_adapter_settings()
  <h1>Настройки Котла <input style="float:none;" type="submit" value="Назад" onclick='history.back();'> <input type="submit" value="Записать в EEPROM" onclick='loadParam("set_SAVE")'></h1>
  <div class="row1">
 	<table border="1" rules="rows">
-	<thead><tr><th>Описание</th><th>Значение</th></tr></thead>
+	<thead><tr><th width="60%">Описание</th><th width="40%">Значение</th></tr></thead>
 	<tbody>
-	<tr><td>Обмен с котлом по Opentherm (через Modbus)</td><td><input type="checkbox" id="get_ht-ot" onchange="setParam('get_HT(OT)')"></td></tr>
+	<tr><td>Обмен с котлом через адаптер по Modbus, порт: <span id="get_modbus_p-heater_s">-</span>, адрес: <span id="get_modbus_p-heater">-</span></td><td><input type="checkbox" id="get_ht-ot" onchange="setParam('get_HT(OT)')"></td></tr>
 	<tr><td>Использовать обычное реле RHEATER для запуска Котла</td><td><input type="checkbox" id="get_ht-r" onchange="setParam('get_HT(R)')"></td></tr>
 	<tr><td>Использовать обычное реле RH_3WAY для переключения Котел - ТН</td><td><input type="checkbox" id="get_ht-r3" onchange="setParam('get_HT(R3)')"></td></tr>
 	<tr><td>Использовать Modbus реле для запуска Котла</td><td><input type="checkbox" id="get_ht-rm" onchange="setParam('get_HT(RM)')"></td></tr>
@@ -43,7 +42,6 @@ function load_adapter_settings()
     <tr><td>Верхний предел уставки теплоносителя, °C</td><td><input type="number" id="get_ht-w34"> <input type="submit" value=">" onclick="setParam('get_HT(W34)')"></td></tr>
     <tr><td>Нижний предел уставки ГВС, °C</td><td><input type="number" id="get_ht-w35"> <input type="submit" value=">" onclick="setParam('get_HT(W35)')"></td></tr>
     <tr><td>Верхний предел уставки ГВС, °C</td><td><input type="number" id="get_ht-w36"> <input type="submit" value=">" onclick="setParam('get_HT(W36)')"></td></tr>
-    <tr><td>Режим работы, биты (+1 - вкл. контур отопления, +2 - вкл котур ГВС, +4 - вкл. второй контур)</td><td><input type="number" id="get_ht-w36"> <input type="submit" value=">" onclick="setParam('get_HT(W36)')"></td></tr>
 	</tbody>
 	</table>
  </div>

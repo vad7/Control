@@ -154,14 +154,13 @@ void web_server(uint8_t thread)
 					{
 						// Для обычного пользователя подменить файл меню, для сокращения функционала
 						if(GETBIT(Socket[thread].flags, fUser)) {
-							if(strstr(Socket[thread].inPtr, ".html")) {
-								if(!(strcmp(Socket[thread].inPtr, "index.html") == 0
-									|| strcmp(Socket[thread].inPtr, "plan.html") == 0
-									|| strcmp(Socket[thread].inPtr, "stats.html") == 0
-									|| strcmp(Socket[thread].inPtr, "history.html") == 0
-									|| strcmp(Socket[thread].inPtr, "wattrouter.html") == 0
-									|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
-							}
+							if(!(strcmp(Socket[thread].inPtr, "index.html") == 0
+							|| strcmp(Socket[thread].inPtr, "plan.html") == 0
+							|| strcmp(Socket[thread].inPtr, "stats.html") == 0
+							|| strcmp(Socket[thread].inPtr, "system.html") == 0
+							|| strcmp(Socket[thread].inPtr, "history.html") == 0
+							|| strcmp(Socket[thread].inPtr, "wattrouter.html") == 0
+							|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
 						}
 						urldecode(Socket[thread].inPtr, Socket[thread].inPtr, len + 1);
 						readFileSD(Socket[thread].inPtr, thread);
@@ -1175,9 +1174,12 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"TIME_COMMAND|Период разбора команд управления ТН (мсек)|");_itoa(TIME_COMMAND,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_I2C_UPDATE |Период синхронизации внутренних часов с I2C часами (мсек)|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_NUM|Используемый порт для обмена по Modbus RTU|Serial");
-			if(&MODBUS_PORT_NUM==&Serial1) strcat(strReturn,cOne);
-			else if(&MODBUS_PORT_NUM==&Serial2) strcat(strReturn,"2");
-			else if(&MODBUS_PORT_NUM==&Serial3) strcat(strReturn,"3");
+			if(&MODBUS_PORT_NUM == &Serial1) strcat(strReturn,"1");
+			else if(&MODBUS_PORT_NUM == &Serial2) strcat(strReturn,"2");
+			else if(&MODBUS_PORT_NUM == &Serial3) strcat(strReturn,"3");
+#ifdef USE_SERIAL4
+			else if(&MODBUS_PORT_NUM == &Serial4) strcat(strReturn,"4");
+#endif
 			else strcat(strReturn,"?");
 			strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_SPEED|Скорость обмена (бод)|");_itoa(MODBUS_PORT_SPEED,strReturn);strcat(strReturn,";");
@@ -1357,7 +1359,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				strcat(strReturn,"Контроль за работой драйвера ЭРВ |");
 				if (digitalReadDirect(PIN_STEP_DIAG))  strcat(strReturn,"Error L9333;"); else strcat(strReturn,"Normal;");
 	#endif
-				strReturn+=m_snprintf(strReturn+=strlen(strReturn), 256, "Состояние FreeRTOS при старте (task+err_code) <sup>2</sup>|0x%04X;", lastErrorFreeRtosCode);
+				strReturn+=m_snprintf(strReturn+=strlen(strReturn), 256, "Состояние FreeRTOS при старте (task+err_code) <sup>1</sup>|0x%04X;", lastErrorFreeRtosCode);
 
 				startSupcStatusReg |= SUPC->SUPC_SR;                                  // Копим изменения
 				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Регистры контроллера питания (SUPC) SAM3X8E [SUPC_SMMR SUPC_MR SUPC_SR]|0x%08X %08X %08X", SUPC->SUPC_SMMR, SUPC->SUPC_MR, startSupcStatusReg);  // Регистры состояния контроллера питания
@@ -1366,7 +1368,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 				// Вывод строки статуса
 				WEB_STORE_DEBUG_INFO(46);
-				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>4</sup>|State:%d modWork:%X[%s] fHP:%X", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s] fHP:%X", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
 				//for(i = 0; i < RNUMBER; i++) strReturn += m_snprintf(strReturn, 32, " %s:%d", HP.dRelay[i].get_name(), HP.dRelay[i].get_Relay());
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
 				//if(HP.dFC.get_present())  {strcat(strReturn," Power:"); _ftoa(strReturn,(float)HP.dFC.get_power()/1000.0,3);  }
@@ -1383,7 +1385,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				strcat(strReturn,"<b> Счетчики ошибок</b>|;");
 				strcat(strReturn,"Счетчик текущего числа повторных попыток пуска ТН|");
 				if(HP.get_State()==pWORK_HP) { _itoa(HP.num_repeat,strReturn);strcat(strReturn,";");} else strcat(strReturn,"0;");
-				strcat(strReturn,"Счетчик \"Потеря связи с "); strcat(strReturn,nameWiznet);strcat(strReturn,"\", повторная инициализация  <sup>3</sup>|");_itoa(HP.num_resW5200,strReturn);strcat(strReturn,";");
+				strcat(strReturn,"Счетчик \"Потеря связи с "); strcat(strReturn,nameWiznet);strcat(strReturn,"\", повторная инициализация  <sup>2</sup>|");_itoa(HP.num_resW5200,strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины SPI|");_itoa(HP.num_resMutexSPI,strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины I2C|");_itoa(HP.num_resMutexI2C,strReturn);strcat(strReturn,";");
 	#ifdef MQTT
@@ -2035,8 +2037,8 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение
 					WEB_STORE_DEBUG_INFO(36);
 					if(pm!=ATOF_ERROR) {   		// нет ошибки преобразования
-						if(HP.dHeater.set_param(x,pm)) HP.dHeater.get_param(x,strReturn);
-						else strcat(strReturn,"E27");  // выход за диапазон значений
+						if((l_i32 = HP.dHeater.set_param(x, pm)) == OK) strcat(strReturn, z);
+						else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
 					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				}
 				ADD_WEBDELIM(strReturn); continue;
@@ -2137,11 +2139,30 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 				if(str[11] == 'p') { // set_modbus_p(n=x) - установить параметры протокола Modbus
 					l_i32 = pm;
 					if(strcmp(x, "timeout")==0) { // Таймаут
-						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32; else l_i32 = Modbus.RS485.ModbusResponseTimeout;
+						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32;
+						_itoa(Modbus.RS485.ModbusResponseTimeout, strReturn);
 					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
-						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32; else l_i32 = Modbus.RS485.ModbusMinTimeBetweenTransaction;
+						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32;
+						_itoa(Modbus.RS485.ModbusMinTimeBetweenTransaction, strReturn);
+					} else if(strcmp(x, "heater")==0) { // get_modbus_p(heater)
+#ifdef HEATER_MODBUS_ADDR
+						_itoa(HEATER_MODBUS_ADDR, strReturn);
+#else
+						strcat(strReturn, "-")
+#endif
+					} else if(strcmp(x, "heater_s")==0) {
+#ifdef HEATER_MODBUS_PORT
+						strcat(strReturn, "Serial");
+						if(&HEATER_MODBUS_PORT == &Serial1) strcat(strReturn,"1");
+						else if(&HEATER_MODBUS_PORT == &Serial2) strcat(strReturn,"2");
+						else if(&HEATER_MODBUS_PORT == &Serial3) strcat(strReturn,"3");
+			#ifdef USE_SERIAL4
+						else if(&HEATER_MODBUS_PORT == &Serial4) strcat(strReturn,"4");
+			#endif
+#else
+						strcat(strReturn, "-");
+#endif
 					} else goto x_FunctionNotFound;
-					_itoa(l_i32, strReturn);
 					ADD_WEBDELIM(strReturn);
 					continue;
 				} else if((y = strchr(x, ':'))) {

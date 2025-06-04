@@ -5155,12 +5155,12 @@ const char *noteTemp[] = {"Температура улицы",
 	// --------------------------------------------------------------------------------
 	#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D65(TXD2)
 	#ifdef USE_HEATER							// Используется Котел
+		#define HEATER_MODBUS_ADDR		240		// 0xF0, Адаптер Opentherm - RS485(Modbus)
 		#define HP_SCHEME_HEATER		5		// Номер схемы который выводится на веб-морде при активном Котле
 		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
 		#define HEATER_MODBUS_SPEED		19200
 		#define HEATER_MODBUS_CONFIG	SERIAL_8N1
 		#define MODBUS_HEATER_GE		HEATER_MODBUS_ADDR	// Переключение портов - если больше или равно, то HEATER_MODBUS_PORT иначе MODBUS_PORT_NUM
-		#define HEATER_MODBUS_ADDR		10		// Адаптер Opentherm - RS485(Modbus)
 		//#define HEATER_MODBUS_RELAY_ADDR	11	// Адрес Modbus Реле включения нагревателя
 		//#define HEATER_MODBUS_RELAY_ID	0	// Номер Реле включения нагревателя (нумерация с 0)
 		//#define HEATER_MODBUS_3WAY_ADDR	11	// Адрес Modbus Реле трехходового клапана: нагреватель - ТН

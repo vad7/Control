@@ -952,8 +952,8 @@ const char *Wheater_3way 						= {"3W"};
 const char *Wheater_T_Flow 						= {"TF"};
 const char *Wheater_Power 						= {"M"};
 const char *Wheater_Errors 						= {"E"};
-const char *Wheater_WriteReg 					= {"W"};	// set_HT(Wn), где n номер регистра в HEX
-
+const char *Wheater_INFO						= {"INFO"};
+const char Wheater_WriteReg 					= 'W';	// get_HT(Wn) / set_HT(Wn), где n номер регистра в HEX
 
 #ifdef SENSOR_IP // параметры удаленного датчика get_sensorIP
 const char *ip_SENSOR_TEMP     = {"SENSOR_TEMP"};   // Темпеартура
