@@ -811,6 +811,8 @@ const char *option_fHP_BackupNoPwrWAIT= {"FBNPW"};
 const char *option_HeatTargetScheduler= {"SCHEDULER"};           // Расписание
 const char *option_Modbus_Attempts    = {"MBA"};
 const char *option_SwitchHeaterHPTime = {"SH"};
+const char *option_ModbusMinTimeBetweenTransaction ={"MBT"};
+const char *option_ModbusResponseTimeout ={"MRT"};
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
@@ -936,10 +938,11 @@ const char *boil_delayOffPump = {"DO"};
 
 // Heater
 const char *Wheater_fHeater_Opentherm 			= {"OT"};
-const char *Wheater_fHeater_USE_Relay_RHEATER	= {"R"};
+const char *Wheater_fHeater_USE_Relay_RHEATER	= {"RY"};
 const char *Wheater_fHeater_USE_Relay_RH_3WAY	= {"R3"};
 const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
-const char *Wheater_fHeater_USE_Relay_Modbus_3WAY= {"RW"};
+const char *Wheater_fHeater_USE_Relay_Modbus_3WAY={"RW"};
+const char *Wheater_fHeater_BoilerInHeatingMode	= {"BH"};
 const char *Wheater_heat_tempout				= {"T"};
 const char *Wheater_heat_power_max				= {"PM"};
 const char *Wheater_boiler_tempout				= {"TB"};
@@ -954,6 +957,7 @@ const char *Wheater_Power 						= {"M"};
 const char *Wheater_Errors 						= {"E"};
 const char *Wheater_INFO						= {"INFO"};
 const char Wheater_WriteReg 					= 'W';	// get_HT(Wn) / set_HT(Wn), где n номер регистра в HEX
+const char Wheater_Read2Reg 					= 'R';	// get_HT(Rn), где n номер регистра в HEX, чтение 2-х регистров (4 байта)
 
 #ifdef SENSOR_IP // параметры удаленного датчика get_sensorIP
 const char *ip_SENSOR_TEMP     = {"SENSOR_TEMP"};   // Темпеартура

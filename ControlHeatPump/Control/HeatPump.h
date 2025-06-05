@@ -243,7 +243,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fWebStoreOnSPIFlash		12				// флаг, что веб морда лежит на SPI Flash, иначе на SD карте
 #define fLogWirelessSensors		13				// Логировать обмен между беспроводными датчиками
 #define fBackupPower			14				// Использование резервного питания от генератора (ограничение мощности)
-#define fModbusLogErrors		15              // флаг писать в лог нерегулярные ошибки счетчика SDM
+#define fModbusLogErrors		15              // флаг писать в лог нерегулярные ошибки Modbus
 //  type_optionHP.flags2:
 #define f2BackupPowerAuto		0               // Автоматически определять работу от генератора (через датчик SGENERATOR)
 #define f2NextionGenFlashing	1				// Моргать картинкой на дисплее, если работаем от генератора
@@ -299,6 +299,8 @@ struct type_optionHP
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
  uint16_t Generator_Start_Time;			// Время запуска генератора
+ uint8_t  ModbusMinTimeBetweenTransaction;
+ uint8_t  ModbusResponseTimeout;
 };// __attribute__((packed));
 
 

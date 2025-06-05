@@ -5165,8 +5165,8 @@ const char *noteTemp[] = {"Температура улицы",
 		//#define HEATER_MODBUS_RELAY_ID	0	// Номер Реле включения нагревателя (нумерация с 0)
 		//#define HEATER_MODBUS_3WAY_ADDR	11	// Адрес Modbus Реле трехходового клапана: нагреватель - ТН
 		//#define HEATER_MODBUS_3WAY_ID		1	// Номер Реле трехходового клапана: нагреватель - ТН
-		#define HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS	10
-		#define HEATER_MODBUS_TIMEOUT				30
+		#define HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS	10	// По умолчанию, мсек
+		#define HEATER_MODBUS_TIMEOUT				30	// По умолчанию, мсек
 	#endif
 
 	// Конфигурирование Modbus для инвертора и счетчика SDM
@@ -5174,9 +5174,9 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_PORT_SPEED       9600        // Скорость порта куда прицеплен частотник и счетчик
 	#define MODBUS_PORT_CONFIG      SERIAL_8N1  // Конфигурация порта куда прицеплен частотник и счетчик
 	#define MODBUS_TIME_WAIT        1000        // Время ожидания захвата мютекса для modbus мсек
-	#define MODBUS_TIMEOUT			80			// Таймаут ожидания ответа, мсек
-	#define MODBUS_REPEAT_DELAY		100			// Задержка перед повторным чтением, мс
-	#define MODBUS_MIN_TIME_BETWEEN_TRNS 20		// Минимальная пауза между транзакциями, мсек
+	#define MODBUS_TIMEOUT			80			// По умолчанию, Таймаут ожидания ответа, мсек
+	#define MODBUS_MIN_TIME_BETWEEN_TRNS 20		// По умолчанию, Минимальная пауза между транзакциями, мсек
+	#define MODBUS_REPEAT_DELAY		100			// Задержка перед повторным чтением, мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
 	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
 	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки

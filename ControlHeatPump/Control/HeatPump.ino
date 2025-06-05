@@ -867,7 +867,8 @@ void HeatPump::resetSettingHP()
 	WR.PWM_Freq = PWM_WRITE_OUT_FREQ_DEFAULT;
 	WR.WF_Time = 50;
 #endif
-
+	Option.ModbusMinTimeBetweenTransaction = MODBUS_MIN_TIME_BETWEEN_TRNS;
+	Option.ModbusResponseTimeout = MODBUS_TIMEOUT;
 }
 
 // --------------------------------------------------------------------
@@ -1140,6 +1141,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var, option_DefrostStartDTemp)==0) { Option.DefrostStartDTemp = rd(x, 100); return true; }
 	else if(strcmp(var, option_DefrostTempSteam)==0) { Option.DefrostTempSteam = rd(x, 100); return true; }
 #endif
+	else if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ Option.ModbusMinTimeBetweenTransaction = x; return OK; }
+	else if(strcmp(var, option_ModbusResponseTimeout)==0){ Option.ModbusResponseTimeout = x; return OK; }
 	else if(strcmp(var, option_fBackupPower)==0)  {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
 	else if(strcmp(var,option_Generator_Start_Time)==0){ Option.Generator_Start_Time = n; return true; }
 	else if(strcmp(var, option_f2BackupPowerAuto) == 0) {
@@ -1293,8 +1296,10 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_DELAY_R4WAY)==0)      {return _itoa(Option.delayR4WAY,ret);}else        // Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
 	if(strcmp(var,option_DELAY_BOILER_SW)==0)  {return _itoa(Option.delayBoilerSW,ret);}else     // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);} else   // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
+	if(strcmp(var,option_ModbusMinTimeBetweenTransaction)==0){ _itoa(Option.ModbusMinTimeBetweenTransaction, ret); } else
+	if(strcmp(var,option_ModbusResponseTimeout)==0){ _itoa(Option.ModbusResponseTimeout, ret); } else
 	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags,fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
-	if(strcmp(var, option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
+	if(strcmp(var,option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
 	if(strcmp(var,option_fBackupPowerInfo)==0) { // Работа от генератора
 	   if(GETBIT(Option.flags,fBackupPower)
 	#ifdef USE_UPS

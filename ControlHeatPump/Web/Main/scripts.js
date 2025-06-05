@@ -3,14 +3,14 @@ var VER_WEB = "1.200";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
-var urlcontrol = 'http://192.168.0.199';
+//var urlcontrol = 'http://192.168.0.199';
 //var urlcontrol = 'http://192.168.0.7';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения, но не более времени обновления параметров.
 var urlupdate = 4000; // время обновления параметров в миллисекундах
 
 function setParam(paramid, resultid) {
 	// Замена set_Par(Var1) на set_par-var1 для получения значения 
-	var elid = paramid.replace("(", "-").replace(")", "");
+	var elid = paramid.replace("(", "-").replace(")", "").toLowerCase();;
 	var elval, clear = true, equate = true;
 	var element;
 	if(paramid.indexOf("(SCHEDULER)")!=-1) {
@@ -48,11 +48,15 @@ function setParam(paramid, resultid) {
 		elval = len + ";" + elval;
 		clear = false;
 	} else if((clear = equate = elid.indexOf("=")==-1)) { // Не (x=n)
-		if(!(element = document.getElementById(elid.toLowerCase())) && resultid) element = document.getElementById(resultid);
-		if(element.getAttribute('type') == 'checkbox') {
+		if(!(element = document.getElementById(elid)) && resultid) element = document.getElementById(resultid);
+		if(!element) {
+			if((element = document.getElementById(elid + "-div10"))) elval = Number(element.value) * 10;
+			else if((element = document.getElementById(elid + "-div100"))) elval = Number(element.value) * 100;
+			else if((element = document.getElementById(elid + "-div1000"))) elval = Number(element.value) * 1000;
+		} else if(element.getAttribute('type') == 'checkbox') {
 			if(element.checked) elval = 1; else elval = 0;
+		//} else if(typeof elval == 'string') elval = elval.replace(/[,=&]+/g, "");
 		} else elval = element.value;
-		//if(typeof elval == 'string') elval = elval.replace(/[,=&]+/g, "");
 	}
 	if(/_modeHP|_listProf|_testMode|_listIP/.test(paramid)) {
 		if(paramid.indexOf("Prof")!=-1) {
@@ -71,7 +75,7 @@ function setParam(paramid, resultid) {
 	}
 	if(/[(]DSD\d/.test(paramid)) clear = false;
 	if(/et_listIP/.test(paramid)) elsend = elsend.replace("(", "=").replace("-", "(");
-	if(!resultid) resultid = elid.replace("set_", "get_").toLowerCase();
+	if(!resultid) resultid = elid.replace("set_", "get_")
 	if(clear) {
 		element = document.getElementById(resultid);
 		if(element) {
@@ -588,7 +592,8 @@ function loadParam(paramid, noretry, resultdiv) {
 										if(element) element.innerHTML = "";
 									}
 								} else if(type == 'values') {
-									if(valueid == "get_ohp-time_chart") window.time_chart = values[1].toLowerCase().replace(/[^\w\d]/g, "");
+									if(valueid == "get_ohp-time_chart") 
+										window.time_chart = values[1].toLowerCase().replace(/[^\w\d]/g, "");
 									element = document.getElementById(valueid + "_2");
 									if(element) {
 										element.value = values[1];
@@ -613,9 +618,14 @@ function loadParam(paramid, noretry, resultdiv) {
 												element.value = element.type == "number" ? values[1].replace(/[^-0-9.,]/g, "") : values[1];
 											}
 										}
-									}
-									if((element = document.getElementById(valueid + "-hide"))) {
+									} else if((element = document.getElementById(valueid + "-hide"))) {
 										element.hidden = values[1] == '0' || values[1] == '';
+									} else if((element = document.getElementById(valueid + "-div10"))) {
+										element.innerHTML = element.value = (Number(values[1])/10).toFixed(1);
+									} else if((element = document.getElementById(valueid + "-div100"))) {
+										element.innerHTML = element.value = (Number(values[1])/100).toFixed(2);
+									} else if((element = document.getElementById(valueid + "-div1000"))) {
+										element.innerHTML = element.value = (Number(values[1])/1000).toFixed(3);
 									}
 								} else if(type == 'is') {
 									if(values[1] == 0 || values[1].substring(0,1) == 'E') {

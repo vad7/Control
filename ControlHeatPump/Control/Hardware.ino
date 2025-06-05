@@ -2238,18 +2238,18 @@ int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num
 				buf[i] = RS485.getResponseBuffer(i);
 			err = OK;
 			break;
-		} else err = translateErr(result);
-		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
-			journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
-			if(cnt == 1) break;
+		} else {
+			err = translateErr(result);
+			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
 		}
+		if(cnt == 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
 	return err;
 }
 
-// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+// Получить значение num регистров в виде uint16_t, повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
 {
 	int8_t cnt = HP.Option.Modbus_Attempts;
@@ -2272,18 +2272,18 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
 			break;
-		} else err = translateErr(result);
-		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
-			journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
-			if(cnt == 1) break;
+		} else {
+			err = translateErr(result);
+			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
+		if(cnt == 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
 	return err;
 }
 
-// Записать значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
+// Записать значение регистра в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data)
 {
 	int8_t cnt = HP.Option.Modbus_Attempts;
@@ -2306,11 +2306,11 @@ int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t da
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
 			break;
-		} else err = translateErr(result);
-		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
-			journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
-			if(cnt == 1) break;
+		} else {
+			err = translateErr(result);
+			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
+		if(cnt == 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
@@ -2398,11 +2398,11 @@ int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
 			break;
-		} else err = translateErr(result);
-		if(cnt == 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
-			journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
-			if(cnt == 1) break;
+		} else {
+			err = translateErr(result);
+			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
 		}
+		if(cnt == 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}

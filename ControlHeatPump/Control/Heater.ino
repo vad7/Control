@@ -37,6 +37,8 @@ void devHeater::init()
 	set.boiler_tempout = 100;
 	set.boiler_power_max = 100;
 	set.pump_work_time_after_stop = 18;			// 3 минуты
+	set.ModbusMinTimeBetweenTransaction = HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS;
+	set.ModbusResponseTimeout = HEATER_MODBUS_TIMEOUT;
 }
 
 void devHeater::Heater_Stop()
@@ -302,11 +304,11 @@ void devHeater::get_info(char* buf)
 	uint16_t d;
 	int8_t _err;
 	buf += strlen(buf);
-	if(!GETBIT(work, fHeater_LinkHeaterOk)) {   // Нет связи
+	if(!GETBIT(work, fHeater_LinkAdapterOk)) {   // Нет связи
 		strcat(buf, "|Данные не доступны - нет связи|;");
 	} else {
-		buf += m_snprintf(buf, 256, "1D|Статус: %X|%s %s %s;", data.Status, (data.Status & 1) ? "Вкл" : "", (data.Status & 2) ? "Отопление" : "", (data.Status & 4) ? "ГВС" : "");
-		buf += m_snprintf(buf, 256, "1A|Модуляция, %%|%d;", (int8_t)data.Power);
+		buf += m_snprintf(buf, 256, "1D|Состояние: %X|%s %s %s;", data.Status, (data.Status & 1) ? "Вкл" : "", (data.Status & 2) ? "Отопление" : "", (data.Status & 4) ? "ГВС" : "");
+		buf += m_snprintf(buf, 256, "1C|Модуляция, %%|%d;", (int8_t)data.Power);
 		buf += m_snprintf(buf, 256, "1A|Давление в контуре, бар|%.1d;", data.P_OUT);
 		buf += m_snprintf(buf, 256, "1E|Код ошибки (дополнительный)|%d(%d);", data.Error, data.Error2);
 		if(data.Error) {
@@ -332,24 +334,33 @@ void devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_fLinkAdapterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(work, fHeater_LinkAdapterOk), ret); } else
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, GETBIT(HP.work_flags, fHP_HeaterValveOn) ? "Котел" : "ТН"); } else
-	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(work, fHeater_LinkHeaterOk)) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
-	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(work, fHeater_LinkHeaterOk)) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(work, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(work, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
 	if(strcmp(var, Wheater_Errors)==0) 					{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_BoilerInHeatingMode)==0){ if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_heat_tempout)==0) 			{ _itoa(set.heat_tempout, ret); } else
 	if(strcmp(var, Wheater_heat_power_max)==0) 			{ _itoa(set.heat_power_max, ret); } else
 	if(strcmp(var, Wheater_boiler_tempout)==0)			{ _itoa(set.boiler_tempout, ret); } else
 	if(strcmp(var, Wheater_power_boiler_max)==0) 		{ _itoa(set.boiler_power_max, ret); } else
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ _itoa(set.pump_work_time_after_stop * 10, ret); } else
+	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ _itoa(set.ModbusMinTimeBetweenTransaction, ret); } else
+	if(strcmp(var, option_ModbusResponseTimeout)==0){ _itoa(set.ModbusResponseTimeout, ret); } else
 	if(strcmp(var, Wheater_INFO)==0) 				   	{ get_info(ret); } else
 	if(var[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
 		uint16_t d;
 		uint16_t adr = strtol(var + 1, NULL, 16);
 		int8_t _err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, adr, &d);
+		if(_err) { strcat(ret, "E"); _itoa(_err, ret); } else _itoa(d, ret);
+	} else
+	if(var[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
+		uint32_t d;
+		uint16_t adr = strtol(var + 1, NULL, 16);
+		int8_t _err = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, adr, &d);
 		if(_err) { strcat(ret, "E"); _itoa(_err, ret); } else _itoa(d, ret);
 	} else
     strcat(ret,(char*)cInvalid);
@@ -364,11 +375,14 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_RH_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_RH_3WAY); return OK;} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus); return OK;} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_Modbus_3WAY)==0){ if(x) SETBIT1(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); else SETBIT0(set.setup_flags, fHeater_USE_Relay_Modbus_3WAY); return OK;} else
+	if(strcmp(var, Wheater_fHeater_BoilerInHeatingMode)==0){ if(x) SETBIT1(set.setup_flags, fHeater_BoilerInHeatingMode); else SETBIT0(set.setup_flags, fHeater_BoilerInHeatingMode); return OK;} else
 	if(strcmp(var, Wheater_heat_tempout)==0)			{ if(x>=0 && x<=100){ set.heat_tempout = x; return OK; } } else
 	if(strcmp(var, Wheater_heat_power_max)==0)			{ if(x>=0 && x<=100){ set.heat_power_max = x; return OK; } } else
 	if(strcmp(var, Wheater_boiler_tempout)==0)			{ if(x>=0 && x<=100){ set.boiler_tempout = x; return OK; } } else
 	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return OK; } } else
-	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ if(x>=0 && x<=100){ set.pump_work_time_after_stop = x / 10; return OK; } } else
+	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ set.pump_work_time_after_stop = x / 10; return OK; } else
+	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = x; return OK; } else
+	if(strcmp(var, option_ModbusResponseTimeout)==0){ set.ModbusResponseTimeout = x; return OK; } else
 	if(var[0] == Wheater_WriteReg){ // set_HT(Wn), где n номер регистра в HEX
 		uint16_t adr = strtol(var + 1, NULL, 16);
 		if(x != LONG_MAX) {

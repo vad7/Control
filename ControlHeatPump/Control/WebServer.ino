@@ -2037,8 +2037,10 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение
 					WEB_STORE_DEBUG_INFO(36);
 					if(pm!=ATOF_ERROR) {   		// нет ошибки преобразования
-						if((l_i32 = HP.dHeater.set_param(x, pm)) == OK) strcat(strReturn, z);
-						else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
+						if((l_i32 = HP.dHeater.set_param(x, pm)) == OK) {
+							_delay(HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS);
+							HP.dHeater.get_param(x, strReturn);
+						} else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
 					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				}
 				ADD_WEBDELIM(strReturn); continue;
@@ -2138,13 +2140,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 				STORE_DEBUG_INFO(38);
 				if(str[11] == 'p') { // set_modbus_p(n=x) - установить параметры протокола Modbus
 					l_i32 = pm;
-					if(strcmp(x, "timeout")==0) { // Таймаут
-						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32;
-						_itoa(Modbus.RS485.ModbusResponseTimeout, strReturn);
-					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
-						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32;
-						_itoa(Modbus.RS485.ModbusMinTimeBetweenTransaction, strReturn);
-					} else if(strcmp(x, "heater")==0) { // get_modbus_p(heater)
+					if(strcmp(x, "heater")==0) { // get_modbus_p(heater)
 #ifdef HEATER_MODBUS_ADDR
 						_itoa(HEATER_MODBUS_ADDR, strReturn);
 #else
@@ -2162,6 +2158,12 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 #else
 						strcat(strReturn, "-");
 #endif
+					} else if(strcmp(x, "timeout")==0) { // Таймаут
+						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32;
+						_itoa(Modbus.RS485.ModbusResponseTimeout, strReturn);
+					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
+						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32;
+						_itoa(Modbus.RS485.ModbusMinTimeBetweenTransaction, strReturn);
 					} else goto x_FunctionNotFound;
 					ADD_WEBDELIM(strReturn);
 					continue;

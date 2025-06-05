@@ -102,14 +102,16 @@ struct type_heater_read {
 #define fHeater_USE_Relay_Modbus_3WAY	4		// Использовать Modbus реле для переключения Котел - ТН
 #define fHeater_BoilerInHeatingMode		5		// Греть бойлер в режиме отопления, иначе используются раздельные режимы котла - Отопление/ГВС.
 
-struct type_HeaterSettings {
+struct type_HeaterSettings {					// Структура для сохранения настроек
 	uint16_t setup_flags;						// флаги настройки
 	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления, C
 	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
 	uint8_t  boiler_tempout;					// Целевая температура теплоносителя бойлера, C
 	uint8_t  boiler_power_max;					// Максимальная мощность (или модуляция) для бойлера, %
 	uint8_t  pump_work_time_after_stop;			// Время работы циркуляцонного насоса котла после останова, /10 секунд
-};												// Структура для сохранения настроек
+	uint8_t  ModbusMinTimeBetweenTransaction;	// Минимальная пауза между транзакциями, мсек
+	uint8_t  ModbusResponseTimeout;				// Таймаут ожидания ответа по Modbus, мсек
+};
 
 // Рабочие флаги (flags)
 #define fHeater_LinkAdapterOk			0		// Есть связь по Modbus с адаптером

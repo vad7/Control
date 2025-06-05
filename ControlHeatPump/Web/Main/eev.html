@@ -192,7 +192,7 @@ function createChart(values, resultdiv) {
 	});
 }
 function GetChart() {
-	loadParam("get_Chart(EEV)"); // EEV
+	loadParam("get_oHP(TIME_CHART),get_Chart(EEV)"); // EEV
 	loadParam("get_Chart(OH)"); // Overheat
 	loadParam("get_Chart(OH2)"); // Overheat2
 	showdelta = document.getElementById("showdelta").checked;
@@ -200,7 +200,7 @@ function GetChart() {
 }
 window.onload = function() {
 	urlupdate = 2000;
-	loadParam("hide_EEVpid,hide_pid2,get_pEEV(DIR),get_oHP(TIME_CHART),get_pEEV(RULE),get_pEEV(MANUAL),get_pEEV(TIME),get_pEEV(KP),get_pEEV(KI),get_pEEV(KD),get_pEEV(P2D),get_pEEV(KP2),get_pEEV(KI2),get_pEEV(KD2),get_pEEV(TRG2),get_pEEV(TRG2D),hide_EEVU");
+	loadParam("get_oHP(TIME_CHART),hide_EEVpid,hide_pid2,get_pEEV(DIR),get_pEEV(RULE),get_pEEV(MANUAL),get_pEEV(TIME),get_pEEV(KP),get_pEEV(KI),get_pEEV(KD),get_pEEV(P2D),get_pEEV(KP2),get_pEEV(KI2),get_pEEV(KD2),get_pEEV(TRG2),get_pEEV(TRG2D),hide_EEVU");
 	updateParam("get_pEEV(POSpp),get_OverHeat,get_pEEV(ERROR),get_pEEV(TRG),get_TCOMP_TCON,get_pEEV(cTDELTA),get_Evapor");
 	GetChart();
 	$("#autoupdate").change(function(){

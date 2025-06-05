@@ -151,38 +151,40 @@ body.test #get_tblrelay span{display:none}
 [data-tooltip]:before,[data-tooltip]:after {visibility: hidden; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)"; filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0); opacity: 0; pointer-events: none;}
 
 [data-tooltip]:before {
-    background: #0C6161; /* фон для старых браузеров */
-    background: hsla(180, 78%, 21%,.9);
-    bottom: 100%;
-    margin-bottom: 6px;
-    color: #f6f6f6;
-    text-align: left;
-    content: attr(data-tooltip);/* Часть кода, определяющая содержимое всплывающей подсказки */
-    font-size: 14px;
-    width: 30%; /* устанавливаем необходимую фиксированную ширину, слова будут переноситься */
-    min-width:400px;
-    right: -100px;
-    padding: 10px;
-    position: absolute;/* обязательно позиционирум абсолютно */
-    text-shadow: 0 1px 1px hsla(0,0%,0%,1);/* тень для текста */
-    /* по желанию - скругляем углы тела подсказки */
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    -o-border-radius: 5px;
-    border-radius: 5px;
+  background: #0C6161; /* фон для старых браузеров */
+  background: hsla(180, 78%, 21%,.9);
+  bottom: 100%;
+  margin-bottom: 6px;
+  color: #f6f6f6;
+  text-align: left;
+  content: attr(data-tooltip);/* Часть кода, определяющая содержимое всплывающей подсказки */
+  font-size: 14px;
+  width: 30%; /* устанавливаем необходимую фиксированную ширину, слова будут переноситься */
+  min-width:350px;
+  right: -100px;
+  padding: 10px;
+  position: absolute;/* обязательно позиционирум абсолютно */
+  text-shadow: 0 1px 1px hsla(0,0%,0%,1);/* тень для текста */
+  /* по желанию - скругляем углы тела подсказки */
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -o-border-radius: 5px;
+  border-radius: 5px;
+  white-space: pre-line;
+  z-index: 1000;
 }
 /* формируем указатель подсказки */
 [data-tooltip]:after {
-    border-top: 6px solid #006104;
-    border-top: 6px solid hsla(110,100%,17%,.9);
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    bottom: 100%;
-    content: "";
-    height: 0;
-    width: 0;
-    right: 25px;
-    position: absolute;
+  border-top: 6px solid #006104;
+  border-top: 6px solid hsla(110,100%,17%,.9);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  bottom: 100%;
+  content: "";
+  height: 0;
+  width: 0;
+  right: 25px;
+  position: absolute;
 }
 /* Показываем подсказку с указателем при наведении */
 [data-tooltip]:hover:before,
