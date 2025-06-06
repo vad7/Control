@@ -1780,7 +1780,7 @@ void vReadSensor(void *)
 		//
 		vReadSensor_delay1ms(TIME_READ_SENSOR - int32_t(GetTickCount() - ttime));     // Ожидать время нужное для цикла чтения
 
-	}  // for
+	} // for
 	vTaskDelete( NULL);
 }
 
@@ -1991,8 +1991,8 @@ delayTask:	// чтобы задача отдавала часть времени
 		{
 		case pOFF_HP:                          // 0 ТН выключен
 		case pSTOPING_HP:                      // 2 Останавливается
-			journal.jprintf((const char*)" Stop task UpdateHP\n");
 			HP.Task_vUpdate_run = false;
+			journal.jprintf((const char*)" Stop task UpdateHP\n");
 			break;
 		case pSTARTING_HP: _delay(10000); break; // 1 Стартует  - этого не должно быть в этом месте
 		case pWORK_HP:                           // 3 Работает   - анализ режима работы get_modWork()
@@ -2013,7 +2013,7 @@ delayTask:	// чтобы задача отдавала часть времени
 			}
 			break;
 		case pWAIT_HP:                          // 4 Ожидание ТН (расписание - пустое место)   проверям раз в 5 сек
-			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
+			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
 				if(HP.get_modeHouse() == pHEAT) {
 					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
 						HP.sendCommand(pRESUME);

@@ -48,7 +48,7 @@ void devHeater::Heater_Stop()
 	HP.dRelay[RHEATER].set_OFF();
 #endif
 #ifdef HEATER_MODBUS_RELAY_ID
-	if(GETBIT(work, fHP_HeaterOn)) {
+	if(GETBIT(HP.work_flags, fHP_HeaterOn)) {
 		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus)) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 0);
 			if(err) {
@@ -94,7 +94,7 @@ void devHeater::Heater_Start()
 	HP.dRelay[RHEATER].set_ON();
 #endif
 #ifdef HEATER_MODBUS_RELAY_ID
-	if(!(GETBIT(work, fHP_HeaterOn)) {
+	if(!(GETBIT(HP.work_flags, fHP_HeaterOn)) {
 		if(dHeater.set.setup_flags & fHeater_USE_Relay_Modbus) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 1);
 			if(err) {
@@ -114,7 +114,7 @@ void devHeater::Heater_Start()
 			return;
 		}
 		int16_t status;
-		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);	// Получить регимстр состояния записи
+		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);	// Получить регистр состояния записи
 		if(err) {
 			err_num_total++;
 			set_Error(err, (char*)__FUNCTION__);
@@ -140,7 +140,7 @@ void devHeater::HeaterValve_On()
 	if(!GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) HP.dRelay[RH_3WAY].set_ON();
 #endif
 #ifdef HEATER_MODBUS_3WAY_ID
-	if(!GETBIT(work, fHP_HeaterValveOn)) {
+	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_3WAY_ADDR, HEATER_MODBUS_3WAY_ID, 1);
 			if(err) {
@@ -152,7 +152,7 @@ void devHeater::HeaterValve_On()
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
-	if(!GETBIT(work, fHP_HeaterValveOn)) {
+	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		journal.jprintf("Heater valve ON, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
@@ -174,7 +174,7 @@ void devHeater::HeaterValve_Off()
 	if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) HP.dRelay[RH_3WAY].set_OFF();
 #endif
 #ifdef HEATER_MODBUS_3WAY_ID
-	if(GETBIT(work, fHP_HeaterValveOn)) {
+	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		if(GETBIT(dHeater.set.setup_flags, fHeater_USE_Relay_Modbus_3WAY)) {
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_3WAY_ADDR, HEATER_MODBUS_3WAY_ID, 0);
 			if(err) {
@@ -186,7 +186,7 @@ void devHeater::HeaterValve_Off()
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
-	if(GETBIT(work, fHP_HeaterValveOn)) {
+	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		journal.jprintf("Heater valve OFF, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
@@ -199,7 +199,7 @@ void devHeater::HeaterValve_Off()
 void devHeater::WaitPumpOff()
 {
 	int32_t d = set.pump_work_time_after_stop * 10;
-	if(GETBIT(HP.work_flags, fHP_HeaterWasOn)) d -= rtcSAM3X8.unixtime() - HP.stopHeater;
+	if(HP.stopHeater) d -= rtcSAM3X8.unixtime() - HP.stopHeater;
 	if(d > 0) journal.jprintf("Wait Heater pump stop: %ds\n", d);
 	for(; d > 0; d--) { // задержка после выкл котла (постциркуляция насоса)
 		_delay(1000);
@@ -243,7 +243,7 @@ int8_t devHeater::set_target(uint8_t temp, uint8_t power_max)
 {
 	uint16_t reg1 = 0;
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		journal.jprintf(" Set Heater: %.2d%, %.2d%%\n", temp, power_max);
+		journal.jprintf(" Set Heater: %d%, %d%%\n", temp, power_max);
 		switch (testMode) // РЕАЛЬНЫЕ Действия в зависимости от режима
 		{
 		case NORMAL:

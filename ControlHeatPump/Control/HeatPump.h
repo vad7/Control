@@ -225,7 +225,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_HeaterOn			6			// Идет работа котла
 #define fHP_HeaterValveOn		7			// Положение крана Котла - ТН: 0 - ТН, 1 - Котел
 #define fHP_CompressorWasOn		8			// Последний цикл работы - Компрессор
-#define fHP_HeaterWasOn			8			// Последний цикл работы - Котел
+#define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
 
 //  Работа с отдельными флагами, type_optionHP.flags:
 #define f_reserved_1			0				//

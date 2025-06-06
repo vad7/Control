@@ -1982,7 +1982,7 @@ xGoWait:
 		vTaskResume(xHandleUpdate);
 		return;
 	}
-	if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_err() != OK) {
+	if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_err() != OK && !HeaterNeedOn) {
 		SETBIT1(HP.work_flags, fHP_BackupNoPwrWAIT);
 		goto xGoWait;
 	}

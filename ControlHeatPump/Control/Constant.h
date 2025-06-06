@@ -506,8 +506,8 @@ const char SendSMSTitle[] 		= "Control";
 
 
 // Многозадачность, деление аппартных ресурсов
-const char *nameFREERTOS =     {"FreeRTOS"};           // Имя источника ошибки (нужно для передачи в функцию) - операционная система
-const char *nameHeatPump =     {"Heat Pump"};           // Имя теплового насоса (для лога ошибок) Здесь можно его поменять
+const char *nameFREERTOS =     {"FreeRTOS"};        // Имя источника ошибки (нужно для передачи в функцию) - операционная система
+const char *nameHeatPump =     {"HP"};              // Имя теплового насоса (для лога ошибок) Здесь можно его поменять
 const char *MutexI2CBuzy =     {"I2C"}; 
 const char *MutexWebThreadBuzy={"WebThread"}; 
 const char *MutexSPIBuzy=      {"SPI"}; 

@@ -3,7 +3,7 @@ var VER_WEB = "1.200";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
-//var urlcontrol = 'http://192.168.0.199';
+var urlcontrol = 'http://192.168.0.199';
 //var urlcontrol = 'http://192.168.0.7';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения, но не более времени обновления параметров.
 var urlupdate = 4000; // время обновления параметров в миллисекундах
@@ -615,7 +615,7 @@ function loadParam(paramid, noretry, resultdiv) {
 											if(element.getAttribute('type') == 'checkbox') element.checked = values[1] == 1;
 											else {
 												element.innerHTML = values[1];
-												element.value = element.type == "number" ? values[1].replace(/[^-0-9.,]/g, "") : values[1];
+												element.value = element.type == "number" ? values[1].replace(/[^\-\d.,]/g, "") : values[1];
 											}
 										}
 									} else if((element = document.getElementById(valueid + "-hide"))) {
