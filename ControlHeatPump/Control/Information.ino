@@ -497,6 +497,10 @@ boolean Profile::set_paramCoolHP(char *var, float x)
  if(strcmp(var,hp_D_TEMP)==0) {  if ((x>=0)&&(x<=50))  {Cool.MaxDeltaTempOut=rd(x, 100); return true;} else return false; }else // максимальная разность температур конденсатора.
  if(strcmp(var,hp_TEMP_PID)==0){ if ((x>=0)&&(x<=40))  {Cool.tempPID=rd(x, 100); return true;} else return false; }else   // Целевая темпеартура ПИД
  if(strcmp(var,hp_WEATHER)==0) { Cool.flags = (Cool.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else      // Использование погодозависимости
+ if(strcmp(var,hp_K_WEATHER)==0){ Cool.kWeatherPID=rd(x, 1000); return true; } else            // Коэффициент погодозависимости
+ if(strcmp(var,hp_kWeatherTarget)==0){ Cool.kWeatherTarget=rd(x, 1000); return true; } else
+ if(strcmp(var,hp_WeatherBase)==0){ Cool.WeatherBase = x; return true; } else
+ if(strcmp(var,hp_WeatherTargetRange)==0){ Cool.WeatherTargetRange = rd(x, 10); return true; } else
  if(strcmp(var,hp_HEAT_FLOOR)==0) { Cool.flags = (Cool.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
  if(strcmp(var,hp_SUN)==0) { Cool.flags = (Cool.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
  if(strcmp(var,option_DELAY_OFF_PUMP)==0){ Cool.delayOffPump = x; return true; } else
@@ -529,6 +533,10 @@ char* Profile::get_paramCoolHP(char *var, char *ret)
    if(strcmp(var,hp_D_TEMP)==0)   {_dtoa(ret,Cool.MaxDeltaTempOut/10,1); return ret;                  } else             // максимальная разность температур конденсатора.
    if(strcmp(var,hp_TEMP_PID)==0) {_dtoa(ret,Cool.tempPID/10,1); return ret;          } else             // Целевая темпеартура ПИД
    if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Cool.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
+   if(strcmp(var,hp_K_WEATHER)==0){ _dtoa(ret,Cool.kWeatherPID,3); return ret;            } else                 // Коэффициент погодозависимости
+   if(strcmp(var,hp_kWeatherTarget)==0){ _dtoa(ret,Cool.kWeatherTarget,3); return ret;    } else
+   if(strcmp(var,hp_WeatherBase)==0){ _dtoa(ret,Cool.WeatherBase,0); return ret;    } else
+   if(strcmp(var,hp_WeatherTargetRange)==0){ _dtoa(ret,Cool.WeatherTargetRange,1); return ret;    } else
    if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Cool.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Cool.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
    if(strcmp(var,hp_targetPID)==0){_dtoa(ret,HP.CalcTargetPID_Cool(),2); return ret;      } else
@@ -576,11 +584,11 @@ boolean Profile::set_paramHeatHP(char *var, float x)
 	if(strcmp(var,hp_TEMP_OUT)==0){ if((x>=-10)&&(x<=90)){Heat.tempOutLim=rd(x, 100); return true;} else return false;    }else    // температура обратки (максимальная)
 	if(strcmp(var,hp_D_TEMP)==0) {  if((x>=0)&&(x<=50))  {Heat.MaxDeltaTempOut=rd(x, 100); return true;} else return false;  }else // максимальная разность температур конденсатора.
 	if(strcmp(var,hp_TEMP_PID)==0){ if((x>=5)&&(x<=90)) {Heat.tempPID=rd(x, 100); return true;} else return false;  }else          // Целевая темпеартура ПИД
-	if(strcmp(var,hp_WEATHER)==0) { Heat.flags = (Heat.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else            // Использование погодозависимости
 	if(strcmp(var,hp_HEAT_FLOOR)==0) { Heat.flags = (Heat.flags & ~(1<<fHeatFloor)) | ((x!=0)<<fHeatFloor); return true; }else
 	if(strcmp(var,hp_SUN)==0) { Heat.flags = (Heat.flags & ~(1<<fUseSun)) | ((x!=0)<<fUseSun); return true; }else
 	if(strcmp(var,hp_fP_ContinueAfterBoiler)==0) { Heat.flags = (Heat.flags & ~(1<<fP_ContinueAfterBoiler)) | ((x!=0)<<fP_ContinueAfterBoiler); return true; }else
 	if(strcmp(var,hp_fUseAdditionalTargets)==0) { Heat.flags = (Heat.flags & ~(1<<fUseAdditionalTargets)) | ((x!=0)<<fUseAdditionalTargets); return true; }else
+	if(strcmp(var,hp_WEATHER)==0) { Heat.flags = (Heat.flags & ~(1<<fWeather)) | ((x!=0)<<fWeather); return true; }else            // Использование погодозависимости
 	if(strcmp(var,hp_K_WEATHER)==0){ Heat.kWeatherPID=rd(x, 1000); return true; } else            // Коэффициент погодозависимости
 	if(strcmp(var,hp_kWeatherTarget)==0){ Heat.kWeatherTarget=rd(x, 1000); return true; } else
 	if(strcmp(var,hp_WeatherBase)==0){ Heat.WeatherBase = x; return true; } else
@@ -638,12 +646,12 @@ char* Profile::get_paramHeatHP(char *var,char *ret)
 	if(strcmp(var,hp_TEMP_OUT)==0) { _dtoa(ret,Heat.tempOutLim/10,1); return ret;              } else             // температура обратки (максимальная)
 	if(strcmp(var,hp_D_TEMP)==0)   { _dtoa(ret,Heat.MaxDeltaTempOut/10,1); return ret;                   } else             // максимальная разность температур конденсатора.
 	if(strcmp(var,hp_TEMP_PID)==0) { _dtoa(ret,Heat.tempPID/10,1); return ret;              } else             // Целевая темпеартура ПИД
-	if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Heat.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
 	if(strcmp(var,hp_HEAT_FLOOR)==0)  { if(GETBIT(Heat.flags,fHeatFloor)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_SUN)==0)      { if(GETBIT(Heat.flags,fUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_fP_ContinueAfterBoiler)==0){ if(GETBIT(Heat.flags,fP_ContinueAfterBoiler)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_fUseAdditionalTargets)==0){ if(GETBIT(Heat.flags,fUseAdditionalTargets)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
 	if(strcmp(var,hp_targetPID)==0){ _dtoa(ret,HP.CalcTargetPID_Heat(),2); return ret;    } else
+	if(strcmp(var,hp_WEATHER)==0)  { if(GETBIT(Heat.flags,fWeather)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else // Использование погодозависимости
 	if(strcmp(var,hp_K_WEATHER)==0){ _dtoa(ret,Heat.kWeatherPID,3); return ret;            } else                 // Коэффициент погодозависимости
 	if(strcmp(var,hp_kWeatherTarget)==0){ _dtoa(ret,Heat.kWeatherTarget,3); return ret;    } else
 	if(strcmp(var,hp_WeatherBase)==0){ _dtoa(ret,Heat.WeatherBase,0); return ret;    } else

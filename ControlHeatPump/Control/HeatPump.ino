@@ -1603,6 +1603,13 @@ int16_t HeatPump::get_targetTempCool()
 	if(get_ruleCool() == pHYBRID) T = Prof.Cool.Temp1;
 	else if(!(GETBIT(Prof.Cool.flags, fTarget))) T = Prof.Cool.Temp1;
 	else T = Prof.Cool.Temp2;
+	if(Prof.Cool.kWeatherTarget != 0) { // Погодозависимость
+		int32_t tmp = Prof.Cool.kWeatherTarget * (Prof.Cool.WeatherBase * 100 - sTemp[TOUT].get_Temp()) / 1000;
+		int32_t tmp_r = Prof.Cool.WeatherTargetRange * 10;
+		if(tmp > tmp_r) tmp = tmp_r;
+		else if(tmp < -tmp_r) tmp = -tmp_r;
+		T += tmp;
+	}
 	T += Schdlr.get_temp_change();
 	return T;
 }
@@ -2677,7 +2684,14 @@ int16_t HeatPump::CalcTargetPID_Heat()
 
 int16_t HeatPump::CalcTargetPID_Cool()
 {
-	return Prof.Cool.tempPID;
+    int16_t  targetRealPID;				 // Цель подачи
+	if(GETBIT(Prof.Cool.flags, fWeather)) { // включена погодозависимость
+		targetRealPID = Prof.Cool.tempPID + (Prof.Cool.kWeatherPID * (TEMP_WEATHER - sTemp[TOUT].get_Temp()) / 1000); // включена погодозависимость, коэффициент в ТЫСЯЧНЫХ результат в сотых градуса, определяем цель
+		if(targetRealPID > Prof.Cool.tempInLim + 50) targetRealPID = Prof.Cool.tempInLim + 50;  // ограничение целевой подачи = максимальная подача + 0.5 градуса
+		if(targetRealPID < MIN_WEATHER) targetRealPID = MIN_WEATHER;
+		if(targetRealPID > MAX_WEATHER) targetRealPID = MAX_WEATHER;
+	} else targetRealPID = Prof.Cool.tempPID; // отключена погодозависмость
+	return targetRealPID;
 }
 
 // -----------------------------------------------------------------------------------------------------
