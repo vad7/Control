@@ -340,7 +340,7 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcpy(Socket[thread].outBuf,"\n  1.5 Опции ТН\r\n");
      strcat(Socket[thread].outBuf,"Расположение файлов веб-сервера на SPI Flash (иначе на SD карте): "); HP.get_optionHP((char*)option_WebOnSPIFlash,Socket[thread].outBuf);STR_END; 
      strcat(Socket[thread].outBuf,"Сохранение состояния ТН в ЕЕПРОМ, для восстановления его после сброса: "); HP.get_optionHP((char*)option_SAVE_ON,Socket[thread].outBuf);STR_END;
-     strcat(Socket[thread].outBuf,"Число попыток пуска компрессора: "); HP.get_optionHP((char*)option_ATTEMPT,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Число попыток пуска компрессора: "); HP.get_optionHP((char*)option_nStart,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Интервал накопления точек графиков в памяти, сек.: "); HP.get_optionHP((char*)option_TIME_CHART,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Графики в памяти пишутся только во время работы компрессора: "); HP.get_optionHP((char*)option_Charts_when_comp_on,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Запись истории на SD карту (раз в минуту): "); HP.get_optionHP((char*)option_History,Socket[thread].outBuf);STR_END;

@@ -5,9 +5,9 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(ATTEMPT),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW),get_oHP(DSH)");
+	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(NST),get_oHP(NSTP),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH),get_oHP(DSH)");
 }; 
 function setTM(s) {
 	val = document.getElementById("get_ohp-" + s.toLowerCase()).value;
@@ -35,8 +35,12 @@ function setTM(s) {
 			<td><input type="checkbox" id="get_ohp-save_on" onChange="setParam('get_oHP(SAVE_ON)');"></td>
 		</tr>
 		<tr>
-			<td>Число повторных попыток пуска при ошибке [0..255]<sup>2</sup></td>
-			<td nowrap><input id="get_ohp-attempt" type="number" min="0" max="255" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(ATTEMPT)');"></td>
+			<td>Число повторных попыток пуска при ошибке подряд до останова [0..255]<sup>2</sup></td>
+			<td nowrap><input id="get_ohp-nst" type="number" min="0" max="255" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(NST)');"></td>
+		</tr>
+		<tr>
+			<td>Число повторных попыток пуска при ошибке до переключения на другой профиль [0..255]</td>
+			<td nowrap><input id="get_ohp-nstp" type="number" min="0" max="255" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(NSTP)');"></td>
 		</tr>
 		<tr>
 			<td>Интервал накопления точек графиков в памяти, сек.<sup>3</sup></td>

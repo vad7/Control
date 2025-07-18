@@ -66,8 +66,13 @@ function setDS(v) {
 		</tr>
 		<tr>
 			<td>Переключаться на другой профиль по Времени</td>
-			<td nowrap>
+			<td>
 				<input type="checkbox" id="get_prof-f3" onchange="setParam('get_Prof(F3)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Время работы профиля</td>
+			<td nowrap>
 				с <input id="get_prof-ts" type="text" size="3" maxlength="5"> <input type="submit" value=">" onclick="setDS('TS')"> 
 				по <input id="get_prof-te" type="text" size="3" maxlength="5"> <input type="submit" value=">" onclick="setDS('TE')">
 			</td>

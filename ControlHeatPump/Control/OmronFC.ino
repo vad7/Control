@@ -31,7 +31,6 @@ int8_t devOmronMX2::initFC()
   freqFC=0;                         // текущая частота инвертора
   power=0;                          // Тееущая мощность частотника
   current=0;                        // Текуший ток частотника
-  startCompressor=0;                // время старта компрессора
   state=ERR_LINK_FC;                // Состояние - нет связи с частотником
   dac=0;                            // Текущее значение ЦАП
   name=(char*)nameOmron;                           // Имя
@@ -358,7 +357,7 @@ err=OK;
              #ifdef FC_USE_RCOMP   // Использовать отдельный провод для команды ход/стоп
                  HP.dRelay[RCOMP].set_ON();                // ПЛОХО через глобальную переменную
              #endif // FC_USE_RCOMP   
-            if (err==OK) {SETBIT1(flags,fOnOff); set_startCompressor(); journal.jprintf(" %s ON\n",name);}
+            if (err==OK) {SETBIT1(flags,fOnOff); HP.set_startCompressor(); journal.jprintf(" %s ON\n",name);}
             else {state=ERR_LINK_FC; SETBIT1(flags,fErrFC); set_Error(err,name);}               // генерация ошибки
       #else // DEMO
              // Боевая часть
@@ -375,7 +374,7 @@ err=OK;
                 err= write_0x05_bit(MX2_START, true);   // Команда Ход
             #endif    
             }
-            if (err==OK) {SETBIT1(flags,fOnOff);set_startCompressor(); journal.jprintf(" %s ON\n",name);}
+            if (err==OK) {SETBIT1(flags,fOnOff);HP.set_startCompressor(); journal.jprintf(" %s ON\n",name);}
             else {state=ERR_LINK_FC; SETBIT1(flags,fErrFC); set_Error(err,name);}               // генерация ошибки
       #endif
   #else  //  FC_ANALOG_CONTROL
@@ -383,7 +382,7 @@ err=OK;
             #ifdef FC_USE_RCOMP   // Использовать отдельный провод для команды ход/стоп
                  HP.dRelay[RCOMP].set_ON();                // ПЛОХО через глобальную переменную
             #endif // FC_USE_RCOMP   
-            SETBIT1(flags,fOnOff);set_startCompressor(); journal.jprintf(" %s ON\n",name);
+            SETBIT1(flags,fOnOff);HP.set_startCompressor(); journal.jprintf(" %s ON\n",name);
         #else // DEMO
              // Боевая часть
             if (((testMode==NORMAL)||(testMode==HARD_TEST))&&(((!get_present())||(GETBIT(flags,fErrFC))))) return err;   // выходим если нет инвертора или он заблокирован по ошибке
@@ -396,7 +395,7 @@ err=OK;
                 state=ERR_LINK_FC; err=ERR_FC_CONF_ANALOG; SETBIT1(flags,fErrFC); set_Error(err,name);// Ошибка конфигурации
             #endif    
             }
-            SETBIT1(flags,fOnOff);set_startCompressor(); journal.jprintf(" %s ON\n",name);
+            SETBIT1(flags,fOnOff);HP.set_startCompressor(); journal.jprintf(" %s ON\n",name);
       #endif 
   #endif    
 return err;
@@ -412,7 +411,7 @@ err=OK;
             #ifdef FC_USE_RCOMP   // Использовать отдельный провод для команды ход/стоп
                HP.dRelay[RCOMP].set_OFF();                // ПЛОХО через глобальную переменную
             #endif // FC_USE_RCOMP   
-          if (err==OK) {SETBIT0(flags,fOnOff);startCompressor=0; journal.jprintf(" %s OFF\n",name);}
+          if (err==OK) {SETBIT0(flags,fOnOff); journal.jprintf(" %s OFF\n",name);}
           else {state=ERR_LINK_FC; SETBIT1(flags,fErrFC); set_Error(err,name);}               // генерация ошибки
       #else // не DEMO
           if (!get_present()) return err; // если инвертора нет выходим
@@ -445,7 +444,7 @@ err=OK;
               err=write_0x05_bit(MX2_START, false);   // Команда стоп
           #endif   
            }
-          if (err==OK) {SETBIT0(flags,fOnOff);startCompressor=0; journal.jprintf(" %s OFF\n",name);}
+          if (err==OK) {SETBIT0(flags,fOnOff); journal.jprintf(" %s OFF\n",name);}
           else {state=ERR_LINK_FC; SETBIT1(flags,fErrFC); set_Error(err,name);}                          // генерация ошибки
       #endif
  #else  // FC_ANALOG_CONTROL 
@@ -453,7 +452,7 @@ err=OK;
             #ifdef FC_USE_RCOMP   // Использовать отдельный провод для команды ход/стоп
                HP.dRelay[RCOMP].set_OFF();                // ПЛОХО через глобальную переменную
             #endif // FC_USE_RCOMP   
-            SETBIT0(flags,fOnOff);startCompressor=0; journal.jprintf(" %s OFF\n",name);
+            SETBIT0(flags,fOnOff); journal.jprintf(" %s OFF\n",name);
       #else // не DEMO
           if  (((testMode==NORMAL)||(testMode==HARD_TEST))&&(((!get_present())||(GETBIT(flags,fErrFC))))) return err;    // выходим если нет инвертора или он заблокирован по ошибке
           if ((testMode==NORMAL)||(testMode==HARD_TEST))      // Режим работа и хард тест, все включаем,
@@ -464,7 +463,7 @@ err=OK;
               state=ERR_LINK_FC; err=ERR_FC_CONF_ANALOG; SETBIT1(flags,fErrFC); set_Error(err,name);// Ошибка конфигурации
           #endif   
            }
-          SETBIT0(flags,fOnOff);startCompressor=0; journal.jprintf(" %s OFF\n",name);
+          SETBIT0(flags,fOnOff); journal.jprintf(" %s OFF\n",name);
       #endif 
  #endif // FC_ANALOG_CONTROL 
 return err;

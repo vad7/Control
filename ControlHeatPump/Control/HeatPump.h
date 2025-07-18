@@ -259,8 +259,8 @@ struct type_optionHP
  uint8_t  ver;							// номер версии для сохранения
  int8_t   numProf;						// Текущий номер профиля 0 стоит по дефолту
  uint16_t flags;						// Флаги опций до 16 флагов
- uint8_t  nStart;						// Число попыток пуска компрессора
- uint8_t  sleep;							// Время засыпания дисплея минуты
+ uint8_t  nStart;						// Число попыток начала/продолжения работы
+ uint8_t  sleep;						// Время засыпания дисплея минуты
  uint8_t  dim;							// Яркость дисплея %
  uint8_t  DailySwitchHysteresis;			// Гистерезис для переключения реле по температуре, десятые градуса
  uint16_t tChart;						// период сбора статистики в секундах!!
@@ -301,6 +301,7 @@ struct type_optionHP
  uint16_t Generator_Start_Time;			// Время запуска генератора
  uint8_t  ModbusMinTimeBetweenTransaction;
  uint8_t  ModbusResponseTimeout;
+ uint8_t  nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
 };// __attribute__((packed));
 
 
@@ -604,6 +605,7 @@ public:
 
 	int16_t  lastEEV;                                      // + значение шагов ЭРВ перед выключением  -1 - первое включение
 	uint8_t num_repeat;                                   // + текущее число повторов пуска ТН
+	uint8_t num_repeat_prof;
 	uint16_t num_resW5200;                                 // + текущее число сброса сетевого чипа
 	uint16_t num_resMutexSPI;                              // + текущее число сброса митекса SPI
 	uint16_t num_resMutexI2C;                              // + текущее число сброса митекса I2C

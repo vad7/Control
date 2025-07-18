@@ -25,7 +25,7 @@
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
 #define VERSION			"1.200"				// Версия прошивки
-#define VER_SAVE		158					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
+#define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
 #endif
@@ -750,7 +750,8 @@ const char *fc_defrostFreq		= {"DFF"};
 #endif
 
 // Описание имен параметров опций ТН  для функций get_optionHP ("get_oHP") set_optionHP ("set_oHP")
-const char *option_ATTEMPT            = {"ATTEMPT"};            // число попыток пуска
+const char *option_nStart             = {"NST"};                // число попыток пуска
+const char *option_nStartNextProf     = {"NSTP"};               // число попыток пуска, новый профиль
 const char *option_TIME_CHART         = {"TIME_CHART"};         // период сбора статистики
 const char *option_BEEP               = {"BEEP"};               // включение звука
 const char *option_NEXTION            = {"NXT"};                // использование дисплея nextion
@@ -1121,9 +1122,11 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_FC_RCOMP		-91			// Не возможно остановить инвертор с помошью RCOMP
 #define ERR_FC_NO_LINK		-92			// Нет связи с инвертором по MODBUS
 #define ERR_NO_POWER_WHILE_WORK -93		// Пропало электричество во время работы
-#define ERR_HEATER_LINK		-94			// Ошибка связи с котлом
+#define ERR_HEATER_ADAPTER_LINK	-94		// Ошибка связи с адаптером котла
+#define ERR_HEATER_LINK		-95			// Ошибка связи с котлом
+#define ERR_HEATER_STOP		-96			// Коьтел внезапно остановился
 
-#define ERR_ERRMAX			-94 		// Последняя ошибка
+#define ERR_ERRMAX			-96 		// Последняя ошибка
 
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
 const int8_t CRITICAL_ERRORS[] = { ERR_COMP_ERR };
@@ -1234,7 +1237,9 @@ const char *noteError[] = {"Ok",                                                
                            "Не возможно остановить инвертор с помошью RCOMP",                                   //-91
 						   "Нет связи с инвертором по MODBUS",													//-92
 						   "Пропало электричество во время работы",												//-93
-						   "Ошибка связи с котлом",																//-94
+						   "Ошибка связи с адаптером котла",													//-94
+						   "Ошибка связи с котлом",																//-95
+						   "Котел внезапно выключился",															//-96
 
                            "NULL"
                            };
@@ -1541,6 +1546,13 @@ enum TEST_MODE
    TEST,
    HARD_TEST           // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
+// Названия режимов теста
+const char *noteTestMode[] =   {"NORMAL","SAFE_TEST","TEST","HARD_TEST"};
+// Описание режима теста
+static const char *noteRemarkTest[] = {"Тестирование отключено, основной режим работы.",
+                                       "Значения датчиков берутся из полей 'Тест', работа исполнительных устройств эмулируется - Безопасно.",
+                                       "Значения датчиков берутся из полей 'Тест', исполнительные устройства работают за исключением компрессора и котла - Почти безопасно.",
+                                       "Значения датчиков берутся из полей 'Тест', все исполнительные устройства работают. Внимание! Может быть повреждено оборудование!"};
 
 //  Перечисляемый тип - Время сброса сокетов
 enum TIME_RES_SOCKET       

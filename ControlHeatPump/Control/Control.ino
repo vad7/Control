@@ -2084,7 +2084,7 @@ delayTask:	// чтобы задача отдавала часть времени
 void vUpdateEEV(void *)
 { //const char *pcTaskName = "HP_UpdateEEV\r\n";
 	for(;;) {
-		while(!(HP.get_startCompressor() && (rtcSAM3X8.unixtime() - HP.get_startCompressor() > HP.dEEV.get_delayOnPid() && HP.dEEV.get_delayOnPid() != 255))) { // ЭРВ контролирует если прошла задержка после включения компрессора (пауза перед началом работы ПИД) и задержка != 255
+		while(!(HP.is_compressor_on() && HP.get_startCompressor() && (rtcSAM3X8.unixtime() - HP.get_startCompressor() > HP.dEEV.get_delayOnPid() && HP.dEEV.get_delayOnPid() != 255))) { // ЭРВ контролирует если прошла задержка после включения компрессора (пауза перед началом работы ПИД) и задержка != 255
 			vTaskDelay(TIME_EEV_BEFORE_PID / portTICK_PERIOD_MS); // Период управления ЭРВ (цикл управления)
 			if(HP.dEEV.get_flags() & (1<<fEEV_StartPosByTemp)) { // Скорректировать ЭРВ по температуре подачи
 				if(!(HP.get_modWork() & pBOILER) || !GETBIT(HP.dEEV.get_flags(), fEEV_BoilerStartPos)) {

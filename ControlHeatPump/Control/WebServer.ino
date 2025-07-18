@@ -38,16 +38,6 @@ extern void  get_datTest(uint8_t thread);
 extern void  get_csvChart(uint8_t thread);
 extern int16_t  get_indexNoSD(uint8_t thread);
 
-
-// Названия режимов теста
-const char *noteTestMode[] =   {"NORMAL","SAFE_TEST","TEST","HARD_TEST"};
-// Описание режима теста
-static const char *noteRemarkTest[] = {"Тестирование отключено, основной режим работы.",
-                                       "Значения датчиков берутся из полей 'Тест', работа исполнительных устройств эмулируется - Безопасно.",
-                                       "Значения датчиков берутся из полей 'Тест', исполнительные устройства работают за исключением компрессора (FC и RCOMP) - Почти безопасно.",
-                                       "Значения датчиков берутся из полей 'Тест', все исполнительные устройства работают. Внимание! Может быть поврежден компрессор!"};
-                               
-                               
 const char* file_types[] = {"text/html", "image/x-icon", "text/css", "application/javascript", "image/jpeg", "image/png", "image/gif", "text/plain", "text/ajax"};
 
 const char header_Authorization_2[] = "&&!Z";
@@ -1378,13 +1368,17 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				strcat(strReturn,"<b> Времена</b>|;");
 				strcat(strReturn,"Текущее время|"); DecodeTimeDate(rtcSAM3X8.unixtime(),strReturn); strcat(strReturn,";");
 				strcat(strReturn,"Время текущего состояния ТН|");DecodeTimeDate(HP.get_command_completed(),strReturn);strcat(strReturn,";");
-				strcat(strReturn,"Время старта компрессора|");DecodeTimeDate(HP.get_startCompressor(),strReturn);strcat(strReturn,";");
-				strcat(strReturn,"Время останова компрессора|");DecodeTimeDate(HP.get_stopCompressor(),strReturn);strcat(strReturn,";");
+				strcat(strReturn,"Время старта компрессора|");DecodeTimeDate(HP.startCompressor,strReturn);strcat(strReturn,";");
+				strcat(strReturn,"Время останова компрессора|");DecodeTimeDate(HP.stopCompressor,strReturn);strcat(strReturn,";");
+#ifdef USE_HEATER
+				strcat(strReturn,"Время включения котла|");DecodeTimeDate(HP.startHeater,strReturn);strcat(strReturn,";");
+				strcat(strReturn,"Время выключения котла|");DecodeTimeDate(HP.stopHeater,strReturn);strcat(strReturn,";");
+#endif
 				strcat(strReturn,"Время сохранения текущих настроек ТН|");DecodeTimeDate(HP.get_saveTime(),strReturn);strcat(strReturn,";");
 
 				strcat(strReturn,"<b> Счетчики ошибок</b>|;");
 				strcat(strReturn,"Счетчик текущего числа повторных попыток пуска ТН|");
-				if(HP.get_State()==pWORK_HP) { _itoa(HP.num_repeat,strReturn);strcat(strReturn,";");} else strcat(strReturn,"0;");
+				_itoa(HP.num_repeat, strReturn); strcat(strReturn, " ("); _itoa(HP.num_repeat_prof, strReturn); strcat(strReturn, ");");
 				strcat(strReturn,"Счетчик \"Потеря связи с "); strcat(strReturn,nameWiznet);strcat(strReturn,"\", повторная инициализация  <sup>2</sup>|");_itoa(HP.num_resW5200,strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины SPI|");_itoa(HP.num_resMutexSPI,strReturn);strcat(strReturn,";");
 				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины I2C|");_itoa(HP.num_resMutexI2C,strReturn);strcat(strReturn,";");

@@ -112,11 +112,11 @@ void HeatPump::process_error(void)
 #endif
 			if(num_repeat < get_nStart())                 // есть еще попытки
 			{
-				sendCommand(pREPEAT);                     // Повторный пуск ТН
-			} else {
-				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext > 0) {
+				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext > 0 && num_repeat_prof < Option.nStartNextProf) {
 					SwitchToProfile(Prof.dataProfile.ProfileNext);
-				} else sendCommand(pSTOP);                    // Послать команду на останов ТН  БЕЗ ПОПЫТОК ПУСКА
+				} else sendCommand(pREPEAT);                     // Повторный пуск ТН
+			} else {
+				sendCommand(pSTOP);                    // Послать команду на останов ТН  БЕЗ ПОПЫТОК ПУСКА
 			}
 		}
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
@@ -768,6 +768,7 @@ void HeatPump::resetSettingHP()
 	startRAM = 0;                                   // Свободная память при старте FREE Rtos - пытаемся определить свободную память при работе
 	lastEEV = -1;                                   // значение шагов ЭРВ перед выключением  -1 - первое включение
 	num_repeat = 0;                                 // текушее число попыток 0 - т.е еще не было работы
+	num_repeat_prof = 0;
 	num_resW5200 = 0;                               // текущее число сбросов сетевого чипа
 	num_resMutexSPI = 0;                            // текущее число сброса митекса SPI
 	num_resMutexI2C = 0;                            // текущее число сброса митекса I2C
@@ -837,7 +838,8 @@ void HeatPump::resetSettingHP()
 	Option.delayBoilerSW = DEF_DELAY_BOILER_SW;
 	Option.delayBoilerOff = DEF_DELAY_BOILER_OFF;
 	Option.numProf = Prof.get_idProfile(); //  Профиль не загружен по дефолту 0 профиль
-	Option.nStart = 3;                   //  Число попыток пуска компрессора
+	Option.nStart = 10;                   //  Число попыток начала работы всего
+	Option.nStartNextProf = 3;           //  Число попыток начала работы на новом профиле
 	Option.tChart = 10;                  //  период накопления статистики по умолчанию 60 секунд
 	SETBIT1(Option.flags, fBeep);         //  Звук
 	SETBIT1(Option.flags, fNextion);      //  дисплей Nextion
@@ -1082,7 +1084,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_SunTempOff)==0)   	   { Option.SunTempOff = rd(x, 100); return true;} else
 	if(strcmp(var,option_SunRegGeo)==0)        { Option.flags = (Option.flags & ~(1<<fSunRegenerateGeo)) | ((n!=0)<<fSunRegenerateGeo); return true; }else
 	if(strcmp(var,option_DailySwitchHysteresis)==0){ Option.DailySwitchHysteresis = rd(x, 10); return true;} else
-	if(strcmp(var,option_ATTEMPT)==0)          { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else                // число попыток пуска
+	if(strcmp(var,option_nStart)==0)          { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else         // число попыток пуска
+	if(strcmp(var,option_nStartNextProf)==0)  { if ((n>=0)&&(n<=255)) {Option.nStartNextProf=n; return true;} else return false;  }else // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       { if(n>0) { if (get_State()==pWORK_HP) clearChart(); Option.tChart = n; return true; } else return false; } else // Сбросить статистистику, начать отсчет заново
 	if(strcmp(var,option_Charts_when_comp_on)==0){ Charts_when_comp_on = n; return true;} else
 	if(strcmp(var, option_BEEP) == 0) { // Подача звукового сигнала
@@ -1255,7 +1258,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 // Получить опции ТН, результат добавляется в ret, "get_oHP"
 char* HeatPump::get_optionHP(char *var, char *ret)
 {
-	if(strcmp(var,option_ATTEMPT)==0)          {return _itoa(Option.nStart,ret);}else                                                             // число попыток пуска
+	if(strcmp(var,option_nStart)==0)           {return _itoa(Option.nStart,ret);}else         // число попыток пуска
+	if(strcmp(var,option_nStartNextProf)==0)   {return _itoa(Option.nStartNextProf,ret);}else // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       {return _itoa(Option.tChart,ret);} else
 	if(strcmp(var,option_Charts_when_comp_on)==0){return _itoa(Charts_when_comp_on, ret);} else
 	if(strcmp(var,option_BEEP)==0)             {if(GETBIT(Option.flags,fBeep)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else            // Подача звукового сигнала
@@ -1773,15 +1777,14 @@ boolean HeatPump::switchBoiler(boolean b)
 #ifdef REVI
 boolean HeatPump::checkEVI()
 {
-  if (!dRelay[REVI].get_present())  return false;                                                                            // Реле отсутвует в конфигурации ничего не делаем
-  if (!is_compressor_on())     {dRelay[REVI].set_OFF(); return dRelay[REVI].get_Relay();}                                    // Компрессор выключен и реле включено - выключить реле
+  if (!dRelay[REVI].get_present())  return false;                                             // Реле отсутвует в конфигурации ничего не делаем
+  if (!is_compressor_on())     {dRelay[REVI].set_OFF(); return dRelay[REVI].get_Relay();}     // Компрессор выключен и реле включено - выключить реле
+  else if (rtcSAM3X8.unixtime()-startCompressor<60) return dRelay[REVI].get_Relay() ;         // Компрессор работает меньше одной минуты еще рано
 
-  // компрессор работает
-  if (rtcSAM3X8.unixtime()-startCompressor<60) return dRelay[REVI].get_Relay() ;                                            // Компрессор работает меньше одной минуты еще рано
 
   // проверяем условия для включения ЭВИ
   if((sTemp[TCONOUTG].get_Temp()>EVI_TEMP_CON)||(sTemp[TEVAOUTG].get_Temp()<EVI_TEMP_EVA)) { dRelay[REVI].set_ON(); return dRelay[REVI].get_Relay();}  // условия выполнены включить ЭВИ
-  else  {dRelay[REVI].set_OFF(); return dRelay[REVI].get_Relay();}                                                          // выключить ЭВИ - условий нет
+  else  {dRelay[REVI].set_OFF(); return dRelay[REVI].get_Relay();}                            // выключить ЭВИ - условий нет
   return dRelay[REVI].get_Relay();
 }
 #endif
@@ -2249,7 +2252,7 @@ void HeatPump::StopWait(boolean stop)
   } else {
      setState(pWAIT_HP);
      journal.jprintf_time("%s WAIT . . .\n",(char*)nameHeatPump);
-     num_repeat = 0; 												// Сброс счетчика ошибок подряд
+     num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
   }
 #ifdef AUTO_START_GENERATOR
   if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
@@ -2619,7 +2622,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 				return pCOMP_NONE;
 			}
 	#endif
-			else if(rtcSAM3X8.unixtime() - dFC.get_startTime() < FC_START_PID_DELAY/100 ) {	Status.ret=pBp10; return pCOMP_NONE; } // РАЗГОН частоту не трогаем
+			else if(rtcSAM3X8.unixtime() - get_startCompressor() < FC_START_PID_DELAY/100 ) {	Status.ret=pBp10; return pCOMP_NONE; } // РАЗГОН частоту не трогаем
 			else if(xTaskGetTickCount()-updatePidBoiler < get_timeBoiler()*1000)          { Status.ret=pBp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
 
 			// Дошли до сюда - ПИД на подачу. Компрессор работает
@@ -2779,7 +2782,7 @@ MODE_COMP HeatPump::UpdateHeat()
 	switch (Prof.Heat.Rule) // в зависимости от алгоритма
 	{
 	case pHYSTERESIS:  // Гистерезис нагрев.
-		if(t1>target && ((_is_on & _HEATR_) || rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn))) {Status.ret=pHh3; return pCOMP_OFF;} // Достигнута целевая температура  ВЫКЛ
+		if(t1>target && ((_is_on & _HEATR_) || ((_is_on & _COMPR_) && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)))) {Status.ret=pHh3; return pCOMP_OFF;} // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!_is_on || onBoiler))  { Status.ret=pHh2;   return pCOMP_ON; } // Достигнут гистерезис ВКЛ
 		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else if(onBoiler) {
@@ -2800,7 +2803,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		break;
 	case pPID:   // ПИД регулирует подачу, а целевай функция гистререзис
 		// отработка гистререзиса целевой функции (дом/обратка)
-		if(t1 > target && ((_is_on & _HEATR_) || rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn))) { Status.ret=pHp3; return pCOMP_OFF; } // Достигнута целевая температура  ВЫКЛ
+		if(t1 > target && ((_is_on & _HEATR_) || ((_is_on & _COMPR_) && rtcSAM3X8.unixtime() - startCompressor > (onBoiler || GETBIT(Option.flags, fBackupPower) ? 0 : Option.MinCompressorOn)))) { Status.ret=pHp3; return pCOMP_OFF; } // Достигнута целевая температура  ВЫКЛ
 		else if(t1 < target - (GETBIT(HP.Option.flags, fBackupPower) ? Prof.Heat.dTempGen : Prof.Heat.dTemp) && (!is_comp_or_heater_on() || onBoiler)) { Status.ret=pHp2; return pCOMP_ON; } // Достигнут гистерезис (компрессор не работает) ВКЛ
 		else if(RET<Prof.Heat.tempOutLim) { Status.ret = pHh13; return pCOMP_ON; }   // Достигнут минимальная температура обратки ВКЛ
 		else if(onBoiler) {
@@ -2880,7 +2883,7 @@ MODE_COMP HeatPump::UpdateHeat()
 			}
 	#endif
 
-			else if (rtcSAM3X8.unixtime()-dFC.get_startTime()<FC_START_PID_DELAY/100 ){ Status.ret=pHp10; return pCOMP_NONE;} // РАЗГОН частоту не трогаем
+			else if (rtcSAM3X8.unixtime()-get_startCompressor()<FC_START_PID_DELAY/100 ){ Status.ret=pHp10; return pCOMP_NONE;} // РАЗГОН частоту не трогаем
 	#ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
 			else if(sTemp[TCOMP].get_Temp() - (SUPERBOILER_DT - SUPERBOILER_DT_HYST) >= sTemp[TBOILER].get_Temp()
 	#ifdef RPUMPB
@@ -3060,7 +3063,7 @@ MODE_COMP HeatPump::UpdateCool()
 			dFC.set_target(dFC.get_target()-dFC.get_stepFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool()); resetPID();  return pCOMP_NONE;               // Уменьшить частоту
 		}
 #endif		
-		else if (rtcSAM3X8.unixtime()-dFC.get_startTime()<FC_START_PID_DELAY/100 ){ Status.ret=pCp10; return pCOMP_NONE;}     // РАЗГОН частоту не трогаем
+		else if (rtcSAM3X8.unixtime()-get_startCompressor()<FC_START_PID_DELAY/100 ){ Status.ret=pCp10; return pCOMP_NONE;}     // РАЗГОН частоту не трогаем
 
 #ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
 		if (sTemp[TCOMP].get_Temp()+SUPERBOILER_DT>sTemp[TBOILER].get_Temp())  dRelay[RSUPERBOILER].set_ON(); else dRelay[RSUPERBOILER].set_OFF();
@@ -4093,7 +4096,7 @@ int8_t HeatPump::runCommand()
 		{
 		case pEMPTY:  return true; break;     // 0 Команд нет
 		case pSTART:                          // 1 Пуск теплового насоса
-			num_repeat=0;                     // обнулить счетчик повторных пусков
+			num_repeat = num_repeat_prof = 0; // обнулить счетчик повторных пусков
 			StartResume(_start);              // включить ТН
 			break;
 		case pAUTOSTART:                      // 2 Пуск теплового насоса автоматический
@@ -4120,6 +4123,7 @@ int8_t HeatPump::runCommand()
 			}
 			StopWait(_stop);                            // Попытка запустит ТН (по числу пусков)
 			num_repeat++;                               // увеличить счетчик повторов пуска ТН
+			num_repeat_prof++;
 			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
 			PauseStart = 1;   							// Запустить выполнение отложенного старта
 			break;
@@ -4130,6 +4134,7 @@ int8_t HeatPump::runCommand()
 			}
 			StopWait(_stop);                            // Попытка запустит ТН (по числу пусков)
 			num_repeat++;                               // увеличить счетчик повторов пуска ТН
+			num_repeat_prof++;
 			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
 			PauseStart = 2;   							// Запустить выполнение отложенного старта
 			break;
@@ -4243,6 +4248,7 @@ void HeatPump::SwitchToProfile(int8_t _profile)
 	HP.Prof.load(_profile);
 	HP.set_profile();
 	//xTaskResumeAll();
+	num_repeat_prof = 0;
 	journal.jprintf_time("Profile changed to #%d\n", _profile);
 	if(frestart) HP.sendCommand(pRESUME);
 }

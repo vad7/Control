@@ -30,8 +30,9 @@ $(document).ready(function() {
 </script>
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
-window.onload = function() { /*get_ruleCool,get_ruleHeat,*/
-	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_modeHP,get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM),get_Cool(CP)");
+window.onload = function() {
+	updateParam("get_modeHP,get_TrgT,get_Cool(TP),get_Heat(TP)");
+	loadParam("get_Temp(TOUT),get_Heat(RULE),get_Cool(RULE),get_Cool(TARGET),get_Heat(TARGET),get_Cool(DTEMP),get_Heat(DTEMP),get_Cool(HP_TIME),get_Heat(HP_TIME),get_Cool(HP_PRO),get_Heat(HP_PRO),get_Heat(DTG),get_Cool(DTG),get_Cool(HP_IN),get_Heat(HP_IN),get_Heat(ADT),get_Heat(ADH),get_Heat(ADEH),get_Heat(HFL),get_Cool(HFL),get_Heat(SUN),get_Cool(SUN),get_Heat(CAB),get_Heat(H_list),get_Heat(DLOFP),get_Cool(DLOFP),get_Prof(ASM),get_Cool(CP)");
 	loadParam("get_Heat(KWT),get_Cool(TEMP1),get_Cool(TEMP_IN),get_Heat(TEMP_IN),get_Cool(TEMP_OUT),get_Heat(TEMP_OUT),get_Heat(TEMP1),get_Cool(TEMP2),get_Heat(TEMP2),get_Cool(TEMP_PID),get_Heat(TEMP_PID),get_Heat(KWB),get_Heat(KWR),get_Heat(KW),get_Heat(W),get_Cool(HP_DIF),get_Heat(HP_DIF),get_Cool(D_TEMP),get_Heat(D_TEMP),get_Heat(CP),get_Heat(FLH),get_Heat(FL),get_Heat(TRH),get_Heat(PW),get_Heat(PP),get_Heat(TMR)");
 	loadParam("get_Heat(MTR),get_Heat(AT),get_Cool(AT),get_Heat(H),get_Cool(W),get_Cool(KW),get_Cool(KWT),get_Cool(KWB),get_Cool(KWR),get_listDSR,get_tblPDS");
 };
@@ -41,9 +42,6 @@ function setDS(v, i) {
 	else setParam("get_Prof(DS" + v + i + "=" + val.toUpperCase() + ")");
 }
 function loadParam_after(paramid) {
-	if(paramid.indexOf("(KW")!=-1 || paramid.indexOf("(TEMP")!=-1) {
-		loadParam("get_TrgT,get_Cool(TP),get_Heat(TP)");
-	}
 	if(paramid.indexOf("et_modeHP")!=-1) {
 		if(document.getElementById('get_modehp').options.selectedIndex == 2) loadParam("get_Cool(SCHEDULER)"); else loadParam("get_Heat(SCHEDULER)");
 	}

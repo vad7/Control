@@ -30,7 +30,6 @@ int8_t devVaconFC::initFC()
 #ifdef FC_MAX_CURRENT
 	current = 0; // Текуший ток частотника
 #endif
-	startCompressor = 0; // время старта компрессора
 	state = ERR_LINK_FC; // Состояние - нет связи с частотником по Modbus
 	Adjust_EEV_delta = 0;
 
@@ -240,7 +239,7 @@ int8_t devVaconFC::get_readState()
 					HP.sendCommand(pREPEAT_FAST);
 					return err;
 				}
-			} else if(get_startTime() && rtcSAM3X8.unixtime() - get_startTime() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {
+			} else if(HP.get_startCompressor() && rtcSAM3X8.unixtime() - HP.get_startCompressor() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {
 				err = ERR_MODBUS_STATE;
 			}
 			if(err) {
@@ -468,7 +467,7 @@ int8_t devVaconFC::start_FC()
   #endif // FC_USE_RCOMP
     if(err == OK) {
         SETBIT1(flags, fOnOff);
-        set_startCompressor();
+        HP.set_startCompressor();
         journal.jprintf(" %s ON\n", name);
     }
     else {
@@ -538,7 +537,7 @@ xStarted:
   #endif // FC_USE_RCOMP
 xStarted:
     SETBIT1(flags, fOnOff);
-    set_startCompressor();
+    HP.set_startCompressor();
     journal.jprintf(" %s ON\n", name);
  #else // DEMO
     // Боевая часть
@@ -558,7 +557,7 @@ xStarted:
     }
 xStarted:
     SETBIT1(flags, fOnOff);
-    set_startCompressor();
+    HP.set_startCompressor();
     journal.jprintf(" %s ON\n", name);
 #endif //DEMO
 #endif //FC_ANALOG_CONTROL
@@ -577,7 +576,6 @@ int8_t devVaconFC::stop_FC()
   #endif // FC_USE_RCOMP
     if(err == OK) {
         SETBIT0(flags, fOnOff);
-        startCompressor = 0;
         journal.jprintf(" %s OFF\n", name);
     }
     else {
@@ -589,7 +587,6 @@ int8_t devVaconFC::stop_FC()
     {
     	if(!get_present()) {
             SETBIT0(flags, fOnOff);
-            startCompressor = 0;
             return err; // выходим если нет инвертора или нет связи
     	}
   #ifdef FC_USE_RCOMP // Использовать отдельный провод для команды ход/стоп
@@ -597,7 +594,6 @@ int8_t devVaconFC::stop_FC()
   #endif
     	if(state == ERR_LINK_FC) {
             SETBIT0(flags, fOnOff);
-            startCompressor = 0;
             return err; // выходим если нет инвертора или нет связи
     	}
   #ifndef FC_USE_RCOMP
@@ -610,7 +606,6 @@ int8_t devVaconFC::stop_FC()
     if(err == OK || err == ERR_NO_POWER_WHILE_WORK) {
         journal.jprintf(" %s[%s] OFF\n", name, (char *)codeRet[HP.get_ret()]);
         SETBIT0(flags, fOnOff);
-        startCompressor = 0;
     } else {
         SETBIT1(flags, fErrFC);
         set_Error(err, name);
@@ -622,7 +617,6 @@ int8_t devVaconFC::stop_FC()
     HP.dRelay[RCOMP].set_OFF(); // ПЛОХО через глобальную переменную
   #endif // FC_USE_RCOMP
     SETBIT0(flags, fOnOff);
-    startCompressor = 0;
     journal.jprintf(" %s OFF\n", name);
  #else // DEMO
     if((testMode == NORMAL) || (testMode == HARD_TEST)) // Режим работа и хард тест, все включаем,
@@ -639,7 +633,6 @@ int8_t devVaconFC::stop_FC()
   #endif
     }
     SETBIT0(flags, fOnOff);
-    startCompressor = 0;
     journal.jprintf(" %s OFF\n", name);
  #endif // DEMO
 #endif // FC_ANALOG_CONTROL
