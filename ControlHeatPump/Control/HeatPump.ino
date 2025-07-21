@@ -3415,6 +3415,7 @@ boolean HeatPump::configHP()
 		if(Switch_R4WAY(true)) return false; 						   // 4-х ходовой на охлаждение
 		pump_in_pause_wait_off();										// ждем пока насосы остановятся
 #ifdef USE_HEATER
+
 		dHeater.HeaterValve_Off();
 #endif
 		Pumps(ON);                                                     // включить насосы

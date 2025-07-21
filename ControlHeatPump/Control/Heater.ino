@@ -170,8 +170,8 @@ void devHeater::HeaterValve_Off()
 	if(HP.is_heater_on()) {
 		Heater_Stop();
 		journal.jprintf("Heater is ON -> Turn OFF\n");
-		WaitPumpOff();
 	}
+	WaitPumpOff();
 #ifdef RH_3WAY
 	if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) HP.dRelay[RH_3WAY].set_OFF();
 #endif
@@ -201,7 +201,7 @@ void devHeater::HeaterValve_Off()
 void devHeater::WaitPumpOff()
 {
 	int32_t d = set.pump_work_time_after_stop * 10;
-	if(HP.stopHeater) d -= rtcSAM3X8.unixtime() - HP.stopHeater;
+	if(HP.stopHeater) d -= rtcSAM3X8.unixtime() - (HP.stopHeater ? HP.stopHeater : HP.get_startDT());
 	if(d > 0) journal.jprintf("Wait Heater pump stop: %ds\n", d);
 	for(; d > 0; d--) { // задержка после выкл котла (постциркуляция насоса)
 		_delay(1000);
@@ -244,6 +244,7 @@ int8_t devHeater::read_state(uint8_t group)
 				set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
 			}
 		} else if(data.Status) {
+			journal.jprintf("%s is working -> STOP\n", HEATER_NAME);
 			Heater_Stop();
 		}
 	}
