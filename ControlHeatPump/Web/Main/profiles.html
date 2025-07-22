@@ -16,6 +16,9 @@ function setDS(v) {
 	var val = document.getElementById("get_prof-" + v.toLowerCase()).value;
 	if(val[2] == ':') setParam("get_Prof(" + v + "=" + val.replace(":","").substr(0,3) + ")");
 }
+function erase_Profile(p) {
+	if(confirm((document.getElementById("infoprofile-"+p).innerHTML=="EMPTY PROFILE" ? "ВОССТАНОВИТЬ" : "СТЕРЕТЬ") + " ПРОФИЛЬ - " + (p + 1) + " \nВЫ УВЕРЕНЫ?")) loadParam("eraseProfile(" + p + ")");
+}
 </script>
 </head>
 <body class="profiles">

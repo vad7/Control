@@ -1157,12 +1157,19 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"VER_SAVE|Версия формата сохраненных данных в I2C памяти|"); _itoa(VER_SAVE,strReturn); strcat(strReturn,";");
 			strcat(strReturn,"CONFIG_NAME|Имя конфигурации|");strcat(strReturn,CONFIG_NAME);strcat(strReturn,";");
 			strcat(strReturn,"CONFIG_NOTE|");strcat(strReturn,CONFIG_NOTE);strcat(strReturn,"|;");
-			strcat(strReturn,"TIME_READ_SENSOR|Период опроса датчиков (мсек)|");_itoa(TIME_READ_SENSOR,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_CONTROL|Период управления тепловым насосом (мсек)|");_itoa(TIME_CONTROL,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_EEV|Период управления ЭРВ (мсек)|");_itoa(TIME_EEV,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_WEB_SERVER|Период опроса web сервера "); strcat(strReturn,nameWiznet);strcat(strReturn," (мсек)|");_itoa(TIME_WEB_SERVER,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_COMMAND|Период разбора команд управления ТН (мсек)|");_itoa(TIME_COMMAND,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_I2C_UPDATE |Период синхронизации внутренних часов с I2C часами (мсек)|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_READ_SENSOR|Период опроса датчиков, мсек|");_itoa(TIME_READ_SENSOR,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"ADC_FREQ|Частота АЦП, Гц|");_itoa(ADC_FREQ,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"WDT_TIME|Период сторожевого таймера, 0 - нет, сек|");_itoa(WDT_TIME,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"configCPU_CLOCK_HZ|Частота CPU, МГц|");_itoa(configCPU_CLOCK_HZ/1000000,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"SD_SPI_SPEED|Частота SPI SD карты, МГц|");_itoa(SD_CLOCK, strReturn);strcat(strReturn,";");
+			strcat(strReturn,"W5200_SPI_SPEED|Частота SPI сети "); strcat(strReturn,nameWiznet);strcat(strReturn,", МГц|");_itoa(84/W5200_SPI_SPEED, strReturn);strcat(strReturn,";");
+			strcat(strReturn,"I2C_SPEED|Частота работы шины I2C, кГц|"); _itoa(I2C_SPEED/1000,strReturn); strcat(strReturn,";");
+			strcat(strReturn,"UART_SPEED|Скорость отладочного порта, бод|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_CONTROL|Период управления тепловым насосом, мсек|");_itoa(TIME_CONTROL,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_EEV|Период управления ЭРВ, мсек|");_itoa(TIME_EEV,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_WEB_SERVER|Период опроса web сервера "); strcat(strReturn,nameWiznet);strcat(strReturn,", мсек|");_itoa(TIME_WEB_SERVER,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_COMMAND|Период разбора команд управления ТН, мсек|");_itoa(TIME_COMMAND,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"TIME_I2C_UPDATE |Период синхронизации внутренних часов с I2C часами, мсек|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_NUM|Используемый порт для обмена по Modbus RTU|Serial");
 			if(&MODBUS_PORT_NUM == &Serial1) strcat(strReturn,"1");
 			else if(&MODBUS_PORT_NUM == &Serial2) strcat(strReturn,"2");
@@ -1172,9 +1179,9 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #endif
 			else strcat(strReturn,"?");
 			strcat(strReturn,";");
-			strcat(strReturn,"MODBUS_PORT_SPEED|Скорость обмена (бод)|");_itoa(MODBUS_PORT_SPEED,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"MODBUS_PORT_SPEED|Скорость обмена, бод|");_itoa(MODBUS_PORT_SPEED,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_CONFIG|Конфигурация порта|8N1;");
-			strcat(strReturn,"MODBUS_TIME_WAIT|Максимальное время ожидания освобождения порта (мсек)|");_itoa(MODBUS_TIME_WAIT,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"MODBUS_TIME_WAIT|Максимальное время ожидания освобождения порта, мсек|");_itoa(MODBUS_TIME_WAIT,strReturn);strcat(strReturn,";");
 			// Частотник
 			strcat(strReturn,"DEVICEFC|Поддержка инвертора для компрессора|");
 			if (HP.dFC.get_present())
@@ -1203,14 +1210,8 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			else strcat(strReturn,"?");
 			strcat(strReturn,";");
 			strcat(strReturn,"NEXTION_PORT_SPEED|Скорость обмена (бод)|");_itoa(NEXTION_PORT_SPEED,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"NEXTION_UPDATE|Время обновления информации на дисплее Nextion (мсек)|");_itoa(NEXTION_UPDATE,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"NEXTION_UPDATE|Время обновления информации на дисплее Nextionмсек)|");_itoa(NEXTION_UPDATE,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"NEXTION_READ|Время опроса дисплея Nextion (мсек)|");_itoa(NEXTION_READ,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"configCPU_CLOCK_HZ|Частота CPU (МГц)|");_itoa(configCPU_CLOCK_HZ/1000000,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"SD_SPI_SPEED|Частота SPI SD карты (МГц)|");_itoa(SD_CLOCK, strReturn);strcat(strReturn,";");
-			strcat(strReturn,"W5200_SPI_SPEED|Частота SPI сети "); strcat(strReturn,nameWiznet);strcat(strReturn," (МГц)|");_itoa(84/W5200_SPI_SPEED, strReturn);strcat(strReturn,";");
-			strcat(strReturn,"I2C_SPEED|Частота работы шины I2C (кГц)|"); _itoa(I2C_SPEED/1000,strReturn); strcat(strReturn,";");
-			strcat(strReturn,"UART_SPEED|Скорость отладочного порта (бод)|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"WDT_TIME|Период сторожевого таймера, 0 - нет (сек)|");_itoa(WDT_TIME,strReturn);strcat(strReturn,";");
 			// Карта
 			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "SD_FAT_VERSION|Версия библиотеки SdFat|%s;", SD_FAT_VERSION);
 			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "USE_SD_CRC|SD - Использовать проверку CRC|%c;", USE_SD_CRC ? '0'+USE_SD_CRC : USE_SD_CRC_FOR_WRITE ? 'W' : '-');
@@ -1218,7 +1219,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 			// W5200
 			strcat(strReturn,"W5200_THREAD|Число потоков для сетевого чипа (web сервера) "); strcat(strReturn,nameWiznet);strcat(strReturn,"|");_itoa(W5200_THREAD,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"W5200_TIME_WAIT|Время ожидания захвата мютекса, для управления потоками (мсек)|");_itoa( W5200_TIME_WAIT,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"W5200_TIME_WAIT|Время ожидания захвата мютекса, для управления потоками, мсек|");_itoa( W5200_TIME_WAIT,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"STACK_vWebX|Размер стека для задачи одного web потока "); strcat(strReturn,nameWiznet);strcat(strReturn," (х4 байта)|");_itoa(STACK_vWebX,strReturn);//strcat(strReturn,";");
 
 			ADD_WEBDELIM(strReturn);  continue;
@@ -1232,7 +1233,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"TIME_ZONE|Часовой пояс|");_itoa(TIME_ZONE,strReturn);strcat(strReturn,";");
 			// FreeRTOS
 			strcat(strReturn,"FREE_RTOS_ARM_VERSION|Версия библиотеки FreeRTOS|");_itoa(FREE_RTOS_ARM_VERSION,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"configTICK_RATE_HZ|Квант времени системы FreeRTOS (мкс)|");_itoa(configTICK_RATE_HZ,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"configTICK_RATE_HZ|Квант времени системы FreeRTOS, мксек)|");_itoa(configTICK_RATE_HZ,strReturn);strcat(strReturn,";");
 			// i2c
 			strcat(strReturn,"I2C_COUNT_EEPROM|Адрес внутри чипа I2C с которого пишется счетчики ТН|"); strcat(strReturn,uint16ToHex(I2C_COUNT_EEPROM)); strcat(strReturn,";");
 			strcat(strReturn,"I2C_SETTING_EEPROM|Адрес внутри чипа I2C с которого пишутся настройки ТН|"); strcat(strReturn,uint16ToHex(I2C_SETTING_EEPROM)); strcat(strReturn,";");
@@ -1240,14 +1241,14 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			// Датчики
 			strcat(strReturn,"P_NUMSAMLES|Число значений для усреднения показаний давления|");_itoa(P_NUMSAMLES,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"T_NUMSAMLES|Число значений для усреднения показаний температуры|");_itoa(T_NUMSAMLES,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"GAP_TEMP_VAL|Допустимая разница показаний между двумя считываниями (°C)|");_dtoa(strReturn, GAP_TEMP_VAL, 2);strcat(strReturn,";");
-			strcat(strReturn,"MAX_TEMP_ERR|Максимальная систематическая ошибка датчика температуры (°C)|");_dtoa(strReturn, MAX_TEMP_ERR, 2);strcat(strReturn,";");
+			strcat(strReturn,"GAP_TEMP_VAL|Допустимая разница показаний между двумя считываниями, °C|");_dtoa(strReturn, GAP_TEMP_VAL, 2);strcat(strReturn,";");
+			strcat(strReturn,"MAX_TEMP_ERR|Максимальная систематическая ошибка датчика температуры, °C|");_dtoa(strReturn, MAX_TEMP_ERR, 2);strcat(strReturn,";");
 			// Удаленные датчики
 			strcat(strReturn,"SENSOR_IP|Использование удаленных датчиков|");
 #ifdef SENSOR_IP
 			strcat(strReturn,"ON;");
 			strcat(strReturn,"IPNUMBER|Максимальное число удаленных датчиков, нумерация начинается с 1|");_itoa(IPNUMBER,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"UPDATE_IP|Максимальное время между посылками данных с удаленного датчика (сек)|");_itoa(UPDATE_IP,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"UPDATE_IP|Максимальное время между посылками данных с удаленного датчика, сек|");_itoa(UPDATE_IP,strReturn);strcat(strReturn,";");
 #else
 			strcat(strReturn,"OFF;");
 #endif
@@ -1258,7 +1259,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			// LEGIONELLA
 			strcat(strReturn,"LEGIONELLA_DAY|День недели когда проводится обеззараживание ГВС (1-понедельник)|");_itoa(LEGIONELLA_DAY,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"LEGIONELLA_HOUR|Час когда начинаятся обеззарживание ГВС|");_itoa(LEGIONELLA_HOUR,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"LEGIONELLA_TEMP|Целевая температура обеззараживания ГВС (°C)|");_dtoa(strReturn, LEGIONELLA_TEMP, 2);strcat(strReturn,";");
+			strcat(strReturn,"LEGIONELLA_TEMP|Целевая температура обеззараживания ГВС, °C|");_dtoa(strReturn, LEGIONELLA_TEMP, 2);strcat(strReturn,";");
 			// ЭРВ
 #ifdef EEV_DEF
 			strcat(strReturn,"EEV_QUEUE|Длина очереди команд шагового двигателя ЭРВ|");_itoa(EEV_QUEUE,strReturn);strcat(strReturn,";");
@@ -1315,7 +1316,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #else
 			strcat(strReturn,"RAM memory;");
 #endif
-			strcat(strReturn,"JOURNAL_LEN|Размер кольцевого буфера системного журнала (байт)|");_itoa(JOURNAL_LEN,strReturn);//strcat(strReturn,";");
+			strcat(strReturn,"JOURNAL_LEN|Размер кольцевого буфера системного журнала, байт|");_itoa(JOURNAL_LEN,strReturn);//strcat(strReturn,";");
 			ADD_WEBDELIM(strReturn) ;
 			continue;
 		} // end CONST1
@@ -1804,9 +1805,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else {
 					if((pm >= 0) && (pm < I2C_PROFIL_NUM)) {
-						HP.Prof.set_list((int8_t)pm);
-						//HP.save();
-						//HP.Prof.save(HP.Prof.get_idProfile());
+						HP.SwitchToProfile(pm);
 						HP.Prof.get_list(strReturn/*,HP.Prof.get_idProfile()*/);
 					} else strcat(strReturn,"E29");
 					ADD_WEBDELIM(strReturn) ;    continue;

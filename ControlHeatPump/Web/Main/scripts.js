@@ -549,7 +549,7 @@ function loadParam(paramid, noretry, resultdiv) {
 											for(var j = 0; j < count; j++) {
 												loadsens = loadsens + "infoProfile(" + j + "),";
 												content = content + '<tr id="get_prof-' + j + '"><td>' + (j+1) + '</td><td id="infoprofile-' + j + '"></td>';
-												content = content + '<td nowrap><input id="eraseprofile-' + j + '" type="submit" value="Стереть"  onclick=\'loadParam("eraseProfile(' + j + ')")\'> <input name="profile" type="submit" value="Загрузить" onclick=\'loadParam("loadProfile(' + j + ')")\' disabled></td></tr>';
+												content = content + '<td nowrap><input id="eraseprofile-' + j + '" type="submit" value="Стереть" onclick="erase_Profile(' + j + ')"> <input name="profile" type="submit" value="Загрузить" onclick=\'loadParam("loadProfile(' + j + ')")\' disabled></td></tr>';
 											}
 											document.getElementById(valueid).innerHTML = content;
 											loadParam(loadsens);

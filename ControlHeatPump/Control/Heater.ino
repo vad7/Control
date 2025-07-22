@@ -201,7 +201,7 @@ void devHeater::HeaterValve_Off()
 void devHeater::WaitPumpOff()
 {
 	int32_t d = set.pump_work_time_after_stop * 10;
-	if(HP.stopHeater) d -= rtcSAM3X8.unixtime() - (HP.stopHeater ? HP.stopHeater : HP.get_startDT());
+	d -= rtcSAM3X8.unixtime() - (HP.stopHeater ? HP.stopHeater : HP.get_startDT());
 	if(d > 0) journal.jprintf("Wait Heater pump stop: %ds\n", d);
 	for(; d > 0; d--) { // задержка после выкл котла (постциркуляция насоса)
 		_delay(1000);

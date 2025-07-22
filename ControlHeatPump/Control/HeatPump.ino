@@ -2198,7 +2198,7 @@ void HeatPump::StopWait(boolean stop)
 
   journal.jprintf(" modWork: %X[%s]\n", get_modWork(), codeRet[Status.ret]);
 #ifdef USE_HEATER
-  if(is_heater_on()) dHeater.Heater_Stop();				// Выкл. котла
+  if(is_heater_on()) heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
 #endif
   if(is_compressor_on()) compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
 
@@ -2524,17 +2524,15 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			Status.ret=pBp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__); return pCOMP_OFF;  // Достижение максимальной температуры подачи
 		}
 		// Отслеживание выключения (с учетом догрева)
-		if(GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева
-		{
-			if(T > Boiler_Target_AddHeating()) {
-				Status.ret=pBp22; return pCOMP_OFF;  // Температура выше целевой температуры ДОГРЕВА надо выключаться!
-			}
-		}
-		if (T > TRG) {
+		if(T > TRG) {
 			Status.ret=pBp3;
 			set_HeatBoilerUrgently(false);
 			return pCOMP_OFF;  // Температура выше целевой температуры БОЙЛЕРА надо выключаться!
-		} else if(!onBoiler && T < TRG - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp)) { // Отслеживание включения
+		}
+		if(GETBIT(Prof.Boiler.flags, fAddHeating) && T > Boiler_Target_AddHeating()) {// режим догрева
+			Status.ret=pBp22; return pCOMP_OFF;  // Температура выше целевой температуры ДОГРЕВА надо выключаться!
+		}
+		if(!onBoiler && T < TRG - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp)) { // Отслеживание включения
 			Status.ret = pBp2;
 			return pCOMP_ON; // Достигнут гистерезис и компрессор еще не работает на ГВС - Старт бойлера
 		} else if(_is_on && !onBoiler) return pCOMP_OFF;// компрессор/котел работает, но ГВС греть не надо  - уходим без изменения состояния
@@ -2738,6 +2736,9 @@ MODE_COMP HeatPump::UpdateHeat()
 	if(_is_on && !onBoiler) {
 #ifdef R4WAY
 		if(dRelay[R4WAY].get_Relay() && (_is_on & _COMPR_)) {	// 4-х ходовой в другом положении - ошибка
+	#ifdef DEBUG_MODWORK
+			journal.printf(" MODE_HP: %d\n", get_modeHouse());
+	#endif
 			set_Error(ERR_WRONG_HARD_STATE, (char*)__FUNCTION__);
 			return pCOMP_NONE;
 		}
@@ -2967,12 +2968,12 @@ MODE_COMP HeatPump::UpdateCool()
 			set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
 			return pCOMP_NONE;
 		}
-//#ifdef R4WAY
-//		if(!dRelay[R4WAY].get_Relay()) { // 4-х ходовой в другом положении - ошибка
-//			set_Error(ERR_WRONG_HARD_STATE, (char*)__FUNCTION__);
-//			return pCOMP_NONE;
-//		}
-//#endif
+#ifdef R4WAY
+		if(!dRelay[R4WAY].get_Relay()) { // 4-х ходовой в другом положении - ошибка
+			set_Error(ERR_WRONG_HARD_STATE, (char*)__FUNCTION__);
+			return pCOMP_NONE;
+		}
+#endif
 	}
 
 	t1 = GETBIT(Prof.Cool.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Cool.Target 0-дом, 1-обратка
@@ -4166,7 +4167,7 @@ int8_t HeatPump::runCommand()
 			_delay(2000);              				      		 // задержка что бы вывести сообщение в консоль и на веб морду
 			save();                                            // сохранить настройки
 			break;
-		case pWAIT:   // Перевод в состяние ожидания  - особенность возможна блокировка задач - используем семафор
+		case pWAIT:   // Перевод в состояние ожидания  - особенность возможна блокировка задач - используем семафор
 xWait:
 			if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
 			{
@@ -4207,20 +4208,43 @@ xWait:
 	return error;
 }
 
-// Переключиться на другой профиль
+// Переключиться на другой профиль (0..I2C_PROFIL_NUM)
 void HeatPump::SwitchToProfile(int8_t _profile)
 {
 	typeof(uint16_t) crc16;
-	struct {
-		MODE_HP mode;
-		uint8_t flags;
-	} _tmp;
+	union {
+		struct { // from type_SaveON
+			MODE_HP mode;
+			uint8_t flags;
+			uint8_t dummy[2];
+		} _tmp;
+		struct { // from type_dataProfile
+			uint8_t flags;
+			uint8_t ProfileNext;
+			uint8_t TimeStart;
+			uint8_t TimeEnd;
+		} _tmp2;
+	};
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
 		return;
 	}
-	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + sizeof(Prof.SaveON.magic) + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, sizeof(_tmp))) {
+	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16), (uint8_t*)&_tmp2, sizeof(_tmp2))) {
+		SemaphoreGive(xI2CSemaphore);
+		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
+		return;
+	}
+	uint8_t p = Prof.check_switch_to_ProfileNext((type_dataProfile *)&_tmp2);
+	if(p) {
+		_profile = p - 1;
+		if(Prof.id == _profile) {
+			SemaphoreGive(xI2CSemaphore);
+			return;
+		}
+		journal.jprintf("Switch profile by time to %d\n", p + 1);
+	}
+	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
 		return;
@@ -4232,12 +4256,15 @@ void HeatPump::SwitchToProfile(int8_t _profile)
 		if(GETBIT(_tmp.flags, fBoilerON)) {
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
 		} else frestart = true;
-	} else if(currmode & pHEAT) {
-		if(_tmp.mode & pHEAT) {
-			if(GETBIT(_tmp.flags, fHeat_UseHeater) != GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) frestart = true;
-		} else frestart = true;
-	} else if(currmode & pCOOL) {
-		if(!(_tmp.mode & pCOOL)) frestart = true;
+	} else {
+		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
+		if(currmode & pHEAT) {
+			if(_tmp.mode & pHEAT) {
+				if(GETBIT(_tmp.flags, fHeat_UseHeater) != GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) frestart = true;
+			} else frestart = true;
+		} else if(currmode & pCOOL) {
+			if(!(_tmp.mode & pCOOL)) frestart = true;
+		}
 	}
 	if(frestart) { // Если направление работы ТН разное
 		HP.sendCommand(pWAIT);
@@ -4250,7 +4277,7 @@ void HeatPump::SwitchToProfile(int8_t _profile)
 	HP.set_profile();
 	//xTaskResumeAll();
 	num_repeat_prof = 0;
-	journal.jprintf_time("Profile changed to #%d\n", _profile);
+	journal.jprintf_time("Profile changed to %d\n", _profile + 1);
 	if(frestart) HP.sendCommand(pRESUME);
 }
 

@@ -101,7 +101,7 @@ window.onload = function() {
 	</tr><tr>
 		<td><b>ПИД</b></td><td></td>
 	</tr><tr>
-		<td>Использовать ПИД управление инвертором</td>
+		<td>Использовать ПИД для температуры подачи</td>
 		<td><input id="get_boiler-pid" type="checkbox" onchange="setParam('get_Boiler(PID)');"></td>
 	</tr><tr>
 		<td>Целевая температура подачи °C [5..70]</td>
@@ -142,7 +142,7 @@ window.onload = function() {
 		<td>Греть от генератора без ТЭНа</td>
 		<td><input type="checkbox" id="get_boiler-wg" onchange="setParam('get_Boiler(WG)');"></td>
 	</tr><tr>
-		<td>Задержка выключения насоса после выключения компрессора, сек.</td>
+		<td>Задержка выключения насоса после окончания нагрева, сек.</td>
 		<td nowrap><input type="number" id="get_boiler-do"> <input type="submit" value=">" onclick="setParam('get_Boiler(DO)');"></td>
 	</tr><tr>
 		<td>Управление циркуляционным насосом ГВС<sup>7</sup></td>

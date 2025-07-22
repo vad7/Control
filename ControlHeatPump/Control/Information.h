@@ -89,6 +89,7 @@ private:
 // Класс предназначен для работы с настройками ТН. в пямяти хранится текущий профиль, ав еепром можно хранить до 10 профилей, и загружать их по одному в пямять
 // также есть функции по сохраннию и удалению из еепром
 // номер текущего профиля хранится в структуре type_SaveON
+#define PROFILE_MAGIC 0xAA     // Признак начала профиля
 #define PROFILE_EMPTY 0x55     // Признак пустого профиля
 
 // --------- внутренние структуры --------------
@@ -244,14 +245,13 @@ struct type_setting_cool {
 
 struct type_dataProfile               // Хранение общих данных
 {
-	int8_t 		id;                     // Номер профайла 0..I2C_PROFIL_NUM-1 (1 элемент структуры!), todo: можно перенести в ОЗУ
 	uint8_t 	flags;                  // Флаги профайла (2 элемент структуры!)
 	uint8_t 	ProfileNext;			// Профиль на который будет переключение при ошибке или по времени [1..I2C_PROFIL_NUM], 0 - нет
-	uint8_t 	TimeStart;             	// Время начала работы профиля, hh:m0
+	uint8_t 	TimeStart;             	// Время начала работы профиля, с hh:m0
+	uint8_t 	TimeEnd;             	// Время окончания работы профиляm, до hh:m0
 	uint32_t 	saveTime;               // Время сохранения профиля
 	char 		name[LEN_PROFILE_NAME]; // Имя профайла
 	char 		note[85]; // Описание профайла кодирование описания профиля 40 русских букв (одна буква 6 байт (двойное кодирование) это входная строка)  описание переводится и хранится в utf8 по 2 байта символ
-	uint8_t 	TimeEnd;             	// Время окончания работы профиля, hh:m0
 };
 
 
@@ -276,13 +276,14 @@ class Profile                         // Класс профиль
     char *get_info(char *c,int8_t num);                     // ДОБАВЛЯЕТ к строке с - описание профиля num
     int16_t save(int8_t num);                               // Записать профайл в еепром под номерм num
     int32_t load(int8_t num);                               // загрузить профайл num из еепром память
-    int8_t  loadFromBuf(uint32_t adr,byte *buf);            // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
+//    int8_t  loadFromBuf(uint32_t adr,byte *buf);            // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
     int8_t  convert_to_new_version(void);
     int32_t erase(int8_t num);                              // стереть профайл num из еепром  (ставится признак пусто)
     boolean set_paramProfile(char *var,char *c);            // Профиль Установить параметры ТН из строки
     char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр
-    int8_t  get_idProfile(){return dataProfile.id;}         // получить номер текущего профиля
+    inline  int8_t get_idProfile(){return id;}             // получить номер текущего профиля
     int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
+    uint8_t	check_switch_to_ProfileNext(type_dataProfile *dp);// проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
 
     // Установка параметров
     boolean set_paramCoolHP(char *var, float x);            // Охлаждение Установить параметры ТН из числа (float)
@@ -298,6 +299,7 @@ class Profile                         // Класс профиль
 				// данные контрольная сумма считается с этого места
 				sizeof(dataProfile) + sizeof(SaveON) + sizeof(Cool) + sizeof(Heat) + sizeof(Boiler)	+ sizeof(DailySwitch);
     };
+    int8_t id;												// Номер профайла 0..I2C_PROFIL_NUM-1
  private:
     uint16_t get_crc16_mem();                               // Расчитать контрольную сумму
     int8_t   check_crc16_eeprom(int8_t num);                // Проверить контрольную сумму ПРОФИЛЯ в EEPROM для данных на выходе ошибка, длина определяется из заголовка
