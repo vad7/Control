@@ -689,9 +689,8 @@ function loadParam(paramid, noretry, resultdiv) {
 									if((element = document.getElementById("get_uptime2"))) element.innerHTML = values[1];
 								} else if(values[0] == "get_errcode" && values[1] == 0) {
 									document.getElementById("get_errcode").innerHTML = "OK";
-									document.getElementById("get_error").innerHTML = "";
 								} else if(values[0] == "get_errcode" && values[1] < 0) {
-									document.getElementById("get_errcode").innerHTML = "Ошибка";
+									document.getElementById("get_errcode").innerHTML = "Ошибка " + values[1];
 								} else if(values[0] == "test_Mail") {
 									setTimeout(loadParam('get_Message(scan_MAIL)'), 1000);
 								} else if(values[0] == "test_SMS") {
@@ -876,6 +875,11 @@ function updateParam(paramids) {
 	setInterval(function() {
 		loadParam(paramids)
 	}, urlupdate);
+	loadParam(paramids);
+}
+
+function updateParamPeriod(paramids, period) {
+	setInterval(function() { loadParam(paramids) }, period);
 	loadParam(paramids);
 }
 

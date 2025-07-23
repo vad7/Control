@@ -575,14 +575,23 @@ int8_t devRelay::set_Relay(int8_t r)
 #endif
 		if(GETBIT(HP.Option.flags2, f2RelayLog)) {
 			journal.jprintf_time("%X RELAY ", __builtin_return_address(0));
+#ifdef DEBUG_MODWORK
+			journal.jprintf("[%d] ", flags);
+#endif
 			if(Relay)	journal.jprintf("%s ON\n", name);
 			else 		journal.jprintf("%s OFF\n", name);
 		} else {
 			if(Relay)	journal.jprintf_time("RELAY %s ON\n", name);
 			else 		journal.jprintf_time("RELAY %s OFF\n", name);
+#ifdef DEBUG_MODWORK
+			journal.jprintf(" [%d]\n", flags);
+#endif
 		}
 	} else {
 		journal.jprintf_time("%X RELAY ", __builtin_return_address(0));
+#ifdef DEBUG_MODWORK
+		journal.jprintf("[%d] ", flags);
+#endif
 		if(Relay)	journal.jprintf("%s ON\n", name);
 		else 		journal.jprintf("%s OFF\n", name);
 	}

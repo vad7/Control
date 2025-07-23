@@ -370,6 +370,7 @@ struct type_statusHP
 #define StartPump_Work_Off	2	// в работе (выкл)
 #define StartPump_Work_On	3	// в работе (вкл)
 #define StartPump_AfterWork	4	// отработка после останова компрессора/котла (вкл)
+const char *StartPump_STR[] = { "Stop", "Start", "Work Off", "Work On", "Wait Off" };
 
 #define HeaterNeedOn (((Status.modWork & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)))
 
@@ -672,8 +673,9 @@ public:
 	TaskHandle_t xHandleKeysLCD;
 	#endif
 
-	SemaphoreHandle_t xCommandSemaphore;                // Семафор команды
-	boolean Task_vUpdate_run;							// задача vUpdate работает
+	SemaphoreHandle_t xCommandSemaphore;    // Семафор команды
+	boolean Task_vUpdate_run;				// задача vUpdate работает
+	void SetTask_vUpdate(bool onoff);		// Пуск/Останов задачи vUpdate
 
 	void Pumps(boolean b);					// Включение/выключение насосов
 	void Pump_HeatFloor(boolean On);		// Включить/выключить насос ТП

@@ -80,7 +80,7 @@ xSetupExit:
 					vTaskDelay(3000);
 					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) { // inside menu item selected
-					if((HP.get_State() != pSTARTING_HP) || (HP.get_State() != pSTOPING_HP)) {
+					if(HP.get_State() != pSTARTING_HP || HP.get_State() != pSTOPING_HP) {
 						if(LCD_setup & 0xFF) HP.sendCommand(pSTART); else HP.sendCommand(pSTOP);
 					}
 					goto xSetupExit;

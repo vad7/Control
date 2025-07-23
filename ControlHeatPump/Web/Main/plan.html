@@ -11,7 +11,8 @@ SchemeOld = "";
 urlupdate = 2000;
 window.onload = function() {
 		loadParam("hide_tro_ei,hide_sun,get_tblTemp1");
-		updateParam("get_MODES,get_HT(ON),get_pFC(cFC),get_pFC(INFO1),get_pEEV(POSpp),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TBOILER),get_Temp(TOUT),get_Temp(TEVAOUT),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TIN),get_Temp(TEVAING),get_Temp(TEVAOUTG),get_Temp(TCONING),get_Temp(TCONOUTG),get_Temp(TCONOUT),get_Boiler(CT),get_Relay(RPUMPI),get_relayOut,get_Flow(FLOWEVA),get_Flow(FLOWCON),get_OverCool,get_Power220,get_fullCOP,get_PowerGEO,get_PowerCO,get_Relay(RBOILER),get_Relay(RSUN),get_Temp(TSUN),get_Temp(TSUNOUTG),get_TrgT,get_oHP(BP),get_Prof(ASM),get_modeHP,get_WR(3)");
+		updateParam("get_MODES,get_HT(ON),get_pFC(cFC),get_pFC(INFO1),get_pEEV(POSpp),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TBOILER),get_Temp(TOUT),get_Temp(TEVAOUT),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TIN),get_Temp(TEVAING),get_Temp(TEVAOUTG),get_Temp(TCONING),get_Temp(TCONOUTG),get_Temp(TCONOUT),get_Boiler(CT),get_Relay(RPUMPI),get_relayOut,get_Flow(FLOWEVA),get_Flow(FLOWCON),get_OverCool,get_Power220,get_fullCOP,get_PowerGEO,get_PowerCO,get_Relay(RBOILER),get_Relay(RSUN),get_Temp(TSUN),get_Temp(TSUNOUTG),get_TrgT,get_oHP(BP),get_Prof(ASM),get_modeHP,get_WR(3),get_Relay(R4WAY)");
+		updateParamPeriod("get_error", 10000);
 };
 function loadParam_after(paramid) {
 	if(paramid.indexOf("get_MODES")!=-1) {
@@ -58,20 +59,21 @@ function set_bTIN(f,T) {
 </div>
 	<span id="get_wr-3"></span>
 	<div id="get_ht-on" style="display:none"></div>
+	<div id="get_relay-r4way" style="display:none"></div>
 </div>
-<div class="row1">
 <table>
 	<tr><td width="20%" style="font-weight: bold;" nowrap>Режим работы<span id="get_prof-asm-hide"> (авто)</span>:</td><td width="16%"><span id="get_modehp">-</span></td><td width="16%" style="font-weight: bold;">На улице:</td><td width="16%"><span id="get_temp-tout">-</span>&deg;</td><td width="16%" style="font-weight: bold;">В доме:</td><td width="16%"><span id="get_temp-tin">-</span>&deg;</td></tr>
 	<tr><td style="font-weight: bold;">Насос ГК:</td><td><span id="get_relay-rpumpi-ONOFF">-</span></td><td style="font-weight: bold;">Насос СО:</td><td nowrap><span id="get_relayout">-</span></td><td style="font-weight: bold;">Цель:</td><td nowrap><span id="get_trgt">-</span>&deg;</td></tr>
 	<tr><td style="font-weight: bold;">Потребление:</td><td nowrap><span id="get_power220">-</span> кВт</td><td style="font-weight: bold;">Вход:</td><td nowrap><span id="get_powergeo">-</span> кВт</td><td style="font-weight: bold;">Выход:</td><td nowrap><span id="get_powerco">-</span> кВт</td></tr>		
-	<tr><td style="font-weight: bold;">COP:</td><td><span id="get_fullcop">-</span></td> <td nowrap><span id="get_ohp-bp-hide" style="color:red" hidden>От генератора</span></td><td></td> <td></td><td></td></tr>		
+	<tr><td style="font-weight: bold;">COP:</td><td><span id="get_fullcop">-</span></td> <td nowrap><span id="get_ohp-bp-hide" style="color:red" hidden>От генератора</span></td><td></td> <td></td><td></td></tr>
 </table>
+<table><tr><td style="font-weight:bold;color:red" id="get_error"></td></tr></table>
+<span></span>
 <table style="width: 350">
 	<tbody id="get_tbltemp1">
 	</tbody>
 </table>
 <br>Поддержание температуры только по тем датчикам, напротив которых включена галочка.
-</div>
 </div>
 </body>
 </html>

@@ -1187,7 +1187,7 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		}
 		return true;
 	} else if(strcmp(var, prof_ProfileNext) == 0) {
-		if(x > I2C_PROFIL_NUM || x-1 == id) return false; // не верный номер профиля
+		if(x > I2C_PROFIL_NUM || (int8_t)x == id + 1) return false; // не верный номер профиля
 		dataProfile.ProfileNext = x;
 		return true;
 	} else if(strcmp(var, prof_TimeStart) == 0) {
@@ -1387,7 +1387,7 @@ char *Profile::get_list(char *c/*,int8_t num*/)
 int8_t Profile::set_list(int8_t num)
 {
 	if(num != id) { // new
-		if(load(num) < 0) journal.jprintf(" Profile %d not selected!\n", num + 1);
+		HP.SwitchToProfile(num);
 	}
 	return num;
 }

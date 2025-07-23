@@ -281,7 +281,7 @@ void Nextion::readCommand()
 						fUpdate = 2;
 						input_delay = NEXTION_INPUT_DELAY;
 					} else if(cmd2 == NXTID_MAIN_ONOFF) {  // событие нажатие кнопки вкл/выкл ТН
-						if((HP.get_State() != pSTARTING_HP) || (HP.get_State() != pSTOPING_HP)) {
+						if(HP.get_State() != pSTARTING_HP || HP.get_State() != pSTOPING_HP) {
 							if(HP.get_State() == pOFF_HP) HP.sendCommand(pSTART); else HP.sendCommand(pSTOP);
 							input_delay = NEXTION_INPUT_DELAY * 2;
 							return;
@@ -352,7 +352,7 @@ void Nextion::readCommand()
 					} else if(cmd2 < I2C_PROFIL_NUM) {
 						HP.Prof.set_list(cmd2);
 					} else if(cmd2 == NXTID_PROFILE_ONOFF) {  // событие нажатие кнопки вкл/выкл ТН
-						if((HP.get_State() != pSTARTING_HP) || (HP.get_State() != pSTOPING_HP)) {
+						if(HP.get_State() != pSTARTING_HP || HP.get_State() != pSTOPING_HP) {
 							if(HP.get_State() == pOFF_HP) HP.sendCommand(pSTART); else HP.sendCommand(pSTOP);
 							input_delay = NEXTION_INPUT_DELAY * 2;
 							return;

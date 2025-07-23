@@ -644,8 +644,8 @@ x_I2C_init_std_message:
 
 	if (xTaskCreate(vUpdate,"UpdateHP",160,NULL,2,&HP.xHandleUpdate)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*160;// 200, до обрезки стеков было 350
-	vTaskSuspend(HP.xHandleUpdate);                                 // Остановить задачу обновление ТН
 	HP.Task_vUpdate_run = false;
+	vTaskSuspend(HP.xHandleUpdate);                                 // Остановить задачу обновление ТН
 
 #ifdef EEV_DEF
 	if (xTaskCreate(vUpdateEEV,"UpdateEEV",100,NULL,2,&HP.xHandleUpdateEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)     set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
@@ -1803,7 +1803,7 @@ void vReadSensor_delay1ms(int32_t ms)
 					Error_Beep_confirmed = true;
 				} else if(HP.get_State() == pOFF_HP) {
 					HP.sendCommand(pSTART);
-				} else if((HP.get_State() == pWORK_HP) || (HP.get_State() == pWAIT_HP)) {
+				} else if(HP.get_State() == pWORK_HP || HP.get_State() == pWAIT_HP) {
 					HP.sendCommand(pSTOP);
 				}
 			}
@@ -1946,8 +1946,8 @@ void vReadSensor_delay1ms(int32_t ms)
 			uint8_t d = HP.Prof.check_switch_to_ProfileNext(&HP.Prof.dataProfile);
 			if(d) {
 				// время профиля вышло, переключаемся на связанный
+				journal.jprintf("Switch profile by time to %d\n", d);
 				HP.SwitchToProfile(--d);
-				if(d == HP.Prof.id) journal.jprintf("Switched profile by time\n");
 			} else {  // error: jump to label [-fpermissive] GCC
 				// Переключение расписания, когда текущий месяц и дясятидневка совпадают; если пропустили из-за выключенного НК или работы,
 				// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
@@ -1998,8 +1998,7 @@ delayTask:	// чтобы задача отдавала часть времени
 		{
 		case pOFF_HP:                          // 0 ТН выключен
 		case pSTOPING_HP:                      // 2 Останавливается
-			HP.Task_vUpdate_run = false;
-			journal.jprintf((const char*)" Stop task UpdateHP\n");
+			HP.SetTask_vUpdate(false);
 			break;
 		case pSTARTING_HP: _delay(10000); break; // 1 Стартует  - этого не должно быть в этом месте
 		case pWORK_HP:                           // 3 Работает   - анализ режима работы get_modWork()

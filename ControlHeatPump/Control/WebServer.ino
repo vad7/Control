@@ -815,25 +815,24 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			ADD_WEBDELIM(strReturn);
 			continue;
 		}
-		if (strcmp(str,"set_ON")==0)  // Функция set_ON
-		{
-			HP.sendCommand(pSTART);        // Послать команду на пуск ТН
-			if (HP.get_State()==pWORK_HP)  strcat(strReturn,cOne); else  strcat(strReturn,cZero); ADD_WEBDELIM(strReturn) ;    continue;
-		}
-		if (strcmp(str,"set_OFF")==0)  // Функция set_OFF
-		{
-			HP.sendCommand(pSTOP);        // Послать команду на останов ТН
-			if (HP.get_State()==pWORK_HP)  strcat(strReturn,cOne); else  strcat(strReturn,cZero); ADD_WEBDELIM(strReturn) ;    continue;
+		if(strncmp(str, "set_O", 5) == 0) {
+			str += 5;
+			if(strcmp(str, "FF") == 0) {		// Функция set_OFF
+				HP.sendCommand(pSTOP);			// Послать команду на останов ТН
+				if(HP.get_State() == pWORK_HP) strcat(strReturn, cOne);	else strcat(strReturn, cZero);
+			} else if(strcmp(str, "N") == 0) {	// Функция set_ON
+				HP.sendCommand(pSTART);			// Послать команду на пуск ТН
+				if(HP.get_State() == pWORK_HP) strcat(strReturn, cOne);	else strcat(strReturn, cZero);
+			}
+			ADD_WEBDELIM(strReturn); continue;
 		}
 		WEB_STORE_DEBUG_INFO(22);
 
-		if (strcmp(str,"get_errcode")==0)  // Функция get_errcode
-		{
-			_itoa(HP.get_errcode(),strReturn); ADD_WEBDELIM(strReturn) ;    continue;
-		}
-		if (strcmp(str,"get_error")==0)  // Функция get_error
-		{
-			strcat(strReturn,HP.get_lastErr()); ADD_WEBDELIM(strReturn) ;    continue;
+		if(strncmp(str, "get_err", 7)==0) {
+			str += 7;
+			if(strcmp(str,"code")==0) _itoa(HP.get_errcode(),strReturn);	// Функция get_errcode
+			else if(strcmp(str,"or")==0) strcat(strReturn, HP.get_errcode() == OK ? "" : HP.get_lastErr()); // Функция get_error
+			ADD_WEBDELIM(strReturn); continue;
 		}
 //		if (strcmp(str,"get_tempSAM3x")==0)  // Функция get_tempSAM3x  - получение температуры чипа sam3x
 //		{
@@ -1359,11 +1358,11 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 				// Вывод строки статуса
 				WEB_STORE_DEBUG_INFO(46);
-				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s] fHP:%X", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
-				//for(i = 0; i < RNUMBER; i++) strReturn += m_snprintf(strReturn, 32, " %s:%d", HP.dRelay[i].get_name(), HP.dRelay[i].get_Relay());
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s] fHP:%X;", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
+				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
 				//if(HP.dFC.get_present())  {strcat(strReturn," Power:"); _ftoa(strReturn,(float)HP.dFC.get_power()/1000.0,3);  }
-				strcat(strReturn,";");
+				//strcat(strReturn,";");
 
 				WEB_STORE_DEBUG_INFO(47);
 				strcat(strReturn,"<b> Времена</b>|;");
