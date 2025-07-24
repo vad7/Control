@@ -34,8 +34,7 @@ function erase_Profile(p) {
 			<input type="submit" value="Записать профиль"  onclick='loadParam("set_SAVE_PROF")'>
 		</h2>
 		* старый профиль с этим номером при сохранении будет заменен<br><br>
-
-		<table  style="width: 900">
+		<table border="1" rules="rows">
 		<tbody>
 		<tr>
 			<td>Имя профиля</td>
@@ -52,7 +51,7 @@ function erase_Profile(p) {
 		<tr>
 			<td>Описание профиля</td>
 			<td>
-				<input id="get_prof-note" type="text"> <input id="get_prof-note2" type="submit" value=">" onclick="setParam('get_Prof(NOTE)');">
+				<input id="get_prof-note" type="text" size=50> <input id="get_prof-note2" type="submit" value=">" onclick="setParam('get_Prof(NOTE)');">
 			</td>
 		</tr>
 		<tr>
@@ -62,7 +61,7 @@ function erase_Profile(p) {
 			</td>
 		</tr>
 		<tr>
-			<td>Переключаться на другой профиль по Ошибке</td>
+			<td>Переключаться на другой профиль по Ошибке, если на другом профиле режим работы отопления совпадает</td>
 			<td>
 				<input type="checkbox" id="get_prof-f2" onchange="setParam('get_Prof(F2)');">
 			</td>

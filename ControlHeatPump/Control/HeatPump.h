@@ -517,7 +517,7 @@ public:
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
 	void set_profile();										// Установить рабочий профиль по текущему Prof
-	void SwitchToProfile(int8_t _profile);					// Переключиться на другой профиль
+	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения
 	RULE_HP get_ruleHeat(){return Prof.Heat.Rule;}           // Получить алгоритм отопления

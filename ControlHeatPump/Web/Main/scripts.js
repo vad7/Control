@@ -621,11 +621,11 @@ function loadParam(paramid, noretry, resultdiv) {
 									} else if((element = document.getElementById(valueid + "-hide"))) {
 										element.hidden = values[1] == '0' || values[1] == '';
 									} else if((element = document.getElementById(valueid + "-div10"))) {
-										element.innerHTML = element.value = (Number(values[1])/10).toFixed(1);
+										if(isNaN(Number(values[1]))) element.placeholder = values[1]; else element.value = (Number(values[1])/10).toFixed(1);
 									} else if((element = document.getElementById(valueid + "-div100"))) {
-										element.innerHTML = element.value = (Number(values[1])/100).toFixed(2);
+										if(isNaN(Number(values[1]))) element.placeholder = values[1]; else element.value = (Number(values[1])/100).toFixed(2);
 									} else if((element = document.getElementById(valueid + "-div1000"))) {
-										element.innerHTML = element.value = (Number(values[1])/1000).toFixed(3);
+										if(isNaN(Number(values[1]))) element.placeholder = values[1]; else element.value = (Number(values[1])/1000).toFixed(3);
 									}
 								} else if(type == 'is') {
 									if(values[1] == 0 || values[1].substring(0,1) == 'E') {

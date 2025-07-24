@@ -110,11 +110,11 @@ void HeatPump::process_error(void)
 				goto xExit;
 			}
 #endif
-			if(num_repeat < get_nStart())                 // есть еще попытки
-			{
+			if(num_repeat < get_nStart()) {                // есть еще попытки
 				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext > 0 && num_repeat_prof >= Option.nStartNextProf) {
-					SwitchToProfile(Prof.dataProfile.ProfileNext - 1);
-				} else sendCommand(pREPEAT);                     // Повторный пуск ТН
+					SwitchToProfile((Prof.dataProfile.ProfileNext - 1) + 128);
+				}
+				sendCommand(pREPEAT);                  // Повторный пуск ТН
 			} else {
 				sendCommand(pSTOP);                    // Послать команду на останов ТН  БЕЗ ПОПЫТОК ПУСКА
 			}
@@ -1757,7 +1757,7 @@ boolean HeatPump::switchBoiler(boolean b)
 	offBoiler = b ? 0 : rtcSAM3X8.unixtime(); // запомнить время выключения ГВС (нужно для переключения)
 	if(onBoiler && get_State() == pWORK_HP) { // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
 		onBoiler = b;
-		journal.jprintf(" Pause %ds, Boiler->House\n", Option.delayBoilerSW);
+		journal.jprintf(" Pause %d s, Boiler->House\n", Option.delayBoilerSW);
 		int16_t newpos = dEEV.get_FromHeatToBoilerMove();
 		if(newpos) {
 			newpos = dEEV.get_EEV() - newpos;
@@ -1821,7 +1821,7 @@ if(b && (get_modWork() & pBOILER)){
 	} else {
 		dRelay[R3WAY].set_Relay(false);              // скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС
 	    if(onBoiler && get_State() == pWORK_HP) {    // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
-	    	journal.jprintf(" Pause %ds, Boiler->Pause\n", Option.delayBoilerSW);
+	    	journal.jprintf(" Pause %d s, Boiler->Pause\n", Option.delayBoilerSW);
 	    	_delay((delayed = Option.delayBoilerSW) * 1000);    // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	    }
 	}
@@ -2234,7 +2234,7 @@ void HeatPump::StopWait(boolean stop)
 	SETBIT0(work_flags, fHP_BoilerTogetherHeat);
 
 	if(stop) {
-		relayAllOFF();													// ВСЕ РЕЛЕ -> ВЫКЛ!
+		relayAllOFF();											// ВСЕ РЕЛЕ -> ВЫКЛ!
 		//journal.jprintf(" statChart stop\n");
 		setState(pOFF_HP);
 		journal.jprintf_time("%s OFF . . .\n", (char*) nameHeatPump);
@@ -2242,7 +2242,7 @@ void HeatPump::StopWait(boolean stop)
 		setState(pWAIT_HP);
 		journal.jprintf_time("%s WAIT . . .\n", (char*) nameHeatPump);
 	}
-	num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
+	if(get_errcode() == OK) num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
 #ifdef AUTO_START_GENERATOR
 	if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
 #endif
@@ -2443,7 +2443,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		   || ((_is_on & _COMPR_) ? sTemp[TCOMP].get_Temp() > get_TempAlarmMax(TCOMP) - BOILER_TEMP_COMP_RESET : false)) // температура нагнетания компрессора больше максимальной -5 градусов
 		{
 #ifdef DEBUG_MODWORK
-			journal.jprintf(" Boiler: Discharging %ds...\n", Prof.Boiler.Reset_Time);
+			journal.jprintf(" Boiler: Discharging %d s...\n", Prof.Boiler.Reset_Time);
 #endif
 			switchBoiler(false);       // Переключиться на ходу на отопление
 			Status.ret = pBdis;
@@ -3118,7 +3118,9 @@ MODE_COMP HeatPump::UpdateCool()
 // Пуск/Останов задачи vUpdate ("UpdateHP")
 void HeatPump::SetTask_vUpdate(bool onoff)
 {
+#ifdef DEBUG_MODWORK
 	if(onoff != Task_vUpdate_run) journal.jprintf(" %s task UpdateHP\n", onoff ? "Start" : "Stop");
+#endif
 	if(onoff) {
 		Task_vUpdate_run = true;
 		vTaskResume(xHandleUpdate);
@@ -3618,7 +3620,7 @@ xNextStop:
 	{
 #endif
 #ifdef DEBUG_MODWORK
-	journal.jprintf_time("Pause %ds before start Compressor\n", Option.delayOnPump);
+	journal.jprintf_time("Pause %d s before start Compressor\n", Option.delayOnPump);
 #endif
 	uint16_t d = Option.delayOnPump;
 #ifdef FLOW_CONTROL
@@ -3757,7 +3759,7 @@ xNextStop:
 		//  ЭРВ ОБЛЕГЧЕННЫЙ ПУСК
 		if(dEEV.get_LightStart())
 		{
-			journal.jprintf(" Pause %ds before go start position EEV . . .\n", dEEV.get_DelayStartPos());
+			journal.jprintf(" Pause %d s before go start position EEV . . .\n", dEEV.get_DelayStartPos());
 			_delay(dEEV.get_DelayStartPos() * 1000);  // Задержка после включения компрессора до ухода на рабочую позицию
 			journal.jprintf(" EEV go ");
 			if(dEEV.get_StartFlagPos() || lastEEV == -1) { // если первая итерация или установлен соответсвующий флаг, то на стартовую позицию
@@ -3856,7 +3858,7 @@ void HeatPump::compressorOFF()
 		uint32_t t = rtcSAM3X8.unixtime() - stopCompressor;
 		if(t < GENERATOR_OFF_DELAY) {
 			t = GENERATOR_OFF_DELAY - t;
-			journal.jprintf(" Delay %ds before RGEN off . . .\n", t);
+			journal.jprintf(" Delay %d s before RGEN off . . .\n", t);
 			_delay(t * 1000);
 			dRelay[RGEN].set_OFF();
 		}
@@ -3997,7 +3999,7 @@ void HeatPump::heaterON()
 #endif
 	// 2. Задержка перед включением
 #ifdef DEBUG_MODWORK
-	journal.jprintf_time("Pause %ds before start Heater\n", Option.delayOnPump);
+	journal.jprintf_time("Pause %d s before start Heater\n", Option.delayOnPump);
 #endif
 	uint16_t d = Option.delayOnPump;
 #ifdef FLOW_CONTROL
@@ -4208,14 +4210,15 @@ xWait:
 	return error;
 }
 
-// Переключиться на другой профиль (0..I2C_PROFIL_NUM)
-void HeatPump::SwitchToProfile(int8_t _profile)
+// Переключиться на другой профиль (0..I2C_PROFIL_NUM),
+// если b7(+128) установлен, то проверка наличия такого же режима работы отопления или ГВС, как текущий
+void HeatPump::SwitchToProfile(uint8_t _profile)
 {
 	typeof(uint16_t) crc16;
 	union {
 		struct { // from type_SaveON
-			MODE_HP mode;
 			uint8_t flags;
+			MODE_HP mode;
 			uint8_t dummy[2];
 		} _tmp;
 		struct { // from type_dataProfile
@@ -4225,6 +4228,11 @@ void HeatPump::SwitchToProfile(int8_t _profile)
 			uint8_t TimeEnd;
 		} _tmp2;
 	};
+	bool _check_mode;
+	if(_profile & 128) {
+		_profile &= ~128;
+		_check_mode = true;
+	} else _check_mode = false;
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
@@ -4251,13 +4259,26 @@ void HeatPump::SwitchToProfile(int8_t _profile)
 	}
 	SemaphoreGive(xI2CSemaphore);
 	MODE_HP currmode = get_modWork();
+#ifdef DEBUG_MODWORK
+	journal.jprintf("Current mode: %d\n", currmode);
+#endif
 	bool frestart = false;
 	if(currmode & pBOILER) {
 		if(GETBIT(_tmp.flags, fBoilerON)) {
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
-		} else frestart = true;
+		} else {
+			if(_check_mode) { // режим не такой же - выходим
+				journal.jprintf("Can't change profile to %d - boiler off\n", _profile + 1);
+				return;
+			}
+			frestart = true;
+		}
 	} else {
 		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
+		if(_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
+			journal.jprintf("Can't change profile to %d - mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
+			return;
+		}
 		if(currmode & pHEAT) {
 			if(_tmp.mode & pHEAT) {
 				if(GETBIT(_tmp.flags, fHeat_UseHeater) != GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) frestart = true;
