@@ -81,7 +81,11 @@ xSetupExit:
 					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == LCD_SetupMenu_OnOff) { // inside menu item selected
 					if(HP.get_State() != pSTARTING_HP || HP.get_State() != pSTOPING_HP) {
-						if(LCD_setup & 0xFF) HP.sendCommand(pSTART); else HP.sendCommand(pSTOP);
+						if(LCD_setup & 0xFF) HP.sendCommand(pSTART);
+						else {
+							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+							HP.sendCommand(pSTOP);
+						}
 					}
 					goto xSetupExit;
 				} else if((LCD_setup & 0xFF00) == 0) {	// select menu item

@@ -21,10 +21,10 @@
 #include "HeatPump.h"
 
 // константы для упрощения читаемости кода (используются только в этом файле)
-#define _stop   true   // Команда останов ТН
-#define _wait   false  // Команда перевода в режим ожидания ТН
-#define _start  true   // Команда запуска ТН
-#define _resume false  // Команда возобновления работы ТН
+#define _STOP_   true   // Команда останов ТН
+#define _WAIT_   false  // Команда перевода в режим ожидания ТН
+#define _START_  true   // Команда запуска ТН
+#define _RESUME_ false  // Команда возобновления работы ТН
 
 // Макросы по работе с компрессором в зависимости от наличия инвертора
 #define COMPRESSOR_ON   { if(dFC.get_present()) dFC.start_FC(); else dRelay[RCOMP].set_ON(); set_startCompressor(); }  // Включить компрессор в зависимости от наличия инвертора
@@ -38,20 +38,6 @@
 void set_Error(int8_t _err, char *nam)
 {
 	if(_err == OK) return;
-	if(HP.is_compressor_on())    // СРАЗУ Если компрессор включен, выключить  ГЛАВНАЯ ЗАЩИТА
-	{ // Выключить компрессор для обоих вариантов
-		if(HP.dFC.get_present()) HP.dFC.stop_FC(); else HP.dRelay[RCOMP].set_OFF();
-		HP.set_stopCompressor();
-		journal.jprintf("! Compressor protection ");
-	}
-#ifdef USE_HEATER
-	if(HP.is_heater_on()) {
-		HP.dHeater.Heater_Stop();
-		journal.jprintf("! Heater protection ");
-	}
-#endif
-	//   if ((HP.get_State()==pOFF_HP)&&(HP.error!=OK)) return HP.error;  // Если ТН НЕ работает, не стартует не останавливается и уже есть ошибка то останавливать нечего и выключать нечего выходим - ошибка не обновляется - важна ПЕРВАЯ ошибка
-
 	if(HP.error == OK) {
 		HP.error = _err;
 		strcpy(HP.note_error, NowTimeToStr());       // Cтереть всю строку и поставить время
@@ -83,11 +69,16 @@ xSearch_sTemp:
 			strcat(HP.note_error, ": ");
 			strcat(HP.note_error, noteError[abs(_err)]); // Описание ошибки
 		}
-		journal.jprintf_time("$ERROR source: %s, code: %d\n", nam, _err); //journal.jprintf(", code: %d\n",_err);
-		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) HP.save_DumpJournal(true); // вывод отладочной информации для начала  если запущена freeRTOS
+		journal.jprintf_time("$ERROR source: %s, code: %d\n", nam, _err);
+		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) HP.save_DumpJournal(true); // вывод отладочной информации для начала, если запущена freeRTOS
+		// Сюда ставить надо останов ТН !
+		if(HP.is_compressor_on()) HP.compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
+		if(HP.is_heater_on()) HP.heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
 		HP.message.setMessage(pMESSAGE_ERROR, HP.note_error, 0);    // сформировать уведомление об ошибке
-		// Сюда ставить надо останов ТН !!!!!!!!!!!!!!!!!!!!!
 		HP.process_error();
+	} else {
+		if(HP.is_compressor_on()) HP.compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
+		if(HP.is_heater_on()) HP.heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
 	}
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
 		journal.printf("xI2CSemaphore locked!\n");
@@ -100,8 +91,7 @@ xSearch_sTemp:
 
 void HeatPump::process_error(void)
 {
-	if(get_State() != pOFF_HP)    // Насос не ВЫКЛЮЧЕН есть что выключать
-	{
+	if(get_State() != pOFF_HP) {   // Насос не ВЫКЛЮЧЕН есть что выключать
 		if(get_nStart() == 0) sendCommand(pSTOP); // Послать команду на останов ТН, если нет попыток повторного пуска
 		else { // сюда ставить повторные пуски ТН при ошибке.
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
@@ -354,7 +344,7 @@ int32_t HeatPump::save(void)
 {
 	uint16_t crc = 0xFFFF;
 	uint32_t addr = I2C_SETTING_EEPROM + 2; // +size all
-	Option.numProf = Prof.get_idProfile();      // Запомнить текущий профиль, его записываем ЭТО обязательно!!!! нужно для восстановления настроек
+	//Option.numProf = Prof.get_idProfile();
 	uint8_t tasks_suspended = TaskSuspendAll(); // Запрет других задач
 	if(error == ERR_SAVE_EEPROM || error == ERR_LOAD_EEPROM || error == ERR_CRC16_EEPROM) error = OK;
 	journal.jprintf(" Save settings ");
@@ -837,7 +827,7 @@ void HeatPump::resetSettingHP()
 	Option.delayR4WAY = DEF_DELAY_R4WAY;
 	Option.delayBoilerSW = DEF_DELAY_BOILER_SW;
 	Option.delayBoilerOff = DEF_DELAY_BOILER_OFF;
-	Option.numProf = Prof.get_idProfile(); //  Профиль не загружен по дефолту 0 профиль
+	Option.numProf = 0; 				//  Профиль по дефолту 1
 	Option.nStart = 10;                   //  Число попыток начала работы всего
 	Option.nStartNextProf = 3;           //  Число попыток начала работы на новом профиле
 	Option.tChart = 10;                  //  период накопления статистики по умолчанию 60 секунд
@@ -1379,13 +1369,6 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	return strcat(ret,(char*)cInvalid);
 }
 
-
-// Установить рабочий профиль по текущему Prof
-void HeatPump::set_profile()
-{
-	Option.numProf = Prof.get_idProfile();
-}
-
 // --------------------------------------------------------------------
 // ФУНКЦИИ РАБОТЫ С ГРАФИКАМИ ТН -----------------------------------
 // --------------------------------------------------------------------
@@ -1795,7 +1778,7 @@ void HeatPump::Pump_HeatFloor(boolean On)
 	if(On) {
 		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor)) || (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor))))
 			dRelay[RPUMPFL].set_ON();
-	} else dRelay[RPUMPFL].set_OFF();
+	} else dRelay[RPUMPFL].set_Relay(error ? fR_StatusAllOff : fR_StatusMain);
 }
 #else
 void HeatPump::Pump_HeatFloor(boolean) { }
@@ -1826,9 +1809,9 @@ if(b && (get_modWork() & pBOILER)){
 	    }
 	}
 #endif
-	if(b) {
+	if(b) { // ВКЛ
 		if(!HeaterNeedOn) {
-			dRelay[PUMP_IN].set_Relay(b);            // Реле включения насоса входного контура  (геоконтур)
+			dRelay[PUMP_IN].set_Relay(b);            // Реле насоса входного контура (геоконтур)
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
 	#ifdef  TWO_PUMP_IN                              // второй насос для воздушника если есть
 			if(sTemp[TEVAOUT].get_Temp() < 2500) dRelay[PUMP_IN1].set_ON(); // Реле включения второго насоса входного контура для  воздушника
@@ -1836,15 +1819,16 @@ if(b && (get_modWork() & pBOILER)){
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
 	#endif
 		}
-	} else {
-		if(GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain)) {
+	} else { // ВЫКЛ
+		if(GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain) || error) {
 			journal.jprintf(" Delay: stop IN pump.\n");
-			delayed += DELAY_BEFORE_STOP_IN_PUMP;
-			for(uint16_t i = 0; i < DELAY_BEFORE_STOP_IN_PUMP; i++) {
+			if(error) delayed += DELAY_BEFORE_STOP_IN_PUMP < PUMPS_STOP_DELAY_ON_ERROR ? DELAY_BEFORE_STOP_IN_PUMP : PUMPS_STOP_DELAY_ON_ERROR;
+			else delayed += DELAY_BEFORE_STOP_IN_PUMP;
+			for(uint16_t i = 0; i < (DELAY_BEFORE_STOP_IN_PUMP < PUMPS_STOP_DELAY_ON_ERROR ? DELAY_BEFORE_STOP_IN_PUMP : PUMPS_STOP_DELAY_ON_ERROR); i++) {
 				_delay(1000); // задержка перед выключение гео насоса после выключения компрессора (облегчение останова)
 				if(is_next_command_stop()) break;
 			}
-			dRelay[PUMP_IN].set_Relay(b);           // Реле включения насоса входного контура  (геоконтур)
+			dRelay[PUMP_IN].set_Relay(error ? fR_StatusAllOff : fR_StatusMain);  // Реле насоса входного контура (геоконтур)
 		}
 #ifdef  TWO_PUMP_IN                                 // второй насос для воздушника если есть
 		dRelay[PUMP_IN1].set_OFF();                 // если насосы выключаем, то второй вентилятор ВСЕГДА выключается
@@ -1852,24 +1836,44 @@ if(b && (get_modWork() & pBOILER)){
 #endif
 	}
 	
-	if(!b && (GETBIT(dRelay[RPUMPO].flags, fR_StatusMain) // пауза перед выключением насосов контуров, если нужно
+	if(!b) { // ВЫКЛ
+		if(error) { // по ошибке
+			delayed = PUMPS_STOP_DELAY_ON_ERROR - delayed;
+			if(delayed > 0) {
+				journal.jprintf(" Delay: stop OUT pump.\n");
+				_delay(delayed);
+			}
+			dRelay[PUMP_OUT].set_Relay(fR_StatusAllOff);
+#ifdef RPUMPBH
+	   		if(dRelay[RPUMPBH].get_Relay()) {
+		   		_delay(DELAY_AFTER_SWITCH_RELAY);		// Задержка на d мсек
+	   			dRelay[RPUMPBH].set_Relay(fR_StatusAllOff);
+	   			offBoiler = rtcSAM3X8.unixtime();		// запомнить время выключения ГВС (нужно для переключения)
+	   		}
+	   		_delay(DELAY_AFTER_SWITCH_RELAY);			// Задержка на d мсек
+		   	Pump_HeatFloor(0);							// насос ТП
+		   	return;
+#endif
+		}
+		if((GETBIT(dRelay[RPUMPO].flags, fR_StatusMain) // пауза перед выключением насосов контуров, если нужно
 #ifdef RPUMPBH
 			|| GETBIT(dRelay[RPUMPBH].flags, fR_StatusMain)
 #endif
-	)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
-		if(startPump == StartPump_AfterWork) {
-			if(pump_in_pause_timer) return; // время не пришло
-			startPump = HP.get_workPump() ? StartPump_Start : StartPump_Stop;
-		} else if(/*get_modeHouse() != pOFF && */(!get_workPump() || get_pausePump())) {
-			delayed = (error ? Option.delayOffPump :
-				onBoiler ? Prof.Boiler.delayOffPump :
-				get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump :
-				get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump) - delayed;
-			if(delayed > 0) {
-				journal.jprintf(" Delay: stop OUT pump.\n");
-				pump_in_pause_timer = delayed;
-				startPump = StartPump_AfterWork;
-				return;
+		)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
+			if(startPump == StartPump_AfterWork) {
+				if(pump_in_pause_timer) return; // время не пришло
+				startPump = HP.get_workPump() ? StartPump_Start : StartPump_Stop;
+			} else if(/*get_modeHouse() != pOFF && */(!get_workPump() || get_pausePump())) {
+				delayed = (error ? Option.delayOffPump :
+					onBoiler ? Prof.Boiler.delayOffPump :
+					get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump :
+					get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump) - delayed;
+				if(delayed > 0) {
+					journal.jprintf(" Delay: stop OUT pump.\n");
+					pump_in_pause_timer = delayed;
+					startPump = StartPump_AfterWork;
+					return;
+				}
 			}
 		}
 	}
@@ -1909,7 +1913,7 @@ if(b && (get_modWork() & pBOILER)){
 		if(!get_workPump() || get_pausePump() || get_modeHouse() == pOFF) {
 			dRelay[RPUMPO].set_OFF(); 				// насос отопления
 	   		_delay(DELAY_AFTER_SWITCH_RELAY);								// Задержка на d мсек
-		   	Pump_HeatFloor(0); 						// насос ТП
+		   	Pump_HeatFloor(0);						// насос ТП
 		}
    		_delay(DELAY_AFTER_SWITCH_RELAY);									// Задержка на d мсек
    	}
@@ -2003,7 +2007,6 @@ xGoWait:
 			goto xGoWait;
 		} else if(profile != Prof.get_idProfile()) {
 			Prof.load(profile);
-			set_profile();
 			journal.jprintf("Profile changed to #%d\n", profile);
 		}
 	}
@@ -2190,10 +2193,8 @@ void HeatPump::StopWait(boolean stop)
 	}
 
 	journal.jprintf(" modWork: %X[%s]\n", get_modWork(), codeRet[Status.ret]);
-#ifdef USE_HEATER
-	if(is_heater_on()) heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
-#endif
 	if(is_compressor_on()) compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
+	if(is_heater_on()) heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
 
 	if(stop) { //Обновление ТН отключаем только при останове
 		SetTask_vUpdate(false);
@@ -3810,17 +3811,16 @@ xNextStop:
 // попытка выключить компрессор  с учетом всех защит
 void HeatPump::compressorOFF()
 {
-#ifdef EEV_DEF
-	lastEEV = dEEV.get_EEV();                                             // Запомнить последнюю позицию ЭРВ
-	dEEV.Pause();                                                       // Поставить на паузу задачу Обновления ЭРВ
-	journal.jprintf(" Stop control EEV\n");
-#endif
-
 	command_completed = rtcSAM3X8.unixtime();
 	if(is_compressor_on()) {
 		COMPRESSOR_OFF;                                             // Компрессор выключить
 		compressor_in_pause = false;
 	}
+#ifdef EEV_DEF
+	lastEEV = dEEV.get_EEV();                                           // Запомнить последнюю позицию ЭРВ
+	dEEV.Pause();                                                       // Поставить на паузу задачу Обновления ЭРВ
+	journal.jprintf(" Stop control EEV\n");
+#endif
 
 #ifdef REVI
 	checkEVI();                                                     // выключить ЭВИ
@@ -4104,18 +4104,18 @@ int8_t HeatPump::runCommand()
 		case pEMPTY:  return true; break;     // 0 Команд нет
 		case pSTART:                          // 1 Пуск теплового насоса
 			num_repeat = num_repeat_prof = 0; // обнулить счетчик повторных пусков
-			StartResume(_start);              // включить ТН
+			StartResume(_START_);              // включить ТН
 			break;
 		case pAUTOSTART:                      // 2 Пуск теплового насоса автоматический
-			StartResume(_start);              // включить ТН
+			StartResume(_START_);              // включить ТН
 			break;
 		case pSTOP:                           // 3 Стоп теплового насоса
 		    PauseStart = 0;
-			StopWait(_stop);                  // Выключить ТН
+			StopWait(_STOP_);                  // Выключить ТН
 			break;
 		case pRESET:                          // 4 Сброс контроллера
 		    PauseStart = 0;
-			StopWait(_stop);                  // Выключить ТН
+			StopWait(_STOP_);                  // Выключить ТН
 			journal.jprintf_time("$SOFTWARE RESET . . .\n\n");
 			save_motoHour();
 			Stats.SaveStats(0);
@@ -4128,27 +4128,27 @@ int8_t HeatPump::runCommand()
 				NO_Power = 2;
 				goto xWait;
 			}
-			StopWait(_stop);                            // Попытка запустит ТН (по числу пусков)
-			num_repeat++;                               // увеличить счетчик повторов пуска ТН
+			StopWait(_STOP_);                 // Попытка запустит ТН (по числу пусков)
+			num_repeat++;                     // увеличить счетчик повторов пуска ТН
 			num_repeat_prof++;
 			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
-			PauseStart = 1;   							// Запустить выполнение отложенного старта
+			PauseStart = 1;   					// Запустить выполнение отложенного старта
 			break;
 		case pREPEAT_FAST:
-			if(NO_Power) {                    // Нет питания - ожидание
+			if(NO_Power) {                      // Нет питания - ожидание
 				NO_Power = 2;
 				goto xWait;
 			}
-			StopWait(_stop);                            // Попытка запустит ТН (по числу пусков)
-			num_repeat++;                               // увеличить счетчик повторов пуска ТН
+			StopWait(_STOP_);                   // Попытка запустит ТН (по числу пусков)
+			num_repeat++;                       // увеличить счетчик повторов пуска ТН
 			num_repeat_prof++;
 			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
-			PauseStart = 2;   							// Запустить выполнение отложенного старта
+			PauseStart = 2;   					// Запустить выполнение отложенного старта
 			break;
 		case pRESTART:
-			// Stop();                                          // пуск Тн после сброса - есть задержка
+			// Stop();                          // пуск Тн после сброса - есть задержка
 			journal.jprintf("Restart %s . . .\n",(char*)nameHeatPump);
-			PauseStart = 1;									// Запустить выполнение отложенного старта
+			PauseStart = 1;						// Запустить выполнение отложенного старта
 			break;
 		case pNETWORK:
 			_delay(1000);               						// задержка что бы вывести сообщение в консоль и на веб морду
@@ -4177,7 +4177,7 @@ xWait:
 			if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
 			{
 				SetTask_vUpdate(false);
-				StopWait(_wait);                                  // Ожидание
+				StopWait(_WAIT_);                                  // Ожидание
 				SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
 				SetTask_vUpdate(true);
 			}
@@ -4186,13 +4186,15 @@ xWait:
 		case pRESUME:   // Восстановление работы после ожиданияя -особенность возможна блокировка задач - используем семафор
 			if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
 			{
-				StartResume(_resume);                             // восстановление ТН
+				StartResume(_RESUME_);                             // восстановление ТН
 				SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
 				SetTask_vUpdate(true);
 			}
 			else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
 			break;
-
+		case pCHANGE_PROFILE:
+			if(Prof.id != Option.numProf) HP.SwitchToProfile(Option.numProf);
+			break;
 		default:                                                         // Не известная команда
 			journal.jprintf("Unknown command: %d !!!", command);
 			break;
@@ -4211,7 +4213,7 @@ xWait:
 }
 
 // Переключиться на другой профиль (0..I2C_PROFIL_NUM),
-// если b7(+128) установлен, то проверка наличия такого же режима работы отопления или ГВС, как текущий
+// Переключение по ошибке - если b7(+128) установлен, проверка наличия такого же режима работы отопления или ГВС, как текущий
 void HeatPump::SwitchToProfile(uint8_t _profile)
 {
 	typeof(uint16_t) crc16;
@@ -4228,11 +4230,11 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			uint8_t TimeEnd;
 		} _tmp2;
 	};
-	bool _check_mode;
+	bool _by_error_check_mode;
 	if(_profile & 128) {
 		_profile &= ~128;
-		_check_mode = true;
-	} else _check_mode = false;
+		_by_error_check_mode = true;
+	} else _by_error_check_mode = false;
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
@@ -4243,7 +4245,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
 		return;
 	}
-	uint8_t p = Prof.check_switch_to_ProfileNext((type_dataProfile *)&_tmp2);
+	uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
 	if(p) {
 		_profile = p - 1;
 		if(Prof.id == _profile) {
@@ -4267,7 +4269,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		if(GETBIT(_tmp.flags, fBoilerON)) {
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
 		} else {
-			if(_check_mode) { // режим не такой же - выходим
+			if(_by_error_check_mode) { // режим не такой же - выходим
 				journal.jprintf("Can't change profile to %d - boiler off\n", _profile + 1);
 				return;
 			}
@@ -4275,7 +4277,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		}
 	} else {
 		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
-		if(_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
+		if(_by_error_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
 			journal.jprintf("Can't change profile to %d - mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
 			return;
 		}
@@ -4297,10 +4299,12 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 	}
 	//vTaskSuspendAll();	// без проверки
 	Prof.load(_profile);
-	set_profile();
 	//xTaskResumeAll();
 	num_repeat_prof = 0;
-	if(_profile == Prof.id) journal.jprintf_time("Set profile to %d\n", _profile + 1); else journal.jprintf_time("Failed sеt profile to %d\n", _profile + 1);
+	if(_profile == Prof.id) {
+		if(_by_error_check_mode) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
+		journal.jprintf_time("Set profile to %d\n", _profile + 1);
+	} else journal.jprintf_time("Failed sеt profile to %d\n", _profile + 1);
 	if(frestart) sendCommand(pRESUME);
 }
 

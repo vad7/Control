@@ -226,9 +226,10 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_HeaterValveOn		7			// Положение крана Котла - ТН: 0 - ТН, 1 - Котел
 #define fHP_CompressorWasOn		8			// Последний цикл работы - Компрессор
 #define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
+#define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 
-//  Работа с отдельными флагами, type_optionHP.flags:
-#define f_reserved_1			0				//
+// Флаги настроек, Option.flags:
+#define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой
 #define fBeep					1               // флаг Использование звука
 #define fNextion				2               // флаг Использование nextion дисплея
 #define fHistory				3               // флаг записи истории на карту памяти
@@ -257,7 +258,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 struct type_optionHP
 {
  uint8_t  ver;							// номер версии для сохранения
- int8_t   numProf;						// Текущий номер профиля 0 стоит по дефолту
+ int8_t   numProf;						// Номер профиля включаемый при загрузке, выбор вручную только через веб "set_listProf", 0..I2C_PROFIL_NUM
  uint16_t flags;						// Флаги опций до 16 флагов
  uint8_t  nStart;						// Число попыток начала/продолжения работы
  uint8_t  sleep;						// Время засыпания дисплея минуты
@@ -418,7 +419,7 @@ public:
 	void     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
 	int8_t   runCommand();              // Выполнить команду по управлению ТН
-	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pEND14 ? c : pEND14]; }
+	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
@@ -516,7 +517,6 @@ public:
 	boolean set_optionHP(char *var, float x);                // Установить опции ТН из числа (float)
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
-	void set_profile();										// Установить рабочий профиль по текущему Prof
 	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения

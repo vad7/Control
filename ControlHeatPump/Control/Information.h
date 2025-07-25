@@ -283,7 +283,7 @@ class Profile                         // Класс профиль
     char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр
     inline  int8_t get_idProfile(){return id;}             // получить номер текущего профиля
     int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
-    uint8_t	check_switch_to_ProfileNext(type_dataProfile *dp);// проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
+    uint8_t	check_switch_to_ProfileNext_byTime(type_dataProfile *dp);// проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
 
     // Установка параметров
     boolean set_paramCoolHP(char *var, float x);            // Охлаждение Установить параметры ТН из числа (float)

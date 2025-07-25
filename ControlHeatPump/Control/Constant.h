@@ -219,8 +219,9 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define DELAY_REPEAT_FAST 			120		        // Задержка перед повторным быстрым включением ТН, сек
 #endif
 #ifndef EEV_DELAY_BEFORE_SET_BOILER_POS
-#define EEV_DELAY_BEFORE_SET_BOILER_POS 8000  // Задержка установки позиции для бойлера при переходе с отопления на бойлер во время работы, если она включена, мс
+#define EEV_DELAY_BEFORE_SET_BOILER_POS 8000		// Задержка установки позиции для бойлера при переходе с отопления на бойлер во время работы, если она включена, мс
 #endif
+#define PUMPS_STOP_DELAY_ON_ERROR	30				// Задержка остановки работающих насосов при останове ТН по ошибке
 
 // ------------------- I2C ----------------------------------
 // Устройства i2c I2C_EEPROM_64KB и I2C_FRAM_MEMORY   Размер и тип памяти, определен в config.h т.к. он часто меняется
@@ -1467,17 +1468,18 @@ enum TYPE_COMMAND
   pRESTART,                      // 5 Пуск ТН после сброса контроллера (отличается от pREPEAT только задержкой)
   pREPEAT,                       // 6 Повторный пуск ТН (определяется числом попыток повторного пуска)
   pNETWORK,                      // 7 перегрузить сетевой контроллер
-  pJFORMAT,                      // 8 форматирование журнала в I2C флеше
-  pSFORMAT,                      // 9 форматирование статистики в I2C флеше
+  pJFORMAT,                      // 8 форматирование журнала в I2C флеш
+  pSFORMAT,                      // 9 форматирование статистики в I2C флеш
   pSAVE,                         // 10 запись настроек ТН
   pWAIT,                         // 11 перевод в режим ожидания ТН (пустое расписание)
   pRESUME,                       // 12 Восстановление работы из режима ожидания
   pPROG_FC,                      // 13 Первоначальное программирование частотного преобразователя
   pREPEAT_FAST,					 // 14 Повторный пуск ТН через короткое время
-  pEND14                         // Обязательно должен быть последним, добавляем ПЕРЕД!!!
+  pCHANGE_PROFILE,               // 15 Сменить профиль на HP.Option.numProf, с проверками и остановом, при необходимости
+  pCOMAND_END                    // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
 
-const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "REP_FAST", "UNKNOWN"};
+const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "REP_FAST", "CHANGE_PROF", "UNKNOWN"};
 
 //  Перечисляемый тип -ТИПЫ уведомлений
 enum MESSAGE          

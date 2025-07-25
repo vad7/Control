@@ -801,7 +801,6 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
          continue;
 		}
 		
-		
 		if (strncmp(str, "set_LOAD", 8) == 0)  // Функция set_LOAD -
 		{
 			str += 8;
@@ -818,6 +817,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 		if(strncmp(str, "set_O", 5) == 0) {
 			str += 5;
 			if(strcmp(str, "FF") == 0) {		// Функция set_OFF
+				SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 				HP.sendCommand(pSTOP);			// Послать команду на останов ТН
 				if(HP.get_State() == pWORK_HP) strcat(strReturn, cOne);	else strcat(strReturn, cZero);
 			} else if(strcmp(str, "N") == 0) {	// Функция set_ON
@@ -830,8 +830,11 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 		if(strncmp(str, "get_err", 7)==0) {
 			str += 7;
-			if(strcmp(str,"code")==0) _itoa(HP.get_errcode(),strReturn);	// Функция get_errcode
-			else if(strcmp(str,"or")==0) strcat(strReturn, HP.get_errcode() == OK ? "" : HP.get_lastErr()); // Функция get_error
+			if(strcmp(str,"code")==0) _itoa(HP.get_errcode(),strReturn);// Функция get_errcode
+			else if(strcmp(str,"or")==0) {  							// Функция get_error
+				strcat(strReturn, HP.get_errcode() != OK ? HP.get_lastErr() :
+									GETBIT(HP.work_flags, fHP_ProfileSetByError) ? "Профиль переключен из-за ошибки!" : "");
+			}
 			ADD_WEBDELIM(strReturn); continue;
 		}
 //		if (strcmp(str,"get_tempSAM3x")==0)  // Функция get_tempSAM3x  - получение температуры чипа sam3x
@@ -1799,13 +1802,16 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 				}
 			}
 			// -----------------------------------------------------------------------------
-			if (strcmp(str,"set_listProf")==0)  // Функция set_listProf загрузить профиль из списка и сразу СОХРАНИТЬ !!!!!!
+			if (strcmp(str,"set_listProf")==0)  // Функция set_listProf - загрузить профиль из списка
 			{
-				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
+				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования - завершить запрос с ошибкой
 				else {
-					if((pm >= 0) && (pm < I2C_PROFIL_NUM)) {
-						HP.SwitchToProfile(pm);
-						HP.Prof.get_list(strReturn/*,HP.Prof.get_idProfile()*/);
+					if(pm >= 0 && pm < I2C_PROFIL_NUM) {
+						HP.Option.numProf = pm;
+						if(HP.Prof.id != HP.Option.numProf) {
+							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+							HP.sendCommand(pCHANGE_PROFILE);
+						}
 					} else strcat(strReturn,"E29");
 					ADD_WEBDELIM(strReturn) ;    continue;
 				}

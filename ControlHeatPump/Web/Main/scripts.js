@@ -61,7 +61,8 @@ function setParam(paramid, resultid) {
 	if(/_modeHP|_listProf|_testMode|_listIP/.test(paramid)) {
 		if(paramid.indexOf("Prof")!=-1) {
 			elval = element.options[elval].innerHTML;
-			elval = Number(elval.substr(0, elval.indexOf('.'))) - 1; 
+			elval = Number(elval.substr(0, elval.indexOf('.'))) - 1;
+			clear = false;
 		}
 		var elsend = paramid.replace("get_", "set_").replace(")", "") + "(" + elval + ")";
 	} else if(/_listChart.?/.test(paramid)) {
@@ -265,7 +266,12 @@ function loadParam(paramid, noretry, resultdiv) {
 											element = document.getElementById(idsel);
 											if(element) {
 												var n = (Number(values[1]) + 1).toString() + '.';
-												for(var j = 0; j < element.options.length; j++) if(n == element.options[j].innerText.substr(0, n.length)) { element.options[j].selected = true; break; }
+												for(var j = 0; j < element.options.length; j++) 
+													if(n == element.options[j].innerText.substr(0, n.length)) { 
+														if(values[0].substring(1,12) == "et_listProf" && (!element.options[j].selected || /^\d+\.\*/.test(element.options[j].innerText))) location.reload();
+														element.options[j].selected = true;
+														break;
+													}
 											}
 											continue;
 										}
@@ -315,7 +321,11 @@ function loadParam(paramid, noretry, resultdiv) {
 											updateParam(upsens);
 											loadParam(loadsens);
 											values[1] = "--;" + values[1];
-										} else if(arr[0].substring(0,13) == "set_listProf(") location.reload();
+										} else if(arr[0].substring(0,13) == "set_listProf(") {
+											if((element = document.getElementById(idsel))) element.selectedOptions[0].innerText = element.selectedOptions[0].innerText.replace(/^\d+\./, "$&*");
+											setTimeout(() => { loadParam("get_listProf_"); }, 500);
+											continue;
+										}
 										element = document.getElementById(idsel);
 										if(element) {
 											if(values[0].substr(-6, 5) == "_skip") {

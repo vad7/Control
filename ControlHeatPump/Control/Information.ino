@@ -1422,8 +1422,9 @@ int8_t Profile::update_list(int8_t num)
 }
 
 // проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
-uint8_t Profile::check_switch_to_ProfileNext(type_dataProfile *dp) // только поля: flags, ProfileNext, TimeStart, TimeEnd
+uint8_t Profile::check_switch_to_ProfileNext_byTime(type_dataProfile *dp) // только поля: flags, ProfileNext, TimeStart, TimeEnd
 {
+	if(GETBIT(HP.work_flags, fHP_ProfileSetByError)) return 0;	// Профиль установлен по переключению из-за ошибки, для дальнейшей автосмены нужно ручное вмешательство
 	uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
 	uint32_t st = dp->TimeStart * 10;
 	uint32_t end = dp->TimeEnd * 10;

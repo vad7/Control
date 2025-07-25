@@ -576,7 +576,6 @@ x_I2C_init_std_message:
 	int8_t _profile = HP.Schdlr.calc_active_profile();
 	if(_profile > SCHDLR_Profile_off && _profile != HP.Prof.get_idProfile()) {
 		HP.Prof.load(_profile);
-		HP.set_profile();
 		journal.jprintf("Profile changed to #%d\n", _profile);
 	}
 
@@ -1804,6 +1803,7 @@ void vReadSensor_delay1ms(int32_t ms)
 				} else if(HP.get_State() == pOFF_HP) {
 					HP.sendCommand(pSTART);
 				} else if(HP.get_State() == pWORK_HP || HP.get_State() == pWAIT_HP) {
+					SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 					HP.sendCommand(pSTOP);
 				}
 			}
@@ -1943,7 +1943,7 @@ void vReadSensor_delay1ms(int32_t ms)
 
 		{
 			// 3. Расписание проверка всегда
-			uint8_t d = HP.Prof.check_switch_to_ProfileNext(&HP.Prof.dataProfile);
+			uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
 			if(d) {
 				// время профиля вышло, переключаемся на связанный
 				journal.jprintf("Switch profile by time to %d\n", d);
