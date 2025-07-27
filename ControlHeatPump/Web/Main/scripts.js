@@ -691,8 +691,7 @@ function loadParam(paramid, noretry, resultdiv) {
 										for(var j = 0; j < elements.length; j++) {
 											if(elements[j].id == "mlogin") elements[j].hidden = false; else { elements[j].remove(); j--; }
 										}
-										element = document.getElementById("MService");
-										element.innerHTML = '<a href="system.html"><i class="menu-icon menu-icon-service"></i>Сервис</a>';
+										if((element = document.getElementById("MService")))	element.innerHTML = '<a href="system.html"><i class="menu-icon menu-icon-service"></i>Сервис</a>';
 									}
 								} else if(values[0] == "get_uptime") {
 									if((element = document.getElementById("get_uptime"))) element.innerHTML = values[1];

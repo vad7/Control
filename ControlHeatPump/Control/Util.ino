@@ -563,7 +563,7 @@ uint8_t initSpiDisk(boolean show)
 		if(show) journal.jprintf(" SPI flash not found!\n");
 		return false;
 	} else {
-		if(show) {
+		if(show) {`
 			SerialFlash.readID(id);
 			journal.jprintf(" Manufacturer ID: 0x%02X\n", id[0]);
 			journal.jprintf(" Memory type: 0x%02X\n", id[1]);
@@ -572,15 +572,12 @@ uint8_t initSpiDisk(boolean show)
 			SerialFlash.readSerialNumber(id);
 			journal.jprintf(" Serial number: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n", id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
 		}
-		if (HP.get_WebStoreOnSPIFlash()) { // проверка наличия файла INDEX_FILE, если стоит флаг загрузки из флеша в настройках
-			if (!SerialFlash.exists((char*)INDEX_FILE)) { // файл не найден морды во флеше нет
-				HP.set_WebStoreOnSPIFlash(false);//  сбрасываем в оперативке (но не на флеше) флаг загрузки из флеш диска
-				if(show) journal.jprintf((char*) " ERROR - Can't find %s file on SPI flash!\n", INDEX_FILE);
-				HP.message.setMessage(pMESSAGE_SD, (char*) "Файл индекса не найден на SPI флеш диске", 0);// сформировать уведомление
-				return 1;
-			} else if(show) journal.jprintf((char*) " Found %s file\n", INDEX_FILE);	// файл найден
-		} // if HP.get_fSPIFlash()
-
+		if(!SerialFlash.exists((char*)INDEX_FILE)) { // файл не найден морды во флеше нет
+			HP.set_WebStoreOnSPIFlash(false);//  сбрасываем в оперативке (но не на флеше) флаг загрузки из флеш диска
+			if(show) journal.jprintf((char*) " ERROR - Can't find %s file on SPI flash!\n", INDEX_FILE);
+			if(HP.get_WebStoreOnSPIFlash()) HP.message.setMessage(pMESSAGE_SD, (char*) "Файл индекса не найден на SPI флеш диске", 0);// сформировать уведомление
+			return 1;
+		} else if(show) journal.jprintf((char*) " Found %s file\n", INDEX_FILE);	// файл найден
 		return 2;
 	}
 #endif

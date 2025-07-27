@@ -1778,7 +1778,7 @@ void HeatPump::Pump_HeatFloor(boolean On)
 	if(On) {
 		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor)) || (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor))))
 			dRelay[RPUMPFL].set_ON();
-	} else dRelay[RPUMPFL].set_Relay(error ? fR_StatusAllOff : fR_StatusMain);
+	} else dRelay[RPUMPFL].set_Relay(error ? -fR_StatusAllOff : -fR_StatusMain);
 }
 #else
 void HeatPump::Pump_HeatFloor(boolean) { }
@@ -1820,7 +1820,7 @@ if(b && (get_modWork() & pBOILER)){
 	#endif
 		}
 	} else { // ВЫКЛ
-		if(GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain) || error) {
+		if(GETBIT(dRelay[PUMP_IN].flags, fR_StatusMain) || (error && dRelay[PUMP_IN].get_Relay())) {
 			journal.jprintf(" Delay: stop IN pump.\n");
 			if(error) delayed += DELAY_BEFORE_STOP_IN_PUMP < PUMPS_STOP_DELAY_ON_ERROR ? DELAY_BEFORE_STOP_IN_PUMP : PUMPS_STOP_DELAY_ON_ERROR;
 			else delayed += DELAY_BEFORE_STOP_IN_PUMP;
@@ -1828,7 +1828,7 @@ if(b && (get_modWork() & pBOILER)){
 				_delay(1000); // задержка перед выключение гео насоса после выключения компрессора (облегчение останова)
 				if(is_next_command_stop()) break;
 			}
-			dRelay[PUMP_IN].set_Relay(error ? fR_StatusAllOff : fR_StatusMain);  // Реле насоса входного контура (геоконтур)
+			dRelay[PUMP_IN].set_Relay(error ? -fR_StatusAllOff : -fR_StatusMain);  // Реле насоса входного контура (геоконтур)
 		}
 #ifdef  TWO_PUMP_IN                                 // второй насос для воздушника если есть
 		dRelay[PUMP_IN1].set_OFF();                 // если насосы выключаем, то второй вентилятор ВСЕГДА выключается
@@ -3788,23 +3788,22 @@ xNextStop:
 		dEEV.Resume();
 		vTaskResume(xHandleUpdateEEV);                               // Запустить задачу Обновления ЭРВ
 		journal.jprintf(" Resume task UpdateEEV\n");
-		#ifdef DEFROST
-		 if(!(get_modWork() & pDEFROST)) journal.jprintf_time("%s WORK . . .\n",(char*)nameHeatPump);     // Сообщение о работе
-		 else journal.jprintf_time("%s DEFROST . . .\n",(char*)nameHeatPump);               // Сообщение о разморозке
-		#else
+	#ifdef DEFROST
+		if(!(get_modWork() & pDEFROST)) journal.jprintf_time("%s WORK . . .\n",(char*)nameHeatPump);     // Сообщение о работе
+		else journal.jprintf_time("%s DEFROST . . .\n",(char*)nameHeatPump);               // Сообщение о разморозке
+	#else
 		journal.jprintf_time("%s WORK . . .\n",(char*)nameHeatPump);     // Сообщение о работе
-		#endif
+	#endif
 	}
 	else  // признак первой итерации
 	{
-		lastEEV = dEEV.get_EEV();                                 // ЭРВ рабоатет запомнить
+		lastEEV = dEEV.get_EEV();                                 // ЭРВ работает запомнить
 		dEEV.Resume();
 		vTaskResume(xHandleUpdateEEV);                               // Запустить задачу Обновления ЭРВ
 		journal.jprintf(" Start task UpdateEEV\n");
 	}
 #else
 	lastEEV = 1;                                                   // Признак первой итерации
-	set_startTime(rtcSAM3X8.unixtime());                         // Запомнить время старта ТН
 #endif
 }
 
@@ -3827,8 +3826,7 @@ void HeatPump::compressorOFF()
 #endif
 
 #if defined(EEV_DEF) && defined(EEV_CLOSE_IMMEDIATELY)
-	if(dEEV.get_EevClose())                                 // Hазбираемся с ЭРВ
-	{
+	if(dEEV.get_EevClose())	{
 		//journal.jprintf(" Pause before closing EEV %d sec . . .\n", dEEV.get_delayOff());
 		_delay(dEEV.get_delayOff() * 1000);                              // пауза перед закрытием ЭРВ
 		dEEV.set_EEV(EEV_CLOSE_STEP);                                    // Если нужно, то закрыть ЭРВ
