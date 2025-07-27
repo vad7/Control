@@ -563,7 +563,7 @@ uint8_t initSpiDisk(boolean show)
 		if(show) journal.jprintf(" SPI flash not found!\n");
 		return false;
 	} else {
-		if(show) {`
+		if(show) {
 			SerialFlash.readID(id);
 			journal.jprintf(" Manufacturer ID: 0x%02X\n", id[0]);
 			journal.jprintf(" Memory type: 0x%02X\n", id[1]);
