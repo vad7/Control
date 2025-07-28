@@ -625,7 +625,7 @@ function loadParam(paramid, noretry, resultdiv) {
 											if(element.getAttribute('type') == 'checkbox') element.checked = values[1] == 1;
 											else {
 												element.innerHTML = values[1];
-												element.value = element.type == "number" ? values[1].replace(/[^\-\d.,]|^\-$/g, "") : values[1];
+												element.value = element.type == "number" ? values[1].replace(/[^\-\d.,]|^\-+$/g, "") : values[1];
 											}
 										}
 									} else if((element = document.getElementById(valueid + "-hide"))) {
@@ -688,10 +688,9 @@ function loadParam(paramid, noretry, resultdiv) {
 								} else if(values[0] == "USR") {
 									if(values[1] != "0") {
 										var elements = document.getElementsByName("USR");
-										for(var j = 0; j < elements.length; j++) {
-											if(elements[j].id == "mlogin") elements[j].hidden = false; else { elements[j].remove(); j--; }
-										}
-										if((element = document.getElementById("MService")))	element.innerHTML = '<a href="system.html"><i class="menu-icon menu-icon-service"></i>Сервис</a>';
+										while(elements.length > 0) elements[0].remove();
+										if((element = document.getElementById("mlogin"))) element.hidden = false;
+										if((element = document.getElementById("MService"))) element.innerHTML = '<a href="system.html"><i class="menu-icon menu-icon-service"></i>Сервис</a>';
 									}
 								} else if(values[0] == "get_uptime") {
 									if((element = document.getElementById("get_uptime"))) element.innerHTML = values[1];
@@ -846,8 +845,8 @@ function autoheight() {
 	for(var i = columns.length - 1; i >= 0; i--) {
 		columns[i].style.minHeight = max_col_height; // устанавливаем высоту каждой колонки равной максимальной
 	}
-	var i = document.body.scrollWidth - document.body.clientWidth;
-	document.body.style.minWidth = i >= 0 && i < 20 ? document.body.clientWidth : Math.max(document.body.clientWidth, document.body.scrollWidth);
+	//var i = document.body.scrollWidth - document.body.clientWidth;
+	//document.body.style.minWidth = i >= 0 && i < 20 ? document.body.clientWidth : Math.max(document.body.clientWidth, document.body.scrollWidth);
 }
 
 function calcacp() {

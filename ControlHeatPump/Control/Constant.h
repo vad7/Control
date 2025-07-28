@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.200"				// Версия прошивки
+#define VERSION			"1.201"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -577,12 +577,17 @@ const char *eev_PosAtHighTemp =  {"PHT"};			// PosAtHighTemp
 const char *eev_fEEV_DirectAlgorithm = {"DIR"};		// флаг fEEV_DirectAlgorithm
 const char *eev_trend_threshold ={"TTH"};
 const char *eev_trend_mul_threshold = {"TMT"};
-const char *eev_DebugToLog    = {"DBG"};
+const char *eev_fEEV_DebugToLog = {"DBG"};
 const char *eev_fEEV_BoilerStartPos={"BF"};
 const char *eev_BoilerStartPos={"BS"};
 const char *eev_FromHeatToBoilerMove={"HBM"};
 const char *eev_defrostPos    = {"DFP"};
 const char *eev_mul_fast      = {"MF"};
+const char *eev_fEEV_PID_for_Cool={"PIDC"};
+const char *eev_tOverheatCool = {"OHC"};
+const char *eev_pid_cool_KP   =  {"CKP"};            // ПИД Коэф пропорц, В ТЫСЯЧНЫХ
+const char *eev_pid_cool_KI   =  {"CKI"};            // ПИД Коэф интегр., В ТЫСЯЧНЫХ
+const char *eev_pid_cool_KD   =  {"CKD"};            // ПИД Коэф дифф., В ТЫСЯЧНЫХ
 
 // Описание имен параметров MQTT для функций get_paramMQTT set_paramMQTT
 const char *mqtt_USE_TS           =  {"USE_TS"};         // флаг использования ThingSpeak - формат передачи для клиента
@@ -974,9 +979,38 @@ const char *ip_STIME           = {"STIME"};         // время с после�
 const char *ip_SENSOR          = {"SENSOR"};        // -------
 #endif
 
+//  Перечисляемый тип - тип фреона
+//enum TYPEFREON
+//{
+#define     R22		0
+#define     R410A	1
+#define     R600A	2
+#define     R134A	3
+#define     R407C	4
+#define     R12		5
+#define     R290	6
+#define     R404A	7
+#define     R717	8            // Обязательно должен быть последним, добавляем ПЕРЕД!!!
+//};
 
 // Названия типы фреонов
 const char *noteFreon[]    =   {"R22","R410A","R600","R134a","R407C","R12","R290","R404A","R717"};
+
+//  Перечисляемый тип - правило работы ЭРВ пять вариантов выводятся в зависимости от наличия датчиков
+enum RULE_EEV
+{
+   TEVAOUT_PEVA,
+#ifdef TCOMPIN
+   TCOMPIN_PEVA,
+#endif
+#ifdef TEVAIN
+   TEVAOUT_TEVAIN,
+   TCOMPIN_TEVAIN,
+   TABLE,
+#endif
+   MANUAL           // Обязательно должен быть последним, добавляем ПЕРЕД!!!
+};
+
 // Названия правил работы ЭРВ для веба
 const char noteRuleEEV[]   =	"TEVAOUT-T[PEVA]:0;"
 	#ifdef TCOMPIN
@@ -1510,35 +1544,6 @@ const char ADR_SMSC_RU[] = "smsc.ru";
 const char ADR_SMSC_UA[] = "smsc.ua";
 const char ADR_SMSCLUB[] = "gate.smsclub.mobi";
 const char SMS_SERVICE_WEB_SELECT[] = "sms.ru:0;smsc.ru:0;smsc.ua:0;smsclub.mobi:0;";
-
-//  Перечисляемый тип - тип фреона
-//enum TYPEFREON
-//{
-#define     R22		0
-#define     R410A	1
-#define     R600A	2
-#define     R134A	3
-#define     R407C	4
-#define     R12		5
-#define     R290	6
-#define     R404A	7
-#define     R717	8            // Обязательно должен быть последним, добавляем ПЕРЕД!!!
-//};
-
-//  Перечисляемый тип - правило работы ЭРВ пять вариантов выводятся в зависимости от наличия датчиков
-enum RULE_EEV           
-{
-   TEVAOUT_PEVA,
-#ifdef TCOMPIN
-   TCOMPIN_PEVA,
-#endif
-#ifdef TEVAIN
-   TEVAOUT_TEVAIN, 
-   TCOMPIN_TEVAIN,
-   TABLE,
-#endif
-   MANUAL           // Обязательно должен быть последним, добавляем ПЕРЕД!!!
-};
 
 //  Перечисляемый тип - режим тестирования ТН
 enum TEST_MODE          

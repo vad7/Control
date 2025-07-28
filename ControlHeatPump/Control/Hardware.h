@@ -261,6 +261,8 @@ private:
 #define fEEV_StartPosByTemp			9	// Стартовая позиция ЭРВ определяется по температуре подачи (пропорционально между EEV_START_POS_LOW_TEMP=StartPos и EEV_START_POS_HIGH_TEMP=PosAtHighTemp)
 #define fEEV_DirectAlgorithm		10	// Прямое управление ЭРВ без ПИД
 #define fEEV_BoilerStartPos			11	// При нагреве бойлера специальная стартовая позиция ЭРВ
+#define fEEV_DebugToLog				12	// Отладка в журнал
+#define fEEV_PID_for_Cool			13	// Использовать отдельный PID для охлаждения
 
 class devEEV
 {
@@ -289,7 +291,6 @@ public:
 	boolean set_paramEEV(char *var,float x);               // Установить параметр ЭРВ из строки
 
 	// Функции чтения настроек ЭРВ в бинарном виде
-	int16_t get_tOverheat(){return  _data.tOverheat;}     // Получить целевой перегрев
 	inline int16_t get_PID_time() { return  _data.pid_time; } // Получить ЗАДАННУЮ постоянную времени в секундах ЭРВ
 	int16_t get_Correction(){return _data.Correction;}     // Получить поправку в градусах для правила работы ЭРВ «TEVAOUT-TEVAIN».  СОТЫЕ ГРАДУСА
 	int16_t get_manualStep(){return _data.manualStep;}     // Получить число шагов открытия ЭРВ для правила работы ЭРВ «Manual»
@@ -346,7 +347,6 @@ private:
 	int16_t OHCor_tdelta;								 // Расчитанная целевая дельта Нагнетание-Конденсации
 	int16_t OHCor_tdelta_prev;							 // Расчитанная целевая дельта Нагнетание-Конденсации
 	int8_t  err;                                         // ошибка ЭРВ (работа) при ошибке останов ТН
-	bool DebugToLog;
 
 	char *note;                                          // Описание
 	char *name;                                          // Имя
@@ -381,7 +381,7 @@ private:
 		int16_t	 OHCor_TDIS_TCON;				// Температура нагнетания - конденсации (/0.01) при конденсации 30 градусов, 0 испарения, и OHCor_OverHeatStart
 		uint16_t flags;                         // флаги ЭРВ
 		uint16_t pid_max;						// ограничение ПИД в шагах ЭРВ
-		uint16_t PosAtHighTemp;					// Положение при EEV_START_POS_HIGH_TEMP
+		uint16_t PosAtHighTemp;					// Положение при EEV_START_POS_HIGH_TEMP, сотые
 		int16_t  tOverheatTCOMP;				// Целевой перегрев2 TCOMPIN-T[PEVA]
 		int16_t  tOverheatTCOMP_delta;			// Дельта целевого перегрева2 TCOMPIN-T[PEVA]
 		int8_t   trend_threshold;				// Порог детектирования тренда
@@ -390,6 +390,8 @@ private:
 		int16_t  tOverheat2_low;				// Нижняя граница перегрева 2 для быстрого закрытия ЭРВ
 		int16_t  tOverheat2_low_hyst;			// Гистерезис для tOverheat2_low
 		uint8_t  mul_fast;						// Множитель при быстром изменении перегрева, десятые
+		uint8_t  tOverheatCool;					// Целевой перегрев для охлаждения, десятые
+		PID_STRUCT pid_cool;					// ПИД для охлаждения
 #ifdef DEFROST
 		uint16_t defrostPos;					// Позиция при разморозке
 #endif

@@ -43,7 +43,7 @@
 		<li class="heater"><a href="heater.html"><i></i>Котел</a></li>\
 	</ul>\
 </li>\
-<li name="USR" class="lan config system files time notice mqtt const has-children" id="MService">\
+<li class="lan config system files time notice mqtt const has-children" id="MService">\
 	<input type="checkbox" name="group-4" id="group-4">\
 	<label for="group-4"><i class="menu-icon menu-icon-service"></i>Сервис</label>\
 	<ul>\

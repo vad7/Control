@@ -610,7 +610,12 @@ void devEEV::initEEV()
 	setZero = false;                        // Признак процесса обнуления (шаговик ищет 0)
 	err = OK;                               // Ошибок нет
 	Resume(); 			                // Обнулить рабочие переменные
-	DebugToLog = false;
+	_data.flags = 0x00;                                  // флаги ЭРВ,
+#ifdef EEV_DEF
+	SETBIT1(_data.flags, fPresent);                      // наличие ЭРВ в текушей конфигурации
+#endif
+	name = (char*) nameEEV;                  // Присвоить имя
+	note = (char*) noteEEV;                  // Присвоить описание
 
 	// Устновка настроек по умолчанию (структара данных _data)
 	_data.tOverheat = DEFAULT_OVERHEAT;                 // Перегрев ЦЕЛЬ (сотые градуса)
@@ -619,7 +624,6 @@ void devEEV::initEEV()
 	_data.pid.Ki = -DEFAULT_EEV_Ki * 10;               // ПИД Коэф интегр.,  в тысячных
 	_data.pid.Kd = -DEFAULT_EEV_Kd * 10;               // ПИД Коэф дифф., в тысячных
 	_data.Correction = 0; // 0.855 ПЕРЕДЕЛАНО  зона не чуствительности перегрева в "плюсе" в этой зоне на каждом шаге эрв закрывается на 1 шаг
-	_data.manualStep = (EEV_STEPS - _data.minSteps) / 2 + _data.minSteps; // Число шагов открытия ЭРВ для правила работы ЭРВ «Manual» - половина диапазона ЭРВ
 	//_data.typeFreon = DEFAULT_FREON_TYPE;               // Тип фреона
 	_data.ruleEEV = DEFAULT_RULE_EEV;                   // правило работы ЭРВ
 #ifdef DEF_OHCor_OverHeatStart						 // Корректировка перегрева
@@ -631,40 +635,43 @@ void devEEV::initEEV()
 	_data.OHCor_Period = DEF_OHCor_Period;
 #endif
 	_data.speedEEV = DEFAULT_SPEED_EEV;                 // Скорость шагового двигателя ЭРВ (импульсы в сек.)
-	_data.preStartPos = DEFAULT_PRE_START_POS;     // ПУСКОВАЯ позиция ЭРВ (ТО что при старте компрессора ПРИ РАСКРУТКЕ)
-	_data.StartPos = DEFAULT_START_POS; // СТАРТОВАЯ позиция ЭРВ после раскрутки компрессора т.е. ПОЗИЦИЯ С КОТОРОЙ НАЧИНАЕТСЯ РАБОТА проходит DelayStartPos сек
 	_data.minSteps = EEV_CLOSE_STEP;                    // Минимальное число шагов открытия ЭРВ
 	_data.maxSteps = EEV_STEPS;                         // Максимальное число шагов ЭРВ (диапазон)
-	_data.pid_max = 45;
-	_data.trend_threshold = 4;
-	_data.tOverheatTCOMP = 850;
-	_data.tOverheatTCOMP_delta = 300;
-	_data.PosAtHighTemp = 0;
+	_data.manualStep = (EEV_STEPS - _data.minSteps) / 2 + _data.minSteps; // Число шагов открытия ЭРВ для правила работы ЭРВ «Manual» - половина диапазона ЭРВ
 	_data.pid2_delta = 070;
-	_data.trend_mul_threshold = 65;
-	_data.tOverheat2_low = 200;
-	_data.tOverheat2_low_hyst = 10;
+	_data.pid_max = 45;
+	_data.FromHeatToBoilerMove = -12;
+
+	// fEEV_DirectAlgorithm
+	_data.tOverheatTCOMP = 650;
+	_data.tOverheatTCOMP_delta = 250;
+	_data.pid2.Kp = 1100;
+	_data.tOverheat2_low = 280;
+	_data.tOverheat2_low_hyst = 012;
 	_data.tOverheat2_critical = EEV_OVERHEAT2_CRITICAL;
+	_data.trend_threshold = 3;
+	_data.trend_mul_threshold = 070;
+	_data.mul_fast = 50;
 
 	// ЭРВ Времена и задержки
 	_data.delayOnPid = DEFAULT_DELAY_ON_PID; // Задержка включения EEV после включения компрессора (сек).  Точнее после выхода на рабочую позицию Общее время =delayOnPid+DelayStartPos
-	_data.delayOn = DEFAULT_DELAY_ON; // Задержка между открытием (для старта) ЭРВ и включением компрессора, для выравнивания давлений (сек). Если ЭРВ закрывлось при остановке
+	SETBIT0(_data.flags, fLightStart); // флаг Облегчение старта компрессора   приоткрытие ЭРВ в момент пуска компрессора
+	_data.preStartPos = DEFAULT_PRE_START_POS;     // ПУСКОВАЯ позиция ЭРВ (ТО что при старте компрессора ПРИ РАСКРУТКЕ)
 	_data.DelayStartPos = DEFAULT_DELAY_START_POS; // Время после старта компрессора когда EEV выходит на стартовую позицию - облегчение пуска вначале ЭРВ
+	SETBIT1(_data.flags, fStartFlagPos);                 // флаг Всегда начинать работу ЭРВ со стратовой позици
+	_data.StartPos = DEFAULT_START_POS; // СТАРТОВАЯ позиция ЭРВ после раскрутки компрессора т.е. ПОЗИЦИЯ С КОТОРОЙ НАЧИНАЕТСЯ РАБОТА проходит DelayStartPos сек
+	SETBIT1(_data.flags, fEEV_StartPosByTemp);
+	_data.PosAtHighTemp = 1000;
+	SETBIT0(_data.flags, fEEV_BoilerStartPos);
+	_data.BoilerStartPos = 20;
+
+	SETBIT0(_data.flags, fEevClose);                     // Флаг закрытие ЭРВ при выключении компрессора
 	_data.delayOff = DEFAULT_DELAY_OFF; // Задержка закрытия EEV после выключения насосов (сек). Время от команды стоп компрессора до закрытия ЭРВ = delayOffPump+delayOff
-	_data.flags = 0x00;                                  // флаги ЭРВ,
-#ifdef EEV_DEF
-	SETBIT1(_data.flags, fPresent);                      // наличие ЭРВ в текушей конфигурации
-#endif
+	_data.delayOn = DEFAULT_DELAY_ON; // Задержка между открытием (для старта) ЭРВ и включением компрессора, для выравнивания давлений (сек). Если ЭРВ закрывлось при остановке
+
+	SETBIT1(_data.flags, fOneSeekZero);                  //  Флаг однократного поиска "0" ЭРВ (только при первом включении ТН)
 	if(DEFAULT_HOLD_MOTOR) SETBIT1(_data.flags, fHoldMotor);
 	SETBIT0(_data.flags, fCorrectOverHeat);              // Включен режим корректировки перегрева
-	SETBIT1(_data.flags, fOneSeekZero);            //  Флаг однократного поиска "0" ЭРВ (только при первом включении ТН)
-	SETBIT0(_data.flags, fEevClose);                     // Флаг закрытие ЭРВ при выключении компрессора
-	SETBIT0(_data.flags, fLightStart); // флаг Облегчение старта компрессора   приоткрытие ЭРВ в момент пуска компрессора
-	SETBIT1(_data.flags, fStartFlagPos);                 // флаг Всегда начинать работу ЭРВ со стратовой позици
-	SETBIT1(_data.flags, fEEV_StartPosByTemp);
-
-	name = (char*) nameEEV;                  // Присвоить имя
-	note = (char*) noteEEV;                  // Присвоить описание
 
 	InitStepper();
 	//journal.jprintf(" EEV init: OK\r\n");
@@ -930,7 +937,7 @@ void devEEV::resetPID()
 	pidw.pre_err = 0;
 	pidw.max = EEV_MAX_INT_PID * 1000*100; // максимальное воздействие интегральной составляющей на ПИД
 #endif
-	if(GETBIT(_data.flags, fEEV_DirectAlgorithm)) {
+	if(GETBIT(_data.flags, fEEV_DirectAlgorithm) && (!(HP.get_modWork() & pCOOL) || !GETBIT(_data.flags, fEEV_PID_for_Cool))) {
 		pidw.max = 0;
 		pidw.sum = 0;
 		pidw.pre_err = _data.tOverheat - Overheat;
@@ -948,6 +955,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 {
 	if(!GETBIT(_data.flags, fPresent)) return err;  // если ЭРВ нет то ничего не делаем
 	if(fPause) return err;    // если пауза то выходим
+	bool DebugToLog = GETBIT(_data.flags, fEEV_DebugToLog);
 	int16_t newEEV = 0;
 	switch(_data.ruleEEV)     // В зависмости от правила вычисления перегрева
 	{
@@ -961,7 +969,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 #ifdef TCOMPIN
 	case TCOMPIN_PEVA:
 #endif
-		if(GETBIT(_data.flags, fEEV_DirectAlgorithm)) {
+		if(GETBIT(_data.flags, fEEV_DirectAlgorithm) && (!(HP.get_modWork() & pCOOL) || !GETBIT(_data.flags, fEEV_PID_for_Cool))) { // Кроме охлаждения с флагом использовать ПИД для охлаждения
 #if defined(TCOMPIN)
 			int16_t diff = _data.tOverheat - Overheat;	// >0 - overheat low, <0 - overheat high
 			pidw.trend[trOH_default] += signm(pidw.pre_err - diff, _data.trend_mul_threshold); //sign_dif(pidw.pre_err - diff, pidw.trend[trOH_default]); // +1 - растет, -1 - падает
@@ -987,7 +995,7 @@ int8_t devEEV::Update(void) //boolean fHeating)
 				if(fast) journal.jprintf(",fast:%d", fast);
 			}
 			if(pidw.max) {
-				if(DebugToLog) journal.jprintf(",skip:%d\n", pidw.max);
+				if(GETBIT(_data.flags, fEEV_DebugToLog)) journal.jprintf(",skip:%d\n", pidw.max);
 				pidw.max--;
 			} else {
 				newEEV = 0;
@@ -1091,12 +1099,13 @@ xSecond_sub_1:				if(pidw.hyst[0] > 0) {
 			newEEV += EEV;
 #endif
 		} else {
-			newEEV = _data.tOverheat - Overheat;   // Расчет ошибки для пида
+			bool _cool = (HP.get_modWork() & pCOOL) && GETBIT(_data.flags, fEEV_PID_for_Cool);
+			newEEV = (_cool ? _data.tOverheatCool*10 : _data.tOverheat) - Overheat;   // Расчет ошибки для пида
 #ifdef PID_FORMULA2
-			newEEV = round_div_int32(updatePID(newEEV, abs(newEEV) < _data.pid2_delta ? _data.pid2 : _data.pid, pidw), 100); // Рассчитaть итерацию: Перевод в шаги (выход ПИДА в сотых) + округление и добавление предудущего значения
+			newEEV = round_div_int32(updatePID(newEEV, abs(newEEV) < _data.pid2_delta ? _data.pid2 : _cool ? _data.pid_cool : _data.pid, pidw), 100); // Рассчитaть итерацию: Перевод в шаги (выход ПИДА в сотых) + округление и добавление предудущего значения
 #else  // Алгоритм 1
             pidw.Kp_dmin=_data.pid2_delta; // передать параметр - уменьшение пропорциональной при определенной ошибке
-			newEEV = updatePID(newEEV, _data.pid, pidw)/100; // Рассчитaть итерацию: Перевод в шаги (выход ПИДА в сотых) + округление вниз
+			newEEV = updatePID(newEEV, _cool ? _data.pid_cool : _data.pid, pidw)/100; // Рассчитaть итерацию: Перевод в шаги (выход ПИДА в сотых) + округление вниз
 	//		newEEV = round_div_int32(updatePID(newEEV, _data.pid, pidw), 100); // Рассчитaть итерацию: Перевод в шаги (выход ПИДА в сотых) + округление здесь 0.5 это один шаг
 #endif
 			// Ограничение пида +  добавление предудущего значения
@@ -1162,7 +1171,7 @@ void devEEV::CorrectOverheat(void)
 #endif
 					- DEF_OHCor_OverHeatStart);
 	if(fPause || !GETBIT(_data.flags, fCorrectOverHeat)) return;
-	if(rtcSAM3X8.unixtime() - HP.get_startCompressor() > _data.OHCor_Delay && ++OverHeatCor_period >= _data.OHCor_Period) {
+	if((!(HP.get_modWork() & pCOOL) || !GETBIT(_data.flags, fEEV_PID_for_Cool)) && rtcSAM3X8.unixtime() - HP.get_startCompressor() > _data.OHCor_Delay && ++OverHeatCor_period >= _data.OHCor_Period) {
 		OverHeatCor_period = 0;
 		t = (HP.sTemp[TCOMP].get_Temp() - t) - OHCor_tdelta;
 		if(t > _data.OHCor_TDIS_TCON_Thr) { // Разница большая - уменьшаем перегрев. o = omin + d_curr * (ost - omin) / d_max
@@ -1309,7 +1318,12 @@ void devEEV::get_paramEEV(char *var, char *ret)
 	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_dtoa(ret, _data.FromHeatToBoilerMove, 1);
 	} else if(strcmp(var, eev_fEEV_BoilerStartPos)==0) { strcat(ret, (char*)(GETBIT(_data.flags, fEEV_BoilerStartPos) ? cOne : cZero));
 	} else if(strcmp(var, eev_mul_fast)==0)	{		_dtoa(ret, _data.mul_fast, 1);
-	} else if(strcmp(var, eev_DebugToLog)==0) { strcat(ret, (char*)(DebugToLog ? cOne : cZero));
+	} else if(strcmp(var, eev_fEEV_DebugToLog)==0) { strcat(ret, (char*)(GETBIT(_data.flags, fEEV_DebugToLog) ? cOne : cZero));
+	} else if(strcmp(var, eev_fEEV_PID_for_Cool)==0) { strcat(ret, (char*)(GETBIT(_data.flags, fEEV_PID_for_Cool) ? cOne : cZero));
+	} else if(strcmp(var, eev_tOverheatCool)==0){ _dtoa(ret, _data.tOverheatCool, 1);
+	} else if(strcmp(var, eev_pid_cool_KP)==0){ _dtoa(ret, -_data.pid_cool.Kp, 3);
+	} else if(strcmp(var, eev_pid_cool_KI)==0){ _dtoa(ret, -_data.pid_cool.Ki, 3);
+	} else if(strcmp(var, eev_pid_cool_KD)==0){ _dtoa(ret, -_data.pid_cool.Kd, 3);
 	} else strcat(ret,"E10");
 }
 
@@ -1476,7 +1490,12 @@ boolean devEEV::set_paramEEV(char *var,float x)
 	} else if(strcmp(var, eev_BoilerStartPos)==0){ 		_data.BoilerStartPos = x; return true;
 	} else if(strcmp(var, eev_FromHeatToBoilerMove)==0){_data.FromHeatToBoilerMove = rd(x, 10); return true;
 	} else if(strcmp(var, eev_mul_fast)==0){			_data.mul_fast = rd(x, 10); return true;
-	} else if(strcmp(var, eev_DebugToLog)==0){ DebugToLog = x; return true;
+	} else if(strcmp(var, eev_fEEV_DebugToLog)==0){ if(x==0) SETBIT0(_data.flags, fEEV_DebugToLog); else SETBIT1(_data.flags, fEEV_DebugToLog); return true;
+	} else if(strcmp(var, eev_fEEV_PID_for_Cool)==0){ if(x==0) SETBIT0(_data.flags, fEEV_PID_for_Cool); else SETBIT1(_data.flags, fEEV_PID_for_Cool); return true;
+	} else if(strcmp(var, eev_tOverheatCool)==0){ _data.tOverheatCool = rd(x, 10); return true;
+	} else if(strcmp(var, eev_pid_cool_KP)==0){ _data.pid_cool.Kp = -rd(x, 1000); return true;
+	} else if(strcmp(var, eev_pid_cool_KI)==0){ _data.pid_cool.Ki = -rd(x, 1000); return true;
+	} else if(strcmp(var, eev_pid_cool_KD) == 0) { _data.pid_cool.Kd = -rd(x, 1000); return true;
 	} else return false; // ошибочное имя параметра
 
 	return true;  // для флагов

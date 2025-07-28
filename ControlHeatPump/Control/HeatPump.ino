@@ -1290,8 +1290,8 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_DELAY_R4WAY)==0)      {return _itoa(Option.delayR4WAY,ret);}else        // Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
 	if(strcmp(var,option_DELAY_BOILER_SW)==0)  {return _itoa(Option.delayBoilerSW,ret);}else     // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
 	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);} else   // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
-	if(strcmp(var,option_ModbusMinTimeBetweenTransaction)==0){ _itoa(Option.ModbusMinTimeBetweenTransaction, ret); } else
-	if(strcmp(var,option_ModbusResponseTimeout)==0){ _itoa(Option.ModbusResponseTimeout, ret); } else
+	if(strcmp(var,option_ModbusMinTimeBetweenTransaction)==0){ return _itoa(Option.ModbusMinTimeBetweenTransaction, ret); } else
+	if(strcmp(var,option_ModbusResponseTimeout)==0){ return _itoa(Option.ModbusResponseTimeout, ret); } else
 	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags,fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
 	if(strcmp(var,option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
 	if(strcmp(var,option_fBackupPowerInfo)==0) { // Работа от генератора
@@ -1454,7 +1454,7 @@ void  HeatPump::updateChart()
 #else
 			else if(ChartsConstSetup[i].object == STATS_OBJ_EEV) Charts[j].add_Point(dEEV.get_EEV());
 #endif
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Overheat2) Charts[j].add_Point(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm) ? dEEV.OverheatTCOMP : dEEV.get_tOverheat());
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Overheat2) Charts[j].add_Point(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm) ? dEEV.OverheatTCOMP : dEEV.get_Overheat());
 #endif
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Power_FC) Charts[j].add_Point(dFC.get_power() / 10);
@@ -4727,36 +4727,27 @@ void HeatPump::set_HeatBoilerUrgently(boolean onoff)
 int32_t updatePID(int32_t errorPid, PID_STRUCT &pid, PID_WORK_STRUCT &pidw)
 {
 	int32_t newVal;
-#ifdef DEBUG_PID
-	journal.printf("PID(%x): err:%d,pre_err:%d,sum:%d (%d,%d,%d). ", &pid, errorPid, pidw.pre_err, pidw.sum, pid.Kp, pid.Ki, pid.Kd);
-#endif
+	bool _debug = GETBIT(HP.dEEV.get_flags(), fEEV_DebugToLog);
+	if(_debug) journal.jprintf("PID(%x): err:%d,pre_err:%d,sum:%d (%d,%d,%d). ", &pid, errorPid, pidw.pre_err, pidw.sum, pid.Kp, pid.Ki, pid.Kd);
 #ifdef PID_FORMULA2
 	// Алгоритм 2 - стандартный ардуиновский ПИД, выдает значение (не дельту)
 	pidw.sum += (int32_t)pid.Ki * errorPid;
 	if(pidw.PropOnMeasure) {
 		pidw.sum -= (int32_t)pid.Kp * (pidw.pre_err - errorPid);
 		newVal = 0;
-#ifdef DEBUG_PID
-		journal.printf("P:%d,", -pid.Kp * (pidw.pre_err - errorPid));
-#endif
+		if(_debug) journal.jprintf("P:%d,", -pid.Kp * (pidw.pre_err - errorPid));
 	} else {
 		newVal = (int32_t)pid.Kp * errorPid;
-#ifdef DEBUG_PID
-		journal.printf("P:%d,", pid.Kp * errorPid);
-#endif
+		if(_debug) journal.jprintf("P:%d,", pid.Kp * errorPid);
 	}
-#ifdef DEBUG_PID
-	journal.printf("I:%d,", pid.Ki * errorPid);
-#endif
+	if(_debug) journal.jprintf("I:%d,", pid.Ki * errorPid);
 	if(pidw.sum > pidw.max) pidw.sum = pidw.max;
 	else if(pidw.sum < pidw.min) pidw.sum = pidw.min;
 	newVal += pidw.sum - pid.Kd * (pidw.pre_err - errorPid);
 	//проверка на ограничения не здесь
 	//if(newVal > pidw.max) newVal = pidw.max;
 	//else if(newVal < pidw.min) newVal = pidw.min;
-#ifdef DEBUG_PID
-	journal.printf("D=%d,Sum(%d)=%d\n", -pid.Kd * (pidw.pre_err - errorPid), pidw.sum, newVal);
-#endif
+	if(_debug) journal.jprintf("D=%d,Sum(%d)=%d\n", -pid.Kd * (pidw.pre_err - errorPid), pidw.sum, newVal);
 #else  // Алгоритм 1 - оригинальный ПИД, выдает дельту, коэффициенты не корректируются по времени
 	// Cp, Ci, Cd – коэффициенты дискретного ПИД регулятора;
 	// u(t) = P (t) + I (t) + D (t);
@@ -4773,23 +4764,17 @@ int32_t updatePID(int32_t errorPid, PID_STRUCT &pid, PID_WORK_STRUCT &pidw)
 	} else pidw.sum = 0;              // если Кi равен 0 то интегрирование не используем
 	newVal = pidw.sum;
 //	if (abs(pidw.sum)>=pidw.max) pidw.sum=0; // Сброс интегральной составляющей при достижении максимума
-#ifdef DEBUG_PID
-	journal.printf("I:%d,", newVal);
-#endif
+	if(_debug) journal.jprintf("I:%d,", newVal);
 	// Пропорциональная составляющая
 	if(abs(errorPid) < pidw.Kp_dmin) newVal += (int32_t) abs(errorPid) * pid.Kp * errorPid / pidw.Kp_dmin; // Вблизи уменьшить воздействие
 	else newVal += (int32_t) pid.Kp * errorPid;
-#ifdef DEBUG_PID
-	journal.printf("P:%d,", newVal-pidw.sum);
-#endif
+	if(_debug) journal.jprintf("P:%d,", newVal-pidw.sum);
 	// Дифференцальная составляющая
 	newVal += (int32_t) pid.Kd * (pidw.pre_err - errorPid);// ДЕСЯТИТЫСЯЧНЫЕ Положительная составляющая - ошибка растет (воздействие надо увеличиить)  Отрицательная составляющая - ошибка уменьшается (воздействие надо уменьшить)
 	if ((abs(newVal)>=pidw.max)&&(pidw.max>0)) pidw.sum=0; // Сброс интегральной составляющей при движении на один шаг (оптимизация классического ПИДа) 100000 Это один шаг
 //    if ((abs(newVal)>=pidw.max-50*1000)&&(pidw.max>0)) pidw.sum=0; // Сброс интегральной составляющей при движении на pidw.max шагов (оптимизация классического ПИДа) Округление (50000 это один шаг)
 
-#ifdef DEBUG_PID
-	journal.printf("D:%d PID:%d\n", pid.Kd * (pidw.pre_err - errorPid), newVal);
-#endif
+	if(_debug) journal.jprintf("D:%d PID:%d\n", pid.Kd * (pidw.pre_err - errorPid), newVal);
 #endif
 	pidw.pre_err = errorPid; // запомнить предыдущую ошибку
 	return round_div_int32(newVal, 1000); // Учесть разрядность коэффициентов (ТЫСЯЧНЫЕ), выход в СОТЫХ

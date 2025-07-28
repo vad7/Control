@@ -258,7 +258,7 @@ void setup() {
 	while(ret) {
 		SerialDbg.print("Wrong I2C EEPROM or setup, press KEY[D");
 		SerialDbg.print(PIN_KEY1);
-		SerialDbg.println("] to continue...");
+		SerialDbg.println("->GND] to continue...");
 		if(!digitalReadDirect(PIN_KEY1)) {
 			WDT_Restart(WDT);
 #ifndef TEST_BOARD

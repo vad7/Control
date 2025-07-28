@@ -144,13 +144,15 @@ void web_server(uint8_t thread)
 					{
 						// Для обычного пользователя подменить файл меню, для сокращения функционала
 						if(GETBIT(Socket[thread].flags, fUser)) {
-							if(!(strcmp(Socket[thread].inPtr, "index.html") == 0
-							|| strcmp(Socket[thread].inPtr, "plan.html") == 0
-							|| strcmp(Socket[thread].inPtr, "stats.html") == 0
-							|| strcmp(Socket[thread].inPtr, "system.html") == 0
-							|| strcmp(Socket[thread].inPtr, "history.html") == 0
-							|| strcmp(Socket[thread].inPtr, "wattrouter.html") == 0
-							|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
+							if(strstr(Socket[thread].inPtr, ".html")) {
+								if(!(strcmp(Socket[thread].inPtr, "index.") == 0
+								|| strcmp(Socket[thread].inPtr, "plan.") == 0
+								|| strcmp(Socket[thread].inPtr, "stats.") == 0
+								|| strcmp(Socket[thread].inPtr, "system.") == 0
+								|| strcmp(Socket[thread].inPtr, "history.") == 0
+								|| strcmp(Socket[thread].inPtr, "wattrouter.") == 0
+								|| strcmp(Socket[thread].inPtr, "about.") == 0)) goto xUNAUTHORIZED;
+							}
 						}
 						urldecode(Socket[thread].inPtr, Socket[thread].inPtr, len + 1);
 						readFileSD(Socket[thread].inPtr, thread);
@@ -1105,31 +1107,31 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #endif
 		if(strncmp(str, "hide_", 5) == 0) { // Удаление элементов внутри tag name="hide_*"
 			str += 5;
-			if(strcmp(str, "fcan") == 0) {
+			if(strcmp(str, "fcan") == 0) { // hide_fcan
 #ifdef FC_ANALOG_CONTROL
 				strcat(strReturn,"0");
 #else
 				strcat(strReturn,"1");
 #endif
-			} else if(strcmp(str, "rpumpfl") == 0) {
+			} else if(strcmp(str, "rpumpfl") == 0) { // hide_rpumpfl
 #ifdef RPUMPFL
 				strcat(strReturn,"0");
 #else
 				strcat(strReturn,"1");
 #endif
-			} else if(strcmp(str, "tro_ei") == 0) { // hide: TCOMPIN, TEVAIN
+			} else if(strcmp(str, "tro_ei") == 0) { // hide_tro_ei: TCOMPIN, TEVAIN
 #ifdef TCOMPIN
 				strcat(strReturn,"0");
 #else
 				strcat(strReturn,"1");
 #endif
-			} else if(strcmp(str, "sun") == 0) { // hide: SUN
+			} else if(strcmp(str, "sun") == 0) { // hide_sun
 #ifdef USE_SUN_COLLECTOR
 				strcat(strReturn,"0");
 #else
 				strcat(strReturn,"1");
 #endif
-			} else if(strcmp(str, "pid2") == 0) { // hide: PID2
+			} else if(strcmp(str, "pid2") == 0) { // hide_pid2
 #ifdef PID_FORMULA2
 				strcat(strReturn,"0");
 #else
@@ -1147,6 +1149,8 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 #else
 				strcat(strReturn, "шаги");
 #endif
+			} else if(strcmp(str, "pidCool") == 0) { // hide_pidCool
+				strcat(strReturn, GETBIT(HP.dEEV.get_flags(), fEEV_PID_for_Cool) ? "0" : "1");
 			}
 			ADD_WEBDELIM(strReturn); continue;
 		}
@@ -2703,7 +2707,7 @@ xget_WR:
 					if ((p<0)||(p>=ANUMBER))  {strcat(strReturn,"E03");ADD_WEBDELIM(strReturn);  continue; }  // Не соответсвие имени функции и параметра
 					else  // параметр верный
 					{
-						if(strncmp(str,"get_", 4)==0) {              // Функция get_
+						if(strncmp(str,"get_", 4)==0) {              // Функция get_Press
 							str += 4;
 							if(strcmp(str,"Press")==0)           // Функция get_Value
 							{
