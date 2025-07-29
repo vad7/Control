@@ -1171,7 +1171,6 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			strcat(strReturn,"W5200_SPI_SPEED|Частота SPI сети "); strcat(strReturn,nameWiznet);strcat(strReturn,", МГц|");_itoa(84/W5200_SPI_SPEED, strReturn);strcat(strReturn,";");
 			strcat(strReturn,"I2C_SPEED|Частота работы шины I2C, кГц|"); _itoa(I2C_SPEED/1000,strReturn); strcat(strReturn,";");
 			strcat(strReturn,"UART_SPEED|Скорость отладочного порта, бод|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_CONTROL|Период управления тепловым насосом, мсек|");_itoa(TIME_CONTROL,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_EEV|Период управления ЭРВ, мсек|");_itoa(TIME_EEV,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_WEB_SERVER|Период опроса web сервера "); strcat(strReturn,nameWiznet);strcat(strReturn,", мсек|");_itoa(TIME_WEB_SERVER,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_COMMAND|Период разбора команд управления ТН, мсек|");_itoa(TIME_COMMAND,strReturn);strcat(strReturn,";");
@@ -1517,7 +1516,7 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 			if (!HP.dSDM.get_present()) {
 				strcat(strReturn,"Счетчик не установлен");
 			} else {
-				HP.dSDM.uplinkSDM();
+				HP.dSDM.check_link();
 				strcat(strReturn,"Проверка связи со счетчиком");
 			}
 			ADD_WEBDELIM(strReturn);  continue;

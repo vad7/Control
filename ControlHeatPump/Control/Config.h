@@ -5870,7 +5870,7 @@ const char *noteTemp[] = {"Температура улицы",
 #else
 		{ STATS_OBJ_Temp, TOUT },
 #endif
-		{ STATS_OBJ_Temp, TIN },
+//		{ STATS_OBJ_Temp, TIN },
 		{ STATS_OBJ_Temp, TBOILER },
 		{ STATS_OBJ_Temp, TCOMP },
 		{ STATS_OBJ_Temp, TEVAING },

@@ -303,6 +303,7 @@ struct type_optionHP
  uint8_t  ModbusMinTimeBetweenTransaction;
  uint8_t  ModbusResponseTimeout;
  uint8_t  nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
+ uint8_t  Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек
 };// __attribute__((packed));
 
 
@@ -422,8 +423,8 @@ public:
 	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
-	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }    // Проверка работает ли компрессор
-	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); }    // Проверка работает ли котел
+	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
+	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
 	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
 	void 	relayAllOFF();              // Все реле выключить
 	void	HandleNoPower(void);		// Обработать пропадание питания

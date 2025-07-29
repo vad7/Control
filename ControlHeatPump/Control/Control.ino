@@ -486,6 +486,15 @@ x_I2C_init_std_message:
 			for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num >= TNUMBER) TempAlarm_remove(i);
 		}
 	}
+	// Проверка связи с устройствами
+#ifdef USE_ELECTROMETER_SDM
+	HP.dSDM.check_link();
+#endif
+	HP.dFC.check_link();
+#ifdef USE_HEATER
+	HP.dHeater.check_link();
+#endif
+
 	// обновить хеш для пользователей
 	WebSec_user.hash = WebSec_admin.hash = NULL;
 	calc_WebSec_hash(&WebSec_user, (char*)NAME_USER, HP.get_passUser(), Socket[0].outBuf);
@@ -688,10 +697,12 @@ x_I2C_init_std_message:
 
 	journal.jprintf(" Create tasks - OK, size %d bytes\n",HP.mRTOS);
 
-	if(HP.get_HP_ON()>0)  HP.sendCommand(pRESTART);  // если надо запустить ТН - отложенный старт
+	if(HP.get_HP_ON()) HP.sendCommand(pRESTART);  // если надо запустить ТН - отложенный старт
 
 	//journal.jprintf("16. Send a notification . . .\n");
-	//HP.message.setMessage(pMESSAGE_RESET,(char*)"Контроллер теплового насоса был сброшен",0);    // сформировать уведомление о сбросе контролла
+	if(rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET) {
+		HP.message.setMessage(pMESSAGE_RESET,(char*)"Контроллер ТН был перезагружен: ",0);    // сформировать уведомление о загрузке
+	}
 	journal.jprintf("16. Information:\n");
 	freeRamShow();
 	HP.startRAM=freeRam()-HP.mRTOS;   // оценка свободной памяти до пуска шедулера, поправка на 1054 байта
@@ -786,15 +797,20 @@ void vWeb0(void *)
  #ifdef PIN_WR_Boiler_Substitution
 	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
  #endif
-	journal.jprintf("WattRouter started");
 	if(GETBIT(WR.Flags, WR_fActive)) {
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+		vTaskDelay(1200);
 		if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
+		journal.jprintf("WattRouter started");
 		journal.jprintf(", Ubuf=%.1d\n", WR_MAP_Ubuf);
 #else
-		journal.jprintf("\n");
+		journal.jprintf("WattRouter started");
 #endif
-	} else journal.jprintf(" - NOT ACTIVE\n");
+	} else {
+		journal.jprintf("WattRouter started");
+		journal.jprintf(" - NOT ACTIVE");
+	}
+	journal.jprintf("\n");
 #endif
 
 	HP.timeNTP = thisTime = xTaskGetTickCount();        // В первый момент не обновляем
@@ -1352,6 +1368,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 			if(SemaphoreTake(xI2CSemaphore, (3 * I2C_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 				SemaphoreGive(xI2CSemaphore);
 				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
+				active = false;
 				HP.num_resMutexI2C++;
 			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
 			else SemaphoreGive(xI2CSemaphore);
@@ -1518,8 +1535,11 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 						}
 					}
 					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+					WEB_STORE_DEBUG_INFO(59);
+
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
 					if(GETBIT(WR.Flags, WR_fActive)) WR_Read_MAP();
+					WEB_STORE_DEBUG_INFO(62);
 #endif
 				}
 			}
@@ -1996,29 +2016,29 @@ void vReadSensor_delay1ms(int32_t ms)
 delayTask:	// чтобы задача отдавала часть времени другим
 		switch (HP.get_State())  // Состояние ТН
 		{
-		case pOFF_HP:                          // 0 ТН выключен
-		case pSTOPING_HP:                      // 2 Останавливается
+		case pOFF_HP:                               // ТН выключен
+		case pSTOPING_HP:                           // Останавливается
 			HP.SetTask_vUpdate(false);
 			break;
-		case pSTARTING_HP: _delay(10000); break; // 1 Стартует  - этого не должно быть в этом месте
-		case pWORK_HP:                           // 3 Работает   - анализ режима работы get_modWork()
-			if((HP.get_modWork() & pHEAT)) {	// Отопление
-				if(HP.get_ruleHeat()==pHYSTERESIS)
-					vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
-				else vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД  секунды
-			} else if((HP.get_modWork() & pCOOL)) { // охлаждение
-				if(HP.get_ruleCool()==pHYSTERESIS)
-					vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);    // Гистерезис
-				else vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);                        // Время интегрирования ПИД секунды
+		case pSTARTING_HP: vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ); break; // Стартует - этого не должно быть в этом месте
+		case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
+			if((HP.get_modWork() & pHEAT)) {		// Отопление
+				if(HP.get_ruleHeat() == pHYSTERESIS)
+					vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);  // Гистерезис
+				else vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ); // Время интегрирования ПИД
+			} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
+				if(HP.get_ruleCool() == pHYSTERESIS)
+					vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);  // Гистерезис
+				else vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ); // Время интегрирования ПИД
 			} else if((HP.get_modWork() & pBOILER)) { // бойлер
 				if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
-					vTaskDelay(HP.dFC.get_Uptime() * 1000/portTICK_PERIOD_MS);  // Время интегрирования ПИД секунды
-				else vTaskDelay(TIME_CONTROL_BOILER/portTICK_PERIOD_MS);                                        // Гистерезис
+					vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ);  // Время интегрирования ПИД
+				else vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ); // Гистерезис
 			} else { // Пауза
-				vTaskDelay(TIME_CONTROL/portTICK_PERIOD_MS);                                        // Гистерезис
+				vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
 			}
 			break;
-		case pWAIT_HP:                          // 4 Ожидание ТН (расписание - пустое место)   проверям раз в 5 сек
+		case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
 			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
 				if(HP.get_modeHouse() == pHEAT) {
 					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
@@ -2030,12 +2050,12 @@ delayTask:	// чтобы задача отдавала часть времени
 					}
 				}
 			}
-			_delay(UPDATE_HP_WAIT_PERIOD);
+			vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
 			break;
-		case pERROR_HP: 						// 5 Ошибка ТН
-			_delay(UPDATE_HP_WAIT_PERIOD);
+		case pERROR_HP: 						      // Ошибка ТН
+			vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
 			break;
-		case pERROR_CODE:                       // 6 - Эта ошибка возникать не должна!
+		case pERROR_CODE:                             // Эта ошибка возникать не должна!
 		default:
 			journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
 		} //  switch (HP.get_State())

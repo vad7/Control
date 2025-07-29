@@ -377,6 +377,7 @@ class devVaconFC
 public:
   int8_t	initFC();                               // Инициализация Частотника
   __attribute__((always_inline)) inline boolean get_present(){return GETBIT(flags,fFC);} // Наличие датчика в текущей конфигурации
+  void 		check_link(void);
   int8_t	get_err(){return err;}                  // Получить последню ошибку частотника
   uint16_t	get_numErr(){return numErr;}            // Получить число ошибок чтения
   void		get_paramFC(char *var, char *ret);      // Получить параметр инвертора в виде строки - get_pFC('x')
@@ -399,8 +400,8 @@ public:
   int16_t get_maxFreqUser(){return _data.maxFreqUser;}          // Максимальная частота инвертора РУЧНОЙ РЕЖИМ (см компрессор) в 0.01
   int16_t get_stepFreq(){return _data.stepFreq;}                // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока (см компрессор) в 0.01
   int16_t get_stepFreqBoiler(){return _data.stepFreqBoiler;}    // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока ГВС в 0.01
-  int16_t get_dtTemp(){return _data.dtTemp;}                    // Превышение температуры от уставок (подача) при которой срабатыват защита (уменьшается частота) в сотых градуса
-  int16_t get_dtTempBoiler(){return _data.dtTempBoiler;}        // Превышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
+  int16_t get_dtTemp(){return _data.dtTemp;}                    // Превышение температуры от уставок (подача) при которой срабатывает защита (уменьшается частота) в сотых градуса
+  int16_t get_dtTempBoiler(){return _data.dtTempBoiler;}        // Превышение температуры от уставок (подача) при которой срабатывает защита ГВС в сотых градуса
   int16_t get_maxFreqGen(){return _data.maxFreqGen;}            // Максимальная частота инвертора при работе от генератора в 0.01
   uint16_t get_PidMaxStep(){return _data.PidMaxStep;}
   uint16_t get_MaxPower() { return _data.MaxPower; }
@@ -507,8 +508,8 @@ public:
 	  int16_t  maxFreqUser;             // Максимальная скорость инвертора РУЧНОЙ РЕЖИМ (см компрессор) в 0.01 %
 	  int16_t  stepFreq;                // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока (см компрессор) в 0.01 %
 	  int16_t  stepFreqBoiler;          // Шаг уменьшения инвертора при достижении максимальной температуры, мощности и тока ГВС в 0.01 %
-	  int16_t  dtTemp;                  // Превышение температуры от уставок (подача) при которой срабатыват защита (уменьшается частота) в сотых градуса
-	  int16_t  dtTempBoiler;            // Превышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
+	  int16_t  dtTemp;                  // Превышение температуры от уставок (подача) при которой срабатывает защита (уменьшается частота) в сотых градуса
+	  int16_t  dtTempBoiler;            // Превышение температуры от уставок (подача) при которой срабатывает защита ГВС в сотых градуса
 	  uint16_t setup_flags;             // флаги настройки - см. define FC_SAVED_FLAGS
 	  int16_t  ReturnOilPeriod;			// в FC_TIME_READ
 	  int16_t  ReturnOilPerDivHz;		// Уменьшение периода в FC_TIME_READ на каждый Гц

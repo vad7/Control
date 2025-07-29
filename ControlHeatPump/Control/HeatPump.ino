@@ -125,7 +125,11 @@ void HeatPump::initHeatPump()
 	fBackupPowerOffDelay = 0;
 	pump_in_pause_timer = 0;
 	work_flags = (1<<fHP_SunNotInited);
+#ifdef TEST_BOARD
+	testMode = SAFE_TEST;
+#else
 	testMode = NORMAL;
+#endif
 	eraseError();
 
 	for(i = 0; i < TNUMBER; i++) sTemp[i].initTemp(i);            // Инициализация датчиков температуры
@@ -156,18 +160,16 @@ void HeatPump::initHeatPump()
 	// Инициалаизация модбаса  перед частотником и счетчиком
 	journal.jprintf("Init Modbus RTU via RS485:");
 	if(Modbus.initModbus() == OK) journal.jprintf(" OK\r\n");  //  выводим сообщение об установлении связи
-	else {
-		journal.jprintf(" not present config\r\n");
-	}         //  нет в конфигурации
+	else journal.jprintf(" not present config\r\n"); 	       //  нет в конфигурации
+#ifdef USE_ELECTROMETER_SDM
+	HP.dSDM.initSDM();                              // Инициализация счетчика
+#endif
+	HP.dFC.initFC();                                // Инициализация FC
+#ifdef USE_HEATER
+	HP.dHeater.init();								// Инициализация Котла
+#endif
 
 	message.initMessage(MAIN_WEB_TASK);                        // Инициализация Уведомлений, параметр - номер потока сервера в котором идет отправка
-	dFC.initFC();                                              // Инициализация FC
-#ifdef USE_ELECTROMETER_SDM
-	dSDM.initSDM();                                            // инициалаизация счетчика
-#endif
-#ifdef USE_HEATER
-	dHeater.init();
-#endif
 #ifdef MQTT
 	clMQTT.initMQTT(MAIN_WEB_TASK);                            // Инициализация MQTT, параметр - номер потока сервера в котором идет отправка
 #endif
@@ -540,6 +542,7 @@ xSkip:		load_struct(NULL, &buffer, 0); // skip unknown type
 	updateLinkIP();
 #endif
 	journal.jprintf("OK\n");
+	if(Option.Control_Period == 0) Option.Control_Period = TIME_CONTROL;
 //	if(Option.ver <= 133) {
 //#ifdef USE_ELECTROMETER_SDM
 //		if(dSDM.get_readState(3) == OK) {
@@ -593,7 +596,7 @@ xNotEqual:
 		}
 		uint8_t errcode;
 		if((errcode = writeEEPROM_I2C(I2C_COUNT_EEPROM + ptr, (byte*)&motoHour + ptr, ptre - ptr))) {
-			journal.jprintf(" ERROR %d save counters!\n", errcode);
+			journal.printf(" ERROR %d save counters!\n", errcode);
 			set_Error(ERR_SAVE2_EEPROM, (char*) __FUNCTION__);
 			return ERR_SAVE2_EEPROM;
 		}
@@ -819,6 +822,7 @@ void HeatPump::resetSettingHP()
 	// Опции теплового насоса
 	// Временные задержки
 	Option.ver = VER_SAVE;
+	Option.Control_Period = TIME_CONTROL;
 	Option.delayOnPump = DEF_DELAY_ON_PUMP;
 	Option.delayStartRes = DEF_DELAY_START_RES;
 	Option.delayRepeadStart = DEF_DELAY_REPEAD_START;
@@ -1074,9 +1078,10 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_SunTempOff)==0)   	   { Option.SunTempOff = rd(x, 100); return true;} else
 	if(strcmp(var,option_SunRegGeo)==0)        { Option.flags = (Option.flags & ~(1<<fSunRegenerateGeo)) | ((n!=0)<<fSunRegenerateGeo); return true; }else
 	if(strcmp(var,option_DailySwitchHysteresis)==0){ Option.DailySwitchHysteresis = rd(x, 10); return true;} else
-	if(strcmp(var,option_nStart)==0)          { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else         // число попыток пуска
-	if(strcmp(var,option_nStartNextProf)==0)  { if ((n>=0)&&(n<=255)) {Option.nStartNextProf=n; return true;} else return false;  }else // число попыток пуска
+	if(strcmp(var,option_nStart)==0)           { if ((n>=0)&&(n<=255)) {Option.nStart=n; return true;} else return false;  }else         // число попыток пуска
+	if(strcmp(var,option_nStartNextProf)==0)   { if ((n>=0)&&(n<=255)) {Option.nStartNextProf=n; return true;} else return false;  }else // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       { if(n>0) { if (get_State()==pWORK_HP) clearChart(); Option.tChart = n; return true; } else return false; } else // Сбросить статистистику, начать отсчет заново
+	if(strcmp(var,option_Control_Period)==0)   { if(n>0) Option.Control_Period = n; else return false; } else
 	if(strcmp(var,option_Charts_when_comp_on)==0){ Charts_when_comp_on = n; return true;} else
 	if(strcmp(var, option_BEEP) == 0) { // Подача звукового сигнала
 		if(n == 0) {
@@ -1251,6 +1256,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_nStart)==0)           {return _itoa(Option.nStart,ret);}else         // число попыток пуска
 	if(strcmp(var,option_nStartNextProf)==0)   {return _itoa(Option.nStartNextProf,ret);}else // число попыток пуска
 	if(strcmp(var,option_TIME_CHART)==0)       {return _itoa(Option.tChart,ret);} else
+	if(strcmp(var,option_Control_Period)==0)   {return _itoa(Option.Control_Period,ret);} else
 	if(strcmp(var,option_Charts_when_comp_on)==0){return _itoa(Charts_when_comp_on, ret);} else
 	if(strcmp(var,option_BEEP)==0)             {if(GETBIT(Option.flags,fBeep)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else            // Подача звукового сигнала
 	if(strcmp(var,option_NEXTION)==0)          { return strcat(ret, (char*)(GETBIT(Option.flags,fNextion) ? cOne : cZero)); } else         // использование дисплея nextion
@@ -1384,6 +1390,9 @@ void HeatPump::get_listChart(char* ret, const char *delimiter)
 			strcat(ret, sADC[ChartsModSetup[index].number].get_note());
 			strcat(ret, ", °C");
 		} else if(ChartsModSetup[index].object == STATS_OBJ_Flow) strcat(ret, sFrequency[ChartsModSetup[index].number].get_note());
+		else if(ChartsModSetup[index].object == STATS_OBJ_WattRouter_In) strcat(ret, "Ваттроутер Сеть");
+		else if(ChartsModSetup[index].object == STATS_OBJ_WattRouter_Out) strcat(ret, "Ваттроутер Выход");
+		else if(ChartsModSetup[index].object == STATS_OBJ_WattRouter_Excess) strcat(ret, "Ваттроутер Излишки");
 		else strcat(ret, STATS_OBJ_names[ChartsModSetup[index].object]);
 		strcat(ret, delimiter);
 	}
@@ -2117,7 +2126,7 @@ xGoWait:
 	if(get_State() != pSTARTING_HP) return;            // Могли нажать кнопку стоп, выход из процесса запуска
 	if(is_next_command_stop()) return;			    // следующая команда останов, выходим
 #ifdef USE_ELECTROMETER_SDM
-	if(!dSDM.get_link()) dSDM.uplinkSDM();
+	if(!dSDM.get_link()) dSDM.check_link();
 #endif
 #ifdef SPOWER
 	HP.sInput[SPOWER].Read(true);
@@ -2511,7 +2520,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 #else
  		if(FEED > Prof.Boiler.tempInLim) {
 #endif
-			Status.ret=pBp1; set_Error(ERR_PID_FEED,(char*)__FUNCTION__); return pCOMP_OFF;  // Достижение максимальной температуры подачи
+			Status.ret=pBp1; return pCOMP_OFF;  // Достижение максимальной температуры подачи
 		}
 		// Отслеживание выключения (с учетом догрева)
 		if(T > TRG) {
@@ -2528,48 +2537,77 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		} else if(_is_on && !onBoiler) return pCOMP_OFF;// компрессор/котел работает, но ГВС греть не надо  - уходим без изменения состояния
 		
 		// ПИД ----------------------------------
-        // Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
-        else if(GETBIT(Option.flags,fBackupPower) && (_is_on & _COMPR_) && getPower() > get_maxBackupPower()) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту
-#ifdef DEBUG_MODWORK
-        	journal.jprintf("%s %.2f (BACKUP POWER: %.3f kW)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,(float)getPower()/1000.0); // КИЛОВАТЫ
-#endif
-			if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler())  { Status.ret=pBp29; return pCOMP_OFF; }   // Уменьшать дальше некуда, выключаем компрессор
-			Status.ret=pBp28;
-			dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());   // Уменьшить частоту
-			resetPID();
+
+#ifdef USE_HEATER
+		else if(_is_on & _HEATR_) {	// Котел
+
+			if(FEED > Prof.Boiler.tempInLim - dHeater.set.boiler_protect_temp_dt * 10) { // Подача ограничение
+				if(dHeater.PowerMaxCurrent > dHeater.set.boiler_power_min) { // установка минимальной мощности, если еще не установили
+					dHeater.set_target(0, dHeater.set.boiler_power_min);
+					Status.ret = pBp6;
+					resetPID();
+				}
+				return pCOMP_NONE;
+			}
+			if(xTaskGetTickCount() - updatePidBoiler < get_timeBoiler() * 1000) { Status.ret = pBp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
+			updatePidBoiler = xTaskGetTickCount();
+			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
+			Status.ret = pBp12;
+			int16_t newFC = updatePID(Prof.Boiler.tempPID - FEED, Prof.Boiler.pid, pidw);
+	#ifndef PID_FORMULA2
+			newFC += dHeater.PowerMaxCurrent;
+	#endif
+			if(newFC > dHeater.set.boiler_power_max) newFC = dHeater.set.boiler_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
+			else if(newFC < dHeater.set.boiler_power_min) newFC = dHeater.set.boiler_power_min;
+			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
+			{
+	#ifdef DEBUG_MODWORK
+				journal.jprintf(" HT> %d\n", newFC);
+	#endif
+				dHeater.set_target(0, newFC);
+			}
 			return pCOMP_NONE;
-        }		
-        
-		// ЗАЩИТА Компрессор работает, достигнута максимальная температура подачи, мощность, температура компрессора то уменьшить обороты на stepFreq
-#if defined(SUPERBOILER) && defined(PCON)
-		else if((_is_on & _COMPR_) ? PressToTemp(PCON) > Prof.Boiler.tempInLim - dFC.get_dtTempBoiler() : FEED > Prof.Boiler.tempInLim) // Ограничение, по температуре нагнетания для SUPERBOILER.
-#else
-		else if((_is_on & _COMPR_) ? FEED > Prof.Boiler.tempInLim - dFC.get_dtTempBoiler() : FEED > Prof.Boiler.tempInLim)         // Подача ограничение
 #endif
-		{
-#ifdef DEBUG_MODWORK
-			if((_is_on & _COMPR_)) journal.jprintf("%s %.2f (FEED: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,FEED/100.0);
-#endif
-			if((_is_on & _COMPR_) ? dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler() : true) { Status.ret=pBp23; return pCOMP_OFF; }     // Уменьшать дальше некуда, выключаем компрессор
-			Status.ret=pBp6;
-			dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту
-			resetPID();
-			return pCOMP_NONE;
-		}
-		else if(_is_on & _HEATR_) {		// Котел
+		} else if(_is_on & _COMPR_) {									// Компрессор
 
-			Status.ret = pBp11; return pCOMP_NONE;		// Пока заглушка!
+			// ЗАЩИТА Компрессор работает, достигнута максимальная температура подачи, мощность, температура компрессора то уменьшить обороты на stepFreq
+	#if defined(SUPERBOILER) && defined(PCON)
+			if(PressToTemp(PCON) > Prof.Boiler.tempInLim - dFC.get_dtTempBoiler()) // Ограничение, по температуре нагнетания для SUPERBOILER.
+	#else
+			if(FEED > Prof.Boiler.tempInLim - dFC.get_dtTempBoiler())         // Подача ограничение
+	#endif
+			{
+	#ifdef DEBUG_MODWORK
+				journal.jprintf("%s %.2f (FEED: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,FEED/100.0);
+	#endif
+				if(dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { // Уменьшать дальше некуда - выключаемся
+					Status.ret=pBp23;
+					return pCOMP_OFF;
+				}
+				Status.ret=pBp6;
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту компрессора
+				resetPID();
+				return pCOMP_NONE;
+	        // Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
+			} else if(GETBIT(Option.flags,fBackupPower) && getPower() > get_maxBackupPower()) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту
+	#ifdef DEBUG_MODWORK
+	        	journal.jprintf("%s %.2f (BACKUP POWER: %.3f kW)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,(float)getPower()/1000.0); // КИЛОВАТЫ
+	#endif
+				if(dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler())  { Status.ret=pBp29; return pCOMP_OFF; }   // Уменьшать дальше некуда, выключаем компрессор
+				Status.ret = pBp28;
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());   // Уменьшить частоту
+				resetPID();
+				return pCOMP_NONE;
+	        }
 
-		} else if(_is_on & _COMPR_) {	// Компрессор
-
-			if(dFC.get_power() > dFC.get_MaxPowerBoiler())               // Мощность для ГВС меньшая мощность
+			if(dFC.get_power() > dFC.get_MaxPowerBoiler())				// Мощность для ГВС меньшая мощность
 			{
 	#ifdef DEBUG_MODWORK
 				journal.jprintf("%s %.2f (POWER: %.3f kW)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100,(float)dFC.get_power()/1000); // КИЛОВАТЫ
 	#endif
-				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler())  { Status.ret=pBp24; return pCOMP_OFF; }    // Уменьшать дальше некуда, выключаем компрессор
-				Status.ret=pBp7;
-				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту
+				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler())  { Status.ret=pBp24; return pCOMP_OFF; } // Уменьшать дальше некуда, выключаем компрессор
+				Status.ret = pBp7;
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // Уменьшить частоту
 				resetPID();
 				return pCOMP_NONE;
 			}
@@ -2579,9 +2617,9 @@ MODE_COMP  HeatPump::UpdateBoiler()
 	#ifdef DEBUG_MODWORK
 				journal.jprintf("%s %.2f (CURRENT: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,(float)dFC.get_current()/100.0);
 	#endif
-				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp27; return pCOMP_OFF;  }    // Уменьшать дальше некуда, выключаем компрессор
+				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp27; return pCOMP_OFF;  } // Уменьшать дальше некуда, выключаем компрессор
 				Status.ret=pBp16;
-				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // Уменьшить частоту
 				resetPID();
 				return pCOMP_NONE;
 			}
@@ -2591,9 +2629,9 @@ MODE_COMP  HeatPump::UpdateBoiler()
 	#ifdef DEBUG_MODWORK
 				journal.jprintf("%s %.2f (TCOMP: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,sTemp[TCOMP].get_Temp()/100.0);
 	#endif
-				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp25; return pCOMP_OFF; }     // Уменьшать дальше некуда, выключаем компрессор
+				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp25; return pCOMP_OFF; } // Уменьшать дальше некуда, выключаем компрессор
 				Status.ret=pBp8;
-				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());// Уменьшить частоту
 				resetPID();
 				return pCOMP_NONE;
 			}
@@ -2603,9 +2641,9 @@ MODE_COMP  HeatPump::UpdateBoiler()
 	#ifdef DEBUG_MODWORK
 				journal.jprintf("%s %.2f (PCON: %.2f)\n",STR_REDUCED,dFC.get_stepFreqBoiler()/100.0,sADC[PCON].get_Value()/100.0);
 	#endif
-				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp26; return pCOMP_OFF; }     // Уменьшать дальше некуда, выключаем компрессор
+				if (dFC.get_target()-dFC.get_stepFreqBoiler()<dFC.get_minFreqBoiler()) { Status.ret=pBp26; return pCOMP_OFF; } // Уменьшать дальше некуда, выключаем компрессор
 				Status.ret=pBp9;
-				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());    // Уменьшить частоту
+				dFC.set_target(dFC.get_target()-dFC.get_stepFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler());// Уменьшить частоту
 				resetPID();
 				return pCOMP_NONE;
 			}
@@ -2804,14 +2842,41 @@ MODE_COMP HeatPump::UpdateHeat()
 			} else return pCOMP_OFF; // Бойлер нагрет и отопление не нужно
 		} else if(rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && FEED > Prof.Heat.tempInLim) { Status.ret=pHp1; /* set_Error(ERR_PID_FEED,(char*)__FUNCTION__); */ return pCOMP_OFF;}  // Достижение максимальной температуры подачи - это ошибка ПИД не работает /работает, но низёханько/ (есть задержка срабатывания для переключения с ГВС)
 
-		else if(_is_on & _HEATR_) {		// Котел
+#ifdef USE_HEATER
+		else if(_is_on & _HEATR_) {	// Котел
 
-			Status.ret = pHp11; return pCOMP_NONE;		// Пока заглушка!
+			if(FEED > Prof.Heat.tempInLim - dHeater.set.heat_protect_temp_dt * 10) { // Подача ограничение
+				if(dHeater.PowerMaxCurrent > dHeater.set.heat_power_min) { // установка минимальной мощности, если еще не установили
+					dHeater.set_target(0, dHeater.set.heat_power_min);
+					Status.ret = pHp6;
+					resetPID();
+				}
+				return pCOMP_NONE;
+			}
+			if(xTaskGetTickCount() - updatePidTime < get_timeHeat() * 1000) { Status.ret = pHp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
+			updatePidBoiler = xTaskGetTickCount();
+			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
+			Status.ret = pHp12;
+			int16_t newFC = updatePID(Prof.Heat.tempPID - FEED, Prof.Heat.pid, pidw);
+	#ifndef PID_FORMULA2
+			newFC += dHeater.PowerMaxCurrent;
+	#endif
+			if(newFC > dHeater.set.heat_power_max) newFC = dHeater.set.heat_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
+			else if(newFC < dHeater.set.heat_power_min) newFC = dHeater.set.heat_power_min;
+			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
+			{
+	#ifdef DEBUG_MODWORK
+				journal.jprintf(" HT> %d\n", newFC);
+	#endif
+				dHeater.set_target(0, newFC);
+			}
+			return pCOMP_NONE;
+#endif
 
 		} else if(_is_on & _COMPR_) {	// Компрессор
 
 			// Питание от резервного источника - ограничение мощности потребления от источника - это жесткое ограничение, по этому оно первое
-			if(GETBIT(Option.flags,fBackupPower) && (_is_on & _COMPR_) && getPower() > get_maxBackupPower()) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту
+			if(GETBIT(Option.flags,fBackupPower) && getPower() > get_maxBackupPower()) { // Включено ограничение мощности и текущая мощность уже выше ограничения - надо менять частоту
 	#ifdef DEBUG_MODWORK
 				journal.jprintf("%s %.2f (BACKUP POWER: %.3f kW)\n",STR_REDUCED,dFC.get_stepFreq()/100.0,(float)getPower()/1000.0); // КИЛОВАТЫ
 	#endif
@@ -4703,7 +4768,7 @@ void HeatPump::Sun_OFF(void)
 #endif
 int16_t HeatPump::getPower(void) {
 #ifdef USE_ELECTROMETER_SDM  // Пытаемся получить мощность по электросчетчику
-	if(!dSDM.get_link()) dSDM.uplinkSDM();	// Попытаемся реанимировать счетчик (связь по модбасу)
+	if(!dSDM.get_link()) dSDM.check_link();	// Попытаемся реанимировать счетчик (связь по модбасу)
 	if(dSDM.get_link()) return dSDM.get_power();
 #endif
 	// Дошли до сюда - значит не получилось мощность по электросчетчику определить,	работаем с ПЧ

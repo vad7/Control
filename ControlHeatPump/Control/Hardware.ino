@@ -1565,7 +1565,7 @@ int8_t devSDM::initSDM()
 	} else {
 		SETBIT1(flags, fSDM);                           // счетчик представлен
 		note = (char*) noteSDM;
-		uplinkSDM();                                  // проверить связь со счетчиком
+		//check_link();                                  // проверить связь со счетчиком
 	}
 #else
 	SETBIT0(flags,fSDM);                           // счетчик не представлен
@@ -1575,9 +1575,9 @@ int8_t devSDM::initSDM()
 	return err;
 }
 
-// Проверить связь со счетчиком предполагается что модбас уже нинициализирован читаем из регистра скорость
-// Выводит сообщеиня в журнал и устанавливает флаг связи
-boolean devSDM::uplinkSDM()
+// Проверить связь со счетчиком предполагается, что модбас уже инициализирован, читаем из регистра скорость
+// Выводит сообщения в журнал и устанавливает флаг связи
+boolean devSDM::check_link()
 {
 	int8_t i, errModbus=0;
 //	if((GETBIT(flags,fSDM))&&(GETBIT(flags,fSDMLink))) return err;  // Если есть счетчик и есть связь выходим
@@ -1652,7 +1652,7 @@ boolean  devSDM::progConnect()
   MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED,MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
 
   // 6. Вывод результатов
-  if (err==OK) { journal.jprintf("%s: Programming is Ok\n",name); uplinkSDM(); return true;}  // Надо сбросить счетчик
+  if (err==OK) { journal.jprintf("%s: Programming is Ok\n",name); check_link(); return true;}  // Надо сбросить счетчик
   else { journal.jprintf("%s: Programming is wrong, no link\n",name); return false; }
 #endif
 }                           

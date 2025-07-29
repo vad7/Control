@@ -7,7 +7,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(T),get_HT(PM),get_HT(TB),get_HT(BM),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MBT),get_modbus_p(heater),get_modbus_p(heater_s)");
+	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(CP),get_HT(T),get_HT(PM),get_HT(TB),get_HT(BM),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MBT),get_HT(PN),get_HT(BN),get_HT(HD),get_HT(BD),get_modbus_p(heater),get_modbus_p(heater_s)");
 };
 // Address in HEX
 function load_adapter_settings()
@@ -33,16 +33,23 @@ function load_adapter_settings2()
 	<tr><td>Использовать обычное реле RH_3WAY для переключения Котел - ТН</td><td><input type="checkbox" id="get_ht-r3" onchange="setParam('get_HT(R3)')"></td></tr>
 	<tr><td>Использовать Modbus реле для запуска Котла</td><td><input type="checkbox" id="get_ht-rm" onchange="setParam('get_HT(RM)')"></td></tr>
 	<tr><td>Использовать Modbus реле для переключения Котел - ТН</td><td><input type="checkbox" id="get_ht-rw" onchange="setParam('get_HT(RW)')"></td></tr>
+    <tr><td>Период управления, сек</td><td><input type="number" id="get_ht-cp"> <input type="submit" value=">" onclick="setParam('get_HT(CP)')"></td></tr>
     <tr><td>Время работы циркуляцонного насоса котла после останова, сек.</td><td><input type="number" id="get_ht-pa"> <input type="submit" value=">" onclick="setParam('get_HT(PA)')"></td></tr>
     <tr><td>Время переключения Котел - ТН, сек.</td><td><input type="number" id="get_ohp-sh"> <input type="submit" value=">" onclick="setParam('get_oHP(SH)')"></td></tr>
     <tr><td>Таймаут ожидания ответа по Modbus, мсек.</td><td><input type="number" id="get_ht-mrt"> <input type="submit" value=">" onclick="setParam('get_HT(MRT)')"></td></tr>
     <tr><td>Минимальная пауза между транзакциями, мсек.</td><td><input type="number" id="get_ht-mbt"> <input type="submit" value=">" onclick="setParam('get_HT(MBT)')"></td></tr>
 	<tr><td><b>Настройка параметров работы</b></td><td></td></tr>
+	<tr><td><b>Отопление</b></td><td></td></tr>
     <tr><td>Целевая температура теплоносителя отопления, °C</td><td><input type="number" id="get_ht-t"> <input type="submit" value=">" onclick="setParam('get_HT(T)')"></td></tr>
+    <tr><td>Минимальная мощность (или модуляция) для отопления, %</td><td><input type="number" id="get_ht-pn"> <input type="submit" value=">" onclick="setParam('get_HT(PN)')"></td></tr>
     <tr><td>Максимальная мощность (или модуляция) для отопления, %</td><td><input type="number" id="get_ht-pm"> <input type="submit" value=">" onclick="setParam('get_HT(PM)')"></td></tr>
+    <tr><td>Уменьшение макс. мощности при приближении к макс. температуре подачи на °С</td><td><input type="number" id="get_ht-hd"> <input type="submit" value=">" onclick="setParam('get_HT(HD)')"></td></tr>
+	<tr><td><b>Нагрев бойлера</b></td><td></td></tr>
 	<tr><td>Греть бойлер в режиме отопления (используются ячейки отопления)</td><td><input type="checkbox" id="get_ht-bh" onchange="setParam('get_HT(BH)')"></td></tr>
     <tr><td>Целевая температура теплоносителя бойлера, °C</td><td><input type="number" id="get_ht-tb"> <input type="submit" value=">" onclick="setParam('get_HT(TB)')"></td></tr>
+    <tr><td>Минимальная мощность (или модуляция) для бойлера, %</td><td><input type="number" id="get_ht-bn"> <input type="submit" value=">" onclick="setParam('get_HT(BN)')"></td></tr>
     <tr><td>Максимальная мощность (или модуляция) для бойлера, %</td><td><input type="number" id="get_ht-bm"> <input type="submit" value=">" onclick="setParam('get_HT(BM)')"></td></tr>
+    <tr><td>Уменьшение макс. мощности при приближении к макс. температуре подачи на °С</td><td><input type="number" id="get_ht-bd"> <input type="submit" value=">" onclick="setParam('get_HT(BD)')"></td></tr>
 	<tr><td><b>Настройка адаптера ectoControl Opentherm/eBus/Navien (значения пишутся сразу в адаптер)</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
     <tr><td>Адаптер подключен (0), иначе подключен термостат или перемычка (1) [#30]</td><td><input type="number" id="get_ht-w30"> <input type="submit" value=">" onclick="setParam('get_HT(W30)')"></td></tr>
     <tr><td>Уставка теплоносителя в аварийном режиме [#32], десятые °C</td><td><input type="number" id="get_ht-w32-div10"> <input type="submit" value=">" onclick="setParam('get_HT(W32)')"></td></tr>

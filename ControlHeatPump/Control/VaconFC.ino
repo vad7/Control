@@ -82,15 +82,20 @@ int8_t devVaconFC::initFC()
 	note = (char*)"OK";
 #endif
 
-	if(get_present()) journal.jprintf("Invertor %s: present config\n", name);
-	else {
-		journal.jprintf("Invertor %s: none config\n", name);
+	if(get_present()) journal.jprintf("Invertor %s: present\n", name);
+	else { // выходим, если нет инвертора
+		journal.jprintf("Invertor %s: none\n", name);
 		return err;
-	} // выходим если нет инвертора
+	}
 
+	return err;
+}
+
+void devVaconFC::check_link(void)
+{
 #ifndef FC_ANALOG_CONTROL // НЕ Аналоговое управление
 	CheckLinkStatus(); // проверка связи с инвертором
-	if(err != OK) return err;// связи нет выходим
+	if(err != OK) return;// связи нет выходим
 	journal.jprintf("Test link Modbus %s: OK\n", name);// Тест пройден
 
 	uint8_t i = 3;
@@ -112,7 +117,6 @@ int8_t devVaconFC::initFC()
 	}
 	set_nominal_power();
 #endif // #ifndef FC_ANALOG_CONTROL
-	return err;
 }
 
 // Вычисление номинальной мощности двигателя компрессора = U*sqrt(3)*I*cos, W

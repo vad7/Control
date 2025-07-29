@@ -80,8 +80,9 @@ int8_t devOmronMX2::initFC()
   	  analogWriteResolution(12);        // разрешение ЦАП 12 бит;
   	  analogWrite(pin,dac);
   	  ChartPower.init(false);                 // инициалазация графика
+  	  set_target(_data.startFreq,true,_data.minFreqUser ,_data.maxFreqUser);       // режим н знаем по этому границы развигаем
   #else									// НЕ Аналоговое управление
-      err=Modbus.LinkTestOmronMX2();     // проверка связи с инвертором  xModbusSemaphore не используем так как в один поток
+  	  err=Modbus.LinkTestOmronMX2();     // проверка связи с инвертором  xModbusSemaphore не используем так как в один поток
       check_blockFC();   
       if (err!=OK)  return err;          // связи нет выходим
       journal.jprintf("Test link Modbus %s: OK\r\n",name);   // Тест пройден
@@ -112,6 +113,39 @@ int8_t devOmronMX2::initFC()
   // Установить стартовую частоту
   set_target(_data.startFreq,true,_data.minFreqUser ,_data.maxFreqUser);       // режим н знаем по этому границы развигаем
   return err;                       
+}
+
+void devOmronMX2::check_link(void)
+{
+    err=Modbus.LinkTestOmronMX2();     // проверка связи с инвертором  xModbusSemaphore не используем так как в один поток
+    check_blockFC();
+    if (err!=OK)  return;          // связи нет выходим
+    journal.jprintf("Test link Modbus %s: OK\r\n",name);   // Тест пройден
+
+    // Если частотник работает то остановить его
+    get_readState(); //  Получить состояние частотника
+    switch (state)   // В зависимости от состояния
+    {
+      case 0:
+      case 2: break;                                                         // ОСТАНОВКА ничего не делаем
+      case 3: stop_FC();                                                      // ВРАЩЕНИЕ Послать команду стоп и ждать остановки
+              while ((state!=2)||(state!=4)) { get_readState();journal.jprintf("Wait stop %s . . .\r\n",name); _delay(3000); }
+              break;
+      case 4:                                                                // ОСТАНОВКА С ВЫБЕГОМ  ждать остановки
+              break;
+      case 5:stop_FC();                                                      // ТОЛЧОВЫЙ ХОД Послать команду стоп и ждать остановки
+              while ((state!=2)||(state!=4)) { get_readState();journal.jprintf("Wait stop %s . . .\r\n",name); _delay(3000); }
+              break;
+      case 6:                                                                // ТОРМОЖЕНИЕ ПОСТОЯННЫМ ТОКОМ
+      case 7: err=ERR_MODBUS_STATE;set_Error(err,name);  break;             // ВЫПОЛНЕНИЕ ПОВТОРНОЙ ПОПЫТКИ Подъем ошибки на верх и останов ТН
+      case 8: break;                                                         // АВАРИЙНОЕ ОТКЛЮЧЕНИЕ
+      case 9: break;                                                         // ПОНИЖЕНОЕ ПИТАНИЕ
+      case -1:break;
+      default:err=ERR_MODBUS_STATE;set_Error(err,name);  break;             // Подъем ошибки на верх и останов ТН
+    }
+    if (err!=OK) return;
+    // Установить стартовую частоту
+    set_target(_data.startFreq,true,_data.minFreqUser ,_data.maxFreqUser);       // режим н знаем по этому границы развигаем
 }
 
 #define progOK  " Register %s to %d\r\n"  // Строка вывода сообщения о удачном программировании регистра

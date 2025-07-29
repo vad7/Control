@@ -104,16 +104,21 @@ struct type_heater_read {
 
 struct type_HeaterSettings {					// Структура для сохранения настроек
 	uint16_t setup_flags;						// флаги настройки
+	uint8_t  Control_Period;					// Период управления, сек
 	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления, C
+	uint8_t  heat_power_min;					// Минимальная мощность (или модуляция) для отопления, %
 	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
+	uint8_t  heat_protect_temp_dt;				// Уменьшение мощности при приближении к макс. температуре подачи на С, в десятых градуса
 	uint8_t  boiler_tempout;					// Целевая температура теплоносителя бойлера, C
 	uint8_t  boiler_power_max;					// Максимальная мощность (или модуляция) для бойлера, %
+	uint8_t  boiler_power_min;					// Минимальная мощность (или модуляция) для бойлера, %
+	uint8_t  boiler_protect_temp_dt;			// Уменьшение мощности бойлера при приближении к макс. температуре подачи на С, в десятых градуса
 	uint8_t  pump_work_time_after_stop;			// Время работы циркуляцонного насоса котла после останова, /10 секунд
 	uint8_t  ModbusMinTimeBetweenTransaction;	// Минимальная пауза между транзакциями, мсек
 	uint8_t  ModbusResponseTimeout;				// Таймаут ожидания ответа по Modbus, мсек
 };
 
-// Рабочие флаги (flags)
+// Рабочие флаги (fwork)
 #define fHeater_LinkAdapterOk			0		// Есть связь по Modbus с адаптером
 #define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом
 
@@ -121,10 +126,9 @@ class devHeater
 {
 public:
 	void	init();									// Инициализация
-	int16_t	CheckLinkStatus(void);					// Проверка связи
+	void 	check_link(void);						// Проверка связи
 	int8_t	read_state(uint8_t group);				// Текущее состояние
-	uint8_t	get_target() { return Target; }			// Получить целевую мощность
-	int8_t	set_target(uint8_t temp, uint8_t power_max); // Установить целевую температуру и максимальную мощность
+	int8_t	set_target(uint16_t temp, uint8_t power_max); // Установить целевую температуру и максимальную мощность
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
@@ -141,15 +145,14 @@ public:
 	int8_t   err;									// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
-	uint8_t  Target;								// Целевая мощность (модуляция), %
+	uint8_t  PowerMaxCurrent;						// Максимальная мощность (модуляция), %
 	type_HeaterSettings set;						// Структура для сохранения настроек
 	type_heater_read data;							// Данные с котла
 
 private:
-	uint8_t work;									// рабочие флаги
+	uint8_t fwork;									// рабочие флаги
 	uint8_t prev_temp;
 	uint8_t prev_boiler_temp;
-	uint8_t prev_power;
  };
 
 #endif

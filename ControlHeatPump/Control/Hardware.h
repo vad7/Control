@@ -525,7 +525,7 @@ class devSDM
        __attribute__((always_inline)) inline int16_t get_voltage(){return Voltage;}          // Напряжение, V
        __attribute__((always_inline)) inline int32_t get_power(){return AcPower;}            // Aктивная мощность, Вт
 
-      boolean uplinkSDM();                             // Проверить связь со счетчиком (связь дейстивтельно проверяется - чтение регистра скорости счетчика)
+      boolean check_link();                            // Проверить связь со счетчиком (связь дейстивтельно проверяется - чтение регистра скорости счетчика)
       boolean progConnect();                           // перепрограммировать счетчик на требуемые параметры связи SDM_SPEED SDM_MODBUS_ADR c DEFAULT_SDM_SPEED DEFAULT_SDM_MODBUS_ADR
       char* get_paramSDM(char *var, char *ret);        // Получить параметр SDM в виде строки
       boolean set_paramSDM(char *var,char *c);         // Установить параметр SDM из строки

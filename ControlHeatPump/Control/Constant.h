@@ -196,8 +196,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_READ_SENSOR  			4000UL		    // мсек. Период опроса датчиков
 #endif
 #define TIME_WEB_SERVER   			2               // мсек. Период опроса web servera было 5
-#define TIME_CONTROL      			(10*1000)       // мсек. Период управления тепловым насосом (цикл управления в режиме Гистерезис)
-#define TIME_CONTROL_BOILER 		(5*1000)        // мсек. Период управления тепловым насосом (цикл управления в режиме Гистерезис)
+#define TIME_CONTROL      			10              // сек. ПО УМОЛЧАНИЮ, Период управления тепловым насосом (цикл управления в режиме Гистерезис)
 #define TIME_EEV          			(1*1000)        // мсек. Период задачи vUpdateEEV в переходных состояниях ТН
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
 #define TIME_COMMAND      			500             // мсек. Период разбора команд управления ТН (скорее пауза перед обработкой команды)
@@ -209,7 +208,6 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_LED_ERR      			200             // Период мигания светодиода при ошибке (мсек).
 #define TIME_BEEP_ERR     			1000            // Период звукового сигнала при ошибке, мсек
 #define cDELAY_START_MESSAGE 		60              // Задержка (сек) после старта на отправку сообщений
-#define UPDATE_HP_WAIT_PERIOD 		5000			// Период вызова vUpdate во время ожидания или ошибки, мсек
 #define NO_POWER_ON_DELAY_CNT 		15				// Задержка включения после появления питани, *TIME_READ_SENSOR
 #define RETURN_FROM_GENERATOR_DELAY	60000			// Задержка переключения с резерва на основное питание, ms
 #define GENERATOR_OFF_DELAY			45				// Задержка выключения генератора, sec
@@ -759,6 +757,7 @@ const char *fc_defrostFreq		= {"DFF"};
 const char *option_nStart             = {"NST"};                // число попыток пуска
 const char *option_nStartNextProf     = {"NSTP"};               // число попыток пуска, новый профиль
 const char *option_TIME_CHART         = {"TIME_CHART"};         // период сбора статистики
+const char *option_Control_Period     = {"CP"};                 // Период управления тепловым насосом
 const char *option_BEEP               = {"BEEP"};               // включение звука
 const char *option_NEXTION            = {"NXT"};                // использование дисплея nextion
 const char *option_NEXTION_WORK       = {"NXTW"};               // Включать дисплей, когда ТН работает
@@ -951,9 +950,13 @@ const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
 const char *Wheater_fHeater_USE_Relay_Modbus_3WAY={"RW"};
 const char *Wheater_fHeater_BoilerInHeatingMode	= {"BH"};
 const char *Wheater_heat_tempout				= {"T"};
+const char *Wheater_heat_power_min				= {"PN"};
 const char *Wheater_heat_power_max				= {"PM"};
+const char *Wheater_heat_protect_temp_dt		= {"HD"};
 const char *Wheater_boiler_tempout				= {"TB"};
+const char *Wheater_power_boiler_min			= {"BN"};
 const char *Wheater_power_boiler_max			= {"BM"};
+const char *Wheater_boiler_protect_temp_dt		= {"BD"};
 const char *Wheater_pump_work_time_after_stop	= {"PA"};
 const char *Wheater_LinkHeaterOk 				= {"L"};
 const char *Wheater_fLinkAdapterOk				= {"A"};
