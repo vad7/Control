@@ -34,44 +34,40 @@ static unsigned long connectTime[MAX_SOCK_NUM];    // время соедине�
 // Функции переключения SPI между тремя! устройствами (активный уровень низкий)
  __attribute__((always_inline)) inline void SPI_switchW5200()   // Переключение на сеть
 { //_delay(1);
-  
-  digitalWriteDirect(PIN_SPI_CS_SD,HIGH);  
-  #ifdef SPI_FLASH
-  digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);  
-  #endif
-  digitalWriteDirect(PIN_SPI_CS_W5XXX,LOW);
-   }
+#ifdef SPI_FLASH
+	 digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);
+#endif
+	 digitalWriteDirect(PIN_SPI_CS_SD,HIGH);
+	 digitalWriteDirect(PIN_SPI_CS_W5XXX,LOW);
+}
 
  __attribute__((always_inline)) inline void SPI_switchSD()     // Переключение на карту памяти
 {
  // _delay(1);
-
-  #ifdef SPI_FLASH
-  digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);  
-  #endif
-  digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);  
-  digitalWriteDirect(PIN_SPI_CS_SD,LOW);
- 
-  }
+#ifdef SPI_FLASH
+	 digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);
+#endif
+	 digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);
+	 digitalWriteDirect(PIN_SPI_CS_SD,LOW);
+}
 #ifdef SPI_FLASH
  __attribute__((always_inline)) inline void SPI_switchFlash()  // переключение на флеш память
 {
  // _delay(1);
-  digitalWriteDirect(PIN_SPI_CS_SD,HIGH);  
-  digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);
-  digitalWriteDirect(PIN_SPI_CS_FLASH,LOW);
- 
-   }
+	 digitalWriteDirect(PIN_SPI_CS_FLASH,LOW);
+	 digitalWriteDirect(PIN_SPI_CS_SD,HIGH);
+	 digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);
+}
 #endif
- __attribute__((always_inline)) inline void SPI_switchAllOFF()  // Все выключить
+__attribute__((always_inline)) inline void SPI_switchAllOFF()  // Все выключить
 {
  // _delay(1);
-  digitalWriteDirect(PIN_SPI_CS_SD,HIGH);  
-  digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);
-  #ifdef SPI_FLASH
-  digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);
-  #endif
-}
+#ifdef SPI_FLASH
+	 digitalWriteDirect(PIN_SPI_CS_FLASH,HIGH);
+ #endif
+	 digitalWriteDirect(PIN_SPI_CS_SD,HIGH);
+	 digitalWriteDirect(PIN_SPI_CS_W5XXX,HIGH);
+ }
 
 // Функции для первоначальной настройки сетевого чипа  ----------------------------------------------------------------
 // Получить номер версии сетевого чипа
@@ -408,35 +404,32 @@ char* socketInfo(char *buf)
  return buf; 
 }
 // Сброс зависших сокетов ------------------------------------------------------------
-// Учитывается многопоточность, не сбрасываются сокеты которые сейчас в работе Socket[xxxx].sock
+// Учитывается многопоточность, не сбрасываются сокеты которые сейчас в работе Socket[xxxx].sock, xWebThreadSemaphore должен быть захвачен!
 void checkSockStatus()
 {
-  unsigned long thisTime = xTaskGetTickCount();
-  if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) {journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexWebThreadBuzy);return;} // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
-  for (uint8_t i = 0; i < MAX_SOCK_NUM; i++) {        // По всем сокетам!!
-        // Не сбрасывать сокеты которые используется в потоке ОБЯЗАТЕЛЬНО!!
-        #if    W5200_THREAD < 2
+	for(uint8_t i = 0; i < MAX_SOCK_NUM; i++) {        // По всем сокетам!!
+		// Не сбрасывать сокеты которые используется в потоке ОБЯЗАТЕЛЬНО!!
+#if    W5200_THREAD < 2
          if (Socket[0].sock==i)  continue;   
         #elif  W5200_THREAD < 3
           if((Socket[0].sock==i)||(Socket[1].sock==i))  continue;    
         #elif  W5200_THREAD < 4
-          if((Socket[0].sock==i)||(Socket[1].sock==i)||(Socket[2].sock==i))  continue;   
-        #else
+		if((Socket[0].sock == i) || (Socket[1].sock == i) || (Socket[2].sock == i)) continue;
+#else
           if((Socket[0].sock==i)||(Socket[1].sock==i)||(Socket[2].sock==i)||(Socket[3].sock==i))  continue;   
         #endif
-    uint8_t s = W5100.readSnSR(i);                                          // Прочитать статус сокета
-    if((s == SnSR::ESTABLISHED) || (s == SnSR::CLOSE_WAIT) /*|| (s == 0x22)*/ ) { // если он "кандидат"
-        if(thisTime - connectTime[i] > HP.time_socketRes()*1000UL) {        // Время пришло
-          journal.jprintf("%s : Socket frozen: %d\n",NowTimeToStr(),i); 
-    //      close(i);
-          W5100.execCmdSn(i, Sock_CLOSE);
-          W5100.writeSnIR(i, 0xFF);
-          HP.add_socketRes();                                               // добавить счетчик
-        }
-    } // if((s == 0x17) || (s == 0x1C))
-    else connectTime[i] = thisTime;                                         // Обновить время если статус не кандидат
-  } // for
-  SemaphoreGive(xWebThreadSemaphore);                                      // Отдать мютекс
+		uint8_t s = W5100.readSnSR(i);                                          // Прочитать статус сокета
+		if((s == SnSR::ESTABLISHED) || (s == SnSR::CLOSE_WAIT) /*|| (s == 0x22)*/) { // если он "кандидат"
+			if(xTaskGetTickCount() - connectTime[i] > HP.time_socketRes() * 1000UL) {        // Время пришло
+				journal.jprintf("%s : Socket frozen: %d\n", NowTimeToStr(), i);
+				//      close(i);
+				W5100.execCmdSn(i, Sock_CLOSE);
+				W5100.writeSnIR(i, 0xFF);
+				HP.add_socketRes();                                               // добавить счетчик
+			}
+		} // if((s == 0x17) || (s == 0x1C))
+		else connectTime[i] = xTaskGetTickCount();                                        // Обновить время если статус не кандидат
+	} // for
 }
 // Послать один пакет!!! ----------------------------------------------------------------------------------
 // Послать данные TCP (максимальный размер данных W5200_MAX_LEN. больше обрезается), при ожидании освобождения буфера отдает управление Free RTOS
@@ -661,7 +654,7 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 {
 	static int8_t Last_Error[5];
 	if(server == NULL || request == NULL) return -2000000004;
-	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT_WEB0 / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		return -2000000000;
 	}
 	EthernetClient tTCP;
@@ -700,7 +693,7 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 				while(timeout-- > 0) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(20);
-					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS)) == pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT_WEB0/portTICK_PERIOD_MS)) == pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 					if(tTCP.available()) {
 						ret = 0;
 						break;

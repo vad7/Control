@@ -56,6 +56,7 @@ extern uint8_t TCChanEnabled[];
 #else
 #define PWM_WRITE_OUT_FREQUENCY	WR.PWM_Freq					// PWM freq for PWM_Write() function
 #endif
+void WR_Init(void);
 void WR_Switch_Load(uint8_t idx, boolean On);
 void WR_Change_Load_PWM(uint8_t idx, int16_t delta);
 inline int16_t WR_Adjust_PWM_delta(uint8_t idx, int16_t delta);
@@ -82,7 +83,7 @@ void WR_ReadPowerMeter(void);
 
 
 bool Check_I2C_bus(void);						// Проверка I2C на зависание, Возврат true если OK
-void Recover_I2C_bus(void);						// Борьба с зависшими устройствами на шине  I2C
+void Recover_I2C_bus(bool _reset);				// Борьба с зависшими устройствами на шине  I2C
 void repower(void);								// Сброс питания на несколько секунд
 
 #endif

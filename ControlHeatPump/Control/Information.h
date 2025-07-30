@@ -109,7 +109,7 @@ struct type_SaveON {
 };
 
 // Структуры для хранения настроек бойлера
-//  Определение флагов в type_boilerHP
+//  Определение флагов в type_boilerHP: Boiler.flags
 #define fScheduleAddHeat 	0           // флаг Расписание только для ТЭНа
 #define fSchedule        	1           // флаг Использование расписания
 #define fLegionella      	2           // флаг легионелла раз внеделю греть бойлер

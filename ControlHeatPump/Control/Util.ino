@@ -1135,6 +1135,27 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 }
 
 #ifdef WATTROUTER
+
+void WR_Init(void)
+{
+	memset(WR_LoadRun, 0, sizeof(WR_LoadRun));
+	memset(WR_SwitchTime, 0, sizeof(WR_SwitchTime));
+	for(uint8_t i = 0; i < WR_NumLoads; i++) {
+		if(WR_Load_pins[i] > 0) pinMode(WR_Load_pins[i], OUTPUT);
+	}
+ #ifdef PIN_WR_Boiler_Substitution
+	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
+ #endif
+	journal.jprintf("WattRouter ");
+	if(GETBIT(WR.Flags, WR_fActive)) {
+		journal.jprintf(" started\n");
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+		if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
+		journal.jprintf(" Ubuf=%.1d\n", WR_MAP_Ubuf);
+#endif
+	} else journal.jprintf(" not active\n");
+}
+
 void WR_Switch_Load(uint8_t idx, boolean On)
 {
 	int8_t pin = WR_Load_pins[idx];
@@ -1296,7 +1317,7 @@ int8_t WR_Check_MPPT(void)
 #endif
 
 #ifdef HTTP_MAP_Read_MAP
-// Пррочитать данные напряжения АКБ MAP, возврат дельты Ubuf - Ubat, ошибка: -32768
+// Прочитать данные напряжения АКБ MAP, возврат дельты Ubuf - Ubat, ошибка: -32768
 int16_t WR_Read_MAP(void)
 {
 	// Read MAP
@@ -1466,8 +1487,8 @@ void WR_ReadPowerMeter(void)
 
 #endif //WATTROUTER
 
-// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
-void Recover_I2C_bus(void)
+// Борьба с зависшими устройствами на шине I2C (в первую очередь часы), true - сброс питания при необходимости
+void Recover_I2C_bus(bool _reset)
 {
 	pinMode(PIN_WIRE_SDA, INPUT);
 	TWI0->TWI_CR = TWI_CR_SVDIS | TWI_CR_MSDIS;
@@ -1495,7 +1516,7 @@ void Recover_I2C_bus(void)
 		digitalWriteDirect(PIN_WIRE_SCL, LOW);
 		delay(1);
 	}
-	if(!digitalReadDirect(PIN_WIRE_SDA)) repower();
+	if(!digitalReadDirect(PIN_WIRE_SDA) && _reset) repower();
 	journal.printf("I2C Resetted\n");
 	// Send a STOP
 	pinMode(PIN_WIRE_SCL, OUTPUT);
@@ -1545,14 +1566,18 @@ bool Check_I2C_bus(void)
 void repower(void)
 {
 #ifdef PIN_REPOWER
-	journal.printf("POWER OFF - ON\n");
+	journal.jprintf("POWER OFF - ON\n");
 	digitalWriteDirect(PIN_BEEP, HIGH);
 	for(uint8_t i = 0; i < 20; i++) {
 		digitalWriteDirect(PIN_LED_OK, i & 1);
 		delay(100);
 	}
+	STORE_DEBUG_INFO(99);
 	pinMode(PIN_REPOWER, OUTPUT);
 	digitalWriteDirect(PIN_REPOWER, HIGH);
-	while(1) ;
+#ifndef TEST_BOARD
+	TaskSuspendAll();
+#endif
+	while(1) ; // hang
 #endif
 }

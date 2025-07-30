@@ -65,9 +65,20 @@ void web_server(uint8_t thread)
 	int32_t len;
 	int8_t sock;
 
-	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-		return;
-	}          // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+#ifdef WATTROUTER
+	len = thread == 0 ? W5200_TIME_WAIT_WEB0 : W5200_TIME_WAIT;
+#else
+	len = W5200_TIME_WAIT;
+#endif
+	if(SemaphoreTake(xWebThreadSemaphore, len) == pdFALSE) {
+		if(thread == 0) return;
+		// 1. Проверка захваченого семафора сети, ожидаем  3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
+		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+			SemaphoreGive(xWebThreadSemaphore);
+			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
+			HP.num_resMutexSPI++;
+		}
+	}
 
 	Socket[thread].sock = -1;                      // Сокет свободный
 
@@ -760,9 +771,10 @@ void parserGET(uint8_t thread, int8_t )
 			if(strcmp(str, "_SCHDLR") == 0) {
 				_itoa(HP.Schdlr.save(), strReturn); // сохранение расписаний
 			} else if(strcmp(str, "_STATS") == 0) { // Сохранить счетчики и статистику
-xSaveStats:		if((i = HP.save_motoHour()) == OK)
-					if((i = Stats.SaveStats(1)) == OK)
-						i = Stats.SaveHistory(1);
+xSaveStats:
+				if((i = Stats.SaveStats(1)) == OK)
+					if((i = Stats.SaveHistory(1)) == OK)
+						i = HP.save_motoHour();
 				_itoa(i, strReturn);
 			} else if(strcmp(str, "_UPD") == 0) { // Подготовка к обновлению
 				if(HP.is_compressor_on()) _itoa(-1, strReturn);
@@ -1077,6 +1089,17 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 						_itoa(HP.dFC.get_err(), strReturn);
 					}
 				}
+			} else if (strcmp(str,"I2C")==0) {   // RESET_I2C
+				strcat(strReturn, "Reset I2C: ");
+				if(SemaphoreTake(xI2CSemaphore, 0) == pdFALSE) strcat(strReturn, "SemaphoreLocked "); else SemaphoreGive(xI2CSemaphore);
+				if(!Check_I2C_bus()) strcat(strReturn, "BusLocked ");
+				Recover_I2C_bus(false);
+				strcat(strReturn, "Ok");
+			} else if (strcmp(str,"POWER")==0) {   // RESET_POWER
+#ifndef PIN_REPOWER
+				strcat(strReturn, "NOT AVAILABLE!");
+#endif
+				repower();
 			} else goto x_FunctionNotFound;
 			ADD_WEBDELIM(strReturn); continue;
 		}
@@ -1364,7 +1387,8 @@ xSaveStats:		if((i = HP.save_motoHour()) == OK)
 
 				// Вывод строки статуса
 				WEB_STORE_DEBUG_INFO(46);
-				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s] fHP:%X;", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()], HP.work_flags);
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s]", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()]);
+				strReturn += m_snprintf(strReturn, 256, " fHP:%X Task:%d;", HP.work_flags, HP.Task_vUpdate_run);
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
 				//if(HP.dFC.get_present())  {strcat(strReturn," Power:"); _ftoa(strReturn,(float)HP.dFC.get_power()/1000.0,3);  }

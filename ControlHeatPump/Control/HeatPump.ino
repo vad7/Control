@@ -84,7 +84,7 @@ xSearch_sTemp:
 		journal.printf("xI2CSemaphore locked!\n");
 		repower();
 	} else {
-		if(!Check_I2C_bus()) Recover_I2C_bus();
+		if(!Check_I2C_bus()) Recover_I2C_bus(true);
 	}
 	SemaphoreGive(xI2CSemaphore);
 }
@@ -3189,7 +3189,6 @@ void HeatPump::SetTask_vUpdate(bool onoff)
 #endif
 	if(onoff) {
 		Task_vUpdate_run = true;
-		vTaskResume(xHandleUpdate);
 	} else {
 		Task_vUpdate_run = false;
 	}
@@ -4153,18 +4152,20 @@ void HeatPump::sendCommand(TYPE_COMMAND c)
 	}
 	if(c == pSTART && get_State() == pSTOPING_HP) return; // Пришла команда на старт, а насос останавливается ничего не делаем игнорируем
 	command = c;
-	vTaskResume(xHandleUpdateCommand);                   	// Запустить выполнение команды
+	SETBIT1(work_flags, fHP_NewCommand);
 }
 // Выполнить команду по управлению ТН true-команда выполнена
-int8_t HeatPump::runCommand()
+void HeatPump::runCommand(void)
 {
+	if(!GETBIT(work_flags, fHP_NewCommand)) return;
+	SETBIT0(work_flags, fHP_NewCommand);
 	uint16_t i;
 	while(1) {
 		journal.jprintf_time("Run: %s\n", get_command_name(command));
 
 		switch(command)
 		{
-		case pEMPTY:  return true; break;     // 0 Команд нет
+		case pEMPTY:  return; break;     // 0 Команд нет
 		case pSTART:                          // 1 Пуск теплового насоса
 			num_repeat = num_repeat_prof = 0; // обнулить счетчик повторных пусков
 			StartResume(_START_);              // включить ТН
@@ -4215,7 +4216,11 @@ int8_t HeatPump::runCommand()
 			break;
 		case pNETWORK:
 			_delay(1000);               						// задержка что бы вывести сообщение в консоль и на веб морду
-			if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) {journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexWebThreadBuzy); command=pEMPTY; return 0;} // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
+			if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) { // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
+				journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexWebThreadBuzy);
+				command = pEMPTY;
+				return;
+			}
 			initW5200(true);                                  // Инициализация сети с выводом инфы в консоль
 			for (i=0;i<W5200_THREAD;i++) SETBIT1(Socket[i].flags,fABORT_SOCK);                                 // Признак инициализации сокета, надо прерывать передачу в сервере
 			SemaphoreGive(xWebThreadSemaphore);                                                                // Мютекс потока отдать
@@ -4266,13 +4271,12 @@ xWait:
 		if(next_command != pEMPTY) { // следующая команда
 			command = next_command;
 			next_command = pEMPTY;
-			_delay(1);
+			_delay(TIME_vUpdateTick);
 		} else {
 			command=pEMPTY;   // Сбросить команду
 			break;
 		}
 	}
-	return error;
 }
 
 // Переключиться на другой профиль (0..I2C_PROFIL_NUM),

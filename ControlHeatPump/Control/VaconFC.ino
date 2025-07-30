@@ -122,24 +122,26 @@ void devVaconFC::check_link(void)
 // Вычисление номинальной мощности двигателя компрессора = U*sqrt(3)*I*cos, W
 void devVaconFC::set_nominal_power(void)
 {
+	if(testMode == NORMAL || testMode == HARD_TEST) {
 #ifdef FC_POWER_IN_PERCENT
 #ifndef FC_ANALOG_CONTROL
-	//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
-	typeof(nominal_power) n = nominal_power;
-	uint32_t pwr;
-	pwr = read_0x03_16(FC_MOTOR_NVOLT) * 173;
-	if(err) return;
-	pwr *= read_0x03_16(FC_MOTOR_NA);
-	if(err) return;
-	pwr = pwr / 100 * read_0x03_16(FC_MOTOR_NCOS) / 100 / 100;
-	if(err) return;
-	nominal_power = pwr;
+		//nominal_power = (uint32_t) (400) * (700) / 100 * (75) / 100; // W
+		typeof(nominal_power) n = nominal_power;
+		uint32_t pwr;
+		pwr = read_0x03_16(FC_MOTOR_NVOLT) * 173;
+		if(err) return;
+		pwr *= read_0x03_16(FC_MOTOR_NA);
+		if(err) return;
+		pwr = pwr / 100 * read_0x03_16(FC_MOTOR_NCOS) / 100 / 100;
+		if(err) return;
+		nominal_power = pwr;
 #ifdef FC_CORRECT_NOMINAL_POWER
-	nominal_power += FC_CORRECT_NOMINAL_POWER;
+		nominal_power += FC_CORRECT_NOMINAL_POWER;
 #endif
-	if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
+		if(n != nominal_power) journal.jprintf(" FC Nominal power: %d W\n", nominal_power);
 #endif
 #endif
+	} else nominal_power = 4500;
 }
 
 // Возвращает состояние, или ERR_LINK_FC, если нет связи по Modbus

@@ -227,6 +227,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_CompressorWasOn		8			// Последний цикл работы - Компрессор
 #define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
+#define fHP_NewCommand			11			// Новая команда(ы) для отработки
 
 // Флаги настроек, Option.flags:
 #define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой
@@ -419,7 +420,7 @@ public:
 
 	void     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
-	int8_t   runCommand();              // Выполнить команду по управлению ТН
+	void     runCommand(void);              // Выполнить команду по управлению ТН
 	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
 	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
@@ -659,7 +660,6 @@ public:
 	#endif
 	TaskHandle_t xHandleReadSensor;                     // Заголовок задачи "Чтение датчиков"
 	TaskHandle_t xHandleSericeHP;						// Задача обслуживания ТН:
-	TaskHandle_t xHandleUpdateCommand;                  // Разбор очереди команд
 	TaskHandle_t xHandleUpdateWeb0;                     // Заголовок задачи "Веб сервер" в зависимости от потоков
 	#if    W5200_THREAD > 1
 	TaskHandle_t xHandleUpdateWeb1;                     // Заголовок задачи "Веб сервер"

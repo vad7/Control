@@ -185,7 +185,6 @@ void vReadSensor(void *) __attribute__((naked));
 void vUpdate( void * ) __attribute__((naked));
 void vUpdateEEV(void *) __attribute__((naked));
 void vUpdateStepperEEV(void *) __attribute__((naked));
-void vUpdateCommand(void *) __attribute__((naked));
 void vServiceHP(void *) __attribute__((naked));
 
 void setup() {
@@ -201,8 +200,8 @@ void setup() {
 	PIO_Configure(PIOB,	PIO_PERIPH_A, PIO_PB20A_TXD2 | PIO_PB21A_RXD2, PIO_DEFAULT);	// Отключаются: A11(AD13)/D65 и D52(AD14)
 #endif
 #ifdef SPI_FLASH
-	//pinMode(PIN_SPI_CS_FLASH,INPUT_PULLUP);     // сигнал CS управление чипом флеш памяти
-	pinMode(PIN_SPI_CS_FLASH,OUTPUT);           // сигнал CS управление чипом флеш памяти
+	pinMode(PIN_SPI_CS_FLASH,INPUT_PULLUP);     // сигнал CS управление чипом флеш памяти
+	//pinMode(PIN_SPI_CS_FLASH,OUTPUT);           // сигнал CS управление чипом флеш памяти
 #endif
 	SPI_switchAllOFF();                         // Выключить все устройства на SPI
 	// Отключить питание (VUSB) на Native USB
@@ -229,7 +228,7 @@ void setup() {
 	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
 #endif
 	// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
-	if(!Check_I2C_bus()) Recover_I2C_bus();
+	if(!Check_I2C_bus()) Recover_I2C_bus(false);
 	Wire.begin();
 
 	// 2. Инициализация журнала
@@ -615,6 +614,9 @@ x_I2C_init_std_message:
 	// Scan oneWire - TEST.
 	//HP.scan_OneWire(Socket[0].outBuf);
 #endif
+#ifdef WATTROUTER
+	WR_Init();
+#endif
 
 	// Создание задач FreeRTOS  ----------------------
 	journal.jprintf("15. Create tasks FreeRTOS . . .\n");
@@ -633,15 +635,9 @@ x_I2C_init_std_message:
 	HP.dEEV.stepperEEV.xCommandQueue = xQueueCreate( EEV_QUEUE, sizeof( int ) );  // Создать очередь комманд для ЭРВ
 #endif
 
-	// ПРИОРИТЕТ 3 Очень высокий приоритет Выполнение команд управления (разбор очереди комманд) - должен быть выше чем задачи обновления ТН и ЭРВ
-	if(xTaskCreate(vUpdateCommand,"CommandHP", 150,NULL,3,&HP.xHandleUpdateCommand)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)     set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*150;// 200, до обрезки стеков было 300
-	vTaskSuspend(HP.xHandleUpdateCommand);      // Остановить задачу разбор очереди комнад
-
-
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
-	if(xTaskCreate(vServiceHP, "ServiceHP", STACK_vUpdateCommand, NULL, 2, &HP.xHandleSericeHP)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*STACK_vUpdateCommand;// 200, до обрезки стеков было 300
+	if(xTaskCreate(vServiceHP, "ServiceHP", STACK_vServiceHP, NULL, 2, &HP.xHandleSericeHP)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS=HP.mRTOS+64+4*STACK_vServiceHP;// 200, до обрезки стеков было 300
 #ifdef LCD2004
 	if(xTaskCreate(vKeysLCD, "KeysLCD", 90, NULL, 2, &HP.xHandleKeysLCD) == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS = HP.mRTOS+64+4* 90;
@@ -651,9 +647,8 @@ x_I2C_init_std_message:
 	if (HP.xCommandSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 
 	if (xTaskCreate(vUpdate,"UpdateHP",160,NULL,2,&HP.xHandleUpdate)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*160;// 200, до обрезки стеков было 350
+	HP.mRTOS=HP.mRTOS+64+4*180;// 200, до обрезки стеков было 350
 	HP.Task_vUpdate_run = false;
-	vTaskSuspend(HP.xHandleUpdate);                                 // Остановить задачу обновление ТН
 
 #ifdef EEV_DEF
 	if (xTaskCreate(vUpdateEEV,"UpdateEEV",100,NULL,2,&HP.xHandleUpdateEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)     set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
@@ -665,11 +660,9 @@ x_I2C_init_std_message:
 	// ВНИМАНИЕ первый поток должен иметь больший стек для обработки фоновых сетевых задач
 	// 1 - поток
 	if ( xTaskCreate(vWeb0,"Web0", STACK_vWebX+14,NULL,1,&HP.xHandleUpdateWeb0)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*(STACK_vWebX+14);
-#if W5200_THREAD >= 2 // - потока
+	HP.mRTOS=HP.mRTOS+64+4*(STACK_vWebX+16);
 	if ( xTaskCreate(vWeb1,"Web1", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb1)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
-#endif
 #if W5200_THREAD >= 3 // - потока
 	if ( xTaskCreate(vWeb2,"Web2", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb2)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
@@ -694,15 +687,14 @@ x_I2C_init_std_message:
 		vSemaphoreCreateBinary(xModbusSemaphore);                       // Создание мютекса
 		if (xModbusSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	}
-
 	journal.jprintf(" Create tasks - OK, size %d bytes\n",HP.mRTOS);
-
-	if(HP.get_HP_ON()) HP.sendCommand(pRESTART);  // если надо запустить ТН - отложенный старт
-
 	//journal.jprintf("16. Send a notification . . .\n");
 	if(rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET) {
 		HP.message.setMessage(pMESSAGE_RESET,(char*)"Контроллер ТН был перезагружен: ",0);    // сформировать уведомление о загрузке
 	}
+
+	if(HP.get_HP_ON()) HP.sendCommand(pRESTART);  // если надо запустить ТН - отложенный старт
+
 	journal.jprintf("16. Information:\n");
 	freeRamShow();
 	HP.startRAM=freeRam()-HP.mRTOS;   // оценка свободной памяти до пуска шедулера, поправка на 1054 байта
@@ -769,18 +761,12 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 // Первый поток веб сервера - дополнительно нагружен различными сервисами
 void vWeb0(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
-	static unsigned long timeResetW5200 = 0;
-	static unsigned long thisTime;
-	static unsigned long resW5200 = 0;
-	static unsigned long iniW5200 = 0;
-	static unsigned long pingt = 0;
+	static unsigned long thisTime = xTaskGetTickCount();
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+	static unsigned long check_vbat_time = rtcSAM3X8.unixtime();
+#endif
 #ifdef HTTP_LowConsumeRequest
 	static uint16_t RepeatLowConsumeRequest = 0;
-#endif
-	static boolean network_last_link = true;
-#ifdef MQTT
-	static unsigned long narmont=0;
-	static unsigned long mqttt=0;
 #endif
 #ifdef WEATHER_FORECAST
 	static uint8_t WF_Day = 0;
@@ -788,34 +774,13 @@ void vWeb0(void *)
 #if defined(HTTP_MAP_RELAY_MAX) && defined(HTTP_MAP_Server)
 	static uint32_t daily_http_time = 0;
 #endif
-#ifdef WATTROUTER
-	memset(WR_LoadRun, 0, sizeof(WR_LoadRun));
-	memset(WR_SwitchTime, 0, sizeof(WR_SwitchTime));
-	for(uint8_t i = 0; i < WR_NumLoads; i++) {
-		if(WR_Load_pins[i] > 0) pinMode(WR_Load_pins[i], OUTPUT);
-	}
- #ifdef PIN_WR_Boiler_Substitution
-	pinMode(PIN_WR_Boiler_Substitution, OUTPUT);
- #endif
-	if(GETBIT(WR.Flags, WR_fActive)) {
-#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-		vTaskDelay(1200);
-		if(WR_Read_MAP() == -32768) journal.jprintf("WR: Error read Ubuf\n");
-		journal.jprintf("WattRouter started");
-		journal.jprintf(", Ubuf=%.1d\n", WR_MAP_Ubuf);
-#else
-		journal.jprintf("WattRouter started");
+#ifdef MQTT
+	static unsigned long narmont=0;
+	static unsigned long mqttt=0;
 #endif
-	} else {
-		journal.jprintf("WattRouter started");
-		journal.jprintf(" - NOT ACTIVE");
-	}
-	journal.jprintf("\n");
-#endif
-
-	HP.timeNTP = thisTime = xTaskGetTickCount();        // В первый момент не обновляем
+	HP.timeNTP = xTaskGetTickCount();        // В первый момент не обновляем
 #ifndef WR_PowerMeter_Modbus
-	Web0_FreqTime = thisTime;
+	Web0_FreqTime = xTaskGetTickCount();
 #endif
 	for(;;)
 	{
@@ -828,7 +793,7 @@ void vWeb0(void *)
 		WEB_SERVER_MAIN_TASK();
 
 		// СЕРВИС: Этот поток работает на любых настройках, по этому сюда ставим работу с сетью
-		boolean active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
+		bool active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
 #ifdef WR_PowerMeter_Modbus		// Синхронизируемся с чтением счетчика - сразу после
 		if(WR_PowerMeter_New) {
 			WR_PowerMeter_New = false;
@@ -1343,107 +1308,17 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 	#endif
 			//
 #endif // WATTROUTER
-		}
-		if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)
-		{
-			if(!active) {
-				WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-				active = true;
-			}
-			thisTime = xTaskGetTickCount();                                      // Запомнить тики
-			if(active) active = HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
-#ifdef MQTT
-			if(active) active=HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
-#endif
-			// 1. Проверка захваченого семафора сети ожидаем  3 времен W5200_TIME_WAIT если мютекса не получаем то сбрасывае мютекс
-			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 30) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-				SemaphoreGive(xWebThreadSemaphore);
-				journal.jprintf_time("UNLOCK mutex xWebThread\n");
-				active = false;
-				HP.num_resMutexSPI++;
-			} // Захват мютекса SPI или ОЖИДАНИНЕ 2 времен W5200_TIME_WAIT и его освобождение
-			else SemaphoreGive(xWebThreadSemaphore);
-
-			// Проверка и сброс митекса шины I2C  если мютекса не получаем то сбрасывае мютекс
-			if(SemaphoreTake(xI2CSemaphore, (3 * I2C_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-				SemaphoreGive(xI2CSemaphore);
-				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
-				active = false;
-				HP.num_resMutexI2C++;
-			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
-			else SemaphoreGive(xI2CSemaphore);
-
-			// 2. Чистка сокетов
-			if(HP.time_socketRes() > 0) {
-				WEB_STORE_DEBUG_INFO(3);
-				checkSockStatus();                   // Почистить старые сокеты  если эта позиция включена
-			}
-
-			// 3. Сброс сетевого чипа по времени
-			if((HP.time_resW5200() > 0) && (active))                             // Сброс W5200 если включен и время подошло
+		} else { // Другие задачи
+			//
+			if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)
 			{
-				WEB_STORE_DEBUG_INFO(4);
-				resW5200 = xTaskGetTickCount();
-				if(timeResetW5200 == 0) timeResetW5200 = resW5200;      // Первая итерация не должна быть сразу
-				if(resW5200 - timeResetW5200 > HP.time_resW5200() * 1000UL) {
-					journal.jprintf_time("Reset %s by timer . . .\n", nameWiznet);
-					HP.sendCommand(pNETWORK);                          // Послать команду сброса и применения сетевых настроек
-					timeResetW5200 = resW5200;                         // Запомить время сброса
-					active = false;
-				}
+				thisTime = xTaskGetTickCount();                                      // Запомнить тики
+				bool active;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
+				active = HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
+	#ifdef MQTT
+				active = HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+	#endif
 			}
-			// 4. Проверка связи с чипом
-			if((HP.get_fInitW5200()) && (thisTime - iniW5200 > 60 * 1000UL) && (active)) // проверка связи с чипом сети раз в минуту
-			{
-				WEB_STORE_DEBUG_INFO(5);
-				iniW5200 = thisTime;
-				if(!HP.NO_Power) {
-					boolean lst = linkStatusWiznet(false);
-					if(!lst || !network_last_link) {
-						if(!lst) journal.jprintf_time("%s no link[%02X], resetting . . .\n", nameWiznet, W5100.readPHYCFGR());
-						HP.sendCommand(pNETWORK);       // Если связь потеряна то подать команду на сброс сетевого чипа
-						HP.num_resW5200++;              // Добавить счетчик инициализаций
-						active = false;
-					}
-					network_last_link = lst;
-				}
-			}
-			// 5.Обновление времени 1 раз в сутки или по запросу (HP.timeNTP==0)
-			if((HP.timeNTP == 0) || ((HP.get_updateNTP()) && (thisTime - HP.timeNTP > 60 * 60 * 24 * 1000UL) && (active))) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
-			{
-				WEB_STORE_DEBUG_INFO(6);
-				HP.timeNTP = thisTime;
-				if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
-				active = false;
-			}
-			// 6. ping сервера если это необходимо
-			if((HP.get_pingTime() > 0) && (thisTime - pingt > HP.get_pingTime() * 1000UL) && (active)) {
-				WEB_STORE_DEBUG_INFO(7);
-				pingt = thisTime;
-				pingServer();
-				active = false;
-			}
-
-#ifdef MQTT                                     // признак использования MQTT
-			// 7. Отправка нанародный мониторинг
-			if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
-			{
-				WEB_STORE_DEBUG_INFO(55);
-				narmont=thisTime;
-				sendNarodMon(false);                       // отладка выключена
-				active=false;
-			}  // if ((HP.clMQTT.get_NarodMonUse()))
-
-			// 8. Отправка на MQTT сервер
-			if ((HP.clMQTT.get_MqttUse())&&(thisTime-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
-			{
-				WEB_STORE_DEBUG_INFO(56);
-				mqttt=thisTime;
-				if(HP.clMQTT.get_TSUse()) sendThingSpeak(false);
-				else sendMQTT(false);
-				active=false;
-			}
-#endif   // MQTT
 
 #ifdef WEATHER_FORECAST
 			if(active && rtcSAM3X8.get_days() != WF_Day) {
@@ -1463,13 +1338,14 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 				}
 			}
 #endif
-#if defined(HTTP_MAP_RELAY_MAX) && defined(HTTP_MAP_Server)
+#ifdef HTTP_MAP_Server
+#ifdef HTTP_MAP_RELAY_MAX
+			uint32_t t = rtcSAM3X8.unixtime();
 			if(HP.IsWorkingNow()) {
 				if(!active) {
-					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+					taskYIELD(); //WEB_SERVER_MAIN_TASK();	// Выполнить задачу веб сервера
 					active = true;
 				}
-				uint32_t t = rtcSAM3X8.unixtime();
 				if(t - daily_http_time > 600UL) { // дискретность 10 минут
 					daily_http_time = t;
 					daily_http_time -= daily_http_time % 600;
@@ -1490,7 +1366,6 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 										journal.jprintf(". Fail set HTTP-%d relay!\n", i);
 									}
 								}
-								WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 							}
 						}
 					}
@@ -1534,20 +1409,49 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 							active = false;
 						}
 					}
-					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					WEB_STORE_DEBUG_INFO(59);
-
-#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-					if(GETBIT(WR.Flags, WR_fActive)) WR_Read_MAP();
-					WEB_STORE_DEBUG_INFO(62);
-#endif
 				}
 			}
+#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+			if(GETBIT(WR.Flags, WR_fActive) && t - check_vbat_time > WR_CHECK_Vbat_Period) {
+				check_vbat_time = t;
+				WEB_STORE_DEBUG_INFO(62);
+				WR_Read_MAP();
+			}
 #endif
+#endif // HTTP_MAP_RELAY_MAX
+#endif // HTTP_MAP_Server
+			// 5.Обновление времени 1 раз в сутки или по запросу (HP.timeNTP==0)
+			if(HP.timeNTP == 0 || (HP.get_updateNTP() && thisTime - HP.timeNTP > 60 * 60 * 24 * 1000UL && active)) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
+			{
+				WEB_STORE_DEBUG_INFO(6);
+				HP.timeNTP = thisTime;
+				if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
+				active = false;
+			}
+#ifdef MQTT                                     // признак использования MQTT
+			// 7. Отправка нанародный мониторинг
+			if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
+			{
+				WEB_STORE_DEBUG_INFO(55);
+				narmont=thisTime;
+				sendNarodMon(false);                       // отладка выключена
+				active=false;
+			}  // if ((HP.clMQTT.get_NarodMonUse()))
 
-			taskYIELD();
-		} // if (xTaskGetTickCount()-thisTime>10000)
+			// 8. Отправка на MQTT сервер
+			if ((HP.clMQTT.get_MqttUse())&&(thisTime-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
+			{
+				WEB_STORE_DEBUG_INFO(56);
+				mqttt=thisTime;
+				if(HP.clMQTT.get_TSUse()) sendThingSpeak(false);
+				else sendMQTT(false);
+				active=false;
+			}
+#endif   // MQTT
 
+		}
+		taskYIELD();
 	} //for
 	vTaskDelete( NULL);
 }
@@ -1555,10 +1459,82 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 // Второй поток
 void vWeb1(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
+	static unsigned long resW5200, iniW5200, pingt, thisTime;
+	resW5200 = iniW5200 = pingt = thisTime = xTaskGetTickCount();
+	static boolean network_last_link = true;
 	for(;;) {
-		web_server(1);
-		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS); // задержка чтения уменьшаем загрузку процессора
+		#define WEB_SERVER_SECOND_TASK() {\
+			/*WEB_STORE_DEBUG_INFO(1);*/\
+			web_server(1);\
+			/*WEB_STORE_DEBUG_INFO(2);*/\
+			vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);\
+		}
+		WEB_SERVER_SECOND_TASK()
 
+		if(xTaskGetTickCount() - thisTime > WEB1_OTHER_JOB_PERIOD)
+		{
+			bool active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
+			thisTime = xTaskGetTickCount();                                      // Запомнить тики
+			if(active) active = HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
+#ifdef MQTT
+			if(active) active=HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+#endif
+
+			// Проверка и сброс митекса шины I2C  если мютекса не получаем то сбрасывае мютекс
+			if(SemaphoreTake(xI2CSemaphore, (3 * I2C_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+				SemaphoreGive(xI2CSemaphore);
+				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
+				active = false;
+				HP.num_resMutexI2C++;
+			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
+			else SemaphoreGive(xI2CSemaphore);
+
+			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+				SemaphoreGive(xWebThreadSemaphore);
+				journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", 0);
+				HP.num_resMutexSPI++;
+			} else {
+				if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
+					WEB_STORE_DEBUG_INFO(3);
+					checkSockStatus();              // Почистить старые сокеты
+				}
+				SemaphoreGive(xWebThreadSemaphore);
+			}
+			// 3. Сброс сетевого чипа по времени
+			if(HP.time_resW5200() > 0 && active)                             // Сброс W5200 если включен и время подошло
+			{
+				WEB_STORE_DEBUG_INFO(4);
+				if(xTaskGetTickCount() - resW5200 > HP.time_resW5200() * 1000UL) {
+					journal.jprintf_time("Reset %s by timer . . .\n", nameWiznet);
+					HP.sendCommand(pNETWORK);                          // Послать команду сброса и применения сетевых настроек
+					resW5200 = xTaskGetTickCount();
+					active = false;
+				}
+			}
+			// 4. Проверка связи с чипом
+			if(HP.get_fInitW5200() && (thisTime - iniW5200 > 60 * 1000UL) && active) // проверка связи с чипом сети раз в минуту
+			{
+				WEB_STORE_DEBUG_INFO(5);
+				iniW5200 = thisTime;
+				if(!HP.NO_Power) {
+					boolean lst = linkStatusWiznet(false);
+					if(!lst || !network_last_link) {
+						if(!lst) journal.jprintf_time("%s no link[%02X], resetting . . .\n", nameWiznet, W5100.readPHYCFGR());
+						HP.sendCommand(pNETWORK);       // Если связь потеряна то подать команду на сброс сетевого чипа
+						HP.num_resW5200++;              // Добавить счетчик инициализаций
+						active = false;
+					}
+					network_last_link = lst;
+				}
+			}
+			// 6. ping сервера если это необходимо
+			if((HP.get_pingTime() > 0) && (thisTime - pingt > HP.get_pingTime() * 1000UL) && (active)) {
+				WEB_STORE_DEBUG_INFO(7);
+				pingt = thisTime;
+				pingServer();
+				active = false;
+			}
+		}
 	}
 	vTaskDelete( NULL);
 }
@@ -1895,73 +1871,66 @@ void vReadSensor_delay1ms(int32_t ms)
 	#ifdef RPUMPB
 	static uint32_t RPUMPBTick=0;
 	#endif
-	static uint8_t  Scheduler_check_day = 0;
+	static uint8_t Scheduler_check_day = 0;
+	static TickType_t _upd_delay_timer = 0, _upd_delay = TIME_vUpdateTick;
 	for(;;)
 	{
-		if(!HP.Task_vUpdate_run) {
-			vTaskSuspend(NULL);				// Stop vUpdate, HP.xHandleUpdate
-			continue;
-		}
-		if (HP.get_State()==pWORK_HP){ //Код обслуживания работы ТН выполняется только если состяние ТН - работа а вот расписание всегда выполняется
-			// 1. Обновится, В это время команды управления не выполняются!!!!!
-			if (SemaphoreTake(HP.xCommandSemaphore,0)==pdPASS)                                           // Cемафор  захвачен
-			{
-				if (HP.get_State()==pWORK_HP)  HP.vUpdate();                                               // ТН работает и идет процесс контроля
-				SemaphoreGive(HP.xCommandSemaphore);                                                       // Семафор отдан
-			}
-			// 2. Управление циркуляционным насосом ГВС
+		if(HP.Task_vUpdate_run) {
+			if(HP.get_State() == pWORK_HP){ //Код обслуживания работы ТН выполняется только если состяние ТН - работа а вот расписание всегда выполняется
+				// 1. Обновится, В это время команды управления не выполняются!!!!!
+				if(SemaphoreTake(HP.xCommandSemaphore,0)==pdPASS) {    // Cемафор  захвачен
+					if(HP.get_State() == pWORK_HP) HP.vUpdate();       // ТН работает и идет процесс контроля
+					SemaphoreGive(HP.xCommandSemaphore);               // Семафор отдан
+				}
 #ifdef RPUMPB
+				// 2. Управление циркуляционным насосом ГВС
 #ifdef SUPERBOILER
-			if (HP.scheduleBoiler())                         // Для супербойлера игнорироуем для циркуляции флаг включения бойлера только расписание
+				if (HP.scheduleBoiler())                         // Для супербойлера игнорироуем для циркуляции флаг включения бойлера только расписание
 #else
-				if ((HP.scheduleBoiler())&&(HP.get_BoilerON()))  // если бойлер разрешен и разрешено греть бойлер согласно расписания или расписание выключено
+					if ((HP.scheduleBoiler())&&(HP.get_BoilerON()))  // если бойлер разрешен и разрешено греть бойлер согласно расписания или расписание выключено
 #endif
-				{
+					{
 #ifndef SUPERBOILER                       // если не определен супер бойлер, то при нагреве ГВС циркуляция всегда рабоатет
-					if ((HP.get_modWork() & pBOILER))           // Если включен нагрев ГВС всегда включать насос циркуляции ЕСЛИ НЕ СУПЕРБОЙЛЕР
-					{ HP.dRelay[RPUMPB].set_ON(); }
-					else
+						if ((HP.get_modWork() & pBOILER))           // Если включен нагрев ГВС всегда включать насос циркуляции ЕСЛИ НЕ СУПЕРБОЙЛЕР
+						{ HP.dRelay[RPUMPB].set_ON(); }
+						else
 #endif  // #ifndef SUPERBOILER 
-						if (HP.get_Circulation() && (!GETBIT(HP.Prof.Boiler.work_flags, fBoilerCircSchedule) || HP.scheduleBoiler()))   // Циркуляция разрешена
-						{
-#ifdef SUPERBOILER
-							if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler() || (HP.dRelay[RSUPERBOILER].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay()))) {
-								// идет прямой нагрев ГВС через предконденсатор, насос циркуляции ВЫКЛЮЧАЕМ
-								HP.dRelay[RPUMPB].set_OFF();
-								goto delayTask;
-							}
-#else
-							if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler())) { // идет нагрев ГВС
-                               HP.dRelay[RPUMPB].set_ON();
-                               goto delayTask; // идет нагрев ГВС включаем насос циркуляции ВСЕГДА - улучшаем перемешивание
-			                }
-#endif
-			                if (HP.get_CirculWork()==0) { HP.dRelay[RPUMPB].set_OFF(); goto delayTask;/* continue;*/}   // В условиях стоит время работы 0 - выключаем насос ГВС
-							if (HP.get_CirculPause()==0) { HP.dRelay[RPUMPB].set_ON(); goto delayTask;/* continue;*/}  // В условиях стоит время паузы 0 - включаем насос ГВС
-							if(HP.dRelay[RPUMPB].get_Relay())                                       // Насос включен Смотрим времена
+							if (HP.get_Circulation() && (!GETBIT(HP.Prof.Boiler.flags, fBoilerCircSchedule) || HP.scheduleBoiler()))   // Циркуляция разрешена
 							{
-								if(xTaskGetTickCount()-RPUMPBTick > HP.get_CirculWork()*configTICK_RATE_HZ)   // ждем время мсек
+#ifdef SUPERBOILER
+								if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler() || (HP.dRelay[RSUPERBOILER].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay()))) {
+									// идет прямой нагрев ГВС через предконденсатор, насос циркуляции ВЫКЛЮЧАЕМ
+									HP.dRelay[RPUMPB].set_OFF();
+								} else
+#else
+								if((HP.dRelay[RCOMP].get_Relay()||HP.dFC.isfOnOff())&&(HP.get_onBoiler())) { // идет нагрев ГВС
+								   HP.dRelay[RPUMPB].set_ON(); // идет нагрев ГВС включаем насос циркуляции ВСЕГДА - улучшаем перемешивание
+								} else
+#endif
+								if (HP.get_CirculWork()==0) HP.dRelay[RPUMPB].set_OFF();       // В условиях стоит время работы 0 - выключаем насос ГВС
+								else if (HP.get_CirculPause()==0) HP.dRelay[RPUMPB].set_ON();  // В условиях стоит время паузы 0 - включаем насос ГВС
+								else if(HP.dRelay[RPUMPB].get_Relay())                                       // Насос включен Смотрим времена
 								{
-									RPUMPBTick=xTaskGetTickCount();
-									HP.dRelay[RPUMPB].set_OFF();                                  // выключить насос
-								}
-							} else {                                                                // Насос выключен
-								if(xTaskGetTickCount()-RPUMPBTick >  HP.get_CirculPause()*configTICK_RATE_HZ)   // ждем время мсек
-								{
-									RPUMPBTick=xTaskGetTickCount();
-									HP.dRelay[RPUMPB].set_ON();                                    // включить насос
-								}
-							} // if(HP.dRealay[RPUMPB].get_Relay())
-						}  //  if (HP.get_Circulation())
-						else HP.dRelay[RPUMPB].set_OFF() ;                                      // if (HP.get_Circulation())        выключить насос если его управление запрещено
-				} //  if (HP.scheduleBoiler())
-				else  HP.dRelay[RPUMPB].set_OFF() ;                                       // По расписанию выключено или бойлер запрещен,  насос выключаем
+									if(xTaskGetTickCount()-RPUMPBTick > HP.get_CirculWork()*configTICK_RATE_HZ)   // ждем время мсек
+									{
+										RPUMPBTick=xTaskGetTickCount();
+										HP.dRelay[RPUMPB].set_OFF();                                  // выключить насос
+									}
+								} else {                                                                // Насос выключен
+									if(xTaskGetTickCount()-RPUMPBTick >  HP.get_CirculPause()*configTICK_RATE_HZ)   // ждем время мсек
+									{
+										RPUMPBTick=xTaskGetTickCount();
+										HP.dRelay[RPUMPB].set_ON();                                    // включить насос
+									}
+								} // if(HP.dRealay[RPUMPB].get_Relay())
+							}  //  if (HP.get_Circulation())
+							else HP.dRelay[RPUMPB].set_OFF();                                // if (HP.get_Circulation())        выключить насос если его управление запрещено
+					} //  if (HP.scheduleBoiler())
+					else  HP.dRelay[RPUMPB].set_OFF();                                       // По расписанию выключено или бойлер запрещен,  насос выключаем
 #endif // #ifdef RPUMPB
-		} // НЕ РЕЖИМ ОЖИДАНИЕ if HP.get_State()==pWORK_HP)
-	
-		if(!HP.Task_vUpdate_run) goto delayTask;/* continue;*/
-
-		{
+			} // НЕ РЕЖИМ ОЖИДАНИЕ if HP.get_State()==pWORK_HP)
+		}
+		if(HP.Task_vUpdate_run) {
 			// 3. Расписание проверка всегда
 			uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
 			if(d) {
@@ -2004,38 +1973,87 @@ void vReadSensor_delay1ms(int32_t ms)
 							HP.sendCommand(pWAIT);
 						} else if(HP.Prof.get_idProfile() != _profile) {
 							HP.SwitchToProfile(_profile);
-							if(!HP.Task_vUpdate_run) continue;
 						} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 							HP.sendCommand(pRESUME);
 						}
+						HP.runCommand();
 					}
 				}
 			}
 		}
-		// 4. Отработка пауз всегда они разные в зависимости от состояния ТН!!
-delayTask:	// чтобы задача отдавала часть времени другим
+		if(HP.Task_vUpdate_run) {
+			// Солнечный коллектор
+#ifdef USE_SUN_COLLECTOR
+			if(HP.work_flags & (1<<fHP_SunSwitching)) {
+				if(GetTickCount() - HP.time_Sun > SUN_VALVE_SWITCH_TIME) {
+					HP.work_flags = (HP.work_flags & ~((1<<fHP_SunSwitching) | (1<<fHP_SunReady)));
+					if(HP.dRelay[RSUNON].get_Relay()) {
+						HP.work_flags |= (1<<fHP_SunReady);
+						HP.time_Sun -= uint32_t(HP.Option.SunMinPause * 1000);
+					}
+					HP.dRelay[RSUNON].set_OFF();
+					HP.dRelay[RSUNOFF].set_OFF();
+				}
+			} else {
+				boolean fregen = GETBIT(HP.get_flags(), fSunRegenerateGeo) && HP.is_pause();
+				int16_t tsun = HP.sTemp[TSUN].get_Temp();
+				if(((!HP.is_pause()	&& (((HP.get_modWork() & pHEAT) && GETBIT(HP.Prof.Heat.flags, fUseSun)) || ((HP.get_modWork() & pCOOL) && GETBIT(HP.Prof.Cool.flags, fUseSun))
+										|| (HP.get_onBoiler() && GETBIT(HP.Prof.Boiler.flags, fBoilerUseSun)))) || fregen)
+					 && HP.get_State() != pERROR_HP && (HP.get_State() != pOFF_HP || HP.PauseStart != 0)) {
+					if((HP.work_flags & (1<<fHP_SunWork))) {
+						if(GetTickCount() - HP.time_Sun > uint32_t(HP.Option.SunMinWorktime * 1000)) {
+							if(fregen) {
+								if(tsun < HP.Option.SunRegGeoTemp || HP.sTemp[TSUNOUTG].get_Temp() < HP.Option.SunRegGeoTempGOff) HP.Sun_OFF();
+							} else if(HP.sTemp[TSUNOUTG].get_Temp() < HP.sTemp[TEVAOUTG].get_Temp() + HP.Option.SunGTDelta) HP.Sun_OFF();
+						}
+					} else if(tsun >= (fregen ? HP.Option.SunRegGeoTemp : HP.sTemp[TEVAOUTG].get_Temp()) + HP.Option.SunTDelta) {
+						HP.Sun_ON();
+					}
+				} else {
+					HP.Sun_OFF();
+					HP.time_Sun = GetTickCount() - uint32_t(HP.Option.SunMinPause * 1000);	// выключить задержку последующего включения
+				}
+				uint8_t fl = HP.work_flags & ((1<<fHP_SunNotInited) | (1<<fHP_SunReady) | (1<<fHP_SunSwitching) | (1<<fHP_SunWork));
+				if((fl == (1<<fHP_SunReady) || fl == (1<<fHP_SunNotInited)) && tsun < HP.Option.SunTempOff) {
+					HP.work_flags = (HP.work_flags & ~((1<<fHP_SunReady) | (1<<fHP_SunNotInited))) | (1<<fHP_SunSwitching);
+					HP.dRelay[RSUNON].set_OFF();
+					HP.dRelay[RSUNOFF].set_ON();
+					HP.time_Sun = GetTickCount();
+				}
+			}
+#endif
+		}
+		// 4. Отработка пауз, всегда они разные в зависимости от состояния ТН
+		while(xTaskGetTickCount() - _upd_delay_timer < _upd_delay) {
+			vTaskDelay(TIME_vUpdateTick);
+			HP.runCommand();
+		}
+		_upd_delay_timer = xTaskGetTickCount();
 		switch (HP.get_State())  // Состояние ТН
 		{
 		case pOFF_HP:                               // ТН выключен
 		case pSTOPING_HP:                           // Останавливается
 			HP.SetTask_vUpdate(false);
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
 			break;
-		case pSTARTING_HP: vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ); break; // Стартует - этого не должно быть в этом месте
+		case pSTARTING_HP:
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+			break; // Стартует - этого не должно быть в этом месте
 		case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
 			if((HP.get_modWork() & pHEAT)) {		// Отопление
 				if(HP.get_ruleHeat() == pHYSTERESIS)
-					vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);  // Гистерезис
-				else vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ); // Время интегрирования ПИД
+					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
 			} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
 				if(HP.get_ruleCool() == pHYSTERESIS)
-					vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);  // Гистерезис
-				else vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ); // Время интегрирования ПИД
+					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
 			} else if((HP.get_modWork() & pBOILER)) { // бойлер
 				if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
-					vTaskDelay((HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ);  // Время интегрирования ПИД
-				else vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ); // Гистерезис
+					_upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ;  // Время интегрирования ПИД
+				else _upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ; // Гистерезис
 			} else { // Пауза
-				vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
 			}
 			break;
 		case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
@@ -2043,64 +2061,24 @@ delayTask:	// чтобы задача отдавала часть времени
 				if(HP.get_modeHouse() == pHEAT) {
 					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
 						HP.sendCommand(pRESUME);
+						HP.runCommand();
 					}
 				} else if(HP.get_modeHouse() == pCOOL) {
 					if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
 						HP.sendCommand(pRESUME);
+						HP.runCommand();
 					}
 				}
 			}
-			vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
 			break;
 		case pERROR_HP: 						      // Ошибка ТН
-			vTaskDelay(HP.Option.Control_Period * configTICK_RATE_HZ);
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
 			break;
 		case pERROR_CODE:                             // Эта ошибка возникать не должна!
 		default:
 			journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
 		} //  switch (HP.get_State())
-
-		if(!HP.Task_vUpdate_run) continue;
-		// Солнечный коллектор
-#ifdef USE_SUN_COLLECTOR
-		if(HP.work_flags & (1<<fHP_SunSwitching)) {
-			if(GetTickCount() - HP.time_Sun > SUN_VALVE_SWITCH_TIME) {
-				HP.work_flags = (HP.work_flags & ~((1<<fHP_SunSwitching) | (1<<fHP_SunReady)));
-				if(HP.dRelay[RSUNON].get_Relay()) {
-					HP.work_flags |= (1<<fHP_SunReady);
-					HP.time_Sun -= uint32_t(HP.Option.SunMinPause * 1000);
-				}
-				HP.dRelay[RSUNON].set_OFF();
-				HP.dRelay[RSUNOFF].set_OFF();
-			}
-		} else {
-			boolean fregen = GETBIT(HP.get_flags(), fSunRegenerateGeo) && HP.is_pause();
-			int16_t tsun = HP.sTemp[TSUN].get_Temp();
-			if(((!HP.is_pause()	&& (((HP.get_modWork() & pHEAT) && GETBIT(HP.Prof.Heat.flags, fUseSun)) || ((HP.get_modWork() & pCOOL) && GETBIT(HP.Prof.Cool.flags, fUseSun))
-									|| (HP.get_onBoiler() && GETBIT(HP.Prof.Boiler.flags, fBoilerUseSun)))) || fregen)
-				 && HP.get_State() != pERROR_HP && (HP.get_State() != pOFF_HP || HP.PauseStart != 0)) {
-				if((HP.work_flags & (1<<fHP_SunWork))) {
-					if(GetTickCount() - HP.time_Sun > uint32_t(HP.Option.SunMinWorktime * 1000)) {
-						if(fregen) {
-							if(tsun < HP.Option.SunRegGeoTemp || HP.sTemp[TSUNOUTG].get_Temp() < HP.Option.SunRegGeoTempGOff) HP.Sun_OFF();
-						} else if(HP.sTemp[TSUNOUTG].get_Temp() < HP.sTemp[TEVAOUTG].get_Temp() + HP.Option.SunGTDelta) HP.Sun_OFF();
-					}
-				} else if(tsun >= (fregen ? HP.Option.SunRegGeoTemp : HP.sTemp[TEVAOUTG].get_Temp()) + HP.Option.SunTDelta) {
-					HP.Sun_ON();
-				}
-			} else {
-				HP.Sun_OFF();
-				HP.time_Sun = GetTickCount() - uint32_t(HP.Option.SunMinPause * 1000);	// выключить задержку последующего включения
-			}
-			uint8_t fl = HP.work_flags & ((1<<fHP_SunNotInited) | (1<<fHP_SunReady) | (1<<fHP_SunSwitching) | (1<<fHP_SunWork));
-			if((fl == (1<<fHP_SunReady) || fl == (1<<fHP_SunNotInited)) && tsun < HP.Option.SunTempOff) {
-				HP.work_flags = (HP.work_flags & ~((1<<fHP_SunReady) | (1<<fHP_SunNotInited))) | (1<<fHP_SunSwitching);
-				HP.dRelay[RSUNON].set_OFF();
-				HP.dRelay[RSUNOFF].set_ON();
-				HP.time_Sun = GetTickCount();
-			}
-		}
-#endif
 	}// for
 	vTaskDelete( NULL );
 }
@@ -2199,17 +2177,6 @@ void vUpdateStepperEEV(void *)
 	vTaskDelete( NULL);
 }
 #endif
-
-// vUpdateCommand /////////////////////////////////////////////////////// 
-// Задача Разбор очереди команд
-void vUpdateCommand(void *)
-{ //const char *pcTaskName = "HP_UpdateCommand\r\n";
-	for(;;) {
-		HP.runCommand();       // Выполнение команд управления ТН
-		vTaskSuspend(NULL);    // Команды выполнены, остановить задачу vUpdateCommand, пуск осуществляется при посылке команды
-	}
-	vTaskDelete( NULL);
-}
 
 // ServiceHP ///////////////////////////////////////////////
 // Графики в ОЗУ, счетчики моточасов, сохранение статистики, работа насосов в простое, дисплей Nextion
