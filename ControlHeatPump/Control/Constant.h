@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.201"				// Версия прошивки
+#define VERSION			"1.202"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -259,10 +259,6 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 	#define I2C_JOURNAL_START 		(I2C_JOURNAL_EEPROM + 2)      // Адрес с которого начинается ДАННЫЕ журнал в памяти i2c ВНИМАНИЕ - 2 байт лежит признак форматирования журнала
 	#define I2C_JOURNAL_EEPROM_NEXT (I2C_MEMORY_TOTAL * 1024 / 8) // Адрес после журнала = размер EEPROM
 	#define JOURNAL_LEN 			((I2C_JOURNAL_EEPROM_NEXT-I2C_JOURNAL_START)/W5200_MAX_LEN*W5200_MAX_LEN)// Размер журнала - округление на целое число страниц W5200_MAX_LEN
-	#define I2C_JOURNAL_HEAD   		(0x01)                                                                  // Признак головы журнала
-	#define I2C_JOURNAL_TAIL   		(0x02)                                                                  // Признак хвоста журнала
-	#define I2C_JOURNAL_FORMAT 		(0xff)                                                                  // Символ которым заполняется журнал при форматировании
-	#define I2C_JOURNAL_READY  		(0x55aa)                                                                // Признак создания журнала - если его нет по адресу I2C_JOURNAL_START-2 то надо форматировать журнал (первичная инициализация)
   #else
 	#define JOURNAL_LEN       		(2*W5200_MAX_LEN)   // Размер системного журнала ДОЛЖНО БЫТЬ кратно W5200_MAX_LEN, Увеличивать аккуратно, может не хвать памяти - виснет при загрузке
   #endif
@@ -282,6 +278,8 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 	#define DAILY_SWITCH_MAX		5			// Максимальное количество записей ежедневного включения устройств (DailySwitch)
 	#define JOURNAL_LEN       		(2*W5200_MAX_LEN)   // Размер системного журнала ДОЛЖНО БЫТЬ кратно W5200_MAX_LEN, Увеличивать аккуратно, может не хвать памяти - виснет при загрузке
 #endif
+#define JOURNAL_TIME_WAIT			200			// Время ожидания захвата мютекса журнала, мсек
+
 // Тип записи сохранения, 16bit
 #define SAVE_TYPE_END			0
 #define SAVE_TYPE_sTemp			-1

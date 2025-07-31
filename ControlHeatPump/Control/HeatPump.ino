@@ -763,7 +763,7 @@ void HeatPump::resetSettingHP()
 	num_repeat = 0;                                 // текушее число попыток 0 - т.е еще не было работы
 	num_repeat_prof = 0;
 	num_resW5200 = 0;                               // текущее число сбросов сетевого чипа
-	num_resMutexSPI = 0;                            // текущее число сброса митекса SPI
+	num_resMutexWEB = 0;                            // текущее число сброса митекса SPI
 	num_resMutexI2C = 0;                            // текущее число сброса митекса I2C
 	num_resMQTT = 0;                                // число повторных инициализация MQTT клиента
 	num_resPing = 0;                                // число не прошедших пингов
@@ -3224,12 +3224,12 @@ void HeatPump::vUpdate()
 		if(get_modeHouse() == pHEAT && sTemp[TIN].get_Temp() > get_targetTempCool() + Prof.Cool.dTemp) {
 			set_mode(pCOOL);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+			journal.jprintf("SET MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
 #endif
 		} else if(get_modeHouse() == pCOOL && sTemp[TIN].get_Temp() < get_targetTempHeat() - Prof.Heat.dTemp) {
 			set_mode(pHEAT);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("Set MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+			journal.jprintf("SET MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
 #endif
 		}
 	}

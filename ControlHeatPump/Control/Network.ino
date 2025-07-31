@@ -453,7 +453,7 @@ uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len, uint1
 		do// Ожидание освобождения буфера
 		{
 			if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-				xSemaphoreGive (xWebThreadSemaphore);  //                                      // Мютекс потока отдать
+				SemaphoreGive(xWebThreadSemaphore);  //                                      // Мютекс потока отдать
 				taskYIELD();
 			} else delay(1);
 			if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {

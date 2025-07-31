@@ -610,7 +610,7 @@ public:
 	uint8_t num_repeat;                                   // + текущее число повторов пуска ТН
 	uint8_t num_repeat_prof;
 	uint16_t num_resW5200;                                 // + текущее число сброса сетевого чипа
-	uint16_t num_resMutexSPI;                              // + текущее число сброса митекса SPI
+	uint16_t num_resMutexWEB;                              // + текущее число сброса митекса WEB
 	uint16_t num_resMutexI2C;                              // + текущее число сброса митекса I2C
 	uint16_t num_resMQTT;                                  // + число повторных инициализация MQTT клиента
 	uint16_t num_resPing;                                  // + число не прошедших пингов
@@ -674,7 +674,7 @@ public:
 	TaskHandle_t xHandleKeysLCD;
 	#endif
 
-	SemaphoreHandle_t xCommandSemaphore;    // Семафор команды
+	type_SEMAPHORE xCommandSemaphore;    // Семафор команды
 	boolean Task_vUpdate_run;				// задача vUpdate работает
 	void SetTask_vUpdate(bool onoff);		// Пуск/Останов задачи vUpdate
 

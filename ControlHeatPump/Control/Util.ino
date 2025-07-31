@@ -55,6 +55,29 @@ uint8_t calc_bits_in_mask(uint32_t mask)
 	return bits;
 }
 
+void SemaphoreCreate(type_SEMAPHORE &_sem)
+{
+	_sem.xSemaphore = false;
+	_sem.BusyCnt = 0;
+}
+
+// Захватить семафор с проверкой, что шедуллер работает, возврат true, если успешно
+bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
+{
+	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+		uint32_t timer = wait_time;
+		while(_sem.xSemaphore) {
+			vTaskDelay(1/portTICK_PERIOD_MS);
+			if(!timer--) {
+				_sem.BusyCnt++;
+				return false;
+			}
+		}
+	}
+	_sem.xSemaphore = true;
+	return true;
+}
+
 // разбор строки побайтно ОШИБКИ ПЛОХО не ловит!
 //  для IP          const char* ipStr = "50.100.150.200"; byte ip[4]; parseBytes(ipStr, '.', ip, 4, 10);
 //  для mac address const char* macStr = "90-A2-AF-DA-14-11"; byte mac[6]; parseBytes(macStr, '-', mac, 6, 16);

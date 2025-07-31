@@ -1,9 +1,9 @@
 // Copyright (c) 2016-2025 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.201";
+var VER_WEB = "1.202";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
-var urlcontrol = 'http://192.168.0.199';
+//var urlcontrol = 'http://192.168.0.199';
 //var urlcontrol = 'http://192.168.0.7';
 var urltimeout = 1800; // таймаут ожидание ответа от контроллера. Чем хуже интертнет, тем выше значения, но не более времени обновления параметров.
 var urlupdate = 4000; // время обновления параметров в миллисекундах
@@ -712,7 +712,7 @@ function loadParam(paramid, noretry, resultdiv) {
 										else if(values[0].match(/UPD$/)) alert("Успешно!");
 										else alert("Настройки сохранены, записано " + values[1] + " байт");
 									} else alert("Ошибка, код: " + values[1]);
-								} else if(values[0].indexOf("RESET_") == 0 || values[0] == "set_updateNet") {
+								} else if(values[0].indexOf("RESET_") == 0) {
 									alert(values[1]);
 								} else if(values[0].toLowerCase() == "set_off" || values[0].toLowerCase() == "set_on") {
 									break;

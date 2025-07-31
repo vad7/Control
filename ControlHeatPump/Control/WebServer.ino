@@ -76,7 +76,7 @@ void web_server(uint8_t thread)
 		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 			SemaphoreGive(xWebThreadSemaphore);
 			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
-			HP.num_resMutexSPI++;
+			HP.num_resMutexWEB++;
 		}
 	}
 
@@ -684,14 +684,6 @@ void parserGET(uint8_t thread, int8_t )
 #endif
 			continue;
 		}
-		if ((strcmp(str,"set_updateNet")==0)||(strcmp(str,"RESET_NET")==0))  // Функция Сброс w5200 и применение сетевых настроек, подождите 5 сек . . .
-		{
-			journal.jprintf("Update network setting . . .\r\n");
-			HP.sendCommand(pNETWORK);        // Послать команду применение сетевых настроек
-			strcat(strReturn,"Сброс Wiznet w5XXX и применение сетевых настроек, подождите 5 сек . . .");
-			ADD_WEBDELIM(strReturn) ;
-			continue;
-		}
 		if (strcmp(str,"get_WORK")==0)  // Функция get_WORK - ТН включен если он работает или идет его пуск
 		{
 			strcat(strReturn, HP.IsWorkingNow() ? "ON" : "OFF"); ADD_WEBDELIM(strReturn); continue;
@@ -1017,6 +1009,11 @@ xSaveStats:
 				journal.Format();
 				strcat(strReturn,"OK");
 #endif
+			} else if(strcmp(str,"NET")==0)  // Функция Сброс w5200 и применение сетевых настроек, подождите 5 сек . . .
+			{
+				journal.jprintf("Update network setting . . .\r\n");
+				HP.sendCommand(pNETWORK);        // Послать команду применение сетевых настроек
+				strcat(strReturn,"Сброс Wiznet W5XXX и применение сетевых настроек, подождите 5 сек . . .");
 			} else if (strcmp(str,"DUE")==0)   // RESET_DUE, Команда сброса контроллера
 			{
 				strcat(strReturn,"Сброс контроллера, подождите 10 секунд . . .");
@@ -1410,8 +1407,10 @@ xSaveStats:
 				strcat(strReturn,"Счетчик текущего числа повторных попыток пуска ТН|");
 				_itoa(HP.num_repeat, strReturn); strcat(strReturn, " ("); _itoa(HP.num_repeat_prof, strReturn); strcat(strReturn, ");");
 				strcat(strReturn,"Счетчик \"Потеря связи с "); strcat(strReturn,nameWiznet);strcat(strReturn,"\", повторная инициализация  <sup>2</sup>|");_itoa(HP.num_resW5200,strReturn);strcat(strReturn,";");
-				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины SPI|");_itoa(HP.num_resMutexSPI,strReturn);strcat(strReturn,";");
-				strcat(strReturn,"Счетчик числа сбросов мютекса захвата шины I2C|");_itoa(HP.num_resMutexI2C,strReturn);strcat(strReturn,";");
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Счетчик блокировок и сбросов мютекса WEB|%d (%d);", xWebThreadSemaphore.BusyCnt, HP.num_resMutexWEB);
+				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок и сбросов мютекса I2C|%d (%d);", xI2CSemaphore.BusyCnt, HP.num_resMutexI2C);
+				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса сети|%d;", xI2CSemaphore.BusyCnt);
+				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса журнала|%d;", journal.Semaphore.BusyCnt);
 	#ifdef MQTT
 				strcat(strReturn,"Счетчик числа повторных соединений MQTT клиента|");_itoa(HP.num_resMQTT,strReturn);strcat(strReturn,";");
 	#endif
@@ -3228,7 +3227,7 @@ xContinueSearchHeader:
 			journal.jprintf_time("Start upload, erase SPI disk ");
 			SerialFlash.eraseAll();
 			while(SerialFlash.ready() == false) {
-				xSemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
+				SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
 				vTaskDelay(1000 / portTICK_PERIOD_MS);
 				if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
 					journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);

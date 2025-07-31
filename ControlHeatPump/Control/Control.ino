@@ -50,12 +50,11 @@
 void vUpdateStepperEEV(void *);
 #include "StepMotor.h"
 
-// Мютексы блокираторы железа
-SemaphoreHandle_t xModbusSemaphore;                 // Семафор Modbus, инвертор запас на счетчик
-SemaphoreHandle_t xWebThreadSemaphore;              // Семафор потоки вебсервера,  деление сетевой карты
-SemaphoreHandle_t xI2CSemaphore;                    // Семафор шины I2C, часы, память, мастер OneWire
-SemaphoreHandle_t xSPISemaphore;                    // Семафор шины SPI  сетевая карта, память. SD карта // пока не используется
-SemaphoreHandle_t xLoadingWebSemaphore;             // Семафор загрузки веб морды в spi память
+// Семафоры захвата железа
+type_SEMAPHORE xModbusSemaphore;                 // Семафор Modbus, инвертор запас на счетчик
+type_SEMAPHORE xWebThreadSemaphore;              // Семафор потоки вебсервера,  деление сетевой карты
+type_SEMAPHORE xI2CSemaphore;                    // Семафор шины I2C, часы, память, мастер OneWire
+type_SEMAPHORE xLoadingWebSemaphore;             // Семафор загрузки веб морды в spi память
 uint16_t lastErrorFreeRtosCode;                     // код последней ошибки операционки нужен для отладки
 uint32_t startSupcStatusReg;                        // Состояние при старте SUPC Supply Controller Status Register - проверяем что с питание
 
@@ -146,26 +145,6 @@ __attribute__((always_inline)) inline void _delay(int t) // Функция за�
 {
   if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(t/portTICK_PERIOD_MS);
   else delay(t);
-}
-
-// Захватить семафор с проверкой, что шедуллер работает
-BaseType_t SemaphoreTake(QueueHandle_t xSemaphore, TickType_t xBlockTime)
-{
-	if(xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) return pdTRUE;
-	else {
-		for(;;) {
-			if(xSemaphoreTake(xSemaphore, 0) == pdTRUE) return pdTRUE;
-			if(!xBlockTime--) break;
-			vTaskDelay(1/portTICK_PERIOD_MS);
-		}
-		return pdFALSE;
-	}
-}
-
-// Освободить семафор с проверкой, что шедуллер работает
-inline void SemaphoreGive(QueueHandle_t xSemaphore)
-{
-	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) xSemaphoreGive(xSemaphore);
 }
 
 // Остановить шедулер задач, возврат 1, если получилось
@@ -643,9 +622,7 @@ x_I2C_init_std_message:
 	HP.mRTOS = HP.mRTOS+64+4* 90;
 #endif
 
-	vSemaphoreCreateBinary(HP.xCommandSemaphore);                       // Создание семафора
-	if (HP.xCommandSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-
+	SemaphoreCreate(HP.xCommandSemaphore);                       // Инит семафора
 	if (xTaskCreate(vUpdate,"UpdateHP",160,NULL,2,&HP.xHandleUpdate)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*180;// 200, до обрезки стеков было 350
 	HP.Task_vUpdate_run = false;
@@ -671,22 +648,10 @@ x_I2C_init_std_message:
 	if ( xTaskCreate(vWeb3,"Web3", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb3)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
 #endif
-	vSemaphoreCreateBinary(xLoadingWebSemaphore);           // Создание семафора загрузки веб морды в spi память
-	if (xLoadingWebSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	//xLoadingWebMutex=xSemaphoreCreateMutex();
-
-	vSemaphoreCreateBinary(xWebThreadSemaphore);               // Создание мютекса
-	if (xWebThreadSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	vSemaphoreCreateBinary(xI2CSemaphore);                     // Создание мютекса
-	if (xI2CSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	//vSemaphoreCreateBinary(xSPISemaphore);                     // Создание мютекса
-	//if (xSPISemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	// Дополнительные семафоры (почему то именно здесь) Создается когда есть модбас
-	if(Modbus.get_present())
-	{
-		vSemaphoreCreateBinary(xModbusSemaphore);                       // Создание мютекса
-		if (xModbusSemaphore==NULL) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	}
+	SemaphoreCreate(xLoadingWebSemaphore);           // Инит семафора загрузки веб морды в spi память
+	SemaphoreCreate(xWebThreadSemaphore);
+	SemaphoreCreate(xI2CSemaphore);
+	SemaphoreCreate(xModbusSemaphore);
 	journal.jprintf(" Create tasks - OK, size %d bytes\n",HP.mRTOS);
 	//journal.jprintf("16. Send a notification . . .\n");
 	if(rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET) {
@@ -1313,10 +1278,9 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 			if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)
 			{
 				thisTime = xTaskGetTickCount();                                      // Запомнить тики
-				bool active;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
-				active = HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
+				HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
 	#ifdef MQTT
-				active = HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+				HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
 	#endif
 			}
 
@@ -1492,7 +1456,7 @@ void vWeb1(void *)
 			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 				SemaphoreGive(xWebThreadSemaphore);
 				journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", 0);
-				HP.num_resMutexSPI++;
+				HP.num_resMutexWEB++;
 			} else {
 				if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
 					WEB_STORE_DEBUG_INFO(3);

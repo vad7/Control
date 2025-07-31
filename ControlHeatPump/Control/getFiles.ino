@@ -31,7 +31,7 @@ void get_Header(uint8_t thread,char *name_file)
     strcat(Socket[thread].outBuf, "\"");
     strcat(Socket[thread].outBuf, WEB_HEADER_END);
 	sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, strlen(Socket[thread].outBuf), 0);
-	sendPrintfRTOS(thread, " ------ Народный контроллер теплового насоса ver. %s  сборка %s %s ------\r\nКонфигурация: %s: %s\r\nСоздание файла: %s %s \r\n\r\n", VERSION,__DATE__,__TIME__,CONFIG_NAME,CONFIG_NOTE,NowTimeToStr(),NowDateToStr());
+	sendPrintfRTOS(thread, " ------ Народный контроллер теплового насоса ver. %s сборка %s %s ------\r\nКонфигурация: %s: %s\r\nСоздание файла: %s %s\r\n\r\n", VERSION,__DATE__,__TIME__,CONFIG_NAME,CONFIG_NOTE,NowTimeToStr(),NowDateToStr());
 }
 
 // Сформировать значения счетиков в текстовый буфере (отсылки нет),
@@ -1198,7 +1198,7 @@ bool get_binModbus(uint8_t thread, char *filename)
     	}
     	addr++;
     	if(size > 1) addr++;
-		xSemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
+		SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
     	_delay(5);
 		if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
 			journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);

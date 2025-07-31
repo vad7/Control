@@ -42,15 +42,19 @@ const char *promtUser={"> "};
 
 // для прекращения логирования
 enum {
-	fLog_HTTP_RelayError			= 0,		// Ошибка Send_HTTP_Request
+	fLog_HTTP_RelayError			= 0,			// Ошибка Send_HTTP_Request
 	fLog_DNS_Lookup
 };
-uint8_t Logflags = 0;							// fLog_*
+uint8_t Logflags = 0;								// fLog_*
+
+#define I2C_JOURNAL_HEAD   		0x01 					// Признак головы журнала
+#define I2C_JOURNAL_TAIL   		0x02					// Признак хвоста журнала
+#define I2C_JOURNAL_FORMAT 		0xFF					// Символ которым заполняется журнал при форматировании
+#define I2C_JOURNAL_READY  		0x55AA					// Признак создания журнала - если его нет по адресу I2C_JOURNAL_START-2 то надо форматировать журнал (первичная инициализация)
 
 class Journal :public Print
 {
 public:
- // SemaphoreHandle_t xJournalSemaphore;                    // Семафор Journal
   void Init();                                            // Инициализация
   void printf(const char *format, ...) ;                  // Печать только в консоль
   void jprintf(const char *format, ...);                  // Печать в консоль и журнал возвращает число записанных байт
@@ -60,12 +64,14 @@ public:
   int32_t send_Data(uint8_t thread);                     // отдать журнал в сеть клиенту  Возвращает число записанных байт
   int32_t available(void);                               // Возвращает размер журнала
   int8_t   get_err(void) { return err; };
+  bool check_wait_semaphore(void);
   virtual size_t write (uint8_t c);                       // чтобы print работал для это класса
   #ifdef I2C_EEPROM_64KB                                  // Если журнал находится в i2c
   void Format(void);                           		    // форматирование журнала в еепром
   #else
   void Clear(){bufferTail=0;bufferHead=0;full=false;err=OK;} // очистка журнала в памяти
   #endif
+  type_SEMAPHORE Semaphore;                    			// Семафор
 private:
   int8_t err;                                             // ошибка журнала
   int32_t bufferHead, bufferTail;                        // Начало и конец
