@@ -73,7 +73,7 @@ void web_server(uint8_t thread)
 	if(SemaphoreTake(xWebThreadSemaphore, len) == pdFALSE) {
 		if(thread == 0) return;
 		// 1. Проверка захваченого семафора сети, ожидаем  3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
-		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 30) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 			SemaphoreGive(xWebThreadSemaphore);
 			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
 			HP.num_resMutexWEB++;
@@ -1409,7 +1409,7 @@ xSaveStats:
 				strcat(strReturn,"Счетчик \"Потеря связи с "); strcat(strReturn,nameWiznet);strcat(strReturn,"\", повторная инициализация  <sup>2</sup>|");_itoa(HP.num_resW5200,strReturn);strcat(strReturn,";");
 				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Счетчик блокировок и сбросов мютекса WEB|%d (%d);", xWebThreadSemaphore.BusyCnt, HP.num_resMutexWEB);
 				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок и сбросов мютекса I2C|%d (%d);", xI2CSemaphore.BusyCnt, HP.num_resMutexI2C);
-				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса сети|%d;", xI2CSemaphore.BusyCnt);
+				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса Modbus|%d;", xModbusSemaphore.BusyCnt);
 				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса журнала|%d;", journal.Semaphore.BusyCnt);
 	#ifdef MQTT
 				strcat(strReturn,"Счетчик числа повторных соединений MQTT клиента|");_itoa(HP.num_resMQTT,strReturn);strcat(strReturn,";");

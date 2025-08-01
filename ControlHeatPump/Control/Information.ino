@@ -85,7 +85,7 @@ void Journal::Init()
 		}
 		if((bufferTail >= 0) && (bufferHead >= 0)) break;
 	}
-	if(bufferTail < bufferHead || bufferTail == JOURNAL_LEN-1) full = 1;  // Буфер полный
+	if(bufferTail < bufferHead) full = 1;  // Буфер полный
 	jprintf("\nSTART ---\nFound I2C journal: size %d bytes, head=%d, tail=%d\n", JOURNAL_LEN, bufferHead, bufferTail);
 #endif //  #ifndef I2C_EEPROM_64KB     // журнал в памяти
 }
@@ -159,11 +159,9 @@ void Journal::Format(void)
 	full = 0;                   // Буфер не полный
 	bufferHead = 0;
 	bufferTail = 1;
-	if(err == OK) {
-		writeREADY();                 // было форматирование
-		jprintf("\nFormat I2C journal (size %d bytes) - Ok\n", JOURNAL_LEN);
-	}
-	Semaphore = false;
+	if(err == OK) writeREADY();                 // было форматирование
+	SemaphoreGive(Semaphore);
+	if(err == OK) jprintf("\nFormat I2C journal (size %d bytes) - Ok\n", JOURNAL_LEN);
 }
 #endif
     

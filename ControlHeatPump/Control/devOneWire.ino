@@ -104,7 +104,7 @@ int8_t  deviceOneWire::lock_I2C_bus_reset(uint8_t checkpresence)
 x_Reset_bridge:
 	#endif
 		if(!OneWireDrv.reset_bridge()) {
-			Recover_I2C_bus();
+			Recover_I2C_bus(false);
 			if(!OneWireDrv.reset_bridge()) {
 				err = ERR_DS2482_NOT_FOUND;
 				break;

@@ -1453,7 +1453,7 @@ void vWeb1(void *)
 			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
 			else SemaphoreGive(xI2CSemaphore);
 
-			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 30) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 				SemaphoreGive(xWebThreadSemaphore);
 				journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", 0);
 				HP.num_resMutexWEB++;

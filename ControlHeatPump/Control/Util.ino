@@ -67,7 +67,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		uint32_t timer = wait_time;
 		while(_sem.xSemaphore) {
-			vTaskDelay(1/portTICK_PERIOD_MS);
+			vTaskDelay(portTICK_PERIOD_MS);
 			if(!timer--) {
 				_sem.BusyCnt++;
 				return false;
