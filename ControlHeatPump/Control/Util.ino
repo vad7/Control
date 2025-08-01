@@ -66,6 +66,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		uint32_t timer = wait_time;
+xContinue:
 		while(_sem.xSemaphore) {
 			vTaskDelay(portTICK_PERIOD_MS);
 			if(!timer--) {
@@ -73,8 +74,14 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 				return false;
 			}
 		}
-	}
-	_sem.xSemaphore = true;
+		vPortEnterCritical();
+		if(_sem.xSemaphore) {
+			vPortExitCritical();
+			goto xContinue;
+		}
+		_sem.xSemaphore = true;
+		vPortExitCritical();
+	} else _sem.xSemaphore = true;
 	return true;
 }
 

@@ -766,7 +766,6 @@ void vWeb0(void *)
 		if(xTaskGetTickCount() - Web0_FreqTime > WEB0_FREQUENT_JOB_PERIOD) {
 			Web0_FreqTime = xTaskGetTickCount();
 #endif
-			active = HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
 #ifdef HTTP_LowConsumeRequest
 			if(active) {
 				if(GETBIT(HP.Option.flags, fBackupPower) != Request_LowConsume || (RepeatLowConsumeRequest && --RepeatLowConsumeRequest == 0)) {
@@ -1273,147 +1272,146 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 	#endif
 			//
 #endif // WATTROUTER
+			HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
 		} else { // Другие задачи
 			//
-			if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD)
-			{
-				thisTime = xTaskGetTickCount();                                      // Запомнить тики
-				HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
+			if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD) {
+				thisTime = xTaskGetTickCount();                 // Запомнить тики
+				active = HP.message.dnsUpdate();                // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
 	#ifdef MQTT
-				HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+				if(active) active = HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
 	#endif
-			}
 
-#ifdef WEATHER_FORECAST
-			if(active && rtcSAM3X8.get_days() != WF_Day) {
-				WF_BoilerTargetPercent = 100;
-				if(rtcSAM3X8.get_hours() == WR.WF_Time / 10 && rtcSAM3X8.get_minutes() >= (WR.WF_Time % 10) * 10 && strlen(HP.Option.WF_ReqServer)) {
-					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
-					if(err == OK) err = WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf);
-					if(err == OK) WF_Day = rtcSAM3X8.get_days();
-					else {
-						if(rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 59 - uint8_t(WEB0_OTHER_JOB_PERIOD / 1000)) {
-							journal.jprintf_time("WF: Request Error %d\n", err);
-							HP.message.setMessage(pMESSAGE_ERROR,(char*)"Ошибка получения прогноза погоды", err);
+	#ifdef WEATHER_FORECAST
+				if(active && rtcSAM3X8.get_days() != WF_Day) {
+					WF_BoilerTargetPercent = 100;
+					if(rtcSAM3X8.get_hours() == WR.WF_Time / 10 && rtcSAM3X8.get_minutes() >= (WR.WF_Time % 10) * 10 && strlen(HP.Option.WF_ReqServer)) {
+						int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
+						if(err == OK) err = WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf);
+						if(err == OK) WF_Day = rtcSAM3X8.get_days();
+						else {
+							if(rtcSAM3X8.get_minutes() == 59 && rtcSAM3X8.get_seconds() >= 59 - uint8_t(WEB0_OTHER_JOB_PERIOD / 1000)) {
+								journal.jprintf_time("WF: Request Error %d\n", err);
+								HP.message.setMessage(pMESSAGE_ERROR,(char*)"Ошибка получения прогноза погоды", err);
+							}
 						}
+						active = false;
 					}
-					active = false;
 				}
-			}
-#endif
-#ifdef HTTP_MAP_Server
-#ifdef HTTP_MAP_RELAY_MAX
-			uint32_t t = rtcSAM3X8.unixtime();
-			if(HP.IsWorkingNow()) {
-				if(!active) {
-					taskYIELD(); //WEB_SERVER_MAIN_TASK();	// Выполнить задачу веб сервера
-					active = true;
-				}
-				if(t - daily_http_time > 600UL) { // дискретность 10 минут
-					daily_http_time = t;
-					daily_http_time -= daily_http_time % 600;
-					if(DailySwitch_on & DailySwitch_on_MASK_OFF) { // Выкл. после смены профиля
-						for(uint8_t i = 1; i < 8; i++) {
-							if(DailySwitch_on & (1<<(i + 24 - 1))) {
+	#endif
+	#ifdef HTTP_MAP_Server
+	#ifdef HTTP_MAP_RELAY_MAX
+				uint32_t t = rtcSAM3X8.unixtime();
+				if(HP.IsWorkingNow()) {
+					if(!active) {
+						taskYIELD(); //WEB_SERVER_MAIN_TASK();	// Выполнить задачу веб сервера
+						active = true;
+					}
+					if(t - daily_http_time > 600UL) { // дискретность 10 минут
+						daily_http_time = t;
+						daily_http_time -= daily_http_time % 600;
+						if(DailySwitch_on & DailySwitch_on_MASK_OFF) { // Выкл. после смены профиля
+							for(uint8_t i = 1; i < 8; i++) {
+								if(DailySwitch_on & (1<<(i + 24 - 1))) {
+									strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
+									_itoa(i, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
+									strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
+									_itoa(0, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1); // OFF
+									if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
+										DailySwitch_on ^= (1<<(i + 24 - 1));
+										SETBIT0(Logflags, fLog_HTTP_RelayError);
+										//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
+									} else {
+										if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
+											SETBIT1(Logflags, fLog_HTTP_RelayError);
+											journal.jprintf(". Fail set HTTP-%d relay!\n", i);
+										}
+									}
+								}
+							}
+						}
+						uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
+						typeof(DailySwitch_on) _dson = 0;
+						for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
+							if(HP.Prof.DailySwitch[i].Device == 0) break;
+							if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
+							int8_t ds = HP.NO_Power || GETBIT(HP.Option.flags, fBackupPower) ? 0 : HP.Prof.check_DailySwitch(i, hhmm);
+							_dson |= (ds < 0 ? GETBIT(DailySwitch_on, i) : ds)<<i;
+						}
+						for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
+							if(HP.Prof.DailySwitch[i].Device == 0) break;
+							if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
+							if(GETBIT((_dson ^ DailySwitch_on), i)) {
+								if(!GETBIT(_dson, i)) { // off
+									uint8_t j = i + 1;
+									for(; j < DAILY_SWITCH_MAX; j++) {
+										if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
+									}
+									if(j < DAILY_SWITCH_MAX) { // Еще есть тоже реле или реле уже включено
+										SETBIT0(DailySwitch_on, i);
+										continue;
+									}
+								}
 								strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
-								_itoa(i, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
+								uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER + 1;
+								_itoa(rel, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
 								strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
-								_itoa(0, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1); // OFF
+								_itoa(GETBIT(_dson, i), Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
 								if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
-									DailySwitch_on ^= (1<<(i + 24 - 1));
+									DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
 									SETBIT0(Logflags, fLog_HTTP_RelayError);
 									//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
 								} else {
 									if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
 										SETBIT1(Logflags, fLog_HTTP_RelayError);
-										journal.jprintf(". Fail set HTTP-%d relay!\n", i);
+										journal.jprintf(". Fail set HTTP-%d relay!\n", rel);
 									}
 								}
+								active = false;
 							}
 						}
+						WEB_STORE_DEBUG_INFO(59);
 					}
-					uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
-					typeof(DailySwitch_on) _dson = 0;
-					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
-						if(HP.Prof.DailySwitch[i].Device == 0) break;
-						if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
-						int8_t ds = HP.NO_Power || GETBIT(HP.Option.flags, fBackupPower) ? 0 : HP.Prof.check_DailySwitch(i, hhmm);
-						_dson |= (ds < 0 ? GETBIT(DailySwitch_on, i) : ds)<<i;
-					}
-					for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
-						if(HP.Prof.DailySwitch[i].Device == 0) break;
-						if(HP.Prof.DailySwitch[i].Device < RNUMBER) continue;
-						if(GETBIT((_dson ^ DailySwitch_on), i)) {
-							if(!GETBIT(_dson, i)) { // off
-								uint8_t j = i + 1;
-								for(; j < DAILY_SWITCH_MAX; j++) {
-									if(HP.Prof.DailySwitch[i].Device == HP.Prof.DailySwitch[j].Device && GETBIT(_dson, j)) break;
-								}
-								if(j < DAILY_SWITCH_MAX) { // Еще есть тоже реле или реле уже включено
-									SETBIT0(DailySwitch_on, i);
-									continue;
-								}
-							}
-							strcpy(Socket[MAIN_WEB_TASK].outBuf, HTTP_MAP_RELAY_SW_1);
-							uint32_t rel = HP.Prof.DailySwitch[i].Device - RNUMBER + 1;
-							_itoa(rel, Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1);
-							strcat(Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1, HTTP_MAP_RELAY_SW_2);
-							_itoa(GETBIT(_dson, i), Socket[MAIN_WEB_TASK].outBuf + sizeof(HTTP_MAP_RELAY_SW_1)-1 + sizeof(HTTP_MAP_RELAY_SW_2)-1);
-							if(Send_HTTP_Request(HTTP_MAP_Server, WebSec_Microart.hash, Socket[MAIN_WEB_TASK].outBuf, 3) == 1) { // Ok?
-								DailySwitch_on = (DailySwitch_on & ~(1<<i)) | (_dson & (1<<i));
-								SETBIT0(Logflags, fLog_HTTP_RelayError);
-								//journal.jprintf_time("Relay HTTP-%d: %s\n", rel, ds ? "ON" : "OFF");
-							} else {
-								if((HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) && !GETBIT(Logflags, fLog_HTTP_RelayError)) {
-									SETBIT1(Logflags, fLog_HTTP_RelayError);
-									journal.jprintf(". Fail set HTTP-%d relay!\n", rel);
-								}
-							}
-							active = false;
-						}
-					}
-					WEB_STORE_DEBUG_INFO(59);
 				}
-			}
-#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
-			if(GETBIT(WR.Flags, WR_fActive) && t - check_vbat_time > WR_CHECK_Vbat_Period) {
-				check_vbat_time = t;
-				WEB_STORE_DEBUG_INFO(62);
-				WR_Read_MAP();
-			}
-#endif
-#endif // HTTP_MAP_RELAY_MAX
-#endif // HTTP_MAP_Server
-			// 5.Обновление времени 1 раз в сутки или по запросу (HP.timeNTP==0)
-			if(HP.timeNTP == 0 || (HP.get_updateNTP() && thisTime - HP.timeNTP > 60 * 60 * 24 * 1000UL && active)) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
-			{
-				WEB_STORE_DEBUG_INFO(6);
-				HP.timeNTP = thisTime;
-				if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
-				active = false;
-			}
-#ifdef MQTT                                     // признак использования MQTT
-			// 7. Отправка нанародный мониторинг
-			if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
-			{
-				WEB_STORE_DEBUG_INFO(55);
-				narmont=thisTime;
-				sendNarodMon(false);                       // отладка выключена
-				active=false;
-			}  // if ((HP.clMQTT.get_NarodMonUse()))
+	#ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
+				if(GETBIT(WR.Flags, WR_fActive) && t - check_vbat_time > WR_CHECK_Vbat_Period) {
+					check_vbat_time = t;
+					WEB_STORE_DEBUG_INFO(62);
+					WR_Read_MAP();
+					active = false;
+				}
+	#endif
+	#endif // HTTP_MAP_RELAY_MAX
+	#endif // HTTP_MAP_Server
+				// 5.Обновление времени 1 раз в сутки или по запросу (HP.timeNTP==0)
+				if(HP.timeNTP == 0 || (HP.get_updateNTP() && thisTime - HP.timeNTP > 60 * 60 * 24 * 1000UL && active)) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
+				{
+					WEB_STORE_DEBUG_INFO(6);
+					HP.timeNTP = thisTime;
+					if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
+					active = false;
+				}
+	#ifdef MQTT                                     // признак использования MQTT
+				// 7. Отправка нанародный мониторинг
+				if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
+				{
+					WEB_STORE_DEBUG_INFO(55);
+					narmont=thisTime;
+					sendNarodMon(false);                       // отладка выключена
+					active=false;
+				}  // if ((HP.clMQTT.get_NarodMonUse()))
 
-			// 8. Отправка на MQTT сервер
-			if ((HP.clMQTT.get_MqttUse())&&(thisTime-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
-			{
-				WEB_STORE_DEBUG_INFO(56);
-				mqttt=thisTime;
-				if(HP.clMQTT.get_TSUse()) sendThingSpeak(false);
-				else sendMQTT(false);
-				active=false;
+				// 8. Отправка на MQTT сервер
+				if ((HP.clMQTT.get_MqttUse())&&(thisTime-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
+				{
+					WEB_STORE_DEBUG_INFO(56);
+					mqttt=thisTime;
+					if(HP.clMQTT.get_TSUse()) sendThingSpeak(false);
+					else sendMQTT(false);
+					active=false;
+				}
+	#endif   // MQTT
 			}
-#endif   // MQTT
-
 		}
 		taskYIELD();
 	} //for
