@@ -1448,11 +1448,10 @@ void vWeb1(void *)
 				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
 				active = false;
 				HP.num_resMutexI2C++;
-			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
-			else SemaphoreGive(xI2CSemaphore);
+			} else SemaphoreGive(xI2CSemaphore);
 
 			if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
-				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
+				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS)) {
 					WEB_STORE_DEBUG_INFO(3);
 					checkSockStatus();              // Почистить старые сокеты
 					SemaphoreGive(xWebThreadSemaphore);

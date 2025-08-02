@@ -65,7 +65,6 @@ volatile uint32_t* SYST_CVR = (volatile uint32_t*)0xE000E018;
 // Захватить семафор с проверкой, что шедуллер работает, возврат true, если успешно
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
-
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		if(wait_time == 0) {
 			vPortEnterCritical();
@@ -78,7 +77,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 				return true;
 			}
 		}
-		if(*SYST_CVR < VARIANT_MCK / configTICK_RATE_HZ / 20) goto xLoop;
+		if(*SYST_CVR < VARIANT_MCK / configTICK_RATE_HZ / 20) goto xLoop; // мало времени до конца тика
 		while(_sem.xSemaphore) {
 xLoop:		if(!wait_time--) {
 				_sem.BusyCnt++;
