@@ -654,7 +654,7 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 {
 	static int8_t Last_Error[5];
 	if(server == NULL || request == NULL) return -2000000004;
-	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT_WEB0 / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {   // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		return -2000000000;
 	}
 	EthernetClient tTCP;
@@ -693,7 +693,7 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 				while(timeout-- > 0) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(20);
-					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT_WEB0/portTICK_PERIOD_MS)) == pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS)) == pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 					if(tTCP.available()) {
 						ret = 0;
 						break;

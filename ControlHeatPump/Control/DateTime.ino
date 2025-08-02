@@ -76,7 +76,7 @@ bool set_time_HTTP(bool upd_vars __attribute__((unused)))
 	int8_t flag = 0;
 	IPAddress ip(0, 0, 0, 0);
 	// Если запущен шедулер то захватываем семафор
-	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT_WEB0 / portTICK_PERIOD_MS)) == pdFALSE) {
+	if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 		return false;
 	}  // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 	journal.jprintf("Update time from: %s\n", HP.get_serverNTP());
@@ -110,7 +110,7 @@ bool set_time_HTTP(bool upd_vars __attribute__((unused)))
 				while(wait--) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(100);
-					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT_WEB0/portTICK_PERIOD_MS))==pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 					if(tTCP.available()) {
 						flag = 1;
 						break;

@@ -5137,9 +5137,9 @@ const char *noteTemp[] = {"Температура улицы",
 		const IPAddress defaultGateway	(192, 168, 0, 10);
 		const IPAddress defaultSDNS		(8, 8, 8, 8);
 	#else
-		#define SD_CLOCK				20 //28	// частота SPI для SD карты в МГц
+		#define SD_CLOCK				28	// частота SPI для SD карты в МГц
 		// СЕТЕВЫЕ НАСТРОЙКИ --------------------------------------------------------------
-		uint8_t SPI_RATE 			  = 3; //2;	// делитель для SPI шины, 2=42MHz, 3=28MHz, 4=21MHz, 6=14MHz
+		uint8_t SPI_RATE 			  = 2;	// делитель для SPI шины, 2=42MHz, 3=28MHz, 4=21MHz, 6=14MHz
 		const boolean   defaultDHCP	=	false;
 		const IPAddress defaultIP		(192, 168, 0, 7);
 		const IPAddress defaultGateway	(192, 168, 0, 1);

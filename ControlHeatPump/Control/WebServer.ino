@@ -65,15 +65,9 @@ void web_server(uint8_t thread)
 	int32_t len;
 	int8_t sock;
 
-#ifdef WATTROUTER
-	len = thread == 0 ? W5200_TIME_WAIT_WEB0 : W5200_TIME_WAIT;
-#else
-	len = W5200_TIME_WAIT;
-#endif
-	if(SemaphoreTake(xWebThreadSemaphore, len) == pdFALSE) {
-		if(thread == 0) return;
+	if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT) == pdFALSE) {
 		// 1. Проверка захваченого семафора сети, ожидаем  3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
-		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 30) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 			SemaphoreGive(xWebThreadSemaphore);
 			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
 			HP.num_resMutexWEB++;
