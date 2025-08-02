@@ -150,13 +150,13 @@ void web_server(uint8_t thread)
 						// Для обычного пользователя подменить файл меню, для сокращения функционала
 						if(GETBIT(Socket[thread].flags, fUser)) {
 							if(strstr(Socket[thread].inPtr, ".html")) {
-								if(!(strcmp(Socket[thread].inPtr, "index.") == 0
-								|| strcmp(Socket[thread].inPtr, "plan.") == 0
-								|| strcmp(Socket[thread].inPtr, "stats.") == 0
-								|| strcmp(Socket[thread].inPtr, "system.") == 0
-								|| strcmp(Socket[thread].inPtr, "history.") == 0
-								|| strcmp(Socket[thread].inPtr, "wattrouter.") == 0
-								|| strcmp(Socket[thread].inPtr, "about.") == 0)) goto xUNAUTHORIZED;
+								if(!(strcmp(Socket[thread].inPtr, "index.html") == 0
+								|| strcmp(Socket[thread].inPtr, "plan.html") == 0
+								|| strcmp(Socket[thread].inPtr, "stats.html") == 0
+								|| strcmp(Socket[thread].inPtr, "system.html") == 0
+								|| strcmp(Socket[thread].inPtr, "history.html") == 0
+								|| strcmp(Socket[thread].inPtr, "wattrouter.html") == 0
+								|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
 							}
 						}
 						urldecode(Socket[thread].inPtr, Socket[thread].inPtr, len + 1);

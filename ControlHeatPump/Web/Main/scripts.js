@@ -892,9 +892,16 @@ function updateParamPeriod(paramids, period) {
 }
 
 function updatelog() {
-	$('#textarea').load(urlcontrol + '/journal.txt', function() {
-		document.getElementById("textarea").scrollTop = document.getElementById("textarea").scrollHeight;
-	});
+fetch(urlcontrol + '/journal.txt')
+  .then(response => {
+    if (!response.ok) throw new Error('Ошибка сети');
+    return response.text();
+  })
+  .then(data => {
+    $('#textarea').text(data);
+    $('#textarea').scrollTop($('#textarea')[0].scrollHeight);
+  })
+  .catch(error => console.error('Ошибка:', error));
 }
 
 function getCookie(name) {

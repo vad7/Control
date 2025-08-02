@@ -1451,16 +1451,12 @@ void vWeb1(void *)
 			} // Захват мютекса I2C или ОЖИДАНИНЕ 3 времен I2C_TIME_WAIT  и его освобождение
 			else SemaphoreGive(xI2CSemaphore);
 
-			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 30) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-				SemaphoreGive(xWebThreadSemaphore);
-				journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", 0);
-				HP.num_resMutexWEB++;
-			} else {
-				if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
+			if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
+				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
 					WEB_STORE_DEBUG_INFO(3);
 					checkSockStatus();              // Почистить старые сокеты
+					SemaphoreGive(xWebThreadSemaphore);
 				}
-				SemaphoreGive(xWebThreadSemaphore);
 			}
 			// 3. Сброс сетевого чипа по времени
 			if(HP.time_resW5200() > 0 && active)                             // Сброс W5200 если включен и время подошло
