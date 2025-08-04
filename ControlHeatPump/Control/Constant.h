@@ -200,7 +200,6 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_vUpdateTick			20				// мсек. Квант задачи vUpdate
 #define TIME_EEV          			(1*1000)        // мсек. Период задачи vUpdateEEV в переходных состояниях ТН
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
-#define TIME_COMMAND      			500             // мсек. Период разбора команд управления ТН (скорее пауза перед обработкой команды)
 #ifndef TIME_I2C_UPDATE
 #define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
 #endif

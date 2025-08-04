@@ -1186,7 +1186,6 @@ xSaveStats:
 			strcat(strReturn,"UART_SPEED|Скорость отладочного порта, бод|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_EEV|Период управления ЭРВ, мсек|");_itoa(TIME_EEV,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_WEB_SERVER|Период опроса web сервера "); strcat(strReturn,nameWiznet);strcat(strReturn,", мсек|");_itoa(TIME_WEB_SERVER,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_COMMAND|Период разбора команд управления ТН, мсек|");_itoa(TIME_COMMAND,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_I2C_UPDATE |Период синхронизации внутренних часов с I2C часами, мсек|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_NUM|Используемый порт для обмена по Modbus RTU|Serial");
 			if(&MODBUS_PORT_NUM == &Serial1) strcat(strReturn,"1");

@@ -177,6 +177,20 @@ void Journal::printf(const char *format, ...)
 	SerialDbg.print(pbuf);
 #endif
 }
+// Печать только в консоль
+void Journal::printf_time(const char *format, ...)
+{
+#ifdef DEBUG
+	if(!Is_otg_vbus_high()) return;
+	NowTimeToStr(pbuf);
+	pbuf[8] = ' ';
+	va_list ap;
+	va_start(ap, format);
+	m_vsnprintf(pbuf + 9, PRINTF_BUF - 9, format, ap);
+	va_end(ap);
+	SerialDbg.print(pbuf);
+#endif
+}
 
 // Печать в консоль и журнал возвращает число записанных байт
 void Journal::jprintf(const char *format, ...)

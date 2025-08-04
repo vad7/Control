@@ -42,10 +42,10 @@ const char *promtUser={"> "};
 
 // для прекращения логирования
 enum {
-	fLog_HTTP_RelayError			= 0,			// Ошибка Send_HTTP_Request
+	fLog_HTTP_RelayError			= 0,				// Ошибка Send_HTTP_Request
 	fLog_DNS_Lookup
 };
-uint8_t Logflags = 0;								// fLog_*
+uint8_t Logflags = 0;									// fLog_*
 
 #define I2C_JOURNAL_HEAD   		0x01 					// Признак головы журнала
 #define I2C_JOURNAL_TAIL   		0x02					// Признак хвоста журнала
@@ -55,37 +55,38 @@ uint8_t Logflags = 0;								// fLog_*
 class Journal :public Print
 {
 public:
-  void Init();                                            // Инициализация
-  void printf(const char *format, ...) ;                  // Печать только в консоль
-  void jprintf(const char *format, ...);                  // Печать в консоль и журнал возвращает число записанных байт
-  void jprintf_only(const char *format, ...);             // Печать ТОЛЬКО в журнал возвращает число записанных байт для использования в критических секциях кода
+  void Init();                                          // Инициализация
+  void printf(const char *format, ...);                 // Печать только в консоль
+  void printf_time(const char *format, ...);            // Печать только в консоль
+  void jprintf(const char *format, ...);                // Печать в консоль и журнал возвращает число записанных байт
+  void jprintf_only(const char *format, ...);           // Печать ТОЛЬКО в журнал возвращает число записанных байт для использования в критических секциях кода
   void jprintf_time(const char *format, ...);			// +Time, далее печать в консоль и журнал
   void jprintf_date(const char *format, ...);			// +DateTime, далее печать в консоль и журнал
-  int32_t send_Data(uint8_t thread);                     // отдать журнал в сеть клиенту  Возвращает число записанных байт
-  int32_t available(void);                               // Возвращает размер журнала
+  int32_t send_Data(uint8_t thread);                    // отдать журнал в сеть клиенту  Возвращает число записанных байт
+  int32_t available(void);                              // Возвращает размер журнала
   int8_t   get_err(void) { return err; };
   bool check_wait_semaphore(void);
-  virtual size_t write (uint8_t c);                       // чтобы print работал для это класса
-  #ifdef I2C_EEPROM_64KB                                  // Если журнал находится в i2c
+  virtual size_t write (uint8_t c);                     // чтобы print работал для это класса
+  #ifdef I2C_EEPROM_64KB                                // Если журнал находится в i2c
   void Format(void);                           		    // форматирование журнала в еепром
   #else
   void Clear(){bufferTail=0;bufferHead=0;full=false;err=OK;} // очистка журнала в памяти
   #endif
   type_SEMAPHORE Semaphore;                    			// Семафор
 private:
-  int8_t err;                                             // ошибка журнала
-  int32_t bufferHead, bufferTail;                        // Начало и конец
-  uint8_t full;                                           // признак полного буфера
-  void _write(char *dataPtr);                            // Записать строку в журнал
+  int8_t err;                                           // ошибка журнала
+  int32_t bufferHead, bufferTail;                       // Начало и конец
+  uint8_t full;                                         // признак полного буфера
+  void _write(char *dataPtr);                           // Записать строку в журнал
    // Переменные
-  char pbuf[PRINTF_BUF+2];                                // Буфер для одной строки + маркеры
-  #ifndef I2C_EEPROM_64KB                                 // Если журнал находится в памяти
-    char _data[JOURNAL_LEN+1];                            // Буфер журнала
+  char pbuf[PRINTF_BUF+2];                              // Буфер для одной строки + маркеры
+  #ifndef I2C_EEPROM_64KB                               // Если журнал находится в памяти
+    char _data[JOURNAL_LEN+1];                          // Буфер журнала
   #else
-    void writeTAIL();                                     // Записать символ "конец" значение bufferTail должно быть установлено
-    void writeHEAD();                                     // Записать символ "начало" значение bufferHead должно быть установлено
-    void writeREADY();                                    // Записать признак "форматирования" журнала - журналом можно пользоваться
-    boolean checkREADY();                                 // Проверить наличие журнала
+    void writeTAIL();                                   // Записать символ "конец" значение bufferTail должно быть установлено
+    void writeHEAD();                                   // Записать символ "начало" значение bufferHead должно быть установлено
+    void writeREADY();                                  // Записать признак "форматирования" журнала - журналом можно пользоваться
+    boolean checkREADY();                               // Проверить наличие журнала
   #endif
  };
 
