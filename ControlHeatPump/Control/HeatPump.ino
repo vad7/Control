@@ -1801,7 +1801,7 @@ void HeatPump::Pump_HeatFloor(boolean) { }
 void HeatPump::Pumps(boolean b)
 {
 #ifdef DEBUG_MODWORK
-	journal.printf(" Pumps(%d), modWork: %X, vUpdate: %d\n", b, get_modWork(), Task_vUpdate_run);
+	journal.printf_time("%X Pumps(%d), modWork: %X, vUpdate: %d\n", __builtin_return_address(0), b, get_modWork(), Task_vUpdate_run);
 #endif
 	int16_t delayed = 0;	// сек
 #ifdef R3WAY                // Если определен трехходовой то в начале переключаем его (при выключении что бы остыл теплообменник)
@@ -1819,6 +1819,7 @@ if(b && (get_modWork() & pBOILER)){
 	}
 #endif
 	if(b) { // ВКЛ
+		if(startPump == StartPump_AfterWork) startPump = StartPump_Stop;
 		if(!HeaterNeedOn) {
 			dRelay[PUMP_IN].set_Relay(b);            // Реле насоса входного контура (геоконтур)
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
@@ -1870,14 +1871,14 @@ if(b && (get_modWork() & pBOILER)){
 #endif
 		)){ // Насосы выключены и будут выключены, нужна пауза идет останов компрессора (новое значение выкл  старое значение вкл)
 			if(startPump == StartPump_AfterWork) {
-				if(pump_in_pause_timer) return; // время не пришло
+				if(pump_in_pause_timer > 1) return; // время не пришло
 				startPump = HP.get_workPump() ? StartPump_Start : StartPump_Stop;
 			} else if(/*get_modeHouse() != pOFF && */(!get_workPump() || get_pausePump())) {
 				delayed = (error ? Option.delayOffPump :
 					onBoiler ? Prof.Boiler.delayOffPump :
 					get_modeHouse() == pHEAT ? Prof.Heat.delayOffPump :
 					get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Option.delayOffPump) - delayed;
-				if(delayed > 0) {
+				if(delayed > 1) {
 					journal.jprintf(" Delay: stop OUT pump.\n");
 					pump_in_pause_timer = delayed;
 					startPump = StartPump_AfterWork;
@@ -3443,6 +3444,9 @@ boolean HeatPump::configHP()
 {
 	uint8_t _is_on = (is_heater_on() << 1) | (is_compressor_on() << 0);		// b1(_HEATR_) - Котел, b0(_COMPR_) - Компрессор
 	MODE_HP conf = Status.modWork;
+#ifdef DEBUG_MODWORK
+	journal.printf_time("CFG: %d\n", conf);
+#endif
 	if(conf == pOFF) { // ЭТО может быть пауза! Выключить - установить положение как при включении ( перевод 4-х ходового производится после отключения компрессора (см compressorOFF()))
 		#ifdef SUPERBOILER                                             // Бойлер греется от предкондесатора
 		 dRelay[RSUPERBOILER].set_OFF();                            // Евгений добавил выключить супербойлер
@@ -3469,6 +3473,9 @@ boolean HeatPump::configHP()
 			if(_is_on & _COMPR_) compressorOFF();
 			else if(_is_on & _HEATR_) heaterOFF();
 			pump_in_pause_wait_off();									// ждем пока насосы остановятся
+#ifdef DEBUG_MODWORK
+			journal.printf_time("Pumps stopped\n");
+#endif
 #ifdef USE_HEATER
 			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) {
 				dHeater.HeaterValve_On();

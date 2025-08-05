@@ -2272,14 +2272,15 @@ void vServiceHP(void *)
 			}
 			if(HP.startPump > StartPump_Stop) {  // Если разрешена работа насоса (0 - останов задачи, > 1 - работа)
 				if(HP.startPump == StartPump_AfterWork) { // Отработка после останова компрессора/котла
-					if(HP.pump_in_pause_timer == 0) {
+					if(HP.pump_in_pause_timer == 1) {
 						HP.Pumps(OFF);
 						if(HP.get_State() == pOFF_HP) {
 							HP.startPump = StartPump_Stop;				// Задача насосов в паузе выключена
 						} else if(HP.get_workPump()) {
 							HP.pump_in_pause_timer = HP.get_pausePump();
 							HP.startPump = StartPump_Start;				// Поставить признак запуска задачи насос
-						}
+						} else HP.startPump = StartPump_Stop;
+						HP.pump_in_pause_timer = 0;
 					} else HP.pump_in_pause_timer--;
 				} else if(HP.get_workPump()) {
 					if(HP.pump_in_pause_timer <= 1) {
