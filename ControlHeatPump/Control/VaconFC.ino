@@ -666,17 +666,6 @@ void devVaconFC::get_paramFC(char *var,char *ret)
 
 	ret += m_strlen(ret);
     if(strcmp(var,fc_ON_OFF)==0)                { if (GETBIT(flags,fOnOff))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
-    if(strcmp(var,fc_INFO)==0)                  {
-#ifndef FC_ANALOG_CONTROL
-    	                                        get_infoFC(ret);
-#else
-                                                strcat(ret, "|Данные не доступны, управление через ") ;
-                                                if((g_APinDescription[pin].ulPinAttribute & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) strcat(ret, "аналоговый"); else strcat(ret, "ШИМ");
-                                                strcat(ret, " выход D");
-                                                _itoa(PIN_DEVICE_FC, ret);
-                                                strcat(ret, "|;");
-#endif
-    	                                        } else
     if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else
     if(strcmp(var,fc_NOTE)==0)                  {  strcat(ret,note);             } else
     if(strcmp(var,fc_PRESENT)==0)               { if (GETBIT(flags,fFC))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
@@ -843,7 +832,7 @@ void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 // Получить информацию о частотнике
 void devVaconFC::get_infoFC(char* buf)
 {
-	buf += m_strlen(buf);
+	buf += strlen(buf);
 	if(testMode == NORMAL || testMode == HARD_TEST) {
 #ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 		if(state == ERR_LINK_FC) {   // Нет связи
@@ -851,8 +840,8 @@ void devVaconFC::get_infoFC(char* buf)
 		} else {
 #ifdef FC_VLT
 			strcat(buf, "16-00|Состояние инвертора: ");
-			get_infoFC_status(buf + m_strlen(buf), state);
-			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
+			get_infoFC_status(buf + strlen(buf), state);
+			buf += m_snprintf(buf += strlen(buf), 256, "|0x%X;", state);
 			if(err == OK) {
 				buf += m_snprintf(buf, 256, "16-01|Фактическая скорость|%d%%;16-10|Выходная мощность (кВт)|%d;", read_0x03_16(FC_SPEED), get_power());
 				buf += m_snprintf(buf, 256, "16-17|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
@@ -890,8 +879,8 @@ void devVaconFC::get_infoFC(char* buf)
 #else //FC_VLT
 			uint32_t i;
 			strcat(buf, "2101|Состояние инвертора: ");
-			get_infoFC_status(buf + m_strlen(buf), state);
-			buf += m_snprintf(buf += m_strlen(buf), 256, "|0x%X;", state);
+			get_infoFC_status(buf + strlen(buf), state);
+			buf += m_snprintf(buf += strlen(buf), 256, "|0x%X;", state);
 			if(err == OK) {
 				buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", read_0x03_16(FC_SPEED), power, get_power());
 				buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));

@@ -113,8 +113,8 @@ class Message
    private:
     uint32_t sendTime;                                                       // время отправки последнего уведомления
     EthernetClient clientMessage;                                            // Клиент для отправки уведомлений
-    boolean dnsUpadateSMS;                                                   // Флаг необходимости обновления через dns IP адреса для смс
-    boolean dnsUpadateSMTP;                                                  // Флаг необходимости обновления через dns IP адреса для smtp
+    boolean dnsUpdateSMS;                                                   // Флаг необходимости обновления через dns IP адреса для смс
+    boolean dnsUpdateSMTP;                                                  // Флаг необходимости обновления через dns IP адреса для smtp
     // Уведомления
     type_messageHP     messageSetting;                                       // Структура для хранения НАСТРОЕК уведомлений
     type_messageData   messageData;                                          // Структура для хранения уведомления (ДАННЫЕ)

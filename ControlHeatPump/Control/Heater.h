@@ -131,7 +131,7 @@ public:
 	int8_t	set_target(uint16_t temp, uint8_t power_max); // Установить целевую температуру и максимальную мощность
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
-	void	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
+	bool	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
 	int8_t	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
 	void	get_info(char* buf);					// Получить информацию
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек

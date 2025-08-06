@@ -507,13 +507,6 @@ return err;
 void devOmronMX2::get_paramFC(char *var,char *ret)
 {
     if(strcmp(var,fc_ON_OFF)==0)                { if (GETBIT(flags,fOnOff))  strcat(ret,(char*)cOne);else  strcat(ret,(char*)cZero); } else
-    if(strcmp(var,fc_INFO)==0)                  {
-    	                                        #ifndef FC_ANALOG_CONTROL  
-    	                                        get_infoFC(ret);
-    	                                        #else
-                                                 strcat(ret, "|Данные не доступны, работа через аналоговый вход|;") ;
-                                                #endif              
-    	                                        } else
     if(strcmp(var,fc_NAME)==0)                  {  strcat(ret,name);             } else
     if(strcmp(var,fc_NOTE)==0)                  {  strcat(ret,note);             } else
     if(strcmp(var,fc_PIN)==0)                   {  _itoa(pin,ret);     } else

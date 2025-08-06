@@ -37,8 +37,8 @@ void Message::initMessage(uint8_t web_task)
   // Инициализация переменных
   IPAddress zeroIP(0, 0, 0, 0);
   lastmessageSetting = pMESSAGE_NONE;                                              // последнее отправленное уведомление
-  dnsUpadateSMS = false;                                                           // Флаг необходимости обновления через dns IP адреса для смс
-  dnsUpadateSMTP = false;                                                          // Флаг необходимости обновления через dns IP адреса для smtp
+  dnsUpdateSMS = false;                                                           // Флаг необходимости обновления через dns IP адреса для смс
+  dnsUpdateSMTP = false;                                                          // Флаг необходимости обновления через dns IP адреса для smtp
   sendTime = 0;                                                                    // отправок уведомлений не было
 
   SETBIT0(messageSetting.flags, fMail );                                           // флаг уведомления скидывать на почту
@@ -88,18 +88,18 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 {
 	boolean ret = true; // по умолчанию преобразование не было
 	if(xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {
-		dnsUpadateSMTP = dnsUpadateSMS = true;
+		dnsUpdateSMTP = dnsUpdateSMS = true;
 		WDT_Restart(WDT);
 	}
-	if(dnsUpadateSMTP) //надо обновлятся
+	if(dnsUpdateSMTP) //надо обновлятся
 	{
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING && SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) return false; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		check_address(messageSetting.smtp_server, messageSetting.smtp_serverIP);   // Получить адрес IP через DNS При не удаче возвращается 0, при удаче: 1 - IP на входе (были цифры, DNS не нужен), 2 - был запрос к DNS и адрес получен
-		dnsUpadateSMTP = false;
+		dnsUpdateSMTP = false;
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) SemaphoreGive(xWebThreadSemaphore);
 		ret = false;  // вызов обновления был
 	}
-	if(dnsUpadateSMS) //надо обновлятся
+	if(dnsUpdateSMS) //надо обновлятся
 	{
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 			if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) return false; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
@@ -119,7 +119,7 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 			break;
 		}
 		check_address(tempBuf, messageSetting.sms_serviceIP);// При не удаче возвращается 0, при удаче: 1 - IP на входе (были цифры, DNS не нужен), 2 - был запрос к DNS и адрес получен
-		dnsUpadateSMS = false;
+		dnsUpdateSMS = false;
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) SemaphoreGive(xWebThreadSemaphore);
 		ret = false;  // вызов обновления был
 	}
@@ -145,7 +145,7 @@ boolean Message::set_messageSetting(char *var, char *c)
 	  else // ок сохраняем
 	  {
 		  strcpy(messageSetting.smtp_server, c);
-		  dnsUpadateSMTP = true;
+		  dnsUpdateSMTP = true;
 		  //       check_address(messageSetting.smtp_server,&messageSetting.smtp_serverIP);      // Получить адрес IP через DNS
 		  return true;
 	  }
@@ -195,7 +195,7 @@ boolean Message::set_messageSetting(char *var, char *c)
 	  x = my_atof(c);  // При смене сервиса определяем новый IP поле sms_serviceIP
 	  if(x == ATOF_ERROR) return false;
 	  messageSetting.sms_service = (SMS_SERVICE) x;
-	  dnsUpadateSMS = true;
+	  dnsUpdateSMS = true;
 	  return true;
   } else if(strcmp(var, mess_SMS_PHONE) == 0) {
 	  if(strlen(c) == 0) return false;
@@ -641,7 +641,7 @@ boolean Message::sendMail()
 		strncpy(retMail, "No connect", LEN_RETMAIL);
 		SETBIT1(WorkFlags, fWF_MessageSendError);
 		SemaphoreGive (xWebThreadSemaphore);
-		dnsUpadateSMTP = true;
+		dnsUpdateSMTP = true;
 		return false;
 	}
 
@@ -652,7 +652,7 @@ boolean Message::sendMail()
 		clientMessage.stop();  // ответ содержит ошибки
 		SETBIT1(WorkFlags, fWF_MessageSendError);
 		SemaphoreGive (xWebThreadSemaphore);
-		dnsUpadateSMTP = true;
+		dnsUpdateSMTP = true;
 		return false;
 	}
 	// 3. Авторизация
@@ -662,14 +662,14 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpadateSMTP = true;
+			dnsUpdateSMTP = true;
 			return false;
 		}
 		if(!SendCommandSMTP((char*) "AUTH LOGIN", true)) {
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpadateSMTP = true;
+			dnsUpdateSMTP = true;
 			return false;
 		}
 		strcpy(tempBuf, "");
@@ -678,7 +678,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpadateSMTP = true;
+			dnsUpdateSMTP = true;
 			return false;
 		}
 		strcpy(tempBuf, "");
@@ -687,7 +687,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpadateSMTP = true;
+			dnsUpdateSMTP = true;
 			return false;
 		}
 	} else                                                               // Авторизация не требуется
@@ -696,7 +696,7 @@ boolean Message::sendMail()
 			clientMessage.stop();  // ответ содержит ошибки
 			SETBIT1(WorkFlags, fWF_MessageSendError);
 			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpadateSMTP = true;
+			dnsUpdateSMTP = true;
 			return false;
 		}
 	}

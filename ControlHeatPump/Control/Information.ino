@@ -287,16 +287,20 @@ int32_t Journal::send_Data(uint8_t thread)
 		} else {                                                        // Текущая позиция меньше хвоста (конец передачи)
 			if(bufferTail - num >= W5200_MAX_LEN) len = W5200_MAX_LEN; else len = bufferTail - num;     // Контроль достижения хвоста журнала
 		}
-		if(readEEPROM_I2C(I2C_JOURNAL_START + num, (byte*) Socket[thread].outBuf, len))         // чтение из памяти
-		{
+		SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+		uint8_t _err = readEEPROM_I2C(I2C_JOURNAL_START + num, (byte*) Socket[thread].outBuf, len);  // чтение из памяти
+		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+			journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+			break;
+		}
+		if(_err) {
 			err = ERR_READ_I2C_JOURNAL;
 #ifdef DEBUG
 			SerialDbg.print(errorReadI2C);
 #endif
-			return 0;
+			break;
 		}
-		if(sendPacketRTOS(thread, (byte*) Socket[thread].outBuf, len, 0) == 0) return 0;        // передать пакет, при ошибке выйти
-		_delay(2);
+		if(sendPacketRTOS(thread, (byte*) Socket[thread].outBuf, len) == 0) return 0;        // передать пакет, при ошибке выйти
 		sum = sum + len;                                                                        // сколько байт передано
 		if(sum >= available()) break;                                                           // Все передано уходим
 		num = num + len;                                                                        // Указатель на переданные данные
@@ -312,8 +316,7 @@ int32_t Journal::send_Data(uint8_t thread)
 		} else {                                                           // Текущая позиция меньше хвоста (конец передачи)
 			if (bufferTail-num>=W5200_MAX_LEN) len=W5200_MAX_LEN; else len=bufferTail-num; // Контроль достижения хвоста журнала
 		}
-		if(sendPacketRTOS(thread,(byte*)_data+num,len,0)==0) return 0;          // передать пакет, при ошибке выйти
-		_delay(2);
+		if(sendPacketRTOS(thread,(byte*)_data+num,len)==0) return 0;          // передать пакет, при ошибке выйти
 		sum=sum+len;// сколько байт передано
 		if (sum>=available()) break;// Все передано уходим
 		num=num+len;// Указатель на переданные данные

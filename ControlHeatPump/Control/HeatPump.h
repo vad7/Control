@@ -325,7 +325,7 @@ struct type_DateTimeHP
 #define fDHCP         0                  // флаг Использование DHCP
 #define fPass         1                  // флаг Использование паролей
 #define fInitW5200    2                  // флаг Ежеминутный контроль SPI для сетевого чипа
-#define fNoAck        4                  // флаг Не ожидать ответа ACK
+//#define fNoAck        4                  // флаг Не ожидать ответа ACK
 #define fNoPing       5                  // флаг Запрет пинга контроллера
 #define fWebLogError  6					// Логировать ошибки
 #define fWebFullLog   7					// Полный лог
@@ -345,7 +345,7 @@ struct type_NetworkHP
     char passAdmin[PASS_LEN+1];           // !save! Пароль администратора
     uint16_t sizePacket;                  // !save! Размер пакета для отправки в байтах
     uint16_t port;                        // !save! порт веб сервера
-    uint8_t delayAck;                     // !save! задержка мсек перед отправкой пакета
+    uint8_t _reserved_was_delayAck;       // !save! задержка мсек перед отправкой пакета
     char pingAdr[40];                     // !save! адрес для пинга, может быть в любом виде
     uint16_t pingTime;                    // !save! время пинга в секундах
 };
@@ -498,8 +498,8 @@ public:
 	void set_gateway(IPAddress gateway) {Network.gateway=gateway;}//  Установит gateway адрес
 	uint16_t get_port() {return Network.port;}             //  получить порт вебсервера
 	__attribute__((always_inline)) inline uint16_t get_NetworkFlags() { return Network.flags; }
-	boolean get_NoAck() { return GETBIT(Network.flags,fNoAck);}  //  Получить флаг Не ожидать ответа ACK
-	uint8_t get_delayAck() {return Network.delayAck;}      //  получить задержку перед отсылкой следующего пакета
+//	boolean get_NoAck() { return GETBIT(Network.flags,fNoAck);}  //  Получить флаг Не ожидать ответа ACK
+//	uint8_t get_delayAck() {return Network.delayAck;}      //  получить задержку перед отсылкой следующего пакета
 	uint16_t get_pingTime() {return Network.pingTime;}     //  получить вермя пингования сервера, 0 если не надо
 	char *  get_pingAdr() {return Network.pingAdr;}         //  получить адрес сервера для пингования
 	boolean get_NoPing() { return GETBIT(Network.flags,fNoPing);} //  Получить флаг блокировки пинга
@@ -659,7 +659,10 @@ public:
 	TaskHandle_t xHandleUpdateEEV;                      // Заголовок задачи "Обновление ЭРВ"
 	#endif
 	TaskHandle_t xHandleReadSensor;                     // Заголовок задачи "Чтение датчиков"
-	TaskHandle_t xHandleSericeHP;						// Задача обслуживания ТН:
+	TaskHandle_t xHandleSericeHP;						// Задача обслуживания ТН
+#ifdef WATTROUTER
+	TaskHandle_t xWattrouter;							// Задача Ваттроутер
+#endif
 	TaskHandle_t xHandleUpdateWeb0;                     // Заголовок задачи "Веб сервер" в зависимости от потоков
 	#if    W5200_THREAD > 1
 	TaskHandle_t xHandleUpdateWeb1;                     // Заголовок задачи "Веб сервер"

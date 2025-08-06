@@ -267,7 +267,7 @@ void Statistics::Init(uint8_t newyear)
 										break;
 									case STATS_OBJ_WattRouter_Out:
 									case STATS_OBJ_WattRouter_Excess:
-#ifdef WR_LOG_DAYS_POWER_EXCESS
+#if defined(WR_LOG_DAYS_POWER_EXCESS) && defined(WATTROUTER)
 										WR_Power_Excess =
 #endif
 										Stats_data[i].value = val * 10000000;
@@ -799,7 +799,7 @@ void Statistics::SendFileData(uint8_t thread, SdFile *File, char *filename)
 	}
 	File->close();
 	uint32_t readed = strlen((char*)_buffer_);
-	if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
+	if(sendPacketRTOS(thread, _buffer_, readed) != readed) {
 		journal.jprintf("Error sendh %s\n", filename);
 		return;
 	}
@@ -822,7 +822,7 @@ void Statistics::SendFileData(uint8_t thread, SdFile *File, char *filename)
 			readed += SD_BLOCK;
 			if(readed <= W5200_MAX_LEN - SD_BLOCK) continue;
 		}
-		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
+		if(sendPacketRTOS(thread, _buffer_, readed) != readed) {
 			journal.jprintf("Error send %s\n", filename);
 			break;
 		}
@@ -843,7 +843,7 @@ void Statistics::SendFileDataByPeriod(uint8_t thread, SdFile *File, char *Prefix
 		sendConstRTOS(thread, HEADER_FILE_NOT_FOUND);
 		return;
 	}
-	if(sendPacketRTOS(thread, _buffer_, bendfile, 0) != bendfile) {
+	if(sendPacketRTOS(thread, _buffer_, bendfile) != bendfile) {
 		journal.jprintf("Error sendh %s\n", Prefix);
 		return;
 	}
@@ -963,7 +963,7 @@ xFoundStart:
 				bendfile = 0; // stop
 			} else if(readed <= W5200_MAX_LEN - SD_BLOCK) continue;
 		} else bendfile = 0;
-		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
+		if(sendPacketRTOS(thread, _buffer_, readed) != readed) {
 			journal.jprintf("Error send %s\n", filename);
 			return;
 		}
@@ -979,7 +979,7 @@ xFoundStart:
 		readed = 0;
 	}
 	if(readed) {
-		if(sendPacketRTOS(thread, _buffer_, readed, 0) != readed) {
+		if(sendPacketRTOS(thread, _buffer_, readed) != readed) {
 			journal.jprintf("Error send %s\n", filename);
 		}
 	}

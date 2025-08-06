@@ -436,30 +436,20 @@ void checkSockStatus()
 // Для разделения доступа к spi используется мютекс  (SemaphoreHandle_t xSPI)
 // возвращает число посланых байт (0-ничего не послано)
 // НЕ РАБОТАЕТ с КОНСТАНТАМИ!! их предварительно надо скопировать в ОЗУ т.к. используется DMA
-// Если pause=0 то ждем подтверждения ACK пакета если pause>0 то просто ждем нужное значение (pause) мсек - работа без подтвержения
-uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len, uint16_t pause)
+uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len) //, uint16_t pause)
 {
 	uint8_t status = 0;
 	uint16_t ret = 0;
 	uint16_t freesize = 0;
 
 	SPI_switchW5200();
-	if(len > W5200_MAX_LEN) ret = W5200_MAX_LEN;
-	else ret = len;
+	if(len > W5200_MAX_LEN) ret = W5200_MAX_LEN; else ret = len;
 
-	if(pause == 0) // Честно ждем ack
-	{
+//	if(pause == 0) { // Честно ждем ack
 		//   SerialDbg.println("ask");
 		do// Ожидание освобождения буфера
 		{
-			if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-				SemaphoreGive(xWebThreadSemaphore);  //                                      // Мютекс потока отдать
-				taskYIELD();
-			} else delay(1);
-			if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-				journal.jprintf("Socket: %d %s\n", Socket[thread].sock, MutexWebThreadBuzy);
-				return 0;
-			} // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
+			if(TaskYeldAndGiveWebSemaphore()) return 0;
 			//taskENTER_CRITICAL();
 			freesize = W5100.getTXFreeSize(Socket[thread].sock);
 			if(freesize >= ret) {
@@ -473,21 +463,19 @@ uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len, uint1
 				break;
 			}
 		} while(freesize < ret);
-	} else  // Не ждем ACK а просто делаем задержку
-	{
-		//  SerialDbg.println("pause no ask");
-		SemaphoreGive (xWebThreadSemaphore);                                                             // Мютекс потока отдать
-		_delay(pause);                                                            // Ждем pause мсек
-		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-			journal.jprintf("Socket: %d %s\n", Socket[thread].sock, MutexWebThreadBuzy);
-			return 0;
-		} // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
-	}
+//	} else { // Не ждем ACK а просто делаем задержку
+//		SemaphoreGive(xWebThreadSemaphore);                                                             // Мютекс потока отдать
+//		_delay(pause);                                                            // Ждем pause мсек
+//		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+//			journal.jprintf("Socket: %d %s\n", Socket[thread].sock, MutexWebThreadBuzy);
+//			return 0;
+//		} // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
+//	}
 
-	if(GETBIT(Socket[thread].flags, fABORT_SOCK)) {
+	if(GETBIT(Socket[thread].flags, fABORT_SOCK)) { // Произошел сброс прерываем передачу
 		SETBIT0(Socket[thread].flags, fABORT_SOCK);
 		return 0;
-	}              // Произошел сброс прерываем передачу
+	}
 
 	// послать данные
 	//taskENTER_CRITICAL();
@@ -502,6 +490,7 @@ uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len, uint1
 			close(Socket[thread].sock);
 			return 0;
 		}
+		if(TaskYeldAndGiveWebSemaphore()) return 0;
 	}
 	W5100.writeSnIR(Socket[thread].sock, SnIR::SEND_OK);
 	return ret;
@@ -517,13 +506,13 @@ uint16_t sendBufferRTOS(uint8_t thread, const uint8_t * buf, uint16_t len)
 	uint16_t i = 0;
 	while(len > 0) {
 		if(len > W5200_MAX_LEN) {
-			if(sendPacketRTOS(thread, (byte*) buf + i, W5200_MAX_LEN, HP.get_NoAck() ? HP.get_delayAck() : 0) == 0) { // ошибка передачи
+			if(sendPacketRTOS(thread, (byte*) buf + i, W5200_MAX_LEN/*, HP.get_NoAck() ? HP.get_delayAck() : 0*/) == 0) { // ошибка передачи
 				return 0;
 			}
 			i += W5200_MAX_LEN;
 			len -= W5200_MAX_LEN;
 		} else {  // последний пакет или ошибка передачи
-			if(sendPacketRTOS(thread, (byte*) buf + i, len, HP.get_NoAck() ? HP.get_delayAck() : 0) == 0) return 0;
+			if(sendPacketRTOS(thread, (byte*) buf + i, len/*, HP.get_NoAck() ? HP.get_delayAck() : 0*/) == 0) return 0;
 			else {
 				i += len;
 				break;
@@ -539,11 +528,10 @@ uint16_t sendBufferRTOS(uint8_t thread, const uint8_t * buf, uint16_t len)
 // Для разделения доступа к spi используется мютекс  (SemaphoreHandle_t xSPI)
 // возвращает число посланых байт (0-ничего не послано)
 // РАБОТАЕТ С КОНСТАНТАМИ, идет предварительное копирование в буфер потока
- __attribute__((always_inline)) inline uint16_t sendConstRTOS(uint8_t thread, const char * buf)
+__attribute__((always_inline)) inline uint16_t sendConstRTOS(uint8_t thread, const char *buf)
 {
-if (strlen(buf)>W5200_MAX_LEN) return 0;   // В один пакет не влезает выходим
-        strcpy(Socket[thread].outBuf,buf); 
-return  sendPacketRTOS(thread,(byte*)Socket[thread].outBuf,strlen(Socket[thread].outBuf),0);   
+	strncpy(Socket[thread].outBuf, buf, W5200_MAX_LEN);
+	return sendPacketRTOS(thread, (byte*) Socket[thread].outBuf, strlen(Socket[thread].outBuf));
 }
 
  // Принт в сокет

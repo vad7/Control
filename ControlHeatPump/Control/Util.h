@@ -32,6 +32,7 @@ struct type_SEMAPHORE {
 void SemaphoreCreate(type_SEMAPHORE &_sem);
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time);// Захватить семафор с проверкой, что шедуллер работает
 inline void SemaphoreGive(type_SEMAPHORE &_sem) { _sem.xSemaphore = false; };
+bool TaskYeldAndGiveWebSemaphore(void);
 uint16_t calc_crc16(unsigned char * pcBlock, unsigned short len, uint16_t crc = 0xFFFF);
 void int_to_dec_str(int32_t value, int32_t div, char **ret, uint8_t maxfract);
 uint8_t calc_bits_in_mask(uint32_t mask);

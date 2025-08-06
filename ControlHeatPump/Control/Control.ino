@@ -52,7 +52,7 @@ void vUpdateStepperEEV(void *);
 
 // Семафоры захвата железа
 type_SEMAPHORE xModbusSemaphore;                 // Семафор Modbus, инвертор запас на счетчик
-type_SEMAPHORE xWebThreadSemaphore;              // Семафор потоки вебсервера,  деление сетевой карты
+type_SEMAPHORE xWebThreadSemaphore;              // Семафор сетевой веба и сетевой карты W5500
 type_SEMAPHORE xI2CSemaphore;                    // Семафор шины I2C, часы, память, мастер OneWire
 type_SEMAPHORE xLoadingWebSemaphore;             // Семафор загрузки веб морды в spi память
 uint16_t lastErrorFreeRtosCode;                     // код последней ошибки операционки нужен для отладки
@@ -261,7 +261,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
+	//_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -599,59 +599,55 @@ x_I2C_init_std_message:
 
 	// Создание задач FreeRTOS  ----------------------
 	journal.jprintf("15. Create tasks FreeRTOS . . .\n");
-	HP.mRTOS=236;  //расчет памяти для задач 236 - размер данных шедуллера, каждая задача требует 64 байта+ стек (он в словах!!)
-	HP.mRTOS=HP.mRTOS+64+4*configMINIMAL_STACK_SIZE;  // задача бездействия
+	HP.mRTOS = 236;  //расчет памяти для задач 236 - размер данных шедуллера, каждая задача требует 64 байта+ стек (он в словах!!)
+	HP.mRTOS += 64+4*configMINIMAL_STACK_SIZE;  // задача бездействия
 	//HP.mRTOS=HP.mRTOS+4*configTIMER_TASK_STACK_DEPTH;  // программные таймера (их теперь нет)
 
 	// ПРИОРИТЕТ 4 Высший приоритет датчики читаются всегда и шаговик ЭРВ всегда шагает если нужно
-	if (xTaskCreate(vReadSensor,"ReadSensor",140,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*140;// 200, до обрезки стеков было 300
+	if(xTaskCreate(vReadSensor,"ReadSensor",140,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if (xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*40; // 50, 100, 150, до обрезки стеков было 200
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
 	vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
 	HP.dEEV.stepperEEV.xCommandQueue = xQueueCreate( EEV_QUEUE, sizeof( int ) );  // Создать очередь комманд для ЭРВ
 #endif
 
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
 	if(xTaskCreate(vServiceHP, "ServiceHP", STACK_vServiceHP, NULL, 2, &HP.xHandleSericeHP)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*STACK_vServiceHP;// 200, до обрезки стеков было 300
+	HP.mRTOS += 64+4*STACK_vServiceHP;// 200, до обрезки стеков было 300
 #ifdef LCD2004
 	if(xTaskCreate(vKeysLCD, "KeysLCD", 90, NULL, 2, &HP.xHandleKeysLCD) == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS = HP.mRTOS+64+4* 90;
+	HP.mRTOS += 64+4* 90;
 #endif
 
 	SemaphoreCreate(HP.xCommandSemaphore);                       // Инит семафора
-	if (xTaskCreate(vUpdate,"UpdateHP",160,NULL,2,&HP.xHandleUpdate)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*180;// 200, до обрезки стеков было 350
+	if(xTaskCreate(vUpdate,"UpdateHP",160,NULL,2,&HP.xHandleUpdate)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*180;// 200, до обрезки стеков было 350
 	HP.Task_vUpdate_run = false;
 
 #ifdef EEV_DEF
-	if (xTaskCreate(vUpdateEEV,"UpdateEEV",100,NULL,2,&HP.xHandleUpdateEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)     set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*100;
+	if(xTaskCreate(vUpdateEEV,"UpdateEEV",100,NULL,2,&HP.xHandleUpdateEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)     set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*100;
 	vTaskSuspend(HP.xHandleUpdateEEV);                              // Остановить задачу обновление EEV
 #endif  
 
 	// ПРИОРИТЕТ 1 средний - обслуживание вебморды в несколько потоков и дисплея Nextion
 	// ВНИМАНИЕ первый поток должен иметь больший стек для обработки фоновых сетевых задач
 	// 1 - поток
-	if ( xTaskCreate(vWeb0,"Web0", STACK_vWebX+14,NULL,1,&HP.xHandleUpdateWeb0)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*(STACK_vWebX+16);
-	if ( xTaskCreate(vWeb1,"Web1", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb1)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
+	if(xTaskCreate(vWeb0,"Web0", STACK_vWebX+14,NULL,1,&HP.xHandleUpdateWeb0)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*(STACK_vWebX+16);
+	if(xTaskCreate(vWeb1,"Web1", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb1)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*STACK_vWebX;
 #if W5200_THREAD >= 3 // - потока
-	if ( xTaskCreate(vWeb2,"Web2", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb2)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
+	if(xTaskCreate(vWeb2,"Web2", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb2)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*STACK_vWebX;
 #endif
 #if W5200_THREAD >= 4 // - потока
-	if ( xTaskCreate(vWeb3,"Web3", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb3)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS=HP.mRTOS+64+4*STACK_vWebX;
+	if(xTaskCreate(vWeb3,"Web3", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb3)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*STACK_vWebX;
 #endif
-	SemaphoreCreate(xLoadingWebSemaphore);           // Инит семафора загрузки веб морды в spi память
-	SemaphoreCreate(xWebThreadSemaphore);
-	SemaphoreCreate(xI2CSemaphore);
-	SemaphoreCreate(xModbusSemaphore);
 	journal.jprintf(" Create tasks - OK, size %d bytes\n",HP.mRTOS);
 	//journal.jprintf("16. Send a notification . . .\n");
 	if(rstc_get_reset_cause(RSTC) != RSTC_SOFTWARE_RESET) {
@@ -671,6 +667,11 @@ x_I2C_init_std_message:
 	journal.jprintf("READY ----------------------\n");
 	eepromI2C.use_RTOS_delay = 1;       //vad711
 	//
+	// Инит семафоров
+	SemaphoreCreate(xLoadingWebSemaphore);
+	SemaphoreCreate(xWebThreadSemaphore);
+	SemaphoreCreate(xI2CSemaphore);
+	SemaphoreCreate(xModbusSemaphore);
 	vTaskStartScheduler();              // СТАРТ !!
 	journal.jprintf("FreeRTOS FAILURE!\n");
 }
@@ -726,7 +727,8 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 // Первый поток веб сервера - дополнительно нагружен различными сервисами
 void vWeb0(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
-	static unsigned long thisTime = xTaskGetTickCount();
+	static unsigned long pingt, thisTime;
+	pingt = thisTime = xTaskGetTickCount();
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
 	static unsigned long check_vbat_time = rtcSAM3X8.unixtime();
 #endif
@@ -776,15 +778,10 @@ void vWeb0(void *)
 						if(err > -2000000000) Request_LowConsume = GETBIT(HP.Option.flags, fBackupPower);
 						else RepeatLowConsumeRequest = (uint16_t)(HTTP_REQUEST_ERR_REPEAT * 1000 / WEB0_OTHER_JOB_PERIOD + 1);
 					}
-					active = false;
 				}
 			}
 #endif
 #ifdef WATTROUTER
-			if(!active) {
-				WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-				active = true;
-			}
 			if((GETBIT(WR.Flags, WR_fActive) || WR.PWM_FullPowerTime || WR_Refresh) /*&& HP.get_State() == pWORK_HP*/) {
 				while(1) {
 					static uint8_t skip_next_small_increase = 0;
@@ -802,7 +799,6 @@ void vWeb0(void *)
 					if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT) || WR_LastSunPowerOutCnt == 0 || nopwr) {
 						mppt = WR_Check_MPPT();				// Чтение солнечного контроллера
 						SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
-						WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 					}
 #endif
 					// Выключить все
@@ -877,10 +873,10 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 									if(WR_LoadRun[i] == 0) continue;
 									WR_Switch_Load(i, 0);
 								} else WR_Switch_Load(i, WR_LoadRun[i] ? true : false);
-								if(WR_Load_pins[i] < 0) {
-									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-									active = false;
-								}
+//								if(WR_Load_pins[i] < 0) {
+//									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//									active = false;
+//								}
 							}
 						}
 						WR_Refresh = 0;
@@ -917,13 +913,11 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 										if(GETBIT(WR.PWM_Loads, i)) {
 											int16_t chg = WR.LoadPower[i] - WR_LoadRun[i];
 											if(chg > curr) chg = curr;
-											WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 											WR_Change_Load_PWM(i, chg);
 											if(curr == chg) break;
 											curr -= chg;
 										} else {
 											if(WR.LoadPower[i] > curr || (WR_SwitchTime[i] && rtcSAM3X8.unixtime() - WR_SwitchTime[i] <= WR.TurnOnPause)) continue;
-											WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 											WR_Switch_Load(i, 1);
 											curr -= WR.LoadPower[i];
 										}
@@ -934,8 +928,6 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 						}
 					}
 #endif
-					if(!active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
-
 
 #ifdef WR_CurrentSensor_4_20mA
 					HP.sADC[IWR].Read();
@@ -1107,13 +1099,13 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 								}
 #endif
 								if(pnet - WR.LoadHist >= WR_LoadRun[i]) {
-									if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//									if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 									WR_Switch_Load(i, 0);
 									break;
 								} else if(reserv == 255) reserv = i;
 							}
 							if(reserv != 255 && pnet > WR.LoadHist) { // еще не все
-								if(WR_Load_pins[reserv] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//								if(WR_Load_pins[reserv] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 								WR_Switch_Load(reserv, 0);
 							}
 						}
@@ -1132,13 +1124,13 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 									need_heat_boiler = false;
 								} else {
 									if(WR_SwitchTime[i] && rtcSAM3X8.unixtime() - WR_SwitchTime[i] <= WR.TurnOnMinTime) continue;
-									if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//									if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 									lr = WR_LoadRun[i];
 									WR_Switch_Load(i, 0);
 									need_heat_boiler = false;
 								}
 								if(!need_heat_boiler) {
-									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//									WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 									if(GETBIT(WR.PWM_Loads, WR_Load_pins_Boiler_INDEX)) WR_Change_Load_PWM(WR_Load_pins_Boiler_INDEX, lr);
 									else WR_Switch_Load(WR_Load_pins_Boiler_INDEX, lr);
 
@@ -1227,7 +1219,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 									break;
 								}
 #endif
-								if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//								if(WR_Load_pins[i] < 0 && !active) WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 								WR_Switch_Load(i, 1);
 								break;
 							}
@@ -1240,7 +1232,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 				if(GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
 					WR_Check_MPPT();				// Чтение солнечного контроллера
 					SETBIT0(WR_WorkFlags, WR_fWF_Read_MPPT);
-					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
+//					WEB_SERVER_MAIN_TASK();	/////////////////////////////////////// Выполнить задачу веб сервера
 				} else WR_LastSunSign = -1;
 				if((WR.Flags & ((1<<WR_fLogFull)|(1<<WR_fLog))) == ((1<<WR_fLogFull)|(1<<WR_fLog))) {
 					journal.jprintf("WR: P=%d%c", WR_Pnet, WR_LastSunSign == 0 ? '!' : WR_LastSunSign == 1 ? '+' : WR_LastSunSign == 2 ? '*' : WR_LastSunSign == 3 ? '-': '?');
@@ -1391,6 +1383,13 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
 					active = false;
 				}
+				// 6. ping сервера если это необходимо
+				if((HP.get_pingTime() > 0) && (thisTime - pingt > HP.get_pingTime() * 1000UL) && (active)) {
+					WEB_STORE_DEBUG_INFO(7);
+					pingt = thisTime;
+					pingServer();
+					active = false;
+				}
 	#ifdef MQTT                                     // признак использования MQTT
 				// 7. Отправка нанародный мониторинг
 				if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
@@ -1421,32 +1420,25 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 // Второй поток
 void vWeb1(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
-	static unsigned long resW5200, iniW5200, pingt, thisTime;
-	resW5200 = iniW5200 = pingt = thisTime = xTaskGetTickCount();
+	static unsigned long resW5200, iniW5200, thisTime;
+	resW5200 = iniW5200 = thisTime = xTaskGetTickCount();
 	static boolean network_last_link = true;
 	for(;;) {
-		#define WEB_SERVER_SECOND_TASK() {\
-			/*WEB_STORE_DEBUG_INFO(1);*/\
-			web_server(1);\
-			/*WEB_STORE_DEBUG_INFO(2);*/\
-			vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);\
-		}
-		WEB_SERVER_SECOND_TASK()
+		web_server(1);
+		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);
 
-		if(xTaskGetTickCount() - thisTime > WEB1_OTHER_JOB_PERIOD)
-		{
-			bool active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
+		if(xTaskGetTickCount() - thisTime > WEB1_OTHER_JOB_PERIOD) {
 			thisTime = xTaskGetTickCount();                                      // Запомнить тики
-			if(active) active = HP.message.dnsUpdate();                          // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
-#ifdef MQTT
-			if(active) active=HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+#ifdef MQTT                            			  // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
+			if(HP.message.dnsUpdate()) HP.clMQTT.dnsUpdate();
+#else
+			HP.message.dnsUpdate();
 #endif
-
+				;
 			// Проверка и сброс митекса шины I2C  если мютекса не получаем то сбрасывае мютекс
 			if(SemaphoreTake(xI2CSemaphore, (3 * I2C_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 				SemaphoreGive(xI2CSemaphore);
 				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
-				active = false;
 				HP.num_resMutexI2C++;
 			} else SemaphoreGive(xI2CSemaphore);
 
@@ -1458,38 +1450,33 @@ void vWeb1(void *)
 				}
 			}
 			// 3. Сброс сетевого чипа по времени
-			if(HP.time_resW5200() > 0 && active)                             // Сброс W5200 если включен и время подошло
+			if(HP.time_resW5200() > 0)                             // Сброс W5200 если включен и время подошло
 			{
 				WEB_STORE_DEBUG_INFO(4);
 				if(xTaskGetTickCount() - resW5200 > HP.time_resW5200() * 1000UL) {
 					journal.jprintf_time("Reset %s by timer . . .\n", nameWiznet);
 					HP.sendCommand(pNETWORK);                          // Послать команду сброса и применения сетевых настроек
 					resW5200 = xTaskGetTickCount();
-					active = false;
 				}
 			}
 			// 4. Проверка связи с чипом
-			if(HP.get_fInitW5200() && (thisTime - iniW5200 > 60 * 1000UL) && active) // проверка связи с чипом сети раз в минуту
+			if(HP.get_fInitW5200() && (thisTime - iniW5200 > 60 * 1000UL)) // проверка связи с чипом сети раз в минуту
 			{
 				WEB_STORE_DEBUG_INFO(5);
 				iniW5200 = thisTime;
 				if(!HP.NO_Power) {
-					boolean lst = linkStatusWiznet(false);
-					if(!lst || !network_last_link) {
-						if(!lst) journal.jprintf_time("%s no link[%02X], resetting . . .\n", nameWiznet, W5100.readPHYCFGR());
-						HP.sendCommand(pNETWORK);       // Если связь потеряна то подать команду на сброс сетевого чипа
-						HP.num_resW5200++;              // Добавить счетчик инициализаций
-						active = false;
+					boolean lst;
+					if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT)) {
+						lst = linkStatusWiznet(false);
+						SemaphoreGive(xWebThreadSemaphore);
+						if(!lst || !network_last_link) {
+							if(!lst) journal.jprintf_time("%s no link[%02X], resetting . . .\n", nameWiznet, W5100.readPHYCFGR());
+							HP.sendCommand(pNETWORK);       // Если связь потеряна то подать команду на сброс сетевого чипа
+							HP.num_resW5200++;              // Добавить счетчик инициализаций
+						}
+						network_last_link = lst;
 					}
-					network_last_link = lst;
 				}
-			}
-			// 6. ping сервера если это необходимо
-			if((HP.get_pingTime() > 0) && (thisTime - pingt > HP.get_pingTime() * 1000UL) && (active)) {
-				WEB_STORE_DEBUG_INFO(7);
-				pingt = thisTime;
-				pingServer();
-				active = false;
 			}
 		}
 	}

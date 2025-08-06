@@ -369,8 +369,8 @@ void devHeater::get_info(char* buf)
 	}
 }
 
-// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret
-void devHeater::get_param(char *var, char *ret)
+// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret, если ошибка возврат true
+bool devHeater::get_param(char *var, char *ret)
 {
 	ret += strlen(ret);
 	if(strcmp(var, Wheater_LinkHeaterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk), ret); } else
@@ -399,19 +399,8 @@ void devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ _itoa(set.ModbusMinTimeBetweenTransaction, ret); } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ _itoa(set.ModbusResponseTimeout, ret); } else
 	if(strcmp(var, Wheater_INFO)==0) 				   	{ get_info(ret); } else
-	if(var[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
-		uint16_t d;
-		uint16_t adr = strtol(var + 1, NULL, 16);
-		int8_t _err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, adr, &d);
-		if(_err) { strcat(ret, "E"); _itoa(_err, ret); } else _itoa(d, ret);
-	} else
-	if(var[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
-		uint32_t d;
-		uint16_t adr = strtol(var + 1, NULL, 16);
-		int8_t _err = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, adr, &d);
-		if(_err) { strcat(ret, "E"); _itoa(_err, ret); } else _itoa(d, ret);
-	} else
-    strcat(ret,(char*)cInvalid);
+	return false;
+	return true;
 }
 
 // Установить параметр из строки, возврат ошибки
@@ -428,25 +417,14 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_heat_tempout)==0)			{ if(x>=0 && x<=100){ set.heat_tempout = x; return OK; } } else
 	if(strcmp(var, Wheater_heat_power_min)==0)			{ if(x>=0 && x<=100){ set.heat_power_min = x; return OK; } } else
 	if(strcmp(var, Wheater_heat_power_max)==0)			{ if(x>=0 && x<=100){ set.heat_power_max = x; return OK; } } else
-	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ set.heat_protect_temp_dt = rd(x, 10); } else
+	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ set.heat_protect_temp_dt = rd(x, 10); return OK; } else
 	if(strcmp(var, Wheater_boiler_tempout)==0)			{ if(x>=0 && x<=100){ set.boiler_tempout = x; return OK; } } else
 	if(strcmp(var, Wheater_power_boiler_min)==0)		{ if(x>=0 && x<=100){ set.boiler_power_min = x; return OK; } } else
 	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return OK; } } else
-	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ set.boiler_protect_temp_dt = rd(x, 10); } else
+	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ set.boiler_protect_temp_dt = rd(x, 10); return OK; } else
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ set.pump_work_time_after_stop = x / 10; return OK; } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = x; return OK; } else
-	if(strcmp(var, option_ModbusResponseTimeout)==0){ set.ModbusResponseTimeout = x; return OK; } else
-	if(var[0] == Wheater_WriteReg){ // set_HT(Wn), где n номер регистра в HEX
-		uint16_t adr = strtol(var + 1, NULL, 16);
-		if(x != LONG_MAX) {
-			int8_t _err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, adr, x);
-			if(_err) return _err;
-			int16_t status;
-			_err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + adr, 1, (uint16_t*)&status);	// Получить регистр состояния записи
-			if(_err) return _err;
-			return status;
-		}
-	}
+	if(strcmp(var, option_ModbusResponseTimeout)==0){ set.ModbusResponseTimeout = x; return OK; }
     return 27;
 }
 

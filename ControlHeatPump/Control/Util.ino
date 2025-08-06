@@ -90,6 +90,20 @@ xLoop:		if(!wait_time--) {
 	return true;
 }
 
+// Возврат true - ошибка повторной блокировки семафора
+bool TaskYeldAndGiveWebSemaphore(void)
+{
+	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+		SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+		taskYIELD();
+		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+			journal.jprintf("Error lock Web [%X]\n", __builtin_return_address(0));
+			return true;
+		}
+	}
+	return false;
+}
+
 // разбор строки побайтно ОШИБКИ ПЛОХО не ловит!
 //  для IP          const char* ipStr = "50.100.150.200"; byte ip[4]; parseBytes(ipStr, '.', ip, 4, 10);
 //  для mac address const char* macStr = "90-A2-AF-DA-14-11"; byte mac[6]; parseBytes(macStr, '-', mac, 6, 16);

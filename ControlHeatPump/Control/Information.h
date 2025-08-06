@@ -35,7 +35,7 @@
 
 #define PRINTF_BUF 256                           // размер буфера для одной строки - большаяя длина нужна при отправке уведомлений, там длинные строки (видел 178)
 
-extern uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len,uint16_t pause);
+extern uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len);//,uint16_t pause);
 const char *errorReadI2C =    {"$ERROR - read I2C memory\n"};
 const char *errorWriteI2C =   {"$ERROR - write I2C memory\n"};
 const char *promtUser={"> "};   

@@ -807,8 +807,8 @@ void HeatPump::resetSettingHP()
 	strcpy(Network.passUser, "user");              // !save! Пароль пользователя
 	strcpy(Network.passAdmin, "admin");            // !save! Пароль администратора
 	Network.sizePacket = 1465;                      // !save! размер пакета для отправки
-	SETBIT0(Network.flags, fNoAck);                // !save! флаг Не ожидать ответа ACK
-	Network.delayAck = 10;                          // !save! задержка мсек перед отправкой пакета
+//	SETBIT0(Network.flags, fNoAck);                // !save! флаг Не ожидать ответа ACK
+//	Network.delayAck = 10;                          // !save! задержка мсек перед отправкой пакета
 	strcpy(Network.pingAdr, PING_SERVER);         // !save! адрес для пинга
 	Network.pingTime = 60 * 60;                       // !save! время пинга в секундах
 	SETBIT0(Network.flags, fNoPing);               // !save! Запрет пинга контроллера
@@ -920,14 +920,8 @@ boolean HeatPump::set_network(char *var, char *c)
                        if((x<1)||(x>65535)) return false;
                        else Network.port=x; return  true;
                        }else     
- if(strcmp(var,net_NO_ACK)==0){      if (x == 0) { SETBIT0(Network.flags,fNoAck); return true;}
-                       else if (x == 1) { SETBIT1(Network.flags,fNoAck);  return true;}
-                       else return false;  
-                       }else  
- if(strcmp(var,net_DELAY_ACK)==0){
-                       if((x<1)||(x>50)) return        false;
-                       else Network.delayAck=x; return  true;
-                       }else         
+//if(strcmp(var,net_NO_ACK)==0){ if (x == 0) { SETBIT0(Network.flags,fNoAck); return true;} else if (x == 1) { SETBIT1(Network.flags,fNoAck);  return true;} else return false; }else
+//if(strcmp(var,net_DELAY_ACK)==0){ if((x<1)||(x>50)) return false; else Network.delayAck=x; return true; }else
  if(strcmp(var,net_PING_ADR)==0){     if (strlen(c)<sizeof(Network.pingAdr)) { strcpy(Network.pingAdr,c); return true;} else return false; }else    
  if(strcmp(var,net_PING_TIME)==0){switch (x)
 			                       {
@@ -977,9 +971,8 @@ char* HeatPump::get_network(char *var,char *ret)
     if(strcmp(var,net_INIT_W5200)==0){if (GETBIT(Network.flags,fInitW5200)) return  strcat(ret,(char*)cOne);       // флаг Ежеминутный контроль SPI для сетевого чипа
                                       else      return  strcat(ret,(char*)cZero);               }else      
     if(strcmp(var,net_PORT)==0){return _itoa(Network.port,ret);                       }else    // Порт веб сервера
-    if(strcmp(var,net_NO_ACK)==0){    if (GETBIT(Network.flags,fNoAck)) return  strcat(ret,(char*)cOne);
-                                      else      return  strcat(ret,(char*)cZero);          }else     
-    if(strcmp(var,net_DELAY_ACK)==0){return _itoa(Network.delayAck,ret);         }else    
+//    if(strcmp(var,net_NO_ACK)==0){ if(GETBIT(Network.flags,fNoAck)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+//    if(strcmp(var,net_DELAY_ACK)==0){ return _itoa(Network.delayAck,ret); }else
     if(strcmp(var,net_PING_ADR)==0){  return strcat(ret,Network.pingAdr);                  }else
     if(strcmp(var,net_PING_TIME)==0){
     	return web_fill_tag_select(ret, "never:0;1 min:0;5 min:0;20 min:0;60 min:0;120 min:0;",

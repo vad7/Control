@@ -66,16 +66,17 @@ void web_server(uint8_t thread)
 	int8_t sock;
 
 	if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT) == pdFALSE) {
+		if(thread == 0) return; // основную задачу не блокируем на долго
 		// 1. Проверка захваченого семафора сети, ожидаем  3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
-		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 60) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 40) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
 			HP.num_resMutexWEB++;
 		}
 	}
 
-	Socket[thread].sock = -1;                      // Сокет свободный
+	Socket[thread].sock = -1;                     // Сокет свободный
 
-	SPI_switchW5200();                    // Это лишнее но для надежности пусть будет
+	SPI_switchW5200();                            // Дополнительный выбор сетевой карты, в либе жестко пин SS (D10)
 	for(sock = 0; sock < W5200_SOCK_SYS; sock++)  // Цикл по сокетам веб сервера!!!! служебный не трогаем!!
 	{
 
@@ -301,7 +302,7 @@ void readFileSD(char *filename, uint8_t thread)
 		if(!n) {
 			Stats.SendFileData(thread, &webFile, filename);
 		} else {
-			sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, strlen(Socket[thread].outBuf), 0);
+			sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, strlen(Socket[thread].outBuf));
 		}
 		return;
 	}
@@ -326,7 +327,7 @@ void readFileSD(char *filename, uint8_t thread)
 			if(!n) {
 				Stats.SendFileData(thread, &webFile, filename);
 			} else {
-				sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, strlen(Socket[thread].outBuf), 0);
+				sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, strlen(Socket[thread].outBuf));
 			}
 	    }
 		return;
@@ -382,9 +383,7 @@ void readFileSD(char *filename, uint8_t thread)
 	case pSD_WEB:
 		{ // Чтение с карты  файлов
 			WEB_STORE_DEBUG_INFO(15);
-			SPI_switchSD();
-			if(!webFile.open(filename, O_READ))
-			{
+			if(!webFile.open(filename, O_READ)) {  // файл не найден
 				if(card.cardErrorCode() > SD_CARD_ERROR_NONE && card.cardErrorCode() < SD_CARD_ERROR_READ
 						&& card.cardErrorData() == 255) { // reinit card
 					if(card.begin(PIN_SPI_CS_SD, SD_SCK_MHZ(SD_CLOCK))) {
@@ -399,7 +398,7 @@ void readFileSD(char *filename, uint8_t thread)
 				W5100.readSnDIPR(Socket[thread].sock, ip);
 				journal.jprintf((char*) "WEB: %d.%d.%d.%d - File not found: %s\n", ip[0], ip[1], ip[2], ip[3], filename);
 				return;
-			} // файл не найден
+			}
 xFileFound:
 			// Файл открыт читаем данные и кидаем в сеть
 	#ifdef LOG
@@ -427,15 +426,10 @@ xFileFound:
 	#endif
 				if(strstr(filename, ".css") != NULL) sendConstRTOS(thread, HEADER_FILE_CSS); // разные заголовки
 				else sendConstRTOS(thread, HEADER_FILE_WEB);
-				//	SPI_switchSD();
 				while((n = ff.read(Socket[thread].outBuf, sizeof(Socket[thread].outBuf))) > 0) {
 					//SPI_switchW5200();
 					if(sendBufferRTOS(thread, (byte*) (Socket[thread].outBuf), n) == 0) break;
-					//	SPI_switchSD();
 				} // while
-				//if(n < 0) journal.jprintf("Read SD error (%d,%d)!\n", card.cardErrorCode(), card.cardErrorData());
-				//SPI_switchSD();
-				//webFile.close();
 			} else {
 				sendConstRTOS(thread, HEADER_FILE_NOT_FOUND);
 				uint8_t ip[4];
@@ -2031,7 +2025,21 @@ xSaveStats:
 			if (strcmp(str,"get_pFC")==0)           // Функция get_pFC - получить значение параметра FC
 			{
 				WEB_STORE_DEBUG_INFO(35);
-				HP.dFC.get_paramFC(x,strReturn);
+				if(strcmp(x, fc_INFO)==0) {
+#ifndef FC_ANALOG_CONTROL
+					SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+					HP.dFC.get_infoFC(strReturn);
+					if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+						journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+					}
+#else
+					strcat(ret, "|Данные не доступны, управление через ") ;
+					if((g_APinDescription[pin].ulPinAttribute & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) strcat(ret, "аналоговый"); else strcat(ret, "ШИМ");
+					strcat(ret, " выход D");
+					_itoa(PIN_DEVICE_FC, ret);
+					strcat(ret, "|;");
+#endif
+				} else HP.dFC.get_paramFC(x,strReturn);
 				ADD_WEBDELIM(strReturn);
 				continue;
 			} else if (strcmp(str,"set_pFC")==0)    // Функция set_pFC - установить значение паремтра FC
@@ -2049,14 +2057,43 @@ xSaveStats:
 			else if(strcmp(str + 1,"et_HT")==0) {
 				if(*str == 'g') {                   // Функция get_HT - Котел, получить значение
 					WEB_STORE_DEBUG_INFO(35);
-					HP.dHeater.get_param(x,strReturn);
+xHeater_get_param:
+					if(HP.dHeater.get_param(x, strReturn)) {
+						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+						if(x[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
+							uint16_t d;
+							l_i32 = strtol(x + 1, NULL, 16);
+							i = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, l_i32, &d);
+							if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
+						} else
+						if(x[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
+							uint32_t d;
+							l_i32 = strtol(x + 1, NULL, 16);
+							i = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, l_i32, &d);
+							if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
+						}
+						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+						}
+					}
 				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение
 					WEB_STORE_DEBUG_INFO(36);
 					if(pm!=ATOF_ERROR) {   		// нет ошибки преобразования
-						if((l_i32 = HP.dHeater.set_param(x, pm)) == OK) {
-							_delay(HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS);
-							HP.dHeater.get_param(x, strReturn);
-						} else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
+						l_i32 = HP.dHeater.set_param(x, pm);
+						if(l_i32 != OK) {
+							if(x[0] == Wheater_WriteReg){ // set_HT(Wn), где n номер регистра в HEX
+								l_i32 = strtol(x + 1, NULL, 16);
+								uint16_t d = pm;
+								if(l_i32 != LONG_MAX) {
+									i = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, l_i32, d);
+									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
+									l_i32 = i == OK ? d : i;
+								}
+								_delay(HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS);
+							} else l_i32 = 36; // E36
+						}
+						if(l_i32 == OK) goto xHeater_get_param;
+						else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
 					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				}
 				ADD_WEBDELIM(strReturn); continue;
@@ -2191,17 +2228,23 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 					i = OK;
 					if(str[0] == 's') {
 						// strtol - NO REENTRANT FUNCTION!
+						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 						if(*y == 'h') i = Modbus.writeHoldingRegisters16(id, par, strtol(z, NULL, 0)); // 1 register (int16).
 						//else if(*y == 'u') i = Modbus.writeHoldingRegisters32(id, par, strtol(z, NULL, 0)); // 2 registers (int32).
 						else if(*y == 'f') i = Modbus.writeHoldingRegistersFloat(id, par, strtol(z, NULL, 0)); // 2 registers (float).
 						else if(*y == 'c') i = Modbus.writeSingleCoil(id, par, atoi(z));	// coil
-						else goto x_FunctionNotFound;
+						else i = 1;
+						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+							i = 2;
+						}
 #ifdef MODBUS_TIME_TRANSMISION
-						_delay(MODBUS_TIME_TRANSMISION * 10); // Задержка перед чтением
+						if(i == OK) _delay(MODBUS_TIME_TRANSMISION * 10); // Задержка перед чтением
 #endif
 					} else if(str[0] == 'g') {
-					} else goto x_FunctionNotFound;
+					} else i = 1;
 					if(i == OK) {
+						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 						if(*y == 'w') {
 							if((i = Modbus.readInputRegisters16(id, par, &par)) == OK) _itoa(par, strReturn);
 						} else if(*y == 'l') {
@@ -2214,7 +2257,11 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 							if((i = Modbus.readHoldingRegistersFloat(id, par, &pm)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'c') {
 							if((i = Modbus.readCoil(id, par, (boolean *)&par)) == OK) _itoa(par, strReturn);
-						} else goto x_FunctionNotFound;
+						} else i = 1;
+						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+							i = 2;
+						}
 					}
 					if(i != OK) {
 						strcat(strReturn, "E"); _itoa(i, strReturn);
@@ -3220,7 +3267,7 @@ xContinueSearchHeader:
 			SerialFlash.eraseAll();
 			while(SerialFlash.ready() == false) {
 				SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
-				vTaskDelay(1000 / portTICK_PERIOD_MS);
+				vTaskDelay(100 / portTICK_PERIOD_MS);
 				if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
 					journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);
 					return pLOAD_ERR;
@@ -3289,7 +3336,7 @@ xContinueSearchHeader:
 								if(buf_len > 0) loadLen = ff.write(ptr, buf_len); // первый пакет упаковали если он не нулевой
 								while(loadLen < lenFile)  // Чтение остальных пакетов из сети
 								{
-									_delay(2);                                                 // время на приход данных
+									if(TaskYeldAndGiveWebSemaphore()) break;
 									buf_len = Socket[thread].client.get_ReceivedSizeRX(); // получить длину входного пакета
 									if(buf_len == 0) {
 										if(Socket[thread].client.connected()) continue;	else break;
@@ -3330,7 +3377,7 @@ xContinueSearchHeader:
 							uint16_t numPoint = 0;
 							while((lenFile -= buf_len) > 0)  // Чтение остальных пакетов из сети
 							{
-								_delay(2);                                                                 // время на приход данных
+								if(TaskYeldAndGiveWebSemaphore()) break;
 								buf_len = Socket[thread].client.get_ReceivedSizeRX();                  // получить длину входного пакета
 								if(buf_len == 0) {
 									if(Socket[thread].client.connected()) continue; else break;
