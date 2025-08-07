@@ -179,9 +179,9 @@ void web_server(uint8_t thread)
 						}
 						break;
 					}
-					case HTTP_POST:    // загрузка настроек
+					case HTTP_POST:    // загрузка настроек, файлов
 					{
-                        uint8_t ret= parserPOST(thread, len);         // разобрать и получить тип ответа
+                        uint8_t ret = parserPOST(thread, len);         // разобрать и получить тип ответа
                         strcpy(Socket[thread].outBuf, HEADER_ANSWER);
 						strcat(Socket[thread].outBuf, postRet[ret]);   // вернуть текстовый ответ, который надо вывести
                			if(sendBufferRTOS(thread, (byte*) (Socket[thread].outBuf), strlen(Socket[thread].outBuf)) == 0) {
@@ -3308,9 +3308,9 @@ xContinueSearchHeader:
 			}
 		} else { // загрузка отдельных файлов веб морды
 			if(SemaphoreTake(xLoadingWebSemaphore, 0) == pdFALSE) { // Cемафор занят - загрузка файла
-				if(lenFile == 0) {
-					journal.jprintf("Upload: %s length = %s!\n", nameFile, pStart);
-					return pLOAD_ERR;
+				if(lenFile == 0) { // пустой файл - пропускаем
+					journal.jprintf("Upload: %s zero length, skip\n", nameFile);
+					return pNULL;
 				}
 				// Файл может лежать во множестве пакетов. Если в SPI Flash, то считается что spi диск отформатирован и ожидает запись файлов с "нуля"
 				// Входные параметры:

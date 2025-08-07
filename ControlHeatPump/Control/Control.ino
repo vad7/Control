@@ -261,7 +261,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	//_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
+	_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -2287,9 +2287,6 @@ void vServiceHP(void *)
 					} else HP.pump_in_pause_timer--;
 				}
 			}
-			STORE_DEBUG_INFO(76);
-			Stats.CheckCreateNewFile();
-			taskYIELD();
 
 			//  Синхронизация часов с I2C часами если стоит соответсвующий флаг
 			static uint32_t _old_time = GetTickCount();
@@ -2331,6 +2328,9 @@ void vServiceHP(void *)
 				}
 			} else last_life_h = hour;
 		}
+		STORE_DEBUG_INFO(76);
+		Stats.CheckCreateNewFile();
+		taskYIELD();
 		STORE_DEBUG_INFO(77);
 #ifdef NEXTION
 		myNextion.readCommand();                 // прочитать сообщения от дисплея

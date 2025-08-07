@@ -46,7 +46,7 @@ int8_t Statistics::CreateOpenFile(uint8_t what)
 	strcat(filename, stats_file_ext);
 	journal.jprintf(" File: %s ", filename);
 	SPI_switchSD();
-	if(!StatsFile.opens(filename, O_READ, &open_fname)) {
+	if(!StatsFile.opens(filename, O_RDWR, &open_fname)) {
 xCreatefile:
 		uint16_t days = month == 1 ? 366 : (12 - month + 1) * 31;
 		if(!StatsFile.createContiguous(filename, what ? HISTORY_MAX_FILE_SIZE(days) : STATS_MAX_FILE_SIZE(days))) {
@@ -94,7 +94,6 @@ xContinue:		if(HistoryBlockCreating) b = HistoryBlockCreating; else b = HistoryC
 					if(what) { // время другим задачам (~200 bps)
 						HistoryBlockCreating = b;
 						free(temp_buf);
-						_delay(CREATE_STATFILE_PAUSE);
 						return OK;
 					}
 				}
@@ -308,10 +307,9 @@ void Statistics::Init(uint8_t newyear)
 
 void Statistics::CheckCreateNewFile()
 {
-	uint8_t sem = 0;
 	if(!HP.get_fSD()) return;
 	if(GETBIT(Flags, STATS_fNewYear)) {
-		if(!(sem = SemaphoreTake(xWebThreadSemaphore, 0))) return;
+		if(!SemaphoreTake(xWebThreadSemaphore, 0)) return;
 		SaveStats(1);
 		SaveHistory(1);
 		// Truncate stats
@@ -337,14 +335,15 @@ void Statistics::CheckCreateNewFile()
 		}
 		Init(1);
 		SETBIT0(Flags, STATS_fNewYear);
+		SemaphoreGive(xWebThreadSemaphore);
 	}
 	if(GETBIT(HP.Option.flags, fHistory) && (HistoryCurrentBlock == 0 || HistoryBlockCreating != 0)) { // Init History
-		if(!sem && !(sem = SemaphoreTake(xWebThreadSemaphore, 0))) return;
+		if(!SemaphoreTake(xWebThreadSemaphore, 0)) return;
 		if(CreateOpenFile(ID_HISTORY) == OK) {
 			StatsFile.close();
 		} else SETBIT0(HP.Option.flags, fHistory); // При ошибке выключаем опцию сохранения истории!
+		SemaphoreGive(xWebThreadSemaphore);
 	}
-	if(sem) SemaphoreGive(xWebThreadSemaphore);
 }
 
 // Сбросить накопленные промежуточные значения
