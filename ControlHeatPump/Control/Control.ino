@@ -1651,7 +1651,7 @@ void vReadSensor(void *)
 		HP.dEEV.set_Overheat(HP.is_HP_Heating()); // нагрев(1) или охлаждение(0)
 #endif
 
-		//  Опрос состояния инвертора
+		// Опрос состояния инвертора
 #ifdef USE_UPS
 		if(HP.NO_Power) {
 			if(!HP.sInput[SPOWER].is_alarm()) { // Включаемся
@@ -1922,6 +1922,10 @@ void vReadSensor_delay1ms(int32_t ms)
 						}
 						HP.runCommand();
 					}
+				} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
+					// Нет расписания, Есть питание, Не на бакапе
+					HP.sendCommand(pRESUME);
+					HP.runCommand();
 				}
 			}
 		}

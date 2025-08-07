@@ -418,7 +418,7 @@ public:
 	void     Reset_TempErrors();		// Сбросить счетчик ошибок всех датчиков
 	void     resetPID();				// Инициализировать переменные ПИД регулятора
 
-	void     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН
+	bool     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН, false - не получилось
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
 	void     runCommand(void);              // Выполнить команду по управлению ТН
 	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }

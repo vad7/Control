@@ -4146,23 +4146,23 @@ void HeatPump::heaterOFF()
 }
 
 // ОБРАБОТЧИК КОМАНД УПРАВЛЕНИЯ ТН
-// Послать команду на управление ТН
-void HeatPump::sendCommand(TYPE_COMMAND c)
+// Послать команду на управление ТН, false - нет места
+bool HeatPump::sendCommand(TYPE_COMMAND c)
 {
-	if(c == command) return;      // Игнорируем повторы
-	if(command != pEMPTY) // Если команда выполняется (не pEMPTY), то следующую в очередь, если есть место
-			{
+	if(c == command) return true;      // Игнорируем повторы
+	if((command == pSTOP || next_command == pSTOP) && c != pSTART) return true; // останавливаемся, кром старт ничего нельзя
+	if(command != pEMPTY) {// Если команда выполняется (не pEMPTY), то следующую в очередь, если есть место
 		if(next_command != c) {
-			if(next_command != pEMPTY && c != pSTOP) return; // STOP имеет приоритет
+			if(next_command != pEMPTY && c != pSTOP) return false; // STOP имеет приоритет
 			next_command = c;
-			journal.jprintf("Active command: %s, next: %s\n", get_command_name(command),
-					get_command_name(next_command));
+			journal.jprintf("Active command: %s, next: %s\n", get_command_name(command), get_command_name(next_command));
 		}
-		return;
+		return true;
 	}
-	if(c == pSTART && get_State() == pSTOPING_HP) return; // Пришла команда на старт, а насос останавливается ничего не делаем игнорируем
+	if(c == pSTART && get_State() == pSTOPING_HP) return false; // Пришла команда на старт, а насос останавливается ничего не делаем игнорируем
 	command = c;
 	SETBIT1(work_flags, fHP_NewCommand);
+	return true;
 }
 // Выполнить команду по управлению ТН true-команда выполнена
 void HeatPump::runCommand(void)
@@ -4367,10 +4367,10 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		}
 	}
 	if(frestart) { // Если направление работы ТН разное
-		sendCommand(pWAIT);
+		if(!sendCommand(pWAIT)) return;
 		uint8_t i = DELAY_BEFORE_STOP_IN_PUMP + (get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump) + 1;
 		while(isCommand()) { // ждем отработки команды
-			_delay(1000);
+			_delay(100);
 			if(!--i) break;
 		}
 	}
@@ -4382,7 +4382,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		if(_by_error_check_mode) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
 		journal.jprintf_time("Set profile to %d\n", _profile + 1);
 	} else journal.jprintf_time("Failed sеt profile to %d\n", _profile + 1);
-	if(frestart) sendCommand(pRESUME);
+	if(frestart) while(!sendCommand(pRESUME)) _delay(100);
 }
 
 // Обработать пропадание питания

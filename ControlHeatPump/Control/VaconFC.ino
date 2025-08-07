@@ -212,8 +212,12 @@ int8_t devVaconFC::get_readState()
 #if defined(SGENERATOR)
 			HP.sInput[SGENERATOR].Read(true);
 			if(HP.sInput[SGENERATOR].get_Input() == HP.sInput[SGENERATOR].get_alarmInput()) {
+#ifdef USE_HEATER
+				SETBIT1(flags, fErrFC); // Блок инвертора
+#else
 				HP.sendCommand(pWAIT);
 				SETBIT1(HP.work_flags, fHP_BackupNoPwrWAIT);
+#endif
 				return err;
 			}
 #endif
