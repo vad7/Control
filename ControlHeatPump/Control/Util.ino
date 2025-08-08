@@ -1539,8 +1539,8 @@ void WR_ReadPowerMeter(void)
 // Борьба с зависшими устройствами на шине I2C (в первую очередь часы), true - сброс питания при необходимости
 void Recover_I2C_bus(bool _reset)
 {
-	pinMode(PIN_WIRE_SDA, INPUT);
 	TWI0->TWI_CR = TWI_CR_SVDIS | TWI_CR_MSDIS;
+	pmc_disable_periph_clk(WIRE_INTERFACE_ID);// Отключить I2C периферию
 //	PMC->PMC_PCER0 = PMC_PCER0_PID12;  // PIOB power ON
 //	PIOB->PIO_PER |= PIO_PER_P12;      // TWCK1 pin (SCL) back to GPIO
 //	PIOB->PIO_OER |= PIO_OER_P12;
@@ -1557,39 +1557,38 @@ void Recover_I2C_bus(bool _reset)
 //	PIOA->PIO_PER |= PIO_PER_P17;      // TWD0 pin (SDA1)  back to GPIO
 //	PIOA->PIO_OER |= PIO_OER_P17;
 //	PIOA->PIO_OWER |= PIO_OWER_P17;
-	pinMode(PIN_WIRE_SCL, OUTPUT);
+	//pinMode(PIN_WIRE_SDA, OUTPUT);// Перевести пины в GPIO режим
+	//pinMode(PIN_WIRE_SCL, OUTPUT);// Перевести пины в GPIO режим
+	// TWI1:
+#define I2C_PORT	PIOB
+#define I2C_SDA	 	PIO_PB12
+#define I2C_SCL	 	PIO_PB13
+	I2C_PORT->PIO_PER = I2C_SDA | I2C_SCL;  // Включить управление через PIO
+	I2C_PORT->PIO_OER = I2C_SDA | I2C_SCL;  // Режим выхода
+	I2C_PORT->PIO_CODR = I2C_SDA | I2C_SCL; // Установить LOW
+	delayMicroseconds(50);
 	// Generate 9 clock pulses
-	for (uint8_t i = 0; i < 10; i++) {
-		digitalWriteDirect(PIN_WIRE_SCL, HIGH);
-		delay(1);
-		digitalWriteDirect(PIN_WIRE_SCL, LOW);
-		delay(1);
+	for (uint8_t i = 0; i < 9; i++) {
+		I2C_PORT->PIO_ODR = I2C_SCL;  // SCL: open-drain (Hi-Z)
+		delayMicroseconds(50);
+		if(digitalReadDirect(PIN_WIRE_SCL) == HIGH) break;  // Проверка освобождения SDA
+	    I2C_PORT->PIO_OER = I2C_SCL;   // Включить режим вывода
+	    I2C_PORT->PIO_CODR = I2C_SCL;  // SCL=0
+		delayMicroseconds(50);
 	}
+	// Форсированный STOP сигнал
+	I2C_PORT->PIO_CODR = I2C_SDA;  // SDA=0
+	I2C_PORT->PIO_OER = I2C_SDA;   // Включить вывод SDA
+	delayMicroseconds(20);
+	I2C_PORT->PIO_ODR = I2C_SCL;  // SCL=Hi-Z (внешняя подтяжка поднимет)
+	delayMicroseconds(20);
+	I2C_PORT->PIO_ODR = I2C_SDA;  // SDA=Hi-Z (STOP условие)
+	delayMicroseconds(20);
 	if(!digitalReadDirect(PIN_WIRE_SDA) && _reset) repower();
+	pmc_enable_periph_clk(WIRE_INTERFACE_ID);
+	Wire.begin();
+	delay(1);
 	journal.printf("I2C Resetted\n");
-	// Send a STOP
-	pinMode(PIN_WIRE_SCL, OUTPUT);
-	digitalWriteDirect(PIN_WIRE_SCL, LOW);
-	pinMode(PIN_WIRE_SDA, OUTPUT);
-	digitalWriteDirect(PIN_WIRE_SDA, LOW);
-	delay(1);
-	digitalWriteDirect(PIN_WIRE_SCL, HIGH);
-	delay(1);
-	digitalWriteDirect(PIN_WIRE_SDA, HIGH);
-	delay(1);
-	pinMode(PIN_WIRE_SCL, INPUT);
-	pinMode(PIN_WIRE_SDA, INPUT);
-	PIO_Configure(
-			g_APinDescription[PIN_WIRE_SCL].pPort,
-			g_APinDescription[PIN_WIRE_SCL].ulPinType,
-			g_APinDescription[PIN_WIRE_SCL].ulPin,
-			g_APinDescription[PIN_WIRE_SCL].ulPinConfiguration);
-	PIO_Configure(
-			g_APinDescription[PIN_WIRE_SDA].pPort,
-			g_APinDescription[PIN_WIRE_SDA].ulPinType,
-			g_APinDescription[PIN_WIRE_SDA].ulPin,
-			g_APinDescription[PIN_WIRE_SDA].ulPinConfiguration);
-	delayMicroseconds(10);
 }
 
 // Возврат true если OK
