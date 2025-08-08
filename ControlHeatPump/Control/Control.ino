@@ -1436,7 +1436,6 @@ void vWeb1(void *)
 #else
 			HP.message.dnsUpdate();
 #endif
-				;
 			// Проверка и сброс митекса шины I2C  если мютекса не получаем то сбрасывае мютекс
 			if(SemaphoreTake(xI2CSemaphore, (3 * I2C_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
 				SemaphoreGive(xI2CSemaphore);
@@ -1444,15 +1443,13 @@ void vWeb1(void *)
 				HP.num_resMutexI2C++;
 			} else SemaphoreGive(xI2CSemaphore);
 			// Проверка захваченого семафора сети, ожидаем 3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
-			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 40) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-				journal.jprintf_time("UNLOCK mutex xWebThread\n");
-				HP.num_resMutexWEB++;
-			}
 			if(HP.time_socketRes() > 0) {// Чистка сокетов, если включена
-				WEB_STORE_DEBUG_INFO(3);
-				checkSockStatus();              // Почистить старые сокеты
+				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
+					WEB_STORE_DEBUG_INFO(3);
+					checkSockStatus();              // Почистить старые сокеты
+					SemaphoreGive(xWebThreadSemaphore);
+				}
 			}
-			SemaphoreGive(xWebThreadSemaphore);
 			// Сброс сетевого чипа по времени
 			if(HP.time_resW5200() > 0)                             // Сброс W5200 если включен и время подошло
 			{
@@ -2328,6 +2325,15 @@ void vServiceHP(void *)
 					HP.sTemp[j].set_flag(fErrorWasSend, 0);
 				}
 			} else last_life_h = hour;
+			// разблокировка веба
+			if(GetTickCount() - web_last_run > (fWebUploadingFilesTo ? 60000UL : WEB_MAX_LOCK_TIME)) {
+				if(SemaphoreTake(xWebThreadSemaphore, 100) == pdFALSE) {
+					journal.jprintf_time("UNLOCK mutex xWebThread\n");
+					HP.num_resMutexWEB++;
+				}
+				SemaphoreGive(xWebThreadSemaphore);
+				web_last_run = GetTickCount();
+			}
 		}
 		STORE_DEBUG_INFO(76);
 		Stats.CheckCreateNewFile();

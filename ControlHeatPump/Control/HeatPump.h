@@ -208,6 +208,7 @@ bool WR_PowerMeter_New = false;
 #else
 unsigned long Web0_FreqTime;
 #endif
+static uint32_t web_last_run;				// последний запуск web_server(), тики
 
 type_WebSecurity WebSec_user;				// хеш паролей
 type_WebSecurity WebSec_admin;				// хеш паролей

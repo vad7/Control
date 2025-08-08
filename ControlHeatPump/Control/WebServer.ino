@@ -65,6 +65,7 @@ void web_server(uint8_t thread)
 	int32_t len;
 	int8_t sock;
 
+	web_last_run = GetTickCount();
 	Socket[thread].sock = -1;                     // Сокет свободный
 
 	for(sock = 0; sock < W5200_SOCK_SYS; sock++)  // Цикл по сокетам веб сервера!!!! служебный не трогаем!!
