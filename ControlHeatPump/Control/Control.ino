@@ -721,14 +721,23 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 }
 
 // --------------------------- W E B ------------------------
+#define WEB_SERVER_TASK(n) {\
+	if(SemaphoreTake(xWebThreadSemaphore, 1)) {\
+		/*WEB_STORE_DEBUG_INFO(1);*/\
+		web_server(n);\
+		SemaphoreGive(xWebThreadSemaphore);\
+		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);\
+		/*WEB_STORE_DEBUG_INFO(2);*/\
+	} else vTaskDelay(portTICK_PERIOD_MS);\
+}
 // Задача обслуживания web сервера
 // Сюда надо пихать все что связано с сетью иначе конфликты не избежны
 // Здесь также обслуживается посылка уведомлений MQTT
 // Первый поток веб сервера - дополнительно нагружен различными сервисами
 void vWeb0(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
-	static unsigned long pingt, thisTime;
-	pingt = thisTime = xTaskGetTickCount();
+	static unsigned long pingt, _other_tasks;
+	pingt = _other_tasks = xTaskGetTickCount();
 #ifdef WR_CHECK_Vbat_INSTEAD_OF_MPPT_SIGN
 	static unsigned long check_vbat_time = rtcSAM3X8.unixtime();
 #endif
@@ -751,15 +760,8 @@ void vWeb0(void *)
 #endif
 	for(;;)
 	{
-		#define WEB_SERVER_MAIN_TASK() {\
-			/*WEB_STORE_DEBUG_INFO(1);*/\
-			web_server(MAIN_WEB_TASK);\
-			/*WEB_STORE_DEBUG_INFO(2);*/\
-			vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);\
-		}
-		WEB_SERVER_MAIN_TASK();
+		WEB_SERVER_TASK(MAIN_WEB_TASK);
 
-		// СЕРВИС: Этот поток работает на любых настройках, по этому сюда ставим работу с сетью
 		bool active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
 #ifdef WR_PowerMeter_Modbus		// Синхронизируемся с чтением счетчика - сразу после
 		if(WR_PowerMeter_New) {
@@ -1265,10 +1267,11 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 			//
 #endif // WATTROUTER
 			HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
+			taskYIELD();
 		} else { // Другие задачи
 			//
-			if(xTaskGetTickCount() - thisTime > WEB0_OTHER_JOB_PERIOD) {
-				thisTime = xTaskGetTickCount();                 // Запомнить тики
+			if(xTaskGetTickCount() - _other_tasks > WEB0_OTHER_JOB_PERIOD) {
+				_other_tasks = xTaskGetTickCount();                 // Запомнить тики
 				active = HP.message.dnsUpdate();                // Обновить адреса через dns если надо, dnsUpdate() возвращает true если обновления не было
 	#ifdef MQTT
 				if(active) active = HP.clMQTT.dnsUpdate();                             // Обновить адреса через dns если надо для MQTT если обновления не было то возвращает true
@@ -1376,43 +1379,43 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 	#endif // HTTP_MAP_RELAY_MAX
 	#endif // HTTP_MAP_Server
 				// 5.Обновление времени 1 раз в сутки или по запросу (HP.timeNTP==0)
-				if(HP.timeNTP == 0 || (HP.get_updateNTP() && thisTime - HP.timeNTP > 60 * 60 * 24 * 1000UL && active)) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
+				if(HP.timeNTP == 0 || (HP.get_updateNTP() && _other_tasks - HP.timeNTP > 60 * 60 * 24 * 1000UL && active)) // Обновление времени раз в день 60*60*24*1000 в тиках HP.timeNTP==0 признак принудительного обновления
 				{
 					WEB_STORE_DEBUG_INFO(6);
-					HP.timeNTP = thisTime;
+					HP.timeNTP = _other_tasks;
 					if(HP.get_UpdateByHTTP()) set_time_HTTP(true); else set_time_NTP(true);
 					active = false;
 				}
 				// 6. ping сервера если это необходимо
-				if((HP.get_pingTime() > 0) && (thisTime - pingt > HP.get_pingTime() * 1000UL) && (active)) {
+				if((HP.get_pingTime() > 0) && (_other_tasks - pingt > HP.get_pingTime() * 1000UL) && (active)) {
 					WEB_STORE_DEBUG_INFO(7);
-					pingt = thisTime;
+					pingt = _other_tasks;
 					pingServer();
 					active = false;
 				}
 	#ifdef MQTT                                     // признак использования MQTT
 				// 7. Отправка нанародный мониторинг
-				if ((HP.clMQTT.get_NarodMonUse())&&(thisTime-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
+				if ((HP.clMQTT.get_NarodMonUse())&&(_other_tasks-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
 				{
 					WEB_STORE_DEBUG_INFO(55);
-					narmont=thisTime;
+					narmont=_other_tasks;
 					sendNarodMon(false);                       // отладка выключена
 					active=false;
 				}  // if ((HP.clMQTT.get_NarodMonUse()))
 
 				// 8. Отправка на MQTT сервер
-				if ((HP.clMQTT.get_MqttUse())&&(thisTime-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
+				if ((HP.clMQTT.get_MqttUse())&&(_other_tasks-mqttt>HP.clMQTT.get_ttime()*1000UL)&&(active))// если нужно & время отправки пришло
 				{
 					WEB_STORE_DEBUG_INFO(56);
-					mqttt=thisTime;
+					mqttt=_other_tasks;
 					if(HP.clMQTT.get_TSUse()) sendThingSpeak(false);
 					else sendMQTT(false);
 					active=false;
 				}
 	#endif   // MQTT
 			}
+			taskYIELD();
 		}
-		taskYIELD();
 	} //for
 	vTaskDelete( NULL);
 }
@@ -1424,8 +1427,7 @@ void vWeb1(void *)
 	resW5200 = iniW5200 = thisTime = xTaskGetTickCount();
 	static boolean network_last_link = true;
 	for(;;) {
-		web_server(1);
-		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);
+		WEB_SERVER_TASK(1);
 
 		if(xTaskGetTickCount() - thisTime > WEB1_OTHER_JOB_PERIOD) {
 			thisTime = xTaskGetTickCount();                                      // Запомнить тики
@@ -1441,15 +1443,17 @@ void vWeb1(void *)
 				journal.jprintf_time("UNLOCK mutex xI2CSemaphore\n");
 				HP.num_resMutexI2C++;
 			} else SemaphoreGive(xI2CSemaphore);
-
-			if(HP.time_socketRes() > 0) {// 2. Чистка сокетов, если включена
-				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS)) {
-					WEB_STORE_DEBUG_INFO(3);
-					checkSockStatus();              // Почистить старые сокеты
-					SemaphoreGive(xWebThreadSemaphore);
-				}
+			// Проверка захваченого семафора сети, ожидаем 3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
+			if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 40) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+				journal.jprintf_time("UNLOCK mutex xWebThread\n");
+				HP.num_resMutexWEB++;
 			}
-			// 3. Сброс сетевого чипа по времени
+			if(HP.time_socketRes() > 0) {// Чистка сокетов, если включена
+				WEB_STORE_DEBUG_INFO(3);
+				checkSockStatus();              // Почистить старые сокеты
+			}
+			SemaphoreGive(xWebThreadSemaphore);
+			// Сброс сетевого чипа по времени
 			if(HP.time_resW5200() > 0)                             // Сброс W5200 если включен и время подошло
 			{
 				WEB_STORE_DEBUG_INFO(4);
@@ -1459,7 +1463,7 @@ void vWeb1(void *)
 					resW5200 = xTaskGetTickCount();
 				}
 			}
-			// 4. Проверка связи с чипом
+			// Проверка связи с чипом
 			if(HP.get_fInitW5200() && (thisTime - iniW5200 > 60 * 1000UL)) // проверка связи с чипом сети раз в минуту
 			{
 				WEB_STORE_DEBUG_INFO(5);
@@ -1486,9 +1490,7 @@ void vWeb1(void *)
 void vWeb2(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
 	for(;;) {
-		web_server(2);
-		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS); // задержка чтения уменьшаем загрузку процессора
-
+		WEB_SERVER_TASK(2);
 	}
 	vTaskDelete( NULL);
 }
@@ -1496,8 +1498,7 @@ void vWeb2(void *)
 void vWeb3(void *)
 { //const char *pcTaskName = "Web server is running\r\n";
 	for(;;) {
-		web_server(3);
-		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS); // задержка чтения уменьшаем загрузку процессора
+		WEB_SERVER_TASK(3);
 	}
 	vTaskDelete( NULL);
 }

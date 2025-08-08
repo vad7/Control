@@ -65,18 +65,8 @@ void web_server(uint8_t thread)
 	int32_t len;
 	int8_t sock;
 
-	if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT) == pdFALSE) {
-		if(thread == 0) return; // основную задачу не блокируем на долго
-		// 1. Проверка захваченого семафора сети, ожидаем  3 времен W5200_TIME_WAIT, если мютекса не получаем, то сбрасываем мютекс
-		if(SemaphoreTake(xWebThreadSemaphore, ((3 + (fWebUploadingFilesTo != 0) * 40) * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-			journal.jprintf_time("UNLOCK mutex xWebThread, %d\n", thread);
-			HP.num_resMutexWEB++;
-		}
-	}
-
 	Socket[thread].sock = -1;                     // Сокет свободный
 
-	SPI_switchW5200();                            // Дополнительный выбор сетевой карты, в либе жестко пин SS (D10)
 	for(sock = 0; sock < W5200_SOCK_SYS; sock++)  // Цикл по сокетам веб сервера!!!! служебный не трогаем!!
 	{
 
@@ -90,6 +80,7 @@ void web_server(uint8_t thread)
 		if((Socket[0].sock==sock)||(Socket[1].sock==sock)||(Socket[2].sock==sock)||(Socket[3].sock==sock)) continue; // исключение повторного захвата сокетов
 #endif
 
+		SPI_switchW5200();                            // Дополнительный выбор сетевой карты, в либе жестко пин SS (D10)
 		// Настройка  переменных потока для работы
 		Socket[thread].http_req_type = HTTP_invalid;        // нет полезной инфы
 		SETBIT0(Socket[thread].flags, fABORT_SOCK);          // Сокет сброса нет
@@ -235,7 +226,6 @@ xUNAUTHORIZED:
 			taskYIELD();
 		} // end if (client)
 	}  // for (int sock = 0; sock < W5200_SOCK_SYS; sock++)
-	SemaphoreGive(xWebThreadSemaphore);              // Семафор отдать
 }
 
 const char filename_subst_scheme[] = "HPscheme";
@@ -3336,7 +3326,12 @@ xContinueSearchHeader:
 								if(buf_len > 0) loadLen = ff.write(ptr, buf_len); // первый пакет упаковали если он не нулевой
 								while(loadLen < lenFile)  // Чтение остальных пакетов из сети
 								{
-									if(TaskYeldAndGiveWebSemaphore()) break;
+									if(TaskYeldAndGiveWebSemaphore()) {
+#ifdef DEBUG_MODWORK
+										journal.jprintf_time("Error lock Web in %s\n", (char*) __FUNCTION__);
+#endif
+										break;
+									}
 									buf_len = Socket[thread].client.get_ReceivedSizeRX(); // получить длину входного пакета
 									if(buf_len == 0) {
 										if(Socket[thread].client.connected()) continue;	else break;
@@ -3377,7 +3372,12 @@ xContinueSearchHeader:
 							uint16_t numPoint = 0;
 							while((lenFile -= buf_len) > 0)  // Чтение остальных пакетов из сети
 							{
-								if(TaskYeldAndGiveWebSemaphore()) break;
+								if(TaskYeldAndGiveWebSemaphore()) {
+#ifdef DEBUG_MODWORK
+									journal.jprintf_time("Error lock Web in %s\n", (char*) __FUNCTION__);
+#endif
+									break;
+								}
 								buf_len = Socket[thread].client.get_ReceivedSizeRX();                  // получить длину входного пакета
 								if(buf_len == 0) {
 									if(Socket[thread].client.connected()) continue; else break;

@@ -409,26 +409,25 @@ void checkSockStatus()
 {
 	for(uint8_t i = 0; i < MAX_SOCK_NUM; i++) {        // По всем сокетам!!
 		// Не сбрасывать сокеты которые используется в потоке ОБЯЗАТЕЛЬНО!!
-#if    W5200_THREAD < 2
-         if (Socket[0].sock==i)  continue;   
-        #elif  W5200_THREAD < 3
-          if((Socket[0].sock==i)||(Socket[1].sock==i))  continue;    
-        #elif  W5200_THREAD < 4
-		if((Socket[0].sock == i) || (Socket[1].sock == i) || (Socket[2].sock == i)) continue;
+#if W5200_THREAD < 2
+		if(Socket[0].sock==i) continue;
+#elif W5200_THREAD < 3
+		if(Socket[0].sock==i || Socket[1].sock==i) continue;
+#elif  W5200_THREAD < 4
+		if(Socket[0].sock == i || Socket[1].sock == i || Socket[2].sock == i) continue;
 #else
-          if((Socket[0].sock==i)||(Socket[1].sock==i)||(Socket[2].sock==i)||(Socket[3].sock==i))  continue;   
-        #endif
+		if(Socket[0].sock==i || Socket[1].sock==i || Socket[2].sock==i || Socket[3].sock==i)  continue;
+#endif
 		uint8_t s = W5100.readSnSR(i);                                          // Прочитать статус сокета
 		if((s == SnSR::ESTABLISHED) || (s == SnSR::CLOSE_WAIT) /*|| (s == 0x22)*/) { // если он "кандидат"
-			if(xTaskGetTickCount() - connectTime[i] > HP.time_socketRes() * 1000UL) {        // Время пришло
-				journal.jprintf("%s : Socket frozen: %d\n", NowTimeToStr(), i);
-				//      close(i);
+			if(xTaskGetTickCount() - connectTime[i] > HP.time_socketRes() * 1000UL) {// Время пришло
+				journal.jprintf_time("Socket frozen: %d\n", i);
 				W5100.execCmdSn(i, Sock_CLOSE);
 				W5100.writeSnIR(i, 0xFF);
-				HP.add_socketRes();                                               // добавить счетчик
+				HP.add_socketRes();                                                  // добавить счетчик
 			}
 		} // if((s == 0x17) || (s == 0x1C))
-		else connectTime[i] = xTaskGetTickCount();                                        // Обновить время если статус не кандидат
+		else connectTime[i] = xTaskGetTickCount();                                   // Обновить время если статус не кандидат
 	} // for
 }
 // Послать один пакет!!! ----------------------------------------------------------------------------------
@@ -449,7 +448,12 @@ uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len) //, u
 		//   SerialDbg.println("ask");
 		do// Ожидание освобождения буфера
 		{
-			if(TaskYeldAndGiveWebSemaphore()) return 0;
+			if(TaskYeldAndGiveWebSemaphore()) {
+#ifdef DEBUG_MODWORK
+				journal.jprintf_time("Error lock Web [%X]\n", __builtin_return_address(0));
+#endif
+				return 0;
+			}
 			//taskENTER_CRITICAL();
 			freesize = W5100.getTXFreeSize(Socket[thread].sock);
 			if(freesize >= ret) {
@@ -490,7 +494,12 @@ uint16_t sendPacketRTOS(uint8_t thread, const uint8_t * buf, uint16_t len) //, u
 			close(Socket[thread].sock);
 			return 0;
 		}
-		if(TaskYeldAndGiveWebSemaphore()) return 0;
+		if(TaskYeldAndGiveWebSemaphore()) {
+#ifdef DEBUG_MODWORK
+			journal.jprintf_time("Error lock Web [%X]\n", __builtin_return_address(0));
+#endif
+			return 0;
+		}
 	}
 	W5100.writeSnIR(Socket[thread].sock, SnIR::SEND_OK);
 	return ret;

@@ -508,7 +508,7 @@ public:
 	byte *get_mac() { return Network.mac;}                 //  Получить mac адрес
 	uint32_t socketRes() {return countResSocket;}          //  Получить число сбросов сокетов
 	void add_socketRes() {countResSocket++;}               //  Добавить 1 к счетчику число сбросов сокетов
-	uint32_t time_socketRes() {return Network.resSocket;}  //  Получить период сбросов сокетов
+	uint32_t time_socketRes() {return Network.resSocket;}  //  Получить период сбросов сокетов, сек
 	uint32_t time_resW5200() {return Network.resW5200;}    //  Получить период сбросов W5200
 	boolean get_fPass() { return GETBIT(Network.flags,fPass);}   //  Получить флаг необходимости идентификации
 	boolean get_fInitW5200() { return GETBIT(Network.flags,fInitW5200);}  //  Получить флаг Контроля w5200
