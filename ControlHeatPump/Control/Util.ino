@@ -1559,22 +1559,27 @@ void Recover_I2C_bus(bool _reset)
 //	PIOA->PIO_OWER |= PIO_OWER_P17;
 	//pinMode(PIN_WIRE_SDA, OUTPUT);// Перевести пины в GPIO режим
 	//pinMode(PIN_WIRE_SCL, OUTPUT);// Перевести пины в GPIO режим
+	// TWI0:
+//#define I2C_PORT		PIOA
+//#define I2C_SDA	 	PIO_PB17
+//#define I2C_SCL	 	PIO_PB18
 	// TWI1:
 #define I2C_PORT	PIOB
 #define I2C_SDA	 	PIO_PB12
 #define I2C_SCL	 	PIO_PB13
 	I2C_PORT->PIO_PER = I2C_SDA | I2C_SCL;  // Включить управление через PIO
+	I2C_PORT->PIO_MDER = I2C_SDA | I2C_SCL; // Режим Open-Drain
 	I2C_PORT->PIO_OER = I2C_SDA | I2C_SCL;  // Режим выхода
 	I2C_PORT->PIO_CODR = I2C_SDA | I2C_SCL; // Установить LOW
-	delayMicroseconds(50);
+	delayMicroseconds(20);
 	// Generate 9 clock pulses
 	for (uint8_t i = 0; i < 9; i++) {
 		I2C_PORT->PIO_ODR = I2C_SCL;  // SCL: open-drain (Hi-Z)
-		delayMicroseconds(50);
-		if(digitalReadDirect(PIN_WIRE_SCL) == HIGH) break;  // Проверка освобождения SDA
+		delayMicroseconds(20);
 	    I2C_PORT->PIO_OER = I2C_SCL;   // Включить режим вывода
 	    I2C_PORT->PIO_CODR = I2C_SCL;  // SCL=0
-		delayMicroseconds(50);
+		delayMicroseconds(20);
+		if(digitalReadDirect(PIN_WIRE_SDA) == HIGH) break;  // Проверка освобождения SDA
 	}
 	// Форсированный STOP сигнал
 	I2C_PORT->PIO_CODR = I2C_SDA;  // SDA=0
@@ -1583,10 +1588,22 @@ void Recover_I2C_bus(bool _reset)
 	I2C_PORT->PIO_ODR = I2C_SCL;  // SCL=Hi-Z (внешняя подтяжка поднимет)
 	delayMicroseconds(20);
 	I2C_PORT->PIO_ODR = I2C_SDA;  // SDA=Hi-Z (STOP условие)
+	pinMode(PIN_WIRE_SDA, INPUT);
 	delayMicroseconds(20);
 	if(!digitalReadDirect(PIN_WIRE_SDA) && _reset) repower();
+	PIO_Configure(
+			g_APinDescription[PIN_WIRE_SCL].pPort,
+			g_APinDescription[PIN_WIRE_SCL].ulPinType,
+			g_APinDescription[PIN_WIRE_SCL].ulPin,
+			g_APinDescription[PIN_WIRE_SCL].ulPinConfiguration);
+	PIO_Configure(
+			g_APinDescription[PIN_WIRE_SDA].pPort,
+			g_APinDescription[PIN_WIRE_SDA].ulPinType,
+			g_APinDescription[PIN_WIRE_SDA].ulPin,
+			g_APinDescription[PIN_WIRE_SDA].ulPinConfiguration);
 	pmc_enable_periph_clk(WIRE_INTERFACE_ID);
 	TWI1->TWI_CR = TWI_CR_SWRST; // Выполняем программный сброс
+	TWI1->TWI_CR = TWI_CR_MSEN | TWI_CR_SVEN;
 	Wire.begin();
 	Wire.setClock(I2C_SPEED);
 	delay(1);
