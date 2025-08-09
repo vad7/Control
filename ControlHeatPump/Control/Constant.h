@@ -88,12 +88,13 @@ const uint16_t  defaultPort=80;
 #ifndef W5200_THREAD
 #define W5200_THREAD      3                 // Число потоков для сетевого чипа w5200 допустимо 1-4 потока, минимум 2 потока
 #endif
-#define W5200_NUM_PING    4                 // Число попыток пинга до определения потери связи
-#define W5200_TIME_PING   1000              // мсек Время между попытками пинга (если не удача)
+#define W5200_NUM_PING    2                 // Число попыток пинга до определения потери связи
+#define W5200_TIME_PING   500              // мсек Время между попытками пинга (если не удача)
 #define W5200_MAX_LEN     2048 //=W5100.SSIZE // Максимальная длина буфера, определяется W5200 не более 2048 байт
 #define W5200_NUM_LINK    2                 // Число попыток сброса чипа w5500 и проверки появления связи (кабель воткнут) используется для инициализаци чипа
 #define W5200_TIME_LINK   4000              // Максимальное время ожидания устанoвления связи (поднятие Link) кабель воткнут  используется для инициализаци чипа (мсек)
-#define W5200_TIME_WAIT   3000              // Время ожидания захвата мютекса (переключение потоков) мсек
+#define W5200_TIME_WAIT   2000              // Время ожидания захвата мютекса (переключение потоков) мсек
+#define W5200_TIME_WAIT_MAX (10*60*1000UL)	// Время ожидания захвата макс
 #define W5200_SPI_SPEED   SPI_RATE          // ЭТО ДЕЛИТЕЛЬ (SPI_RATE определен в w5100.h)!!! Частота SPI w5200 = 84/W5200_SPI_SPEED т.е. 2-42МГц 3-28МГц 4-21МГц 6-14МГц Диапазон 2-6
 #define W5200_SOCK_SYS    (MAX_SOCK_NUM-1)  // Номер системного сокета который не использутся в вебсервере, это последний сокет, НЕ МЕНЯТЬ
 #define W5200_RTR         (2*0x07D0)        // время таймаута в 100 мкс интервалах  (по умолчанию 200ms(100us X 2000(0x07D0))) актуально для комманд CONNECT, DISCON, CLOSE, SEND, SEND_MAC, SEND_KEEP
@@ -196,7 +197,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef TIME_READ_SENSOR 
 #define TIME_READ_SENSOR  			4000UL		    // мсек. Период опроса датчиков
 #endif
-#define TIME_WEB_SERVER   			W5200_THREAD    // мсек. Период опроса web_server() в каждой задаче
+#define TIME_WEB_SERVER   			2			    // мсек. Период опроса web_server() в каждой задаче
 #define TIME_CONTROL      			10              // сек. ПО УМОЛЧАНИЮ, Период управления тепловым насосом (цикл управления в режиме Гистерезис)
 #define TIME_vUpdateTick			20				// мсек. Квант задачи vUpdate
 #define TIME_EEV          			(1*1000)        // мсек. Период задачи vUpdateEEV в переходных состояниях ТН
@@ -226,7 +227,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 // Устройства i2c I2C_EEPROM_64KB и I2C_FRAM_MEMORY   Размер и тип памяти, определен в config.h т.к. он часто меняется
 #define I2C_SPEED         twiClock400kHz // Частота работы шины I2C
 #define I2C_NUM_INIT         3           // Число попыток инициализации шины
-#define I2C_TIME_WAIT        2000        // Время ожидания захвата мютекса шины I2C мсек
+#define I2C_TIME_WAIT        1000        // Время ожидания захвата мютекса шины I2C мсек
 #define I2C_ADR_RTC          0x68        // Адрес чипа rtc на шине I2C
 #define I2C_ADR_DS2482       0x18        // Адрес чипа OneWire на шине I2C 3-х проводная
 #define I2C_ADR_DS2482_2     0x19        // Адрес чипа OneWire на 2-ой шине I2C

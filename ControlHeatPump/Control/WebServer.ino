@@ -2020,8 +2020,8 @@ xSaveStats:
 #ifndef FC_ANALOG_CONTROL
 					SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 					HP.dFC.get_infoFC(strReturn);
-					if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
-						journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+					if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+						journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 					}
 #else
 					strcat(ret, "|Данные не доступны, управление через ") ;
@@ -2046,11 +2046,11 @@ xSaveStats:
 			// Котел
 #ifdef USE_HEATER
 			else if(strcmp(str + 1,"et_HT")==0) {
+				SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 				if(*str == 'g') {                   // Функция get_HT - Котел, получить значение
 					WEB_STORE_DEBUG_INFO(35);
 xHeater_get_param:
 					if(HP.dHeater.get_param(x, strReturn)) {
-						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 						if(x[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
 							uint16_t d;
 							l_i32 = strtol(x + 1, NULL, 16);
@@ -2062,9 +2062,6 @@ xHeater_get_param:
 							l_i32 = strtol(x + 1, NULL, 16);
 							i = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, l_i32, &d);
 							if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
-						}
-						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
-							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
 						}
 					}
 				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение
@@ -2086,6 +2083,9 @@ xHeater_get_param:
 						if(l_i32 == OK) goto xHeater_get_param;
 						else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
 					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
+				}
+				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+					journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 				}
 				ADD_WEBDELIM(strReturn); continue;
 			}
@@ -2225,8 +2225,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 						else if(*y == 'f') i = Modbus.writeHoldingRegistersFloat(id, par, strtol(z, NULL, 0)); // 2 registers (float).
 						else if(*y == 'c') i = Modbus.writeSingleCoil(id, par, atoi(z));	// coil
 						else i = 1;
-						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
-							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 							i = 2;
 						}
 #ifdef MODBUS_TIME_TRANSMISION
@@ -2249,8 +2249,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 						} else if(*y == 'c') {
 							if((i = Modbus.readCoil(id, par, (boolean *)&par)) == OK) _itoa(par, strReturn);
 						} else i = 1;
-						if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
-							journal.jprintf("Error lock Web in %s\n", (char*) __FUNCTION__);
+						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 							i = 2;
 						}
 					}

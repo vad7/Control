@@ -1182,8 +1182,8 @@ bool get_binModbus(uint8_t thread, char *filename)
     		if(err) journal.jprintf("error ");
     		journal.jprintf("%d\n", err ? err : cell_32b);
     	}
-		if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
-			journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);
+		if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+			journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 			return false;
 		}
     	if(err == OK) {

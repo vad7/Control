@@ -577,8 +577,8 @@ ICMPPing ping(W5200_SOCK_SYS, (uint16_t)random(0, 255));
 boolean pingServer()
 {
 	IPAddress ip;
-	if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE)  {return false;}  // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
-	if(!check_address(HP.get_pingAdr(), ip)) {journal.jprintf("Wrong ping server\n"); SemaphoreGive(xWebThreadSemaphore); return false;}  // адрес не верен, или DNS не работает - ничего не делаем
+	if(SemaphoreTake(xWebThreadSemaphore, 100)==pdFALSE)  {return false;}  // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+	if(!check_address(HP.get_pingAdr(), ip)) { SemaphoreGive(xWebThreadSemaphore); journal.jprintf("Wrong ping server\n");  return false;}  // адрес не верен, или DNS не работает - ничего не делаем
  	// Адрес правильный
 	ping.setTimeout(W5200_TIME_PING);                   // время между попытками пинга мсек
 	WDT_Restart(WDT);                                   // Сбросить вачдог

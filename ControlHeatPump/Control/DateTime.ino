@@ -109,7 +109,7 @@ bool set_time_HTTP(bool upd_vars __attribute__((unused)))
 				flag = 0;
 				while(wait--) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
-					_delay(100);
+					_delay(10);
 					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 					if(tTCP.available()) {
 						flag = 1;
@@ -202,8 +202,8 @@ bool set_time_NTP(bool upd_vars)
 
 	// 2. Посылка пакета
 	if(!Udp.begin(NTP_LOCAL_PORT, W5200_SOCK_SYS)) {
-		journal.jprintf(" UDP fail\n");
 		SemaphoreGive(xWebThreadSemaphore);
+		journal.jprintf(" UDP fail\n");
 		return false;
 	}
 	for(uint8_t i = 0; i < NTP_REPEAT; i++)                                       // Делам 5 попыток получить время
@@ -237,7 +237,14 @@ bool set_time_NTP(bool upd_vars)
 		}
 		flag = true;
 
+		SemaphoreGive(xWebThreadSemaphore);
 		_delay(NTP_REPEAT_TIME);                                             // Ждем, чтобы увидеть, доступен ли ответ:
+		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+			journal.jprintf_date("ERROR lok!");
+			Udp.stop();
+			return false;
+		}
+
 		if(flag) {
 			flag = false;
 			if(Udp.parsePacket()) {

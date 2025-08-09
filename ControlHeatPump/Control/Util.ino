@@ -67,6 +67,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		if(wait_time == 0) {
+			if(_sem.xSemaphore) return false;
 			vPortEnterCritical();
 			if(_sem.xSemaphore) {
 				vPortExitCritical();
@@ -96,7 +97,7 @@ inline bool TaskYeldAndGiveWebSemaphore(void)
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 		taskYIELD();
-		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {  // Захват мютекса веба
+		if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 			return true;
 		}
 	}
@@ -1585,7 +1586,9 @@ void Recover_I2C_bus(bool _reset)
 	delayMicroseconds(20);
 	if(!digitalReadDirect(PIN_WIRE_SDA) && _reset) repower();
 	pmc_enable_periph_clk(WIRE_INTERFACE_ID);
+	TWI1->TWI_CR = TWI_CR_SWRST; // Выполняем программный сброс
 	Wire.begin();
+	Wire.setClock(I2C_SPEED);
 	delay(1);
 	journal.printf("I2C Resetted\n");
 }
@@ -1626,5 +1629,7 @@ void repower(void)
 	TaskSuspendAll();
 #endif
 	while(1) ; // hang
+#else
+	journal.jprintf("Request REPOWER from %X\n", __builtin_return_address(0));
 #endif
 }
