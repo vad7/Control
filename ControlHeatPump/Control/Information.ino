@@ -287,7 +287,9 @@ int32_t Journal::send_Data(uint8_t thread)
 		} else {                                                        // Текущая позиция меньше хвоста (конец передачи)
 			if(bufferTail - num >= W5200_MAX_LEN) len = W5200_MAX_LEN; else len = bufferTail - num;     // Контроль достижения хвоста журнала
 		}
+		SemaphoreGive(xWebThreadSemaphore);
 		uint8_t _err = readEEPROM_I2C(I2C_JOURNAL_START + num, (byte*) Socket[thread].outBuf, len);  // чтение из памяти
+		if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX/portTICK_PERIOD_MS)==pdFALSE) break;
 		if(_err) {
 			err = ERR_READ_I2C_JOURNAL;
 #ifdef DEBUG

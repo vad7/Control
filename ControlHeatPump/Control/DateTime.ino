@@ -110,7 +110,7 @@ bool set_time_HTTP(bool upd_vars __attribute__((unused)))
 				while(wait--) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(10);
-					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX/portTICK_PERIOD_MS)==pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 					if(tTCP.available()) {
 						flag = 1;
 						break;
@@ -236,11 +236,10 @@ bool set_time_NTP(bool upd_vars)
 			flag = false;
 		}
 		flag = true;
-
 		SemaphoreGive(xWebThreadSemaphore);
 		_delay(NTP_REPEAT_TIME);                                             // Ждем, чтобы увидеть, доступен ли ответ:
-		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-			journal.jprintf_date("ERROR lok!");
+		if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {
+			journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 			Udp.stop();
 			return false;
 		}
