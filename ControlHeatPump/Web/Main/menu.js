@@ -70,7 +70,7 @@
 </li>\
 <li class="wattrouter"><a href="wattrouter.html"><i class="menu-icon menu-icon-wr"></i>Ваттроутер</a></li>\
 <li class="about"><a href="about.html"><i class="menu-icon menu-icon-about"></i>О контроллере</a></li>\
-<li name="USR" id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=0"><i class="menu-icon"></i>Логин</a></li>\
+<li id="mlogin" hidden><a href="planf.html" onclick="NeedLogin=0"><i class="menu-icon"></i>Логин</a></li>\
 </ul>\
 <div class="dateinfo">\
 	<div id="get_status"></div>\
