@@ -93,6 +93,9 @@ Stats_Data Stats_data[] = {
 #ifdef USE_SUN_COLLECTOR
 	,{ 0, STATS_OBJ_Sun, STATS_TYPE_TIME, STATS_WHEN_ALWAYS, 0 }
 #endif
+#ifdef USE_HEATER
+	,{ 0, STATS_OBJ_Heater, STATS_TYPE_TIME, STATS_WHEN_ALWAYS, 0 }
+#endif
 #ifdef PGEO
 	,{ 0, STATS_OBJ_Press, STATS_TYPE_MIN, STATS_WHEN_ALWAYS, PGEO }
 #endif

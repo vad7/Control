@@ -60,7 +60,8 @@ enum {
 	STATS_OBJ_WattRouter_Excess,//= 23
 	STATS_OBJ_Power_BOILER,	// кВт*ч, потрачено на нагрев ГВС всего, включая ваттроутер
 	STATS_OBJ_PowerDay,		// кВт*ч, потребление ТН по дневному тарифу (не TARIF_NIGHT_START - END), TYPE_SUM, должен следовать после STATS_OBJ_Power
-	STATS_OBJ_PowerNight	// кВт*ч, потребление ТН по ночному тарифу (TARIF_NIGHT_START - END), TYPE_SUM, должен следовать после STATS_OBJ_Power
+	STATS_OBJ_PowerNight,	// кВт*ч, потребление ТН по ночному тарифу (TARIF_NIGHT_START - END), TYPE_SUM, должен следовать после STATS_OBJ_Power
+	STATS_OBJ_Heater		// Котел - время для дневной статистики, текущая мощность для истории
 };
 
 const char *STATS_OBJ_names[] = {
@@ -90,6 +91,7 @@ const char *STATS_OBJ_names[] = {
 	"WattRouter_Excess",
 	"PowerDay",
 	"PowerNight",
+	"Heater",
 	NULL
 };
 

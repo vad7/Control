@@ -516,9 +516,16 @@ void Statistics::Update()
 			if(newval == 0) continue;
 			//if(newval == 0) skip_value = 1;
 			break;
+#ifdef USE_SUN_COLLECTOR
 		case STATS_OBJ_Sun:
 			if(!GETBIT(HP.work_flags, fHP_SunWork)) continue;
 			break;
+#endif
+#ifdef USE_HEATER
+		case STATS_OBJ_Heater:
+			if(!HP.is_heater_on()) continue;
+			break;
+#endif
 		case STATS_OBJ_Compressor:
 			if(compressor_on_timer == 0) continue;
 			break;
@@ -579,6 +586,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 				strcat(ret, "C");		// ось COP
 				break;
 			case STATS_OBJ_Compressor:
+			case STATS_OBJ_Heater:
 				strcat(ret, "H");
 				break;
 			case STATS_OBJ_Flow:
@@ -673,9 +681,16 @@ void Statistics::StatsFieldHeader(char *ret, uint8_t i, uint8_t flag)
 	case STATS_OBJ_Compressor:
 		strcat(ret, "Моточасы, м");
 		break;
+#ifdef USE_HEATER
+	case STATS_OBJ_Heater:
+		strcat(ret, "Котел, м");
+		break;
+#endif
+#ifdef USE_SUN_COLLECTOR
 	case STATS_OBJ_Sun:
 		strcat(ret, "СК время, м");
 		break;
+#endif
 	default: strcat(ret, "?");
 	}
 	switch(Stats_data[i].type) {
@@ -1137,6 +1152,11 @@ void Statistics::History()
 		case STATS_OBJ_Compressor:
 			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // H
 			break;
+#ifdef USE_HEATER
+		case STATS_OBJ_Heater:
+			int_to_dec_str(HP.dHeater.data.Power, 1, &buf, 0); // %
+			break;
+#endif
 		case STATS_OBJ_Power:
 			int_to_dec_str(HP.power220, 1, &buf, 0);  // W
 			break;
