@@ -2050,18 +2050,19 @@ xSaveStats:
 				if(*str == 'g') {                   // Функция get_HT - Котел, получить значение
 					WEB_STORE_DEBUG_INFO(35);
 xHeater_get_param:
-					if(HP.dHeater.get_param(x, strReturn)) {
+					if(!HP.dHeater.get_param(x, strReturn)) {
 						if(x[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
 							uint16_t d;
 							l_i32 = strtol(x + 1, NULL, 16);
 							i = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, l_i32, &d);
 							if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
-						} else
-						if(x[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
+						} else if(x[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
 							uint32_t d;
 							l_i32 = strtol(x + 1, NULL, 16);
 							i = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, l_i32, &d);
 							if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
+						} else if(strcmp(x, Wheater_INFO)==0) {
+							HP.dHeater.get_info(strReturn);
 						}
 					}
 				} else if(*str == 's') {			// Функция set_HT - Котел, установить значение

@@ -369,7 +369,7 @@ void devHeater::get_info(char* buf)
 	}
 }
 
-// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret, если ошибка возврат true
+// Получить параметр в виде строки, результат ДОБАВЛЯЕТСЯ в ret, если ошибка возврат false
 bool devHeater::get_param(char *var, char *ret)
 {
 	ret += strlen(ret);
@@ -398,8 +398,8 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ _itoa(set.pump_work_time_after_stop * 10, ret); } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ _itoa(set.ModbusMinTimeBetweenTransaction, ret); } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ _itoa(set.ModbusResponseTimeout, ret); } else
-	if(strcmp(var, Wheater_INFO)==0) 				   	{ get_info(ret); } else
 	return false;
+
 	return true;
 }
 

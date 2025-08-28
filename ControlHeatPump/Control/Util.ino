@@ -1615,6 +1615,7 @@ bool Check_I2C_bus(void)
 {
 	bool ret;
 	pinMode(PIN_WIRE_SDA, INPUT);
+	delayMicroseconds(20);
 	if(digitalReadDirect(PIN_WIRE_SDA)) {
 		ret = true;
 	} else {
