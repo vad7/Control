@@ -722,7 +722,7 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 
 // --------------------------- W E B ------------------------
 #define WEB_SERVER_TASK(n) {\
-	if(!xWebThreadSemaphore.xSemaphore && SemaphoreTake(xWebThreadSemaphore, 0)) {\
+	if(SemaphoreTake(xWebThreadSemaphore, 0)) {\
 		/*WEB_STORE_DEBUG_INFO(1);*/\
 		web_server(n);\
 		SemaphoreGive(xWebThreadSemaphore);\

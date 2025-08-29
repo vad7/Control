@@ -799,6 +799,7 @@ const char *option_f2AutoStartGenerator={"AG"};
 const char *option_f2modWorkLog       ={"MWL"};
 const char *option_f2RelayLog         ={"RL"};
 const char *option_f2LogEnergy        ={"LE"};
+const char *option_f2ReadMPPT         ={"RM"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
 const char *option_WF_MinTemp         = {"WMT"};

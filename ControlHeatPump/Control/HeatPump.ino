@@ -1106,6 +1106,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { Option.flags = (Option.flags & ~(1<<fWebStoreOnSPIFlash)) | ((n!=0)<<fWebStoreOnSPIFlash); return true; } else
 	if(strcmp(var,option_LogWirelessSensors)==0){ Option.flags = (Option.flags & ~(1<<fLogWirelessSensors)) | ((n!=0)<<fLogWirelessSensors); return true; } else
 	if(strcmp(var,option_f2LogEnergy)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2LogEnergy)) | ((n!=0)<<f2LogEnergy); return true; } else
+	if(strcmp(var,option_f2ReadMPPT)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2ReadMPPT)) | ((n!=0)<<f2ReadMPPT); return true; } else
 	if(strcmp(var,option_SAVE_ON)==0)          {if (n==0) {SETBIT0(Option.flags,fSaveON); return true;} else if (n==1) {SETBIT1(Option.flags,fSaveON); return true;} else return false;    }else             // флаг записи в EEPROM включения ТН (восстановление работы после перезагрузки)
 	if(strncmp(var,option_SGL1W, sizeof(option_SGL1W)-1)==0) {
 	   uint8_t bit = var[sizeof(option_SGL1W)-1] - '0' - 1;
@@ -1258,6 +1259,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_f2modWorkLog)==0)     { return strcat(ret, (char*)(GETBIT(Option.flags2, f2modWorkLog) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2RelayLog)==0)       { return strcat(ret, (char*)(GETBIT(Option.flags2, f2RelayLog) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2LogEnergy)==0)      { return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogEnergy) ? cOne : cZero)); } else
+	if(strcmp(var,option_f2ReadMPPT)==0)       { return strcat(ret, (char*)(GETBIT(Option.flags2, f2ReadMPPT) ? cOne : cZero)); } else
 	if(strcmp(var,option_History)==0)          {if(GETBIT(Option.flags,fHistory)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else            // Сбрасывать статистику на карту
 	if(strcmp(var,option_SDM_LOG_ERR)==0)      {if(GETBIT(Option.flags,fModbusLogErrors)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { return strcat(ret, (char*)(GETBIT(Option.flags,fWebStoreOnSPIFlash) ? cOne : cZero)); } else
@@ -4322,14 +4324,16 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
 		return;
 	}
-	uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
-	if(p) {
-		_profile = p - 1;
-		if(Prof.id == _profile) {
-			SemaphoreGive(xI2CSemaphore);
-			return;
+	if(HP.get_State() != pOFF_HP) {
+		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
+		if(p) {
+			_profile = p - 1;
+			if(Prof.id == _profile) {
+				SemaphoreGive(xI2CSemaphore);
+				return;
+			}
+			journal.jprintf("Switch profile by time to %d\n", p + 1);
 		}
-		journal.jprintf("Switch profile by time to %d\n", p + 1);
 	}
 	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);

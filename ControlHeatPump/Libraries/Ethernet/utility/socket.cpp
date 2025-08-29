@@ -141,6 +141,7 @@ uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len)
       close(s);
       return 0;
     }
+    RTOS_delay();
   }
   /* +2008.01 bj */
   W5100.writeSnIR(s, SnIR::SEND_OK);

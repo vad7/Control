@@ -463,7 +463,7 @@ void Nextion::Update()
 		if(WR_LastSunPowerOutCnt <= 5 || WR_LastSunPowerOut != 0 || fUpdate == 2) { // Если не 0
 			setComponentText("b", WR_LastSunPowerOut == 0 ? (char*)"" : itoa(WR_LastSunPowerOut, ntemp, 10));
 		}
-		SETBIT1(WR_WorkFlags, WR_fWF_Read_MPPT);
+		if(GETBIT(HP.Option.flags2, f2ReadMPPT)) SETBIT1(WR_WorkFlags, WR_fWF_Read_MPPT);
 #endif
 		uint8_t fl = (HP.IsWorkingNow() && HP.get_State() != pSTOPING_HP) | (HP.HeatBoilerUrgently << 1)
 #ifdef USE_SUN_COLLECTOR

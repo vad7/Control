@@ -690,7 +690,10 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 				while(timeout-- > 0) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(20);
-					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS)) == pdFALSE) break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS)) == pdFALSE) {
+						ret = -2000000013;
+						break; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
+					}
 					if(tTCP.available()) {
 						ret = 0;
 						break;
@@ -783,7 +786,7 @@ xget_value_1:
 			tTCP.stop();
 		}
 	}
-	SemaphoreGive(xWebThreadSemaphore);
+	if(ret != -2000000013) SemaphoreGive(xWebThreadSemaphore);
 	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) journal.jprintf(" Ret = %d\n", ret);
 	else if(ret < 0) {
 		if(Last_Error[fget_value] != (int8_t)(ret + 2000000000)) {
