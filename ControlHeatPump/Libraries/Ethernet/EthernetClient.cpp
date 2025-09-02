@@ -70,8 +70,6 @@ int EthernetClient::connect(IPAddress ip, uint16_t port) {
 
   uint32_t start = millis();
   while (status() != SnSR::ESTABLISHED) {
-    RTOS_delay();
-
     if (status() == SnSR::CLOSED) {
       _sock = MAX_SOCK_NUM;
 //      Serial.println("EXCEPTION: Socket was closed after being established");
@@ -81,6 +79,7 @@ int EthernetClient::connect(IPAddress ip, uint16_t port) {
         _sock = MAX_SOCK_NUM;
     	return 0; // timeout
     }
+    RTOS_delay();
   }
 
   return 1;
@@ -120,8 +119,6 @@ int EthernetClient::connect(IPAddress ip, uint16_t port,uint8_t sock)// pav2000
 
   uint32_t start = millis();
   while (status() != SnSR::ESTABLISHED) {
-    RTOS_delay();
-
     if (status() == SnSR::CLOSED) {
       _sock = MAX_SOCK_NUM;
       return 0;
@@ -130,6 +127,7 @@ int EthernetClient::connect(IPAddress ip, uint16_t port,uint8_t sock)// pav2000
         _sock = MAX_SOCK_NUM;
     	return 0;
     }
+    RTOS_delay();
   }
   return 1;
 }
@@ -226,12 +224,10 @@ void EthernetClient::stop() {
   unsigned long start = millis();
 
   // wait a second for the connection to close
-  while (status() != SnSR::CLOSED && millis() - start < 1000)
-    RTOS_delay();
+  while (status() != SnSR::CLOSED && millis() - start < 1000) RTOS_delay();
 
   // if it hasn't closed, close it forcefully
-  if (status() != SnSR::CLOSED)
-    close(_sock);
+  if (status() != SnSR::CLOSED) close(_sock);
 
   EthernetClass::_server_port[_sock] = 0;
   _sock = MAX_SOCK_NUM;

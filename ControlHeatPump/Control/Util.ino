@@ -104,6 +104,18 @@ inline bool TaskYeldAndGiveWebSemaphore(void)
 	return false;
 }
 
+// Delay 1ms
+void RTOS_delay(void)
+{
+	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+		if(xWebThreadSemaphore.xSemaphore) {
+			SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+			vTaskDelay(portTICK_PERIOD_MS);
+			SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS);  // Захват мютекса веба
+		} else vTaskDelay(portTICK_PERIOD_MS);
+	}
+}
+
 // разбор строки побайтно ОШИБКИ ПЛОХО не ловит!
 //  для IP          const char* ipStr = "50.100.150.200"; byte ip[4]; parseBytes(ipStr, '.', ip, 4, 10);
 //  для mac address const char* macStr = "90-A2-AF-DA-14-11"; byte mac[6]; parseBytes(macStr, '-', mac, 6, 16);
