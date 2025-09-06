@@ -91,7 +91,7 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 		dnsUpdateSMTP = dnsUpdateSMS = true;
 		WDT_Restart(WDT);
 	}
-	if(dnsUpdateSMTP) //надо обновлятся
+	if(dnsUpdateSMTP && GETBIT(messageSetting.flags, fMail)) //надо обновляться
 	{
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING && SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) return false; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 		check_address(messageSetting.smtp_server, messageSetting.smtp_serverIP);   // Получить адрес IP через DNS При не удаче возвращается 0, при удаче: 1 - IP на входе (были цифры, DNS не нужен), 2 - был запрос к DNS и адрес получен
@@ -99,7 +99,7 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) SemaphoreGive(xWebThreadSemaphore);
 		ret = false;  // вызов обновления был
 	}
-	if(dnsUpdateSMS) //надо обновлятся
+	if(ret && dnsUpdateSMS && GETBIT(messageSetting.flags, fSMS)) //надо обновляться
 	{
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 			if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) return false; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
@@ -130,7 +130,7 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 boolean Message::set_messageSetting(char *var, char *c)
 {
   float x;
-  if (strcmp(var, mess_MAIL) == 0) { if (strcmp(c, cZero) == 0)      { SETBIT0(messageSetting.flags, fMail); return true;} else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMail);  return true;  } else return false;
+  if (strcmp(var, mess_MAIL) == 0) { if (strcmp(c, cZero) == 0)      { SETBIT0(messageSetting.flags, fMail); return true;} else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMail); dnsUpdateSMTP = true; return true;  } else return false;
   } else if (strcmp(var, mess_MAIL_AUTH) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMailAUTH);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailAUTH); return true; } else return false;
   } else if (strcmp(var, mess_MAIL_INFO) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMailInfo);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailInfo); return true; } else return false;
   } else if (strcmp(var, mess_MESS_RESET) == 0) { if (strcmp(c, cZero) == 0)  {  SETBIT0(messageSetting.flags, fMessageReset); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageReset); return true; } else return false;
@@ -189,6 +189,7 @@ boolean Message::set_messageSetting(char *var, char *c)
 		  return true;
 	  } else if(strcmp(c, cOne) == 0) {
 		  SETBIT1(messageSetting.flags, fSMS);
+		  dnsUpdateSMS = true;
 		  return true;
 	  } else return false;
   } else if(strcmp(var, mess_SMS_SERVICE) == 0) {
