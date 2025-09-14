@@ -421,7 +421,7 @@ void checkSockStatus()
 		uint8_t s = W5100.readSnSR(i);                                          // Прочитать статус сокета
 		if((s == SnSR::ESTABLISHED) || (s == SnSR::CLOSE_WAIT) /*|| (s == 0x22)*/) { // если он "кандидат"
 			if(xTaskGetTickCount() - connectTime[i] > HP.time_socketRes() * 1000UL) {// Время пришло
-				journal.jprintf_time("Socket frozen: %d\n", i);
+				if(HP.get_NetworkFlags() & ((1<<fWebFullLog)|(1<<fWebLogError))) journal.jprintf_time("Socket frozen: %d\n", i);
 				W5100.execCmdSn(i, Sock_CLOSE);
 				W5100.writeSnIR(i, 0xFF);
 				HP.add_socketRes();                                                  // добавить счетчик
