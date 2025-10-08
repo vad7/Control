@@ -7,7 +7,7 @@
 window.onload = function() {
 	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(NST),get_oHP(NSTP),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH),get_oHP(DSH),get_oHP(CP),get_oHP(RM)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH),get_oHP(DSH),get_oHP(CP),get_oHP(RM),get_oHP(WSM)");
 }; 
 function setTM(s) {
 	val = document.getElementById("get_ohp-" + s.toLowerCase()).value;
@@ -24,7 +24,7 @@ function setTM(s) {
 	<input type="submit" value="?" onclick="location.assign('config-help.html')" style="float:none"></h1>
 	<div class="row1">
 		<table border="1" rules="rows">
-		<thead><tr><th>Описание</th><th>Значение</th></tr></thead>			
+		<thead><tr><th width="60%">Описание</th><th width="40%">Значение</th></tr></thead>			
 		<tbody>
 		<tr>
 			<td>Расположение файлов веб-сервера на SPI Flash (иначе на SD карте)<sup>1</sup></td>
@@ -256,6 +256,10 @@ function setTM(s) {
 		<tr>
 			<td>HTTP GET запрос на сервер погоды</td>
 			<td nowrap><input id="get_ohp-wft" type="text"> <input type="submit" value=">" onclick="setParam('get_oHP(WFT)')"></td>
+		</tr>
+		<tr>
+			<td>Добавка к полученному значению облачности по месяцам, %</td>
+			<td nowrap><input id="get_ohp-wsm" size="30" type="text"> <input type="submit" value=">" onclick="setParam('get_oHP(WSM)')"></td>
 		</tr>
 		<tr>
 			<td>Пароль для сервера Микроарт Малина (логин: <span id="get_ohp-ml">-</span>)</td>

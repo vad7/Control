@@ -2101,6 +2101,11 @@ xGetOptionHP:
 					strcat(strReturn, HP.Option.WF_ReqServer);
 				} else if(strcmp(x, option_WF_ReqText)==0) {
 					strcat(strReturn, HP.Option.WF_ReqText);
+				} else if(strcmp(x, option_WF_AddCloudByMonth)==0) {
+					for(i = 0; i < (int16_t)sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0]); i++) {
+						_itoa(HP.Option.WF_AddCloudByMonth[i], strReturn);
+						if(i < (int16_t)sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0])-1) strcat(strReturn, ",");
+					}
 				} else if(strcmp(x, option_Microart_login)==0) {
 					strcat(strReturn, HTTP_MAP_Server_Login);
 				} else if(strcmp(x, option_Microart_pass)==0) {
@@ -2123,6 +2128,15 @@ xGetOptionHP:
 						goto xGetOptionHP;
 					} else if(strcmp(x, option_WF_ReqText)==0) {
 						strncpy(HP.Option.WF_ReqText, z, sizeof(HP.Option.WF_ReqText)-1);
+						goto xGetOptionHP;
+					} else if(strcmp(x, option_WF_AddCloudByMonth)==0) {
+						i = 0;
+						while((y = strpbrk(z, ","))) {
+							y[0] = 0;
+							HP.Option.WF_AddCloudByMonth[i++] = atoi(z);
+							z = y + 1;
+						}
+						HP.Option.WF_AddCloudByMonth[i] = atoi(z);
 						goto xGetOptionHP;
 					} else if(strcmp(x, option_Microart_pass)==0) {
 						strncpy(HP.Option.Microart_pass, z, sizeof(HP.Option.Microart_pass)-1);

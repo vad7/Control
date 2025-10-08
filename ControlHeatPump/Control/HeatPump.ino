@@ -863,6 +863,7 @@ void HeatPump::resetSettingHP()
 	WR.PWM_Freq = PWM_WRITE_OUT_FREQ_DEFAULT;
 	WR.WF_Time = 50;
 #endif
+	memcpy(Option.WF_AddCloudByMonth, WF_AddCloudByMonth, sizeof(Option.WF_AddCloudByMonth));
 	Option.ModbusMinTimeBetweenTransaction = MODBUS_MIN_TIME_BETWEEN_TRNS;
 	Option.ModbusResponseTimeout = MODBUS_TIMEOUT;
 }

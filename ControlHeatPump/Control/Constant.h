@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.202"				// Версия прошивки
+#define VERSION			"1.203"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -803,6 +803,7 @@ const char *option_f2ReadMPPT         ={"RM"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
 const char *option_WF_MinTemp         = {"WMT"};
+const char *option_WF_AddCloudByMonth = {"WSM"};
 const char option_Microart_login[]    = "ML";
 const char option_Microart_pass[]     = "MP";
 const char *option_DailySwitchHysteresis={"DSH"};
