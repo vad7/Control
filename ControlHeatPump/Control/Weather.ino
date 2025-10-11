@@ -81,7 +81,7 @@ int WF_ProcessForecast(char *json)
 				if(avg_cl < 0) avg_cl = 0;
 			//}
 			avg_cl += HP.Option.WF_AddCloudByMonth[rtcSAM3X8.get_months()-1];
-			if(avg_cl > 100) avg_cl = 100;
+			if(avg_cl > 100) avg_cl = 100; else if(avg_cl < 0) avg_cl = 0;
 			WF_BoilerTargetPercent = avg_cl;
 			/*if(GETBIT(WR.Flags, WR_fLog))*/ journal.jprintf(":%d%%, BoilerTrg=%.2d\n", avg_cl, HP.get_boilerTempTarget());
 		} else {
