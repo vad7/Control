@@ -2102,9 +2102,9 @@ xGetOptionHP:
 				} else if(strcmp(x, option_WF_ReqText)==0) {
 					strcat(strReturn, HP.Option.WF_ReqText);
 				} else if(strcmp(x, option_WF_AddCloudByMonth)==0) {
-					for(i = 0; i < (int16_t)sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0]); i++) {
+					for(i = 0; i < (int16_t)(sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0])); i++) {
 						_itoa(HP.Option.WF_AddCloudByMonth[i], strReturn);
-						if(i < (int16_t)sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0])-1) strcat(strReturn, ",");
+						if(i < (int16_t)(sizeof(HP.Option.WF_AddCloudByMonth)/sizeof(HP.Option.WF_AddCloudByMonth[0])-1)) strcat(strReturn, ",");
 					}
 				} else if(strcmp(x, option_Microart_login)==0) {
 					strcat(strReturn, HTTP_MAP_Server_Login);

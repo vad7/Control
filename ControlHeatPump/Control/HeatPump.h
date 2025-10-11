@@ -307,7 +307,7 @@ struct type_optionHP
  uint8_t  ModbusResponseTimeout;
  uint8_t  nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
  uint8_t  Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек
- uint8_t  WF_AddCloudByMonth[12];		// + к облачности по месяцам, %
+ int8_t   WF_AddCloudByMonth[12];		// + к облачности по месяцам, %
 };// __attribute__((packed));
 
 
