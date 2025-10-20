@@ -295,7 +295,7 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Ускоренный нагрев ГВС (одновременное использование ТЭНа и ТН для нагрева): ");HP.Prof.get_boiler((char*)boil_TURBO_BOILER,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Использование ТЭНа для догрева бойлера до высоких температур: ");HP.Prof.get_boiler((char*)boil_ADD_HEATING,Socket[thread].outBuf); STR_END;
      strcat(Socket[thread].outBuf,"Значение температуры для включения догрева бойлера (C°): "); HP.Prof.get_boiler((char*)boil_TEMP_RBOILER,Socket[thread].outBuf) ;STR_END;
-     strcat(Socket[thread].outBuf,"Гистерезис температуры догрева бойлера, если догрев не по расписанию °C: "); HP.Prof.get_boiler((char*)boil_dAddHeat,Socket[thread].outBuf) ;STR_END;
+     strcat(Socket[thread].outBuf,"Гистерезис температуры догрева бойлера, если догрев не по расписанию °C: "); HP.Prof.get_boiler((char*)boil_dAddHeating,Socket[thread].outBuf) ;STR_END;
      strcat(Socket[thread].outBuf,"Включать догрев, если компрессор не нагрел бойлер до температуры догрева: ");HP.Prof.get_boiler((char*)boil_fAddHeatingForce,Socket[thread].outBuf);STR_END;
      
      

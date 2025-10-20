@@ -117,7 +117,7 @@ struct type_SaveON {
 
 // Структуры для хранения настроек бойлера
 //  Определение флагов в type_boilerHP: Boiler.flags
-#define fScheduleAddHeat 	0           // флаг Расписание только для ТЭНа
+#define fScheduleAddHeating	0           // флаг Расписание только для ТЭНа
 #define fSchedule        	1           // флаг Использование расписания
 #define fLegionella      	2           // флаг легионелла раз внеделю греть бойлер
 #define fCirculation     	3           // флаг Управления циркуляционным насосом ГВС
@@ -125,11 +125,11 @@ struct type_SaveON {
 #define fTurboBoiler     	5           // флаг Ускоренный нагрев бойлера (ТН + ТЭН)
 #define fAddHeating      	6           // флаг ДОГРЕВА ГВС ТЭНом
 #define fBoilerTogetherHeat	7			// флаг одновременного нагрева бойлера с отоплением до температуры догрева
-#define fBoiler_reserved	8			// резерв
+#define fBoilerHeatingOnly	8			// флаг нагрева только ТЭНом, при этом если не по рассписанию только для тэна, то берется температура tempRBOILER
 #define fBoilerUseSun		9		  	// флаг использования солнечного коллектора
-#define fAddHeatingForce	10			// флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
+#define fAddHeatingForce	10			// флаг Включать догрев тэном, если компрессор не нагрел бойлер до температуры догрева
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
-#define fBoilerHeatElemSchPri 12		// Приоритет нагрева бойлера тэном по расписанию
+#define fBoilerScheduleForHeating 12	// Работа по расписанию только для ТЭНа
 #define fBoilerCircSchedule 13		  	// флаг Рециркуляция ГВС по расписанию
 #define fBoilerPID			14			// Использовать ПИД
 
@@ -146,7 +146,7 @@ struct type_boilerHP {
 	uint16_t Reset_Time;               // время сброса излишков тепла в секундах (fResetHeat)
 	uint16_t delayOffPump;			   // Задержка выключения насоса после выключения компрессора (сек).
 	PID_STRUCT pid;                    // Настройки и переменные ПИД регулятора
-	int16_t dAddHeat;                  // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
+	int16_t dAddHeating;               // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
 	int16_t tempRBOILER;               // Температура догрева бойлера
 	int16_t add_delta_temp; 	       // Добавка температуры к установке бойлера, в сотых градусах
 	uint8_t add_delta_hour;	           // Начальный Час добавки температуры к установке бойлера

@@ -32,7 +32,7 @@ $(document).ready(function() {
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(TP),get_Boiler(H),get_Boiler(CP)");
-	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO)");
+	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO),get_Boiler(HO)");
 };
 </script>
 </head>
@@ -74,6 +74,9 @@ window.onload = function() {
 		<td nowrap><input id="get_boiler-adeh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADEH)');"></td>
 	</tr><tr>
 		<td><b>Встроенный ТЭН</b></td><td></td>
+	</tr><tr>
+		<td>Использовать только ТЭН (компрессором/котлом не греет)</td>
+		<td><input type="checkbox" id="get_boiler-ho" onChange="setParam('get_Boiler(HO)');" ></td>
 	</tr><tr>
 		<td>Ускоренный нагрев бойлера<sup>3</sup></td>
 		<td><input type="checkbox" id="get_boiler-turbo" onChange="setParam('get_Boiler(TURBO)');" ></td>

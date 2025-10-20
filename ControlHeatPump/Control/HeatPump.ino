@@ -2325,7 +2325,7 @@ boolean HeatPump::boilerAddHeat()
 
 	// Догрев бойлера
 	if(GETBIT(Prof.SaveON.flags, fBoilerON)) { // Бойлер включен
-		if(scheduleBoiler()) { // Если разрешено греть бойлер согласно расписания
+		if(scheduleBoiler()) { // Если разрешено согласно расписания
 			if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
 				int16_t b_target = get_boilerTempTarget();
 				if(!flagRBOILER && (T < b_target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
@@ -2334,8 +2334,8 @@ boolean HeatPump::boilerAddHeat()
 				}
 				if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, то догрев не включаем
 				else {
-					if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeat || dRelay[RBOILER].get_Relay()
-							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerHeatElemSchPri))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
+					if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating || dRelay[RBOILER].get_Relay()
+							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerScheduleForHeating))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
 						return true;
 					}
 					// бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
@@ -2345,12 +2345,14 @@ boolean HeatPump::boilerAddHeat()
 				return flagRBOILER = onBoiler;
 			}
 			// ТЭН не используется (сняты все флажки)
-
-		} else if(GETBIT(Prof.Boiler.flags, fAddHeating) && GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
+		} else if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
+			if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && T < Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating) return true;
+			if(GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
 #ifdef RPUMPBH	// насос бойлера
-		  if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
+				if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
 #endif
-			if(!onBoiler /*check_start_pause()*/) return true;
+				if(!onBoiler /*check_start_pause()*/) return true;
+			}
 		}
 	}
 	// Бойлер сейчас запрещен
@@ -2387,7 +2389,8 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			flagRBOILER = false;
 			return pCOMP_OFF;
 		}
-		if(!GETBIT(Option.flags, fBackupPower) && !HeatBoilerUrgently) {   // Включение ТЭНа бойлера если не питание от резервного источника
+		if(!GETBIT(Option.flags, fBackupPower) || (GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && GETBIT(Prof.Boiler.flags, fBoilerOnGenerator)) /*|| HeatBoilerUrgently*/) {
+			// Включение ТЭНа бойлера, если не питание от резервного источника
 			dRelay[RBOILER].set_ON();
 			#ifdef RPUMPBH
 			if(!onBoiler && GETBIT(work_flags, fHP_BoilerTogetherHeat)) dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
@@ -2412,7 +2415,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		return pCOMP_OFF;
 	}
 #endif
-	if(!GETBIT(Prof.SaveON.flags,fBoilerON) || (!scheduleBoiler() && !GETBIT(Prof.Boiler.flags,fScheduleAddHeat))) // Если запрещено греть бойлер согласно расписания ИЛИ  Бойлер выключен, выходим и можно смотреть отопление
+	if(!GETBIT(Prof.SaveON.flags,fBoilerON) || (!scheduleBoiler() && !GETBIT(Prof.Boiler.flags,fScheduleAddHeating))) // Если запрещено греть бойлер согласно расписания ИЛИ  Бойлер выключен, выходим и можно смотреть отопление
 	{
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
 		if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
