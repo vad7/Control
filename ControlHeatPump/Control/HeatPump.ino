@@ -2346,7 +2346,9 @@ boolean HeatPump::boilerAddHeat()
 			}
 			// ТЭН не используется (сняты все флажки)
 		} else if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
-			if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && T < Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating) return true;
+			if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && T < Prof.Boiler.tempRBOILER) {
+				if(dRelay[RBOILER].get_Relay() || T < Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating) return true;
+			}
 			if(GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
 #ifdef RPUMPBH	// насос бойлера
 				if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
@@ -2432,6 +2434,24 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		return pCOMP_OFF;      // запрещено греть бойлер согласно расписания
 	}
 	uint8_t _is_on = (is_heater_on() << 1) | (is_compressor_on() << 0);		// b1(_HEATR_) - Котел, b0(_COMPR_) - Компрессор
+	int16_t T = sTemp[TBOILER].get_Temp();  // текущая температура
+	int16_t TRG = get_boilerTempTarget();   // целевая температура
+#ifdef RPUMPBH
+	if(GETBIT(Prof.Boiler.flags, fBoilerTogetherHeat) && (Status.modWork & pHEAT)) { // Режим одновременного нагрева бойлера с отоплением
+		if(!_is_on || T > TRG) {
+			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
+			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
+		} else if(FEED > T + HYSTERESIS_BoilerTogetherHeatSt) {
+			SETBIT1(work_flags, fHP_BoilerTogetherHeat);
+			dRelay[RPUMPBH].set_ON();    // насос ГВС - включить
+			return pCOMP_OFF;
+		} else if(FEED <= T + HYSTERESIS_BoilerTogetherHeatEn) {
+			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
+			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
+		} else if(_is_on) return pCOMP_OFF; // догреваем до конца, только потом возможен экслюзивный нагрев бойлера
+	}
+#endif
+	if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) return pCOMP_OFF;		// выбран только ТЭН
 
 	// -----------------------------------------------------------------------------------------------------
 	// Сброс излишней энергии в систему отопления по температуре подачи/конденсации
@@ -2465,24 +2485,6 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			return pCOMP_NONE;
 		}
 	}
-
-	int16_t T = sTemp[TBOILER].get_Temp();  // текущая температура
-	int16_t TRG = get_boilerTempTarget();   // целевая температура
-#ifdef RPUMPBH
-	if(GETBIT(Prof.Boiler.flags, fBoilerTogetherHeat) && (Status.modWork & pHEAT)) { // Режим одновременного нагрева бойлера с отоплением до температуры догрева
-		if(!_is_on || T > TRG) {
-			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
-			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
-		} else if(FEED > T + HYSTERESIS_BoilerTogetherHeatSt) {
-			SETBIT1(work_flags, fHP_BoilerTogetherHeat);
-			dRelay[RPUMPBH].set_ON();    // насос ГВС - включить
-			return pCOMP_OFF;
-		} else if(FEED <= T + HYSTERESIS_BoilerTogetherHeatEn) {
-			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
-			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
-		} else if(_is_on) return pCOMP_OFF; // догреваем до конца, только потом возможен экслюзивный нагрев бойлера
-	}
-#endif
 
 	// Алгоритм гистерезис для старт стоп
 	if(!dFC.get_present() || !GETBIT(Prof.Boiler.flags, fBoilerPID)) // Алгоритм гистерезис для старт стоп и по опции
