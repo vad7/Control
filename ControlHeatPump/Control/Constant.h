@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.204"				// Версия прошивки
+#define VERSION			"1.205"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -659,6 +659,8 @@ const char *mess_MESS_TBOILER = {"MESS_TBOILER"};        // Критическа
 const char *mess_MESS_TCOMP   = {"MESS_TCOMP"};          // Критическая температура компрессора (если больше то генериться уведомление)
 const char *mess_MAIL_RET     = {"scan_MAIL"};           // Ответ на тестовую почту
 const char *mess_SMS_RET      = {"scan_SMS"};            // Ответ на тестовую  sms
+const char *mess_fMessageExternalWarning={"FME"};
+const char *mess_ExtWarningMinInterval= {"EMI"};
 
 // Дата время
 const char *time_TIME       = {"TIME"};         // текущее время  12:45 без секунд

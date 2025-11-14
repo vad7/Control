@@ -1364,6 +1364,16 @@ xSaveStats:
 				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s]", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()]);
 				strReturn += m_snprintf(strReturn, 256, " fHP:%X Task:%d;", HP.work_flags, HP.Task_vUpdate_run);
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
+#ifdef USE_REMOTE_WARNING
+				strReturn += m_snprintf(strReturn, 256, "Предупреждение BMS, pin D%d|", RWARN_PIN);
+				if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+					strcat(strReturn, (char*)RWARN_WARNING_NO_LINK);
+					strcat(strReturn,";");
+				} else {
+					if(RWARN_Warning) strReturn += m_snprintf(strReturn, 256, "%s (%d);", RWARN_Warning <= RWARN_WARNING_MAX ? RWARN_WARNING_TEXT[RWARN_Warning-1] : "?", RWARN_Warning);
+					else strcat(strReturn, "-;");
+				}
+#endif
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
 				//if(HP.dFC.get_present())  {strcat(strReturn," Power:"); _ftoa(strReturn,(float)HP.dFC.get_power()/1000.0,3);  }
 				//strcat(strReturn,";");

@@ -130,15 +130,16 @@ boolean Message::dnsUpdate() // запускается 0 потоке вебсе
 boolean Message::set_messageSetting(char *var, char *c)
 {
   float x;
-  if (strcmp(var, mess_MAIL) == 0) { if (strcmp(c, cZero) == 0)      { SETBIT0(messageSetting.flags, fMail); return true;} else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMail); dnsUpdateSMTP = true; return true;  } else return false;
-  } else if (strcmp(var, mess_MAIL_AUTH) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMailAUTH);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailAUTH); return true; } else return false;
-  } else if (strcmp(var, mess_MAIL_INFO) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMailInfo);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailInfo); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_RESET) == 0) { if (strcmp(c, cZero) == 0)  {  SETBIT0(messageSetting.flags, fMessageReset); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageReset); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_ERROR) == 0) { if (strcmp(c, cZero) == 0)  {  SETBIT0(messageSetting.flags, fMessageError); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageError); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_LIFE) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMessageLife);  return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageLife); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_TEMP) == 0) { if (strcmp(c, cZero) == 0)   {  SETBIT0(messageSetting.flags, fMessageTemp);  return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageTemp); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_SD) == 0) { if (strcmp(c, cZero) == 0)     {  SETBIT0(messageSetting.flags, fMessageSD);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageSD); return true; } else return false;
-  } else if (strcmp(var, mess_MESS_WARNING) == 0) { if (strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageWarning); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageWarning); return true; } else return false;
+  if(strcmp(var, mess_MAIL) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMail); return true;} else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMail); dnsUpdateSMTP = true; return true;  } else return false;
+  } else if(strcmp(var, mess_MAIL_AUTH) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMailAUTH);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailAUTH); return true; } else return false;
+  } else if(strcmp(var, mess_MAIL_INFO) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMailInfo);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMailInfo); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_RESET) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageReset); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageReset); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_ERROR) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageError); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageError); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_LIFE) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageLife);  return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageLife); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_TEMP) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageTemp);  return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageTemp); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_SD) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageSD);  return true;  } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageSD); return true; } else return false;
+  } else if(strcmp(var, mess_MESS_WARNING) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageWarning); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageWarning); return true; } else return false;
+  } else if(strcmp(var, mess_fMessageExternalWarning) == 0) { if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fMessageExternalWarning); return true; } else if (strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fMessageExternalWarning); return true; } else return false;
   } else if(strcmp(var, mess_SMTP_SERVER) == 0) {
 	  if(strlen(c) == 0) return false;                                             // пустая строка
 	  if(strlen(c) > sizeof(messageSetting.smtp_server) - 1) return false;         // слишком длиная строка
@@ -151,47 +152,22 @@ boolean Message::set_messageSetting(char *var, char *c)
 	  }
   } else if(strcmp(var, mess_SMTP_PORT) == 0) {
 	  x = my_atof(c);
-	  if(x == ATOF_ERROR) return false;
-	  else if((x <= 1) || (x >= 65535 - 1)) return false;
-	  else messageSetting.smtp_port = (int) x;
-	  return true;
+	  if(x == ATOF_ERROR) return false; else if((x <= 1) || (x >= 65535 - 1)) return false; else messageSetting.smtp_port = (int) x; return true;
   } else if(strcmp(var, mess_SMTP_LOGIN) == 0) {
 	  if(strlen(c) == 0) return false;
-	  if(strlen(c) > sizeof(messageSetting.smtp_login) - 1) return false;
-	  else {
-		  strcpy(messageSetting.smtp_login, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.smtp_login) - 1) return false; else { strcpy(messageSetting.smtp_login, c); return true; }
   } else if(strcmp(var, mess_SMTP_PASS) == 0) {
 	  if(strlen(c) == 0) return false;
 	  if(strlen(c) > sizeof(messageSetting.smtp_password) - 1) return false;
-	  else {
-		  strcpy(messageSetting.smtp_password, c);
-		  return true;
-	  }
+	  else { strcpy(messageSetting.smtp_password, c); return true; }
   } else if(strcmp(var, mess_SMTP_MAILTO) == 0) {
 	  if(strlen(c) == 0) return false;
-	  if(strlen(c) > sizeof(messageSetting.smtp_MailTo) - 1) return false;
-	  else {
-		  strcpy(messageSetting.smtp_MailTo, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.smtp_MailTo) - 1) return false; else { strcpy(messageSetting.smtp_MailTo, c); return true; }
   } else if(strcmp(var, mess_SMTP_RCPTTO) == 0) {
 	  if(strlen(c) == 0) return false;
-	  if(strlen(c) > sizeof(messageSetting.smtp_RCPTTo) - 1) return false;
-	  else {
-		  strcpy(messageSetting.smtp_RCPTTo, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.smtp_RCPTTo) - 1) return false; else { strcpy(messageSetting.smtp_RCPTTo, c); return true; }
   } else if(strcmp(var, mess_SMS) == 0) {
-	  if(strcmp(c, cZero) == 0) {
-		  SETBIT0(messageSetting.flags, fSMS);
-		  return true;
-	  } else if(strcmp(c, cOne) == 0) {
-		  SETBIT1(messageSetting.flags, fSMS);
-		  dnsUpdateSMS = true;
-		  return true;
-	  } else return false;
+	  if(strcmp(c, cZero) == 0) { SETBIT0(messageSetting.flags, fSMS); return true; } else if(strcmp(c, cOne) == 0) { SETBIT1(messageSetting.flags, fSMS); dnsUpdateSMS = true; return true; } else return false;
   } else if(strcmp(var, mess_SMS_SERVICE) == 0) {
 	  x = my_atof(c);  // При смене сервиса определяем новый IP поле sms_serviceIP
 	  if(x == ATOF_ERROR) return false;
@@ -200,43 +176,32 @@ boolean Message::set_messageSetting(char *var, char *c)
 	  return true;
   } else if(strcmp(var, mess_SMS_PHONE) == 0) {
 	  if(strlen(c) == 0) return false;
-	  if(strlen(c) > sizeof(messageSetting.sms_phone) - 1) return false;
-	  else {
-		  strcpy(messageSetting.sms_phone, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.sms_phone) - 1) return false; else { strcpy(messageSetting.sms_phone, c); return true; }
   } else if(strcmp(var, mess_SMS_P1) == 0) {
 	  if(strlen(c) == 0) return false;       // первый параметр для отправки смс
-	  if(strlen(c) > sizeof(messageSetting.sms_p1) - 1) return false;
-	  else {
-		  strcpy(messageSetting.sms_p1, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.sms_p1) - 1) return false; else { strcpy(messageSetting.sms_p1, c); return true; }
   } else if(strcmp(var, mess_SMS_P2) == 0) {
 	  if(strlen(c) == 0) return false;       // второй параметр для отправки смс
-	  if(strlen(c) > sizeof(messageSetting.sms_p2) - 1) return false;
-	  else {
-		  strcpy(messageSetting.sms_p2, c);
-		  return true;
-	  }
+	  if(strlen(c) > sizeof(messageSetting.sms_p2) - 1) return false; else { strcpy(messageSetting.sms_p2, c); return true; }
   } else if(strcmp(var, mess_MESS_TIN) == 0) {
 	  x = my_atof(c);
-	  if(x == ATOF_ERROR) return false;
-	  else messageSetting.mTIN = rd(x, 100);
+	  if(x == ATOF_ERROR) return false; else messageSetting.mTIN = rd(x, 100);
 	  return true;
   } else if(strcmp(var, mess_MESS_TBOILER) == 0) {
 	  x = my_atof(c);
-	  if(x == ATOF_ERROR) return false;
-	  else messageSetting.mTBOILER = rd(x, 100);
+	  if(x == ATOF_ERROR) return false; else messageSetting.mTBOILER = rd(x, 100);
 	  return true;
   } else if(strcmp(var, mess_MESS_TCOMP) == 0) {
 	  x = my_atof(c);
-	  if(x == ATOF_ERROR) return false;
-	  else messageSetting.mTCOMP = rd(x, 100);
+	  if(x == ATOF_ERROR) return false; else messageSetting.mTCOMP = rd(x, 100);
 	  return true;
   } else if(strcmp(var, mess_MAIL_RET) == 0) {
 	  return true;
   } else if(strcmp(var, mess_SMS_RET) == 0) {
+	  return true;
+  } else if(strcmp(var, mess_ExtWarningMinInterval) == 0) {
+	  x = my_atof(c);
+	  if(x == ATOF_ERROR) return false; else messageSetting.ExtWarningMinInterval = x;
 	  return true;
   } else return false;
 
@@ -245,35 +210,27 @@ boolean Message::set_messageSetting(char *var, char *c)
 char* Message::get_messageSetting(char *var, char *ret)
 {
 	if(strcmp(var, mess_MAIL) == 0) {
-		if(GETBIT(messageSetting.flags, fMail)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMail)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MAIL_AUTH) == 0) {
-		if(GETBIT(messageSetting.flags, fMailAUTH)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMailAUTH)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MAIL_INFO) == 0) {
-		if(GETBIT(messageSetting.flags, fMailInfo)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMailInfo)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_SMS) == 0) {
-		if(GETBIT(messageSetting.flags, fSMS)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fSMS)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_RESET) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageReset)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageReset)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_ERROR) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageError)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageError)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_LIFE) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageLife)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageLife)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_TEMP) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageTemp)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageTemp)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_SD) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageSD)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageSD)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_WARNING) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageWarning)) return strcat(ret, (char*) cOne);
-		else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageWarning)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+	} else if(strcmp(var, mess_fMessageExternalWarning) == 0) {
+		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_SMTP_SERVER) == 0) {
 		return strcat(ret, messageSetting.smtp_server);
 	} else if(strcmp(var, mess_SMTP_IP) == 0) {
@@ -333,6 +290,8 @@ char* Message::get_messageSetting(char *var, char *ret)
 	} else if(strcmp(var, mess_SMS_RET) == 0) {
 		if(waitSend) return strcat(ret, (char*) "wait response");                // В зависимости готов ответ или нет
 		else return strcat(ret, retTest);
+	} else if(strcmp(var, mess_ExtWarningMinInterval) == 0) {
+		return _itoa(messageSetting.ExtWarningMinInterval, ret);
 	} else return strcat(ret, (char*) cInvalid);
 
 }
@@ -505,6 +464,12 @@ bool Message::setMessage(MESSAGE ms, char *c, int p1) // может запуск
 void Message::setMessage_add_text(char *c)
 {
 	strcat(messageData.data, c);
+}
+
+// Добавить число в конец уведомления
+void Message::setMessage_add_int(int32_t n)
+{
+	_itoa(n, messageData.data);
 }
 
 // Установить (сформировать) тестовое письмо, отправка sendMessage();

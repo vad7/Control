@@ -44,6 +44,7 @@
 #define fMessageTemp     7                  // флаг уведомления Достижение граничной температуры
 #define fMessageSD       8                  // флаг уведомления "Проблемы с sd картой"
 #define fMessageWarning  9                  // флаг уведомления "Прочие уведомления"
+#define fMessageExternalWarning 10          // флаг уведомления "Внешние уведомления"
 // Рабочие флаги
 #define fWF_MessageSendError 	0			// ошибка отправки email
 #define fWF_SMSSendError 		1			// ошибка отправки SMS
@@ -70,7 +71,9 @@ struct type_messageHP
  int16_t mTIN;                               // Критическая температура в доме (если меньше то генерится уведомление)
  int16_t mTBOILER;                           // Критическая температура бойлера (если меньше то генерится уведомление)
  int16_t mTCOMP;                             // Критическая температура компрессора (если больше то генерится уведомление)
- int16_t P1,P2;
+ uint8_t ExtWarningMinInterval;              // Минимальный интервал между внешними сообщениями в часах
+ uint8_t _reserved1;
+ int16_t _reserved2;
 };
 // Само уведомление (данные)
 struct type_messageData
@@ -91,6 +94,7 @@ class Message
      boolean setTestSMS();                                                  // Установить (сформировать) тестовое СМС, отправка sendMessage();  
      boolean sendMessage();                                                 // Послать уведомление согласно выбранных настроек cформированное setMessage
      void    setMessage_add_text(char *c);									// Добавить текст в конец уведомления
+     void    setMessage_add_int(int32_t n);									// Добавить число в конец уведомления
      boolean dnsUpdate();                                                   // Обновление IP адресов серверов через dns 
      
      boolean set_messageSetting(char *var, char *c);                        // Установить параметр Уведомления из строки
@@ -98,6 +102,7 @@ class Message
      // Чтение отдельных параметров
      boolean get_fMessageTemp(){return GETBIT(messageSetting.flags,fMessageTemp);}// чтение флага уведомлений Достижение граничной температуры
      boolean get_fMessageLife(){return GETBIT(messageSetting.flags,fMessageLife);}// чтение флага уведомлений Сигнал жизния
+     type_messageHP *get_Settings(void) { return &messageSetting; }
      
      int16_t get_mTIN(){return messageSetting.mTIN;}                        // чтение Критическая температура в доме
      int16_t get_mTBOILER(){return messageSetting.mTBOILER;}                // чтение Критическая температура бойлера

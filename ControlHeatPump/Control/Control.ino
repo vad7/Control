@@ -200,6 +200,10 @@ void setup() {
 	pinMode(PIN_LED_OK, OUTPUT);            // Выход на светодиод мигает 0.5 герца - ОК  с частотой 2 герца ошибка
 	digitalWriteDirect(PIN_BEEP,LOW);       // Выключить пищалку
 	digitalWriteDirect(PIN_LED_OK,HIGH);    // Выключить светодиод
+#ifdef USE_REMOTE_WARNING
+	pinMode(RWARN_PIN, INPUT_PULLUP);
+#endif
+
 #ifndef DEBUG
 	if(ret)
 #endif
@@ -261,7 +265,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
+	//_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -2140,6 +2144,96 @@ void vServiceHP(void *)
 				}
 			}
 			timer_sec = t;
+#ifdef USE_REMOTE_WARNING
+			if(RWARN_Status == RWARN_St_Wait) {
+				if(digitalReadDirect(RWARN_PIN) == RWARN_ACTIVE_LEVEL) {
+					RWARN_WarningBuffer = 0;
+					RWARN_Cnt = 1;
+					RWARN_Status = RWARN_St_Reading_H;
+#ifdef TEST_BOARD
+					journal.printf("W:1\n");
+#endif
+				}
+			} else if(RWARN_Status == RWARN_St_Reading_H) {
+				if(digitalReadDirect(RWARN_PIN) == RWARN_ACTIVE_LEVEL) {
+					if(RWARN_Cnt < RWARN_PULSE_WIDTH_MAX) RWARN_Cnt++;
+					else {
+#ifdef TEST_BOARD
+						journal.printf("W:H skip %d\n", RWARN_Cnt);
+#endif
+						RWARN_Cnt = 0;
+						RWARN_Status = RWARN_DELAY_BETWEEN_TR;
+					}
+				} else if(RWARN_Cnt < RWARN_PULSE_WIDTH_MIN || RWARN_Cnt >= RWARN_PULSE_WIDTH_MAX) {
+#ifdef TEST_BOARD
+					journal.printf("W:H skip %d\n", RWARN_Cnt);
+#endif
+					RWARN_Cnt = 0;
+					RWARN_Status = RWARN_DELAY_BETWEEN_TR;
+				} else {
+#ifdef TEST_BOARD
+					journal.printf("W:H end %d = %d\n", RWARN_Cnt, RWARN_WarningBuffer);
+#endif
+					RWARN_WarningBuffer++;
+					RWARN_Cnt = 1;
+					RWARN_Status = RWARN_St_Reading_L;
+				}
+			} else if(RWARN_Status == RWARN_St_Reading_L) {
+				if(digitalReadDirect(RWARN_PIN) != RWARN_ACTIVE_LEVEL) {
+					if(RWARN_Cnt < RWARN_PULSE_WIDTH_MAX) RWARN_Cnt++;
+					else {
+#ifdef TEST_BOARD
+						journal.printf("W:OK = %d\n", RWARN_WarningBuffer);
+#endif
+						RWARN_NoLinkCnt = 0;
+						RWARN_Warning_Last = RWARN_Warning;
+						RWARN_Warning = RWARN_WarningBuffer;
+						RWARN_Status = RWARN_St_Wait;
+						if(RWARN_Warning != 1) { // не Ok
+							type_messageHP *msgset = HP.message.get_Settings();
+							uint32_t lt = rtcSAM3X8.unixtime();
+							if(RWARN_Warning_Last != RWARN_Warning && GETBIT(msgset->flags, fMessageExternalWarning)
+									&& lt > RWARN_LastMessageSent + msgset->ExtWarningMinInterval * 60 * 60) {
+								if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+									RWARN_LastMessageSent = lt;
+									if(RWARN_Warning <= RWARN_WARNING_MAX) HP.message.setMessage_add_text((char*)RWARN_WARNING_TEXT[RWARN_Warning-1]);
+									else {
+										HP.message.setMessage_add_text((char*)"Код ");
+										HP.message.setMessage_add_int(RWARN_Warning);
+									}
+								}
+							}
+						}
+					}
+				} else if(RWARN_Cnt < RWARN_PULSE_WIDTH_MIN) {
+#ifdef TEST_BOARD
+					journal.printf("W:L skip %d\n", RWARN_Cnt);
+#endif
+					RWARN_Cnt = 0;
+					RWARN_Status = RWARN_DELAY_BETWEEN_TR;
+				} else {
+#ifdef TEST_BOARD
+					journal.printf("W:L next H %d\n", RWARN_Cnt);
+#endif
+					RWARN_Cnt = 1;
+					RWARN_Status = RWARN_St_Reading_H;
+				}
+			} else { // RWARN_DELAY_BETWEEN_TR;
+				if(digitalReadDirect(RWARN_PIN) != RWARN_ACTIVE_LEVEL) {
+					if(++RWARN_Cnt >= RWARN_DELAY_BETWEEN_TR) RWARN_Status = RWARN_St_Wait;
+				} else RWARN_Cnt = 0;
+				if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+					type_messageHP *msgset = HP.message.get_Settings();
+					uint32_t lt = rtcSAM3X8.unixtime();
+					if(GETBIT(msgset->flags, fMessageExternalWarning) && lt > RWARN_LastMessageSent + msgset->ExtWarningMinInterval * 60 * 60) {
+						if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+							RWARN_LastMessageSent = lt;
+							HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
+						}
+					}
+				} else RWARN_NoLinkCnt++;
+			}
+#endif
 			if(HP.IsWorkingNow()) {
 #ifdef RHEAT
 				if(HP.RHEAT_timer < USHRT_MAX) HP.RHEAT_timer++;
