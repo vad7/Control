@@ -2232,7 +2232,7 @@ void vServiceHP(void *)
 							RWARN_Warning_Last = RWARN_NoLinkCnt;
 						}
 					}
-				} else RWARN_NoLinkCnt++;
+				} else if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
 			}
 #endif
 			if(HP.IsWorkingNow()) {
