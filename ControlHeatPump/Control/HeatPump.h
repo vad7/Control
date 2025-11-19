@@ -177,13 +177,14 @@ uint16_t PWM_CalcIdx;
 #endif
 
 #ifdef USE_REMOTE_WARNING
-#define RWARN_St_Wait		0
-#define RWARN_St_Reading_H	1
-#define RWARN_St_Reading_L	2
-uint8_t	RWARN_Status = RWARN_DELAY_BETWEEN_TR;
+#define RWARN_St_Wait			0
+#define RWARN_St_Reading_H		1
+#define RWARN_St_Reading_L		2
+#define RWARN_St_DelayBetweenTR	3
+uint8_t	RWARN_Status = RWARN_St_DelayBetweenTR;
 uint8_t	RWARN_Cnt = 0;
 uint8_t	RWARN_WarningBuffer = 0;
-uint8_t	RWARN_Warning = 0;			// New Warning
+uint8_t	RWARN_Warning = 255;			// New Warning
 uint8_t	RWARN_Warning_Last = 0;
 uint16_t RWARN_NoLinkCnt = 0;
 uint32_t RWARN_LastMessageSent = 0;

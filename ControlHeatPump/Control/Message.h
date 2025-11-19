@@ -33,7 +33,7 @@
 
 // Структуры
 // Структура для хранения параметров уведомлений.
-// Работа с отдельными флагами type_messageHP
+// type_messageHP.flags:
 #define fMail            0                  // флаг уведомления скидывать на почту 
 #define fMailAUTH        1                  // флаг необходимости авторизации на почтовом сервере
 #define fMailInfo        2                  // флаг необходимости добавления в письмо информации о состянии ТН
@@ -98,7 +98,7 @@ class Message
      boolean dnsUpdate();                                                   // Обновление IP адресов серверов через dns 
      
      boolean set_messageSetting(char *var, char *c);                        // Установить параметр Уведомления из строки
-     char*   get_messageSetting(char *var, char *ret);                      // Получить параметр Уведомления по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
+     void    get_messageSetting(char *var, char *ret);                      // Получить параметр Уведомления по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
      // Чтение отдельных параметров
      boolean get_fMessageTemp(){return GETBIT(messageSetting.flags,fMessageTemp);}// чтение флага уведомлений Достижение граничной температуры
      boolean get_fMessageLife(){return GETBIT(messageSetting.flags,fMessageLife);}// чтение флага уведомлений Сигнал жизния

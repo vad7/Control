@@ -6,7 +6,8 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_Message(SMTP_IP),get_Message(SMS_IP),get_Message(SMS_NAMEP1),get_Message(SMS_NAMEP2),get_Message(SMS_P1),get_Message(SMS_P1),get_Message(SMS_list),get_Message(MESS_TEMP),get_Message(MESS_RESET),get_Message(MESS_ERROR),get_Message(MESS_LIFE),get_Message(MESS_TIN),get_Message(MESS_TBOILER),get_Message(MESS_TCOMP),get_Message(MESS_SD),get_Message(MESS_WARNING),get_Message(MAIL),get_Message(SMTP_SERVER),get_Message(SMTP_PORT),get_Message(MAIL_AUTH),get_Message(SMTP_LOGIN),get_Message(SMTP_PASS),get_Message(MAIL_INFO),get_Message(SMTP_MAILTO),get_Message(SMTP_RCPTTO),get_Message(SMS),get_Message(SMS_PHONE),get_Message(FME),get_Message(EMI)");
+	loadParam("get_Message(SMTP_IP),get_Message(SMS_IP),get_Message(SMS_NAMEP1),get_Message(SMS_NAMEP2),get_Message(SMS_P1),get_Message(SMS_P1),get_Message(SMS_list),get_Message(MESS_TEMP),get_Message(MESS_RESET),get_Message(MESS_ERROR),get_Message(MESS_LIFE),get_Message(MESS_TIN),get_Message(MESS_TBOILER),get_Message(MESS_TCOMP),get_Message(MESS_SD),get_Message(MESS_WARNING)");
+	loadParam("get_Message(MAIL),get_Message(SMTP_SERVER),get_Message(SMTP_PORT),get_Message(MAIL_AUTH),get_Message(SMTP_LOGIN),get_Message(SMTP_PASS),get_Message(MAIL_INFO),get_Message(SMTP_MAILTO),get_Message(SMTP_RCPTTO),get_Message(SMS),get_Message(SMS_PHONE),get_Message(FME),get_Message(EMI),get_Message(FMEI)");
 }; 
 function loadParam_after(paramid) {
 	if(paramid.indexOf("get_message-smtp_server") != -1) {
@@ -86,7 +87,7 @@ function loadParam_after(paramid) {
 			</td>
 		</tr>							
 		<tr>
-			<td>Внешние уведомления</td>
+			<td>Внешние уведомления <span id="get_message-fmei" style="float:right"></span></td>
 			<td>
 				<input type="checkbox" id="get_message-fme" onchange="setParam('get_Message(FME)')">
 			</td>

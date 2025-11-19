@@ -207,92 +207,91 @@ boolean Message::set_messageSetting(char *var, char *c)
 
 }
 // Получить параметр Уведомления по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
-char* Message::get_messageSetting(char *var, char *ret)
+void Message::get_messageSetting(char *var, char *ret)
 {
 	if(strcmp(var, mess_MAIL) == 0) {
-		if(GETBIT(messageSetting.flags, fMail)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMail)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MAIL_AUTH) == 0) {
-		if(GETBIT(messageSetting.flags, fMailAUTH)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMailAUTH)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MAIL_INFO) == 0) {
-		if(GETBIT(messageSetting.flags, fMailInfo)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMailInfo)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_SMS) == 0) {
-		if(GETBIT(messageSetting.flags, fSMS)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fSMS)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_RESET) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageReset)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageReset)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_ERROR) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageError)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageError)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_LIFE) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageLife)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageLife)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_TEMP) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageTemp)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageTemp)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_SD) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageSD)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageSD)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_WARNING) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageWarning)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
+		if(GETBIT(messageSetting.flags, fMessageWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_fMessageExternalWarning) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) return strcat(ret, (char*) cOne); else return strcat(ret, (char*) cZero);
-	} else if(strcmp(var, mess_SMTP_SERVER) == 0) {
-		return strcat(ret, messageSetting.smtp_server);
-	} else if(strcmp(var, mess_SMTP_IP) == 0) {
-		return strcat(ret, IPAddress2String(messageSetting.smtp_serverIP));
-	} else if(strcmp(var, mess_SMTP_PORT) == 0) {
-		return _itoa(messageSetting.smtp_port, ret);
-	} else if(strcmp(var, mess_SMTP_LOGIN) == 0) {
-		return strcat(ret, messageSetting.smtp_login);
-	} else if(strcmp(var, mess_SMTP_PASS) == 0) {
-		return strcat(ret, messageSetting.smtp_password);
-	} else if(strcmp(var, mess_SMTP_MAILTO) == 0) {
-		return strcat(ret, messageSetting.smtp_MailTo);
-	} else if(strcmp(var, mess_SMTP_RCPTTO) == 0) {
-		return strcat(ret, messageSetting.smtp_RCPTTo);
-	} else if(strcmp(var, mess_SMS_SERVICE) == 0) {
-		return web_fill_tag_select(ret, SMS_SERVICE_WEB_SELECT, messageSetting.sms_service);
-	} else if(strcmp(var, mess_SMS_IP) == 0) {
-		return strcat(ret, IPAddress2String(messageSetting.sms_serviceIP));
-	} else if(strcmp(var, mess_SMS_PHONE) == 0) {
-		return strcat(ret, messageSetting.sms_phone);
+		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
+	} else if(strcmp(var, mess_fMessageExternalWarning_info) == 0) {
+		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) {
+			if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+				strcat(ret, (char*)RWARN_WARNING_NO_LINK);
+				strcat(ret, " ");
+			}
+			if(RWARN_Warning >= RWARN_WARNING_OK && RWARN_Warning <= RWARN_WARNING_MAX) {
+				_itoa(RWARN_Warning, ret);
+				strcat(ret, ": ");
+				strcat(ret, RWARN_WARNING_TEXT[RWARN_Warning]);
+			}
+		}
+	} else if(strcmp(var, mess_SMTP_SERVER) == 0) { strcat(ret, messageSetting.smtp_server);
+	} else if(strcmp(var, mess_SMTP_IP) == 0) { strcat(ret, IPAddress2String(messageSetting.smtp_serverIP));
+	} else if(strcmp(var, mess_SMTP_PORT) == 0) { _itoa(messageSetting.smtp_port, ret);
+	} else if(strcmp(var, mess_SMTP_LOGIN) == 0) { strcat(ret, messageSetting.smtp_login);
+	} else if(strcmp(var, mess_SMTP_PASS) == 0) { strcat(ret, messageSetting.smtp_password);
+	} else if(strcmp(var, mess_SMTP_MAILTO) == 0) {	strcat(ret, messageSetting.smtp_MailTo);
+	} else if(strcmp(var, mess_SMTP_RCPTTO) == 0) {	strcat(ret, messageSetting.smtp_RCPTTo);
+	} else if(strcmp(var, mess_SMS_SERVICE) == 0) {	web_fill_tag_select(ret, SMS_SERVICE_WEB_SELECT, messageSetting.sms_service);
+	} else if(strcmp(var, mess_SMS_IP) == 0) {	strcat(ret, IPAddress2String(messageSetting.sms_serviceIP));
+	} else if(strcmp(var, mess_SMS_PHONE) == 0) { strcat(ret, messageSetting.sms_phone);
 	} else if(strcmp(var, mess_SMS_P1) == 0) { // первый параметр для отправки смс
-		return strcat(ret, messageSetting.sms_p1);
+		strcat(ret, messageSetting.sms_p1);
 	} else if(strcmp(var, mess_SMS_P2) == 0) { // второй параметр для отправки смс
-		return strcat(ret, messageSetting.sms_p2);
+		strcat(ret, messageSetting.sms_p2);
 	} else if(strcmp(var, mess_SMS_NAMEP1) == 0) {
 		switch(messageSetting.sms_service)  // описание первого параметра для отправки смс
 		{
 		case pSMS_RU:
-			return strcat(ret, (char*) "API ID");
+			strcat(ret, (char*) "API ID");
 			break;
 		default:
-			return strcat(ret, (char*) "Login");
+			strcat(ret, (char*) "Login");
 			break; // Этого не должно быть, но если будет то установить по умолчанию
 		}
 	} else if(strcmp(var, mess_SMS_NAMEP2) == 0) {
 		switch(messageSetting.sms_service)   // описание второго параметра для отправки смс
 		{
 		case pSMS_RU:
-			return strcat(ret, (char*) "none");
+			strcat(ret, (char*) "none");
 			break;
 		default:
-			return strcat(ret, (char*) "Password");
+			strcat(ret, (char*) "Password");
 			break; // Этого не должно быть, но если будет то установить по умолчанию
 		}
 	} else if(strcmp(var, mess_MESS_TIN) == 0) {
 		_dtoa(ret, messageSetting.mTIN, 2);
-		return ret;
 	} else if(strcmp(var, mess_MESS_TBOILER) == 0) {
 		_dtoa(ret, messageSetting.mTBOILER, 2);
-		return ret;
 	} else if(strcmp(var, mess_MESS_TCOMP) == 0) {
 		_dtoa(ret, messageSetting.mTCOMP, 2);
-		return ret;
 	} else if(strcmp(var, mess_MAIL_RET) == 0) {
-		if(waitSend) return strcat(ret, (char*) "wait response");                // В зависимости готов ответ или нет
-		else return strcat(ret, retTest);
+		if(waitSend) strcat(ret, (char*) "wait response");                // В зависимости готов ответ или нет
+		else strcat(ret, retTest);
 	} else if(strcmp(var, mess_SMS_RET) == 0) {
-		if(waitSend) return strcat(ret, (char*) "wait response");                // В зависимости готов ответ или нет
-		else return strcat(ret, retTest);
+		if(waitSend) strcat(ret, (char*) "wait response");                // В зависимости готов ответ или нет
+		else strcat(ret, retTest);
 	} else if(strcmp(var, mess_ExtWarningMinInterval) == 0) {
-		return _itoa(messageSetting.ExtWarningMinInterval, ret);
-	} else return strcat(ret, (char*) cInvalid);
+		_itoa(messageSetting.ExtWarningMinInterval, ret);
+	} else strcat(ret, (char*) cInvalid);
 
 }
 // Записать настройки в eeprom i2c на входе адрес с какого, на выходе конечный адрес, число меньше 0 это код ошибки

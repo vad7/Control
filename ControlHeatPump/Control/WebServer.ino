@@ -1365,13 +1365,18 @@ xSaveStats:
 				strReturn += m_snprintf(strReturn, 256, " fHP:%X Task:%d;", HP.work_flags, HP.Task_vUpdate_run);
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 #ifdef USE_REMOTE_WARNING
-				strReturn += m_snprintf(strReturn, 256, "Предупреждение BMS, pin D%d|", RWARN_PIN);
-				if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
-					strcat(strReturn, (char*)RWARN_WARNING_NO_LINK);
-					strcat(strReturn,";");
-				} else {
-					if(RWARN_Warning) strReturn += m_snprintf(strReturn, 256, "%s (%d);", RWARN_Warning <= RWARN_WARNING_MAX ? RWARN_WARNING_TEXT[RWARN_Warning-1] : "?", RWARN_Warning);
-					else strcat(strReturn, "-;");
+				if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarning)) {
+					strReturn += m_snprintf(strReturn, 256, "Предупреждение BMS, pin D%d [%d, %ds]", RWARN_PIN, RWARN_Status, RWARN_NoLinkCnt);
+					//if(GETBIT(HP.Option.flags2, f2modWorkLog)) {
+					//	strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "", RWARN_Status, RWARN_NoLinkCnt);
+					//}
+					if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+						strcat(strReturn, " - <b>");
+						strcat(strReturn, (char*)RWARN_WARNING_NO_LINK);
+						strcat(strReturn, "</b>");
+					}
+					if(RWARN_Warning >= RWARN_WARNING_OK && RWARN_Warning <= RWARN_WARNING_MAX) strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "|<b>%s</b> (%d);", RWARN_WARNING_TEXT[RWARN_Warning], RWARN_Warning);
+					else strcat(strReturn, "|-;");
 				}
 #endif
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }

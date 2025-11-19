@@ -5879,7 +5879,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RWARN_DELAY_BETWEEN_TR		4				// сек
 	#define RWARN_WARNING_MSG			"Предупреждение BMS - "
 	#define RWARN_WARNING_NO_LINK		"НЕТ СВЯЗИ!"
-	#define RWARN_WARNING_MAX			6
+	#define RWARN_WARNING_OK			1
+	#define RWARN_WARNING_MAX			6				// максимальный номер внешнего предупреждения, нумерация с 1
 	static const char *RWARN_WARNING_TEXT[] = { "Ok", "Пере-Разряд ячейки", "Пере-Заряд ячейки", "Разбег ячеек", "Не отвечает", "Ошибка" };
 	#endif
 	//-----------------------------------------------------------------------------------------------------------------------------
