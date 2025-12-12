@@ -249,8 +249,14 @@ int8_t devVaconFC::get_readState()
 					HP.sendCommand(pREPEAT_FAST);
 					return err;
 				}
-			} else if(HP.get_startCompressor() && rtcSAM3X8.unixtime() - HP.get_startCompressor() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {
+			} else if(HP.is_compressor_on() && rtcSAM3X8.unixtime() - HP.get_startCompressor() > FC_ACCEL_TIME / 100 && ((state & (FC_S_RDY | FC_S_RUN | FC_S_DIR)) != (FC_S_RDY | FC_S_RUN))) {
 				err = ERR_MODBUS_STATE;
+				if(HP.NO_Power || GETBIT(HP.Option.flags, fBackupPower)) {
+					if(get_present()) stop_FC(); else HP.dRelay[RCOMP].set_OFF();
+					HP.set_stopCompressor();
+					HP.sendCommand(pREPEAT_FAST);
+					return err;
+				}
 			}
 			if(err) {
 				set_Error(err, name); // генерация ошибки
