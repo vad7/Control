@@ -5871,7 +5871,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// Примеры, (символы '_' и '^' 1 сек) код 3: ____|^^|__|^^^|__|^^|____, код 1: ____|^^^|____
 	#define USE_REMOTE_WARNING
 	#ifdef USE_REMOTE_WARNING
-	#define RWARN_PIN					58				// (D58/A4) - X19.2 -> PC817.4+R4.7k->[+3.3V]
+	#define RWARN_PIN					58				// (D58/A4) - X19.2 -> PC817.4+R4.7k->[+3.3V], R вместо VD10, C35 удалить
 	#define RWARN_ACTIVE_LEVEL			0				// Уровень импульсов 0/1
 	#define RWARN_WATCHDOG				600				// Сообщать, если нет связи (любой код) более секунд
 	#define RWARN_PULSE_WIDTH_MIN		2				// сек
