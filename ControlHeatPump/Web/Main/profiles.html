@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <html lang="ru">
 <head> 
 <title>Управление профилями. Народный контроллер ТН</title>
@@ -107,3 +108,113 @@ function erase_Profile(p) {
 </div>
 </body>
 </html>
+=======
+<html lang="ru">
+<head> 
+<title>Управление профилями. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type='text/javascript' src='scripts.js'></script>
+<script type="text/javascript">
+window.onload = function() {
+	loadParam("get_Prof(ID),get_Prof(NAME),get_Prof(DATE),get_Prof(NOTE),get_Prof(ENABLE),get_Prof(NUM),get_Prof(PN),get_Prof(TS),get_Prof(TE),get_Prof(F2),get_Prof(F3)");
+};
+function loadParam_after(paramid) {
+	if(paramid.match(/^eraseProfile|^loadProfile|^set_SAVE/)) location.reload();
+}
+function setDS(v) {
+	var val = document.getElementById("get_prof-" + v.toLowerCase()).value;
+	if(val[2] == ':') setParam("get_Prof(" + v + "=" + val.replace(":","").substr(0,3) + ")");
+}
+function erase_Profile(p) {
+	if(confirm((document.getElementById("infoprofile-"+p).innerHTML=="EMPTY PROFILE" ? "ВОССТАНОВИТЬ" : "СТЕРЕТЬ") + " ПРОФИЛЬ - " + (p + 1) + " \nВЫ УВЕРЕНЫ?")) loadParam("eraseProfile(" + p + ")");
+}
+</script>
+</head>
+<body class="profiles">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+	<h1>Управление профилями
+	<input type="submit" value="?" onclick='location.assign("profiles-help.html")' style="float:none;">
+       </h1>
+	<div class="row1">
+		<h2>Текущий профиль
+			<input id="get_prof-id" type="number" min="1">
+			<input id="get_prof-id2" type="submit" value="Изменить номер *" onclick="setParam('get_Prof(ID)');">
+			<input type="submit" value="Записать профиль"  onclick='loadParam("set_SAVE_PROF")'>
+		</h2>
+		* старый профиль с этим номером при сохранении будет заменен<br><br>
+		<table border="1" rules="rows">
+		<tbody>
+		<tr>
+			<td>Имя профиля</td>
+			<td>
+				<input id="get_prof-name" type="text"> <input id="get_prof-name2" type="submit" value=">" onclick="setParam('get_Prof(NAME)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Использование профиля в списке (*)</td>
+			<td>
+				<input type="checkbox" id="get_prof-enable" onchange="setParam('get_Prof(ENABLE)');" >
+			</td>
+		</tr>
+		<tr>
+			<td>Описание профиля</td>
+			<td>
+				<input id="get_prof-note" type="text" size=50> <input id="get_prof-note2" type="submit" value=">" onclick="setParam('get_Prof(NOTE)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Профиль на который будет переключение при ошибке или по времени, номер</td>
+			<td>
+				<input id="get_prof-pn" type="text" size="3" maxlength="2"> <input type="submit" value=">" onclick="setParam('get_Prof(PN)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Переключаться на другой профиль по Ошибке, если на другом профиле режим работы отопления совпадает</td>
+			<td>
+				<input type="checkbox" id="get_prof-f2" onchange="setParam('get_Prof(F2)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Переключаться на другой профиль по Времени</td>
+			<td>
+				<input type="checkbox" id="get_prof-f3" onchange="setParam('get_Prof(F3)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Время работы профиля</td>
+			<td nowrap>
+				с <input id="get_prof-ts" type="text" size="3" maxlength="5"> <input type="submit" value=">" onclick="setDS('TS')"> 
+				по <input id="get_prof-te" type="text" size="3" maxlength="5"> <input type="submit" value=">" onclick="setDS('TE')">
+			</td>
+		</tr>
+		<tr>
+			<td>Последнее редактирование</td>
+			<td>
+				<span id="get_prof-date"></span>
+			</td>
+		</tr>							
+	</tbody>
+	</table>
+
+	</div>
+	<div class="row1">
+		<h2>Таблица профилей</h2>
+		<table border="1" rules="rows">
+		<thead>
+		<tr>
+			<th>Номер профиля</th>
+			<th>Описание</th>
+			<th>Действие</th>
+		</tr>
+		</thead>
+		<tbody id="get_prof-num">
+		</tbody>
+	</table>		
+	</div>	
+</div>
+</body>
+</html>
+>>>>>>> branch 'main' of https://github.com/vad7/Control.git
