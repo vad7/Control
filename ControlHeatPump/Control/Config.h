@@ -5017,7 +5017,7 @@ const char *noteTemp[] = {"Температура улицы",
 // =============================================== C O N F I G   7 ===================================================================
 // -----------------------------------------------------------------------------------------------------------------------------------
 #ifdef CONFIG_7    // Имя и описание конфигурации и ОСОБЕННОСТИ конфигурации ---------------------------------------------------------
-//	#define TEST_BOARD 				// Тестовая плата!
+	#define TEST_BOARD 				// Тестовая плата!
 
 	#define CONFIG_NAME   "vad7"
 	#define CONFIG_NOTE   "Частотник,Охлаждение,ЭРВ,РТО,ТП,Котел,ВаттРоутер. (Vacon 10,HLP068T4LC6,B3-052-46-HQ,HE 4.0,ETS 6-25)"
@@ -5084,7 +5084,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#ifdef TEST_BOARD
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
 //		#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
-		#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
+		//#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
 //		#define NEXTION_DEBUG 			// Отладка дисплея Nextion - отправка
 //		#define NEXTION_DEBUG2 			// Отладка дисплея Nextion - прием
 //		#define DEBUG_PID				// Отладка ПИДа
@@ -5871,8 +5871,10 @@ const char *noteTemp[] = {"Температура улицы",
 	// Примеры, (символы '_' и '^' 1 сек) код 3: ____|^^|__|^^^|__|^^|____, код 1: ____|^^^|____
 	#define USE_REMOTE_WARNING
 	#ifdef USE_REMOTE_WARNING
+	#define RWARN_BMS_NUM_MAX			2				// число BMS (АКБ)
 	#define RWARN_PIN					58				// (D58/A4) - X19.2 -> PC817.4+R4.7k->[+3.3V]
-	#define RWARN_ACTIVE_LEVEL			0				// Уровень импульсов 0/1
+	#define RWARN_PULSE_LEVEL			0				// UART active level
+	#define RWARN_PULSE_QT				3000			// microsec, bit length
 	#define RWARN_WATCHDOG				600				// Сообщать, если нет связи (любой код) более секунд
 	#define RWARN_PULSE_WIDTH_MIN		2				// сек
 	#define RWARN_PULSE_WIDTH_MAX		3				// сек

@@ -202,6 +202,7 @@ void setup() {
 	digitalWriteDirect(PIN_LED_OK,HIGH);    // Выключить светодиод
 #ifdef USE_REMOTE_WARNING
 	pinMode(RWARN_PIN, INPUT_PULLUP);
+	memset(RWARN_bms, 0, sizeof(RWARN_bms));
 #endif
 
 #ifndef DEBUG
@@ -265,7 +266,7 @@ xRewriteHeader:
 		}
 	}
 #ifdef TEST_BOARD
-	//_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
+	_delay(1); // Если зависает при загрузке (START...START...) - включить или выключить эту строку
 #endif
 	journal.Init();
 #ifdef POWER_CONTROL
@@ -612,9 +613,9 @@ x_I2C_init_std_message:
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
-	vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",50,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*50; // 50, 100, 150, до обрезки стеков было 200
+	//vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
 	HP.dEEV.stepperEEV.xCommandQueue = xQueueCreate( EEV_QUEUE, sizeof( int ) );  // Создать очередь комманд для ЭРВ
 #endif
 
@@ -2057,29 +2058,117 @@ xContinue:
 }
 #endif
 
-#ifdef EEV_DEF
 // Задача обеспечения движения шаговика EEV (StepperEEV)
 void vUpdateStepperEEV(void *)
 { //const char *pcTaskName = "HP_UpdateStepperEEV\r\n";
   // Размер стека не позволяет использовать внутри jprintf.* !!!
-	static int16_t cmd = 0;
+#ifdef USE_REMOTE_WARNING
+		uint8_t _bit = 0, _byte = 0, _idx = 0, mEEV = 0;
+		uint16_t _crc = 0;
+#endif
 	for(;;) {
+#ifdef USE_REMOTE_WARNING
+		vTaskDelay(1);
+		uint32_t m = micros();
+		if(_bit == 0) {
+			if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) {
+				RWARN_timer = m + RWARN_PULSE_QT;
+				_byte = 0;
+				_bit = 1;
+				if(RWARN_Status == RWARN_St_Read_Wait) {
+					RWARN_Status = RWARN_St_Reading;
+					_crc = 0xFFFF;
+					_idx = 0;
+				}
+
+				SerialDbg.print("^"); SerialDbg.print(m); SerialDbg.print('\n');
+
+
+			}
+		} else if(m - RWARN_timer > 5) {
+			RWARN_timer += RWARN_PULSE_QT;
+			if(RWARN_Status != RWARN_St_Reading) {
+				if(RWARN_Status == RWARN_St_Read_Wait) _bit = 0;
+				continue;
+			}
+
+
+			SerialDbg.print("?"); SerialDbg.print(m); SerialDbg.print('='); SerialDbg.print(digitalReadDirect(RWARN_PIN)); SerialDbg.print('\n');
+
+
+			if(_bit == 9) { // Stop bit
+				if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) {
+					RWARN_buf[_idx++] = _byte;
+
+
+					SerialDbg.print("#"); SerialDbg.print(_byte, 16); SerialDbg.print("\n");
+
+
+					if(_idx == sizeof(RWARN_buf)) {
+						if(_crc != *(uint16_t *)(RWARN_buf + sizeof(RWARN_buf) - 2)) {
+
+							SerialDbg.print("#CRC ERR: "); SerialDbg.print(_crc, 16); SerialDbg.print(" != "); SerialDbg.print(*(uint16_t *)(RWARN_buf + sizeof(RWARN_buf) - 2), 16); SerialDbg.print("\n");
+
+
+							RWARN_Errors++;
+							RWARN_LastError = 2;
+						} else {
+							RWARN_bms_num = RWARN_buf[0];
+							memcpy((uint8_t *)&RWARN_bms, RWARN_buf + sizeof(RWARN_bms_num), sizeof(RWARN_bms));
+
+							SerialDbg.print("#OK\n");
+
+							RWARN_Status = RWARN_St_Read_Ok;
+						}
+					} else if(_idx < sizeof(RWARN_buf) - 2) _crc = _crc16(_crc, _byte);
+				} else {
+					RWARN_Errors++;
+					RWARN_LastError = 1;
+					RWARN_Status = RWARN_St_Read_Error;
+
+
+					SerialDbg.print("#STOP ERR "); SerialDbg.print(m); SerialDbg.print('\n');
+
+
+
+
+				}
+				_bit = 0;
+			} else {
+				if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) _byte |= 0x80;
+				_byte >>= 1;
+				_bit++;
+			}
+		}
+		if(++mEEV < 2) continue;
+		mEEV = 0;
+#else
+		vTaskDelay(2);
+#endif	// USE_REMOTE_WARNING
+#ifdef EEV_DEF // каждые 2ms
+		static int16_t steps_left = 0, cmd = 0;
 		// Полный цикл движения шаговика с разгребанием очереди команд,
 		// В очереди лежат АБСОЛЮТНЫЕ координаты
 		// При этом если очередь содержит более одной команды - просто суммируем все команды и двигаемся по итоговой сумме
 		// Это значит что шаговик не успевает за темпом выдачи команд программой. Экономим время
-
-		// 1. Чтение очереди команд, для выяснения все таки куда надо двигаться, переходим на относительные координаты
-		int16_t steps_left, *step_number = &HP.dEEV.EEV; // получить текущее положение шаговика абсолютное в начале очереди
-		if(*step_number < 0) *step_number = 0;
-		while(xQueueReceive(HP.dEEV.stepperEEV.xCommandQueue,&cmd,0) == pdPASS) ;   // Читаем очередь пока есть чего читать
-		if(HP.dEEV.setZero) {
-			*step_number = (HP.dEEV.stepperEEV.number_of_steps + EEV_SET_ZERO_OVERRIDE + 7) / 8 * 8; // Если выполняется команда установки 0 то все остальные команды игнорируются до ее выполнения.
-			cmd = 0;
+		if(HP.dEEV.stepperEEV.suspend_work) {
+			HP.dEEV.stepperEEV.suspend_work--; // *2 ms
+			continue;
 		}
-		steps_left = cmd - *step_number;
+		int16_t *step_number;
+		if(steps_left == 0) {
+			// 1. Чтение очереди команд, для выяснения все таки куда надо двигаться, переходим на относительные координаты
+			step_number = &HP.dEEV.EEV; // получить текущее положение шаговика абсолютное в начале очереди
+			if(*step_number < 0) *step_number = 0;
+			while(xQueueReceive(HP.dEEV.stepperEEV.xCommandQueue,&cmd,0) == pdPASS) ;   // Читаем очередь пока есть чего читать
+			if(HP.dEEV.setZero) {
+				*step_number = (HP.dEEV.stepperEEV.number_of_steps + EEV_SET_ZERO_OVERRIDE + 7) / 8 * 8; // Если выполняется команда установки 0 то все остальные команды игнорируются до ее выполнения.
+				cmd = 0;
+			}
+			steps_left = cmd - *step_number;
+		}
 		// 2. Движение
-		while(steps_left != 0) {
+		if(steps_left != 0) {
 			if(steps_left > 0) {// направление в увеличение
 				(*step_number)++;
 				steps_left--;
@@ -2089,14 +2178,16 @@ void vUpdateStepperEEV(void *)
 			}
 			if(*step_number < 0) {
 				HP.dEEV.set_error(ERR_MIN_EEV);
+				steps_left = 0;
 				break;
 			}
 #if EEV_PHASE == PHASE_4  // 4 фазы движения
-			HP.dEEV.stepperEEV.stepOne(*step_number % 4);                  // Сделать один шаг //
+			HP.dEEV.stepperEEV.stepOne(*step_number % 4);                   // Сделать один шаг //
 #else                     // остальные варианты  8 фаз движения
 			HP.dEEV.stepperEEV.stepOne(*step_number % 8);                   // Сделать один шаг //
 #endif
-			vTaskDelay(HP.dEEV.stepperEEV.step_delay / portTICK_PERIOD_MS);      // Ожидать step_delay для следующего шага.
+			HP.dEEV.stepperEEV.set_pulse_waiting();                         // Ожидать step_delay для следующего шага.
+			continue;
 		}
 		if(HP.dEEV.setZero) { // если стоит признак установки нуля, обнулить и сбросить признак
 			*step_number = 0;
@@ -2107,13 +2198,14 @@ void vUpdateStepperEEV(void *)
 		if(xQueuePeek(HP.dEEV.stepperEEV.xCommandQueue,&cmd,0) == errQUEUE_EMPTY) {
 			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();                                   // выключить двигатель если нет удержания
 			HP.dEEV.stepperEEV.offBuzy();                                                            // признак Мотор остановлен
-			vTaskSuspend(NULL);               // Приостановить задучу vUpdateStepperEEV
+			HP.dEEV.stepperEEV.suspend();
+			//vTaskSuspend(NULL);               // Приостановить задучу vUpdateStepperEEV
 		}
 		// Дошли до сюда новая, очередь не пуста и новая итерация по разбору очереди
+#endif // EEV_DEF
 	} // for
 	vTaskDelete( NULL);
 }
-#endif
 
 // ServiceHP ///////////////////////////////////////////////
 // Графики в ОЗУ, счетчики моточасов, сохранение статистики, работа насосов в простое, дисплей Nextion
@@ -2144,97 +2236,6 @@ void vServiceHP(void *)
 				}
 			}
 			timer_sec = t;
-#ifdef USE_REMOTE_WARNING
-			type_messageHP *msgset = HP.message.get_Settings();
-			if(GETBIT(msgset->flags, fMessageExternalWarning)) {
-				if(RWARN_Status == RWARN_St_Wait) {
-					if(digitalReadDirect(RWARN_PIN) == RWARN_ACTIVE_LEVEL) {
-						RWARN_WarningBuffer = 0;
-						RWARN_Cnt = 1;
-						RWARN_Status = RWARN_St_Reading_H;
-	#ifdef TEST_BOARD
-						journal.printf("W:1\n");
-	#endif
-					}
-				} else if(RWARN_Status == RWARN_St_Reading_H) {
-					if(digitalReadDirect(RWARN_PIN) == RWARN_ACTIVE_LEVEL) {
-						if(RWARN_Cnt < RWARN_PULSE_WIDTH_MAX) RWARN_Cnt++;
-						else {
-	#ifdef TEST_BOARD
-							journal.printf("W:H skip %d\n", RWARN_Cnt);
-	#endif
-							RWARN_Cnt = 0;
-							RWARN_Status = RWARN_St_DelayBetweenTR;
-						}
-					} else if(RWARN_Cnt < RWARN_PULSE_WIDTH_MIN || RWARN_Cnt >= RWARN_PULSE_WIDTH_MAX) {
-	#ifdef TEST_BOARD
-						journal.printf("W:H skip %d\n", RWARN_Cnt);
-	#endif
-						RWARN_Cnt = 0;
-						RWARN_Status = RWARN_St_DelayBetweenTR;
-					} else {
-	#ifdef TEST_BOARD
-						journal.printf("W:H end %d = %d\n", RWARN_Cnt, RWARN_WarningBuffer);
-	#endif
-						RWARN_WarningBuffer++;
-						RWARN_Cnt = 1;
-						RWARN_Status = RWARN_St_Reading_L;
-					}
-				} else if(RWARN_Status == RWARN_St_Reading_L) {
-					if(digitalReadDirect(RWARN_PIN) != RWARN_ACTIVE_LEVEL) {
-						if(RWARN_Cnt < RWARN_PULSE_WIDTH_MAX) RWARN_Cnt++;
-						else {
-	#ifdef TEST_BOARD
-							journal.printf("W:OK = %d\n", RWARN_WarningBuffer);
-	#endif
-							RWARN_NoLinkCnt = 0;
-							RWARN_Warning_Last = RWARN_Warning;
-							RWARN_Warning = RWARN_WarningBuffer;
-							RWARN_Status = RWARN_St_Wait;
-							if(RWARN_Warning != RWARN_WARNING_OK) { // не Ok
-								uint32_t lt = rtcSAM3X8.unixtime();
-								if(RWARN_Warning_Last != RWARN_Warning && lt > RWARN_LastMessageSent + msgset->ExtWarningMinInterval * 60 * 60) {
-									if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
-										RWARN_LastMessageSent = lt;
-										if(RWARN_Warning <= RWARN_WARNING_MAX) HP.message.setMessage_add_text((char*)RWARN_WARNING_TEXT[RWARN_Warning]);
-										else {
-											HP.message.setMessage_add_text((char*)"Код ");
-											HP.message.setMessage_add_int(RWARN_Warning);
-										}
-									}
-								}
-							}
-						}
-					} else if(RWARN_Cnt < RWARN_PULSE_WIDTH_MIN) {
-	#ifdef TEST_BOARD
-						journal.printf("W:L skip %d\n", RWARN_Cnt);
-	#endif
-						RWARN_Cnt = 0;
-						RWARN_Status = RWARN_St_DelayBetweenTR;
-					} else {
-	#ifdef TEST_BOARD
-						journal.printf("W:L next H %d\n", RWARN_Cnt);
-	#endif
-						RWARN_Cnt = 1;
-						RWARN_Status = RWARN_St_Reading_H;
-					}
-				} else { // RWARN_St_DelayBetweenTR;
-					if(digitalReadDirect(RWARN_PIN) != RWARN_ACTIVE_LEVEL) {
-						if(++RWARN_Cnt >= RWARN_DELAY_BETWEEN_TR) RWARN_Status = RWARN_St_Wait;
-					} else RWARN_Cnt = 0;
-				}
-				if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
-					uint32_t lt = rtcSAM3X8.unixtime();
-					if(RWARN_Warning_Last != RWARN_NoLinkCnt && lt > RWARN_LastMessageSent + msgset->ExtWarningMinInterval * 60 * 60) {
-						if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
-							RWARN_LastMessageSent = lt;
-							HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
-							RWARN_Warning_Last = RWARN_NoLinkCnt;
-						}
-					}
-				} else if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
-			}
-#endif
 			if(HP.IsWorkingNow()) {
 #ifdef RHEAT
 				if(HP.RHEAT_timer < USHRT_MAX) HP.RHEAT_timer++;
@@ -2416,6 +2417,8 @@ void vServiceHP(void *)
 				SemaphoreGive(xWebThreadSemaphore);
 				web_last_run = GetTickCount();
 			}
+#ifdef USE_REMOTE_WARNING
+#endif
 		}
 		STORE_DEBUG_INFO(76);
 		Stats.CheckCreateNewFile();

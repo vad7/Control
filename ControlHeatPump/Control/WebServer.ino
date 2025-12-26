@@ -1361,8 +1361,8 @@ xSaveStats:
 
 				// Вывод строки статуса
 				WEB_STORE_DEBUG_INFO(46);
-				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|State:%d modWork:%X[%s]", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()]);
-				strReturn += m_snprintf(strReturn, 256, " fHP:%X Task:%d;", HP.work_flags, HP.Task_vUpdate_run);
+				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Строка статуса ТН <sup>3</sup>|St:%d mW:%X[%s]", HP.get_State(), HP.get_modWork(), codeRet[HP.get_ret()]);
+				strReturn += m_snprintf(strReturn, 256, " fHP:%X Task:%d Cmd:%d,%d;", HP.work_flags, HP.Task_vUpdate_run, HP.command, HP.next_command);
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 #ifdef USE_REMOTE_WARNING
 				if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarning)) {
@@ -1828,6 +1828,7 @@ xSaveStats:
 						HP.Option.numProf = pm;
 						if(HP.Prof.id != HP.Option.numProf) {
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+							SETBIT0(HP.work_flags, fHP_ProfilesSwitchByTime);
 							HP.sendCommand(pCHANGE_PROFILE);
 						}
 					} else strcat(strReturn,"E29");

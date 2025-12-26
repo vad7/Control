@@ -34,15 +34,8 @@ void StepMotor::initStepMotor(int number_of_steps, int motor_pin_1, int motor_pi
 	pinMode(this->motor_pin_3, OUTPUT);
 	pinMode(this->motor_pin_4, OUTPUT);
 	off();                     // Снять напряжение
+	suspend_work = true;
 }
-
-
-// Установить скорость поступления шагов
-void StepMotor::setSpeed(long whatSpeed)
-{
-	step_delay = 1000 / whatSpeed; // пересчет на время одного шага в мсек
-}
-
 
 // Движение до steps_to_move 
 // На входе АБСОЛЮТНАЯ координата, в очередь уходит АБСОЛЮТНАЯ координата
@@ -54,7 +47,8 @@ void StepMotor::step(int steps_to_move)
 		return;
 	} else { // В очередь команад попала
 		buzy = true;                      // флаг начало движения
-		vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
+		suspend_work = false;
+		//vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
 	}
 }
 

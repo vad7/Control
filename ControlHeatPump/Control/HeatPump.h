@@ -177,17 +177,44 @@ uint16_t PWM_CalcIdx;
 #endif
 
 #ifdef USE_REMOTE_WARNING
-#define RWARN_St_Wait			0
-#define RWARN_St_Reading_H		1
-#define RWARN_St_Reading_L		2
-#define RWARN_St_DelayBetweenTR	3
-uint8_t	RWARN_Status = RWARN_St_DelayBetweenTR;
+// UART packet: <bms num><RWARN_BMS>*bms num<CRC16>
+struct RWARN_BMS {
+	uint8_t  last_status;	// bms_flags (b7=on/off, b6=balancing) + last_error
+	uint8_t  bms_min_string;
+	uint8_t  bms_max_string;
+	uint16_t bms_min_cell_mV;
+	uint16_t bms_max_cell_mV;
+	int32_t  bms_total_mV;
+} __attribute__ ((packed));
+uint8_t  RWARN_bms_num = 0;
+RWARN_BMS RWARN_bms[RWARN_BMS_NUM_MAX];
+uint8_t  RWARN_buf[sizeof(RWARN_bms_num) + sizeof(RWARN_BMS) * RWARN_BMS_NUM_MAX + 2]; // RWARN_BMS + CRC16
+uint32_t RWARN_timer;			// microsec
+uint32_t RWARN_ReadTime = 0;	// unix time
+uint16_t RWARN_Errors = 0;
+uint8_t  RWARN_LastError = 0;	// Ошибка: 1 - неверный стоп бит, 2 - CRC, 3 - таймаут
+uint8_t  RWARN_LastErrorSend = 0;
+uint32_t RWARN_LastMessageSent = 0;
+
+
+uint8_t  RWARN_period;	// sec
+uint8_t  RWARN_idx = 0;
+uint8_t  RWARN_send_len;
+uint8_t  RWARN_bit = 0;
+uint8_t  RWARN_byte;
+uint32_t RWARN_quantum = 0;
+
+
+#define RWARN_St_Read_Wait		0
+#define RWARN_St_Reading		1
+#define RWARN_St_Read_Ok		2
+#define RWARN_St_Read_Error		3
+volatile uint8_t RWARN_Status = RWARN_St_Read_Wait;
 uint8_t	RWARN_Cnt = 0;
 uint8_t	RWARN_WarningBuffer = 0;
 uint8_t	RWARN_Warning = 255;			// New Warning
 uint8_t	RWARN_Warning_Last = 0;
 uint16_t RWARN_NoLinkCnt = 0;
-uint32_t RWARN_LastMessageSent = 0;
 #endif
 
 struct {
@@ -230,6 +257,8 @@ type_WebSecurity WebSec_admin;				// хеш паролей
 type_WebSecurity WebSec_Microart;			// хеш паролей
 #endif
 
+#define SWITCH_PROF_BY_ERROR	0x80		// переключить профиль по ошибке
+
 // Рабочие флаги ТН (work_flags)
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
 #define fHP_SunNotInited		1			// Солнечный коллектор не инициализирован
@@ -243,6 +272,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
+#define fHP_ProfilesSwitchByTime 12			// Профили меняются по расписанию
 
 // Флаги настроек, Option.flags:
 #define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой
@@ -536,7 +566,7 @@ public:
 	boolean set_optionHP(char *var, float x);                // Установить опции ТН из числа (float)
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
-	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль
+	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль (+опции SWITCH_PROF_*)
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения
 	RULE_HP get_ruleHeat(){return Prof.Heat.Rule;}           // Получить алгоритм отопления
@@ -726,6 +756,8 @@ public:
 	uint32_t stopCompressor;              // время останова компрессора (для опеспечения паузы)
 	uint32_t startHeater;                 // время включения котла
 	uint32_t stopHeater;                  // время выключения котла
+	TYPE_COMMAND command;                 // Текущая команда управления ТН
+	TYPE_COMMAND next_command;            // Следующая команда управления ТН
 
 private:
 	void    StartResume(boolean start);    // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки
@@ -755,8 +787,6 @@ private:
 
 	type_motoHour motoHour;               // Структура для хранения счетчиков запись каждый час
 	type_motoHour motoHour_saved;
-	TYPE_COMMAND command;                 // Текущая команда управления ТН
-	TYPE_COMMAND next_command;            // Следующая команда управления ТН
 	type_status Status;                   // Описание состояния ТН
 
 // Ошибки и описания

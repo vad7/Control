@@ -102,7 +102,7 @@ void HeatPump::process_error(void)
 #endif
 			if(num_repeat < get_nStart()) {                // есть еще попытки
 				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext > 0 && num_repeat_prof >= Option.nStartNextProf) {
-					SwitchToProfile((Prof.dataProfile.ProfileNext - 1) + 128);
+					SwitchToProfile((Prof.dataProfile.ProfileNext - 1) | SWITCH_PROF_BY_ERROR);
 				}
 				sendCommand(pREPEAT);                  // Повторный пуск ТН
 			} else {
@@ -124,7 +124,7 @@ void HeatPump::initHeatPump()
 	NO_Power = 0;
 	fBackupPowerOffDelay = 0;
 	pump_in_pause_timer = 0;
-	work_flags = (1<<fHP_SunNotInited);
+	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchByTime);
 #ifdef TEST_BOARD
 	testMode = SAFE_TEST;
 #else
@@ -4298,7 +4298,7 @@ xWait:
 }
 
 // Переключиться на другой профиль (0..I2C_PROFIL_NUM),
-// Переключение по ошибке - если b7(+128) установлен, проверка наличия такого же режима работы отопления или ГВС, как текущий
+// Переключение по ошибке - если +SWITCH_PROF_BY_ERROR, проверка наличия такого же режима работы отопления или ГВС, как текущий
 void HeatPump::SwitchToProfile(uint8_t _profile)
 {
 	typeof(uint16_t) crc16;
@@ -4316,8 +4316,8 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		} _tmp2;
 	};
 	bool _by_error_check_mode;
-	if(_profile & 128) {
-		_profile &= ~128;
+	if(_profile & SWITCH_PROF_BY_ERROR) {
+		_profile &= ~SWITCH_PROF_BY_ERROR;
 		_by_error_check_mode = true;
 	} else _by_error_check_mode = false;
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор

@@ -24,21 +24,25 @@
 // library interface description
 class StepMotor {
   public:
-   void  initStepMotor(int number_of_steps, int motor_pin_1, int motor_pin_2,int motor_pin_3, int motor_pin_4); // Иницилизация
-   void setSpeed(long whatSpeed);                                                                               // Установка скорости шагов в секунду
-   void step(int number_of_steps);                                                                              // Движение 
-   inline boolean isBuzy()  {return buzy;}                                                                      // True если мотор шагает
-   inline void offBuzy()    {buzy=false;}                                                                       // Установка признака - мотор остановлен                                                                      
-   void off();                                                                                                  // выключить двигатель
-   TaskHandle_t xHandleStepperEEV;                                                                              // Заголовок задачи шаговый двигатель двигается 
-   QueueHandle_t xCommandQueue;                                                                                 // очередь комманд на управление двигателем
+   void initStepMotor(int number_of_steps, int motor_pin_1, int motor_pin_2,int motor_pin_3, int motor_pin_4); // Иницилизация
+   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / 2 / whatSpeed; };// Установка скорости шагов в секунду
+   void step(int number_of_steps);                                     // Движение
+   void set_pulse_waiting(void) { suspend_work = step_delay; }         // ожидать для следующего импульса
+   void suspend(void) { suspend_work = 255; }                          // остановить работу EEV
+   void resume(void) { suspend_work = 0; }                             // начать работу EEV
+   inline boolean isBuzy()  {return buzy;}                             // True если мотор шагает
+   inline void offBuzy()    {buzy=false;}                              // Установка признака - мотор остановлен
+   void off();                                                         // выключить двигатель
+   TaskHandle_t xHandleStepperEEV;                                     // Заголовок задачи шаговый двигатель двигается
+   QueueHandle_t xCommandQueue;                                        // очередь комманд на управление двигателем
   private:
     void stepOne(int this_step);
     inline void setPinMotor(int pin, boolean val);
     boolean buzy;
-    unsigned long step_delay;              // delay between steps, in ms, based on speed
-    int number_of_steps;                   // total number of steps this motor can take
-    int pin_count;                         // how many pins are in use.
+    uint8_t suspend_work;                                               // ожидание, если 255 - останов, 2*ms
+    uint8_t step_delay;                                                 // delay between steps, in ms, based on speed
+    int number_of_steps;                                                // total number of steps this motor can take
+    int pin_count;                                                      // how many pins are in use.
     // motor pin numbers:
     int motor_pin_1;
     int motor_pin_2;

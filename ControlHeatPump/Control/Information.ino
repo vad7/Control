@@ -1198,6 +1198,7 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		return true;
 	} else if(strcmp(var, prof_DATE_PROFILE) == 0) { return true;
 	} else if(strcmp(var, prof_fAutoSwitchProf_mode) == 0) { if(x == 1) SETBIT1(SaveON.flags, fAutoSwitchProf_mode); else SETBIT0(SaveON.flags, fAutoSwitchProf_mode); return true;
+	} else if(strcmp(var, prof_fHP_ProfilesSwitchByTime) == 0) { if(x == 1) SETBIT1(HP.work_flags, fHP_ProfilesSwitchByTime); else SETBIT0(HP.work_flags, fHP_ProfilesSwitchByTime); return true;
 	} else if(strncmp(var, prof_DailySwitch, sizeof(prof_DailySwitch)-1) == 0) {
 		var += sizeof(prof_DailySwitch)-1;
 		uint32_t i = *(var + 1) - '0';
@@ -1270,6 +1271,7 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 	if(strcmp(var,prof_DATE_PROFILE)==0)   { return DecodeTimeDate(dataProfile.saveTime,ret);                 }else// параметры только чтение
 	if(strcmp(var,prof_NUM_PROFILE)==0)    { return _itoa(I2C_PROFIL_NUM,ret);                                }else
 	if(strcmp(var, prof_fAutoSwitchProf_mode)==0) { return _itoa(GETBIT(SaveON.flags, fAutoSwitchProf_mode), ret); }else
+	if(strcmp(var, prof_fHP_ProfilesSwitchByTime)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfilesSwitchByTime), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_OnError)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_OnError), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_ByTime)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_ByTime), ret); }else
 	if(strcmp(var, prof_TimeStart)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeStart / 10, dataProfile.TimeStart % 10); return ret; }else
@@ -1469,7 +1471,7 @@ int8_t Profile::update_list(int8_t num)
 // проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
 uint8_t Profile::check_switch_to_ProfileNext_byTime(type_dataProfile *dp) // только поля: flags, ProfileNext, TimeStart, TimeEnd
 {
-	if(GETBIT(HP.work_flags, fHP_ProfileSetByError)) return 0;	// Профиль установлен по переключению из-за ошибки, для дальнейшей автосмены нужно ручное вмешательство
+	if(GETBIT(HP.work_flags, fHP_ProfileSetByError) || !GETBIT(HP.work_flags, fHP_ProfilesSwitchByTime)) return 0;	// Профиль установлен по переключению из-за ошибки, для дальнейшей автосмены нужно ручное вмешательство
 	uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
 	uint32_t st = dp->TimeStart * 10;
 	uint32_t end = dp->TimeEnd * 10;
