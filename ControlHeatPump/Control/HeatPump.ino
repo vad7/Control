@@ -4807,6 +4807,11 @@ void HeatPump::set_HeatBoilerUrgently(boolean onoff)
 	}
 }
 
+// Установить текущее время как начало старта контроллера
+void HeatPump::set_uptime(uint32_t ttime)
+{
+	timeON = ttime;
+}
 
 // Уравнение ПИД регулятора в конечных разностях.
 // errorPid - Ошибка ПИД = (Цель - Текущее состояние)  в СОТЫХ
@@ -4880,3 +4885,4 @@ void UpdatePIDbyTime(uint16_t new_time, uint16_t curr_time, PID_STRUCT &pid)
 #else
 void UpdatePIDbyTime(uint16_t, uint16_t, PID_STRUCT &) {}
 #endif
+

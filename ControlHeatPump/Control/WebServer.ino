@@ -1366,17 +1366,30 @@ xSaveStats:
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 #ifdef USE_REMOTE_WARNING
 				if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarning)) {
-					strReturn += m_snprintf(strReturn, 256, "Предупреждение BMS, pin D%d [%d, %ds]", RWARN_PIN, RWARN_Status, RWARN_NoLinkCnt);
-					//if(GETBIT(HP.Option.flags2, f2modWorkLog)) {
-					//	strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "", RWARN_Status, RWARN_NoLinkCnt);
-					//}
+					strReturn += m_snprintf(strReturn, 256, "Информация от BMS АКБ, pin D%d [%s, %ds]", RWARN_PIN,
+							RWARN_Status == RWARN_St_Reading ? "Read"
+									: RWARN_Status == RWARN_St_Read_Ok ? "Ok"
+											: RWARN_Status == RWARN_St_Delay ? "Delay"
+													: RWARN_Status == RWARN_St_Error_Frame ? "Err-FR"
+															: RWARN_Status == RWARN_St_Error_CRC ? "Err-CRC" : "Wait",
+							RWARN_NoLinkCnt);
 					if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
 						strcat(strReturn, " - <b>");
 						strcat(strReturn, (char*)RWARN_WARNING_NO_LINK);
 						strcat(strReturn, "</b>");
 					}
-					if(RWARN_Warning >= RWARN_WARNING_OK && RWARN_Warning <= RWARN_WARNING_MAX) strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "|<b>%s</b> (%d);", RWARN_WARNING_TEXT[RWARN_Warning], RWARN_Warning);
-					else strcat(strReturn, "|-;");
+					strcat(strReturn, "|");
+					for(i = 0; i < RWARN_bms_num; i++) {
+						if(i) strcat(strReturn, ", ");
+						strcat(strReturn, "BMS");
+						_itoa(i + 1, strReturn);
+						if(RWARN_bms[i].last_status == ERR_BMS_Ok) strcat(strReturn, ":Ok");
+						else {
+							strcat(strReturn, ":ERR");
+							_itoa(RWARN_bms[i].last_status, strReturn);
+						}
+					}
+					strcat(strReturn, ";");
 				}
 #endif
 				//if(HP.dFC.get_present())  {strcat(strReturn," freqFC:"); _ftoa(strReturn,(float)HP.dFC.get_frequency()/100.0,2); }
@@ -2676,7 +2689,8 @@ xget_WR:
 									if(testMode != NORMAL) WR_PowerMeter_Power = pm;
 #endif
 								}
-								if(WR_Pnet == -32768) strcat(strReturn, "-"); else {
+								if(WR_Pnet == -32768) strcat(strReturn, "-");
+								else {
 									_itoa(WR_Pnet, strReturn);
 									l_i32 = WR.MinNetLoad;
 									if(WR.MinNetLoadSunDivider) l_i32 += WR_LastSunPowerOut / WR.MinNetLoadSunDivider;

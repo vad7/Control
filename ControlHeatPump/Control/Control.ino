@@ -202,7 +202,6 @@ void setup() {
 	digitalWriteDirect(PIN_LED_OK,HIGH);    // Выключить светодиод
 #ifdef USE_REMOTE_WARNING
 	pinMode(RWARN_PIN, INPUT_PULLUP);
-	memset(RWARN_bms, 0, sizeof(RWARN_bms));
 #endif
 
 #ifndef DEBUG
@@ -613,8 +612,8 @@ x_I2C_init_std_message:
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",50,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
-	HP.mRTOS += 64+4*50; // 50, 100, 150, до обрезки стеков было 200
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
 	//vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
 	HP.dEEV.stepperEEV.xCommandQueue = xQueueCreate( EEV_QUEUE, sizeof( int ) );  // Создать очередь комманд для ЭРВ
 #endif
@@ -2063,96 +2062,70 @@ void vUpdateStepperEEV(void *)
 { //const char *pcTaskName = "HP_UpdateStepperEEV\r\n";
   // Размер стека не позволяет использовать внутри jprintf.* !!!
 #ifdef USE_REMOTE_WARNING
-		uint8_t _bit = 0, _byte = 0, _idx = 0, mEEV = 0;
-		uint16_t _crc = 0;
+	uint8_t _bit = 0, _byte = 0, _idx = 0;
+	uint16_t _crc = 0;
+	memset(RWARN_bms, 0, sizeof(RWARN_bms));
+	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
+	RWARN_link_status = 0;
+	RWARN_NoLinkCnt = 0;
+	RWARN_Status = RWARN_St_Delay;
+	RWARN_timer = micros();
 #endif
 	for(;;) {
-#ifdef USE_REMOTE_WARNING
 		vTaskDelay(1);
+#ifdef USE_REMOTE_WARNING
 		uint32_t m = micros();
-		if(_bit == 0) {
+		if(RWARN_Status == RWARN_St_Read_Wait) {
 			if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) {
-				RWARN_timer = m + RWARN_PULSE_QT;
+				RWARN_timer = m;
+				_crc = 0xFFFF;
+				_idx = 0;
 				_byte = 0;
 				_bit = 1;
-				if(RWARN_Status == RWARN_St_Read_Wait) {
-					RWARN_Status = RWARN_St_Reading;
-					_crc = 0xFFFF;
-					_idx = 0;
-				}
-
-				SerialDbg.print("^"); SerialDbg.print(m); SerialDbg.print('\n');
-
-
+				RWARN_Status = RWARN_St_Reading;
 			}
-		} else if(m - RWARN_timer > 5) {
-			RWARN_timer += RWARN_PULSE_QT;
-			if(RWARN_Status != RWARN_St_Reading) {
-				if(RWARN_Status == RWARN_St_Read_Wait) _bit = 0;
-				continue;
-			}
-
-
-			SerialDbg.print("?"); SerialDbg.print(m); SerialDbg.print('='); SerialDbg.print(digitalReadDirect(RWARN_PIN)); SerialDbg.print('\n');
-
-
-			if(_bit == 9) { // Stop bit
+		} else if(RWARN_Status == RWARN_St_Reading) {
+			if(_bit == 0) {
 				if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) {
-					RWARN_buf[_idx++] = _byte;
-
-
-					SerialDbg.print("#"); SerialDbg.print(_byte, 16); SerialDbg.print("\n");
-
-
-					if(_idx == sizeof(RWARN_buf)) {
-						if(_crc != *(uint16_t *)(RWARN_buf + sizeof(RWARN_buf) - 2)) {
-
-							SerialDbg.print("#CRC ERR: "); SerialDbg.print(_crc, 16); SerialDbg.print(" != "); SerialDbg.print(*(uint16_t *)(RWARN_buf + sizeof(RWARN_buf) - 2), 16); SerialDbg.print("\n");
-
-
-							RWARN_Errors++;
-							RWARN_LastError = 2;
-						} else {
-							RWARN_bms_num = RWARN_buf[0];
-							memcpy((uint8_t *)&RWARN_bms, RWARN_buf + sizeof(RWARN_bms_num), sizeof(RWARN_bms));
-
-							SerialDbg.print("#OK\n");
-
-							RWARN_Status = RWARN_St_Read_Ok;
-						}
-					} else if(_idx < sizeof(RWARN_buf) - 2) _crc = _crc16(_crc, _byte);
-				} else {
-					RWARN_Errors++;
-					RWARN_LastError = 1;
-					RWARN_Status = RWARN_St_Read_Error;
-
-
-					SerialDbg.print("#STOP ERR "); SerialDbg.print(m); SerialDbg.print('\n');
-
-
-
-
+					RWARN_timer = m;
+					_byte = 0;
+					_bit = 1;
 				}
-				_bit = 0;
-			} else {
-				if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) _byte |= 0x80;
-				_byte >>= 1;
-				_bit++;
+			} else if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT / 3) {
+				RWARN_timer += RWARN_PULSE_QT;
+				if(_bit == 9) { // Stop bit
+					if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) {
+						RWARN_buf[_idx++] = _byte;
+						if(_idx == sizeof(RWARN_buf)) {
+							if(_crc != *(uint16_t *)(RWARN_buf + sizeof(RWARN_buf) - 2)) {
+								RWARN_Status = RWARN_St_Error_CRC;
+							} else {
+								RWARN_bms_num = MIN(RWARN_buf[0], RWARN_BMS_NUM_MAX);
+								memcpy((uint8_t *)RWARN_bms, RWARN_buf + sizeof(RWARN_bms_num), sizeof(RWARN_bms));
+								RWARN_Status = RWARN_St_Read_Ok;
+							}
+						} else if(_idx < sizeof(RWARN_buf) - 2+1) _crc = _crc16(_crc, _byte);
+					} else RWARN_Status = RWARN_St_Error_Frame;
+					_bit = 0;
+				} else {
+					_byte >>= 1;
+					if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) _byte |= 0x80;
+					_bit++;
+				}
 			}
+		} else if(RWARN_Status == RWARN_St_Delay) {
+			if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) RWARN_timer = m;
+			else if(m - RWARN_timer >= RWARN_PACKET_DELAY) RWARN_Status = RWARN_St_Read_Wait;
 		}
-		if(++mEEV < 2) continue;
-		mEEV = 0;
-#else
-		vTaskDelay(2);
 #endif	// USE_REMOTE_WARNING
-#ifdef EEV_DEF // каждые 2ms
+#ifdef EEV_DEF // каждые 1ms
 		static int16_t steps_left = 0, cmd = 0;
 		// Полный цикл движения шаговика с разгребанием очереди команд,
 		// В очереди лежат АБСОЛЮТНЫЕ координаты
 		// При этом если очередь содержит более одной команды - просто суммируем все команды и двигаемся по итоговой сумме
 		// Это значит что шаговик не успевает за темпом выдачи команд программой. Экономим время
 		if(HP.dEEV.stepperEEV.suspend_work) {
-			HP.dEEV.stepperEEV.suspend_work--; // *2 ms
+			if(HP.dEEV.stepperEEV.suspend_work != 255) HP.dEEV.stepperEEV.suspend_work--; // *1 ms
 			continue;
 		}
 		int16_t *step_number;
@@ -2418,6 +2391,53 @@ void vServiceHP(void *)
 				web_last_run = GetTickCount();
 			}
 #ifdef USE_REMOTE_WARNING
+			if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+				uint32_t lt = rtcSAM3X8.unixtime();
+				if(RWARN_link_status != RWARN_NoLinkCnt && lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
+					if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+						RWARN_LastMessageSent = lt;
+						HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
+						RWARN_link_status = RWARN_NoLinkCnt;
+					}
+				}
+			} else {
+				if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
+				if(RWARN_Status == RWARN_St_Read_Ok) {
+					RWARN_NoLinkCnt = 0;
+					RWARN_link_status = RWARN_LinkErr_Ok;
+					uint32_t lt = rtcSAM3X8.unixtime();
+					for(uint8_t i = 0; i < RWARN_bms_num; i++) {
+						uint8_t _err = RWARN_bms[i].last_status & RWARN_status_error_mask;
+						if(RWARN_bms[i].last_status != ERR_BMS_Ok && RWARN_last_status[i] != _err
+								&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
+							if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+								RWARN_LastMessageSent = lt;
+								if(_err < RWARN_ERROR_TOTAL) HP.message.setMessage_add_text((char*)RWARN_ERROR_TEXT[_err]);
+								else {
+									HP.message.setMessage_add_text((char*)"Код ");
+									HP.message.setMessage_add_int(_err);
+								}
+							}
+						}
+						RWARN_last_status[i] = _err;
+					}
+					RWARN_timer = micros();
+					RWARN_Status = RWARN_St_Delay;
+				} else if(RWARN_Status == RWARN_St_Error_Frame || RWARN_Status == RWARN_St_Error_CRC) {
+					RWARN_Errors++;
+					uint32_t lt = rtcSAM3X8.unixtime();
+					if(RWARN_link_status != RWARN_LinkErr_Error && lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
+						if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+							RWARN_LastMessageSent = lt;
+							HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_LINK);
+							if(RWARN_Status == RWARN_St_Error_CRC) HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_CRC);
+							RWARN_link_status = RWARN_LinkErr_Error;
+						}
+					}
+					RWARN_timer = micros();
+					RWARN_Status = RWARN_St_Delay;
+				}
+			}
 #endif
 		}
 		STORE_DEBUG_INFO(76);

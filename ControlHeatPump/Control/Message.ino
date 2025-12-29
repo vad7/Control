@@ -234,13 +234,13 @@ void Message::get_messageSetting(char *var, char *ret)
 	} else if(strcmp(var, mess_fMessageExternalWarning_info) == 0) {
 		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) {
 			if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
+				strcat(ret, "(");
 				strcat(ret, (char*)RWARN_WARNING_NO_LINK);
-				strcat(ret, " ");
-			}
-			if(RWARN_Warning >= RWARN_WARNING_OK && RWARN_Warning <= RWARN_WARNING_MAX) {
-				_itoa(RWARN_Warning, ret);
-				strcat(ret, ": ");
-				strcat(ret, RWARN_WARNING_TEXT[RWARN_Warning]);
+				strcat(ret, ") ");
+			} else {
+				strcat(ret, "(связь была ");
+				_itoa(RWARN_NoLinkCnt, ret);
+				strcat(ret, "с назад) ");
 			}
 		}
 	} else if(strcmp(var, mess_SMTP_SERVER) == 0) { strcat(ret, messageSetting.smtp_server);
@@ -431,6 +431,7 @@ bool Message::setMessage(MESSAGE ms, char *c, int p1) // может запуск
   if (((GETBIT(messageSetting.flags, fMessageTemp)) == 0) && (ms == pMESSAGE_TEMP))         return false;
   if (((GETBIT(messageSetting.flags, fMessageSD)) == 0) && (ms == pMESSAGE_SD))             return false;
   if (((GETBIT(messageSetting.flags, fMessageWarning)) == 0) && (ms == pMESSAGE_WARNING))   return false;
+  if (((GETBIT(messageSetting.flags, fMessageExternalWarning)) == 0) && (ms == pMESSAGE_EXT_WARNING)) return false;
   // else if (((messageSetting.GETBIT(fMessageTemp))&&(ms==pMESSAGE_TEMP))&&((sTemp[TIN].get_Temp()<messageSetting.mTIN)||(sTemp[TBOILER].get_Temp()<messageSetting.mTBOILER)||(sTemp[TCOMP].get_Temp()>messageSetting.mTCOMP)))  return false;  // выходим, температуры в границах!!
 
   // Проверка на дублирование сообщения. Тестовые сообщения и сообщения жизни  можно посылать многократно  подряд
@@ -730,6 +731,7 @@ boolean Message::sendMail()
 	case pMESSAGE_TEMP:		strcat(tempBuf, "TEMP\r\n");	break;                                                             // Уведомление Достижение граничной температуры
 	case pMESSAGE_SD:		strcat(tempBuf, "ERROR SD\r\n");break;                                                         // Уведомление "Проблемы с sd картой"
 	case pMESSAGE_WARNING:	strcat(tempBuf, "WARNING\r\n");	break;                                                          // Уведомление "Прочие уведомления"
+	case pMESSAGE_EXT_WARNING:strcat(tempBuf, "WARNING BMS\r\n");	break;                                                  // Уведомление "Внешние уведомления"
 	default:
 		strcat(tempBuf, "ERROR TYPE \r\n");
 		clientMessage.stop();
@@ -765,6 +767,35 @@ boolean Message::sendMail()
 	clientMessage.write(messageData.data, strlen(messageData.data));
 
 	// 7. Дополнительная информация если требуется добавляется в уведомление
+#ifdef USE_REMOTE_WARNING
+	if(messageData.ms == pMESSAGE_EXT_WARNING) {
+		strcpy(tempBuf, "\r\n ----- СОСТОЯНИЕ -----");
+		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
+			if(RWARN_bms[i].last_status < RWARN_ERROR_TOTAL) m_snprintf(tempBuf+strlen(tempBuf), 256, "\n\nBMS%d: %s", i+1, (char*)RWARN_ERROR_TEXT[RWARN_bms[i].last_status]);
+			else m_snprintf(tempBuf+strlen(tempBuf), 256, "BMS%d: Код ошибки %d", i+1, RWARN_bms[i].last_status);
+			m_snprintf(tempBuf+strlen(tempBuf), 256, "\nАКБ: %.3dV\nМин. ячейка[%d]: %.3dV\nМакс ячейка[%d]: %.3dV", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_string, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms[i].bms_max_cell_mV);
+			clientMessage.write(messageData.data, strlen(messageData.data));
+		}
+		strcpy(tempBuf, "\n\n");
+#ifdef USE_ELECTROMETER_SDM
+		strcat(tempBuf, "Текущее напряжение сети ТН: %d");
+		_itoa(HP.dSDM.get_voltage(), tempBuf);
+		strcat(tempBuf, "\n");
+		clientMessage.write(messageData.data, strlen(messageData.data));
+#endif
+#ifdef WATTROUTER
+		strcpy(tempBuf, "Ваттроутер.\nТекущая мощность сети, Вт: ");
+		if(WR_Pnet == -32768) strcat(tempBuf, "-"); else _itoa(WR_Pnet, tempBuf);
+		strcat(tempBuf, "\nОт солнца, Вт: ");
+		_itoa(WR_LastSunPowerOut, tempBuf);
+		if(WR_LastSunSign != 1) strcat(tempBuf, WR_LastSunSign == 2 ? "*" : WR_LastSunSign == 3 ? "+" : "!");
+		strcat(tempBuf, "Напряжение АКБ: ");
+		_dtoa(tempBuf, WR_MAP_Ubat, 1);
+		strcat(tempBuf, "V\n");
+		clientMessage.write(messageData.data, strlen(messageData.data));
+#endif
+	} else
+#endif
 	if(GETBIT(messageSetting.flags, fMailInfo)) get_mailState(clientMessage, tempBuf);
 
 	// 8. Завершение сессии  и отправка
@@ -845,6 +876,7 @@ boolean Message::sendSMS()
 	case pMESSAGE_TEMP:		strcat(tempBuf, "TEMP+");	break;                                                             // Уведомление Достижение граничной температуры
 	case pMESSAGE_SD:		strcat(tempBuf, "ERROR+SD+");	break;                                                         // Уведомление "Проблемы с sd картой"
 	case pMESSAGE_WARNING:	strcat(tempBuf, "WARNING+");  break;                                                          // Уведомление "Прочие уведомления"
+	case pMESSAGE_EXT_WARNING:strcat(tempBuf, "WARNING+BMS+");  break;                                                    // Уведомление "Внешние уведомления"
 	default:
 		strcat(tempBuf, "ERROR+TYPE+");
 		SemaphoreGive (xWebThreadSemaphore);
@@ -974,6 +1006,7 @@ boolean Message::sendSMSC()
     case pMESSAGE_TEMP    : strcat(tempBuf, "TEMP+"); break;                                                             // Уведомление Достижение граничной температуры
     case pMESSAGE_SD      : strcat(tempBuf, "ERROR+SD+"); break;                                                         // Уведомление "Проблемы с sd картой"
     case pMESSAGE_WARNING : strcat(tempBuf, "WARNING+"); break;                                                          // Уведомление "Прочие уведомления"
+    case pMESSAGE_EXT_WARNING:strcat(tempBuf, "WARNING+BMS+"); break;
     default               : strcat(tempBuf, "ERROR+TYPE+"); SemaphoreGive(xWebThreadSemaphore); return false; break;    // ответ содержит ошибки
   }
   for (i = 0; i < strlen(messageData.data); i++) if (messageData.data[i] == ' ') messageData.data[i] = '+'; // замена пробела на знак "+" т.к. это запрещенный знак при отправке сообщения
@@ -1094,6 +1127,7 @@ boolean Message::sendSMSCLUB()
     case pMESSAGE_TEMP    : strcat(tempBuf, "TEMP+"); break;                                                             // Уведомление Достижение граничной температуры
     case pMESSAGE_SD      : strcat(tempBuf, "ERROR+SD+"); break;                                                         // Уведомление "Проблемы с sd картой"
     case pMESSAGE_WARNING : strcat(tempBuf, "WARNING+"); break;                                                          // Уведомление "Прочие уведомления"
+    case pMESSAGE_EXT_WARNING:strcat(tempBuf, "WARNING+BMS+"); break;
     default               : strcat(tempBuf, "ERROR+TYPE+"); SemaphoreGive(xWebThreadSemaphore); return false; break;    // ответ содержит ошибки
   }
   strcat(tempBuf, messageData.data);										// содержимое

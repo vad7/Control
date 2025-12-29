@@ -25,7 +25,7 @@
 class StepMotor {
   public:
    void initStepMotor(int number_of_steps, int motor_pin_1, int motor_pin_2,int motor_pin_3, int motor_pin_4); // Иницилизация
-   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / 2 / whatSpeed; };// Установка скорости шагов в секунду
+   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed; };// Установка скорости шагов в секунду
    void step(int number_of_steps);                                     // Движение
    void set_pulse_waiting(void) { suspend_work = step_delay; }         // ожидать для следующего импульса
    void suspend(void) { suspend_work = 255; }                          // остановить работу EEV

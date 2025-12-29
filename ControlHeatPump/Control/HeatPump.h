@@ -178,8 +178,26 @@ uint16_t PWM_CalcIdx;
 
 #ifdef USE_REMOTE_WARNING
 // UART packet: <bms num><RWARN_BMS>*bms num<CRC16>
+enum { // last_error[n] =
+	ERR_BMS_Ok = 0,
+	ERR_BMS_NotAnswer = 1,
+	ERR_BMS_Read = 2,
+	ERR_BMS_Config = 3,
+	ERR_BMS_Resistance = 4,
+	ERR_BMS_Cell_Low = 5,
+	ERR_BMS_Cell_High = 6,
+	ERR_BMS_Cell_DeltaMax = 7
+};
+#define RWARN_WARNING_MSG			"Предупреждение BMS - "
+#define RWARN_WARNING_NO_LINK		"НЕТ СВЯЗИ!"
+#define RWARN_WARNING_ERR_LINK		"Ошибка передачи данных"
+#define RWARN_WARNING_ERR_CRC		" (CRC)"
+#define RWARN_ERROR_TOTAL			8				// максимальный номер внешнего предупреждения, нумерация с 1
+static const char *RWARN_ERROR_TEXT[RWARN_ERROR_TOTAL] =
+	{ "Ok", "Не отвечает", "Ошибка заголовка", "Ошибка настройки", "Большое R проводов", "ПереРазряд ячейки", "ПереЗаряд ячейки", "Разбег ячеек" };
+#define RWARN_status_error_mask		0b00111111;
 struct RWARN_BMS {
-	uint8_t  last_status;	// bms_flags (b7=on/off, b6=balancing) + last_error
+	uint8_t  last_status;	// bms_flags (b7=on/off, b6=balancing) + last_error:
 	uint8_t  bms_min_string;
 	uint8_t  bms_max_string;
 	uint16_t bms_min_cell_mV;
@@ -188,33 +206,23 @@ struct RWARN_BMS {
 } __attribute__ ((packed));
 uint8_t  RWARN_bms_num = 0;
 RWARN_BMS RWARN_bms[RWARN_BMS_NUM_MAX];
+uint8_t RWARN_last_status[RWARN_BMS_NUM_MAX];
+uint8_t RWARN_link_status;
 uint8_t  RWARN_buf[sizeof(RWARN_bms_num) + sizeof(RWARN_BMS) * RWARN_BMS_NUM_MAX + 2]; // RWARN_BMS + CRC16
-uint32_t RWARN_timer;			// microsec
-uint32_t RWARN_ReadTime = 0;	// unix time
 uint16_t RWARN_Errors = 0;
-uint8_t  RWARN_LastError = 0;	// Ошибка: 1 - неверный стоп бит, 2 - CRC, 3 - таймаут
-uint8_t  RWARN_LastErrorSend = 0;
+volatile uint32_t RWARN_timer;			// microsec
+uint16_t RWARN_NoLinkCnt;
 uint32_t RWARN_LastMessageSent = 0;
-
-
-uint8_t  RWARN_period;	// sec
-uint8_t  RWARN_idx = 0;
-uint8_t  RWARN_send_len;
-uint8_t  RWARN_bit = 0;
-uint8_t  RWARN_byte;
-uint32_t RWARN_quantum = 0;
-
-
-#define RWARN_St_Read_Wait		0
-#define RWARN_St_Reading		1
-#define RWARN_St_Read_Ok		2
-#define RWARN_St_Read_Error		3
-volatile uint8_t RWARN_Status = RWARN_St_Read_Wait;
-uint8_t	RWARN_Cnt = 0;
-uint8_t	RWARN_WarningBuffer = 0;
-uint8_t	RWARN_Warning = 255;			// New Warning
-uint8_t	RWARN_Warning_Last = 0;
-uint16_t RWARN_NoLinkCnt = 0;
+#define RWARN_St_Read_Wait			0
+#define RWARN_St_Reading			1
+#define RWARN_St_Read_Ok			2
+#define RWARN_St_Delay				3
+#define RWARN_St_Error_Frame		4
+#define RWARN_St_Error_CRC			5
+volatile uint8_t RWARN_Status;			// при старте = RWARN_St_Delay
+#define RWARN_LinkErr_Ok			0
+#define RWARN_LinkErr_NoLink		1
+#define RWARN_LinkErr_Error			2
 #endif
 
 struct {
@@ -646,7 +654,7 @@ public:
 	void resetCount(boolean full);                          // Сборос сезонного счетчика моточасов
 	void updateCount();                                     // Обновление счетчиков моточасов
 
-	void set_uptime(unsigned long ttime){timeON=ttime;}     // Установить текущее время как начало старта контроллера
+	void set_uptime(uint32_t ttime);                        // Установить текущее время как начало старта контроллера
 
 // Переменные
 	uint8_t CPU_LOAD;                                      // загрузка CPU
