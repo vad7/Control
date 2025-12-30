@@ -189,13 +189,17 @@ enum { // last_error[n] =
 	ERR_BMS_Cell_DeltaMax = 7
 };
 #define RWARN_WARNING_MSG			"Предупреждение BMS - "
+#define RWARN_WARNING_LINK_UNKNOWN	"Ожидание..."
 #define RWARN_WARNING_NO_LINK		"НЕТ СВЯЗИ!"
+#define RWARN_WARNING_LINK_ERROR	"ОШИБКА СВЯЗИ!"
 #define RWARN_WARNING_ERR_LINK		"Ошибка передачи данных"
 #define RWARN_WARNING_ERR_CRC		" (CRC)"
 #define RWARN_ERROR_TOTAL			8				// максимальный номер внешнего предупреждения, нумерация с 1
 static const char *RWARN_ERROR_TEXT[RWARN_ERROR_TOTAL] =
 	{ "Ok", "Не отвечает", "Ошибка заголовка", "Ошибка настройки", "Большое R проводов", "ПереРазряд ячейки", "ПереЗаряд ячейки", "Разбег ячеек" };
-#define RWARN_status_error_mask		0b00111111;
+#define RWARN_status_on_off_mask		0b10000000
+#define RWARN_status_on_balancing_mask	0b01000000
+#define RWARN_status_error_mask			0b00111111
 struct RWARN_BMS {
 	uint8_t  last_status;	// bms_flags (b7=on/off, b6=balancing) + last_error:
 	uint8_t  bms_min_string;
@@ -220,9 +224,11 @@ uint32_t RWARN_LastMessageSent = 0;
 #define RWARN_St_Error_Frame		4
 #define RWARN_St_Error_CRC			5
 volatile uint8_t RWARN_Status;			// при старте = RWARN_St_Delay
-#define RWARN_LinkErr_Ok			0
-#define RWARN_LinkErr_NoLink		1
-#define RWARN_LinkErr_Error			2
+#define RWARN_LinkErr_Unknown		0
+#define RWARN_LinkErr_Ok			1
+#define RWARN_LinkErr_NoLink		2
+#define RWARN_LinkErr_Error			3
+#define RWARN_LinkErr_Error_CRC		4
 #endif
 
 struct {

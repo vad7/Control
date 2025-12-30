@@ -661,6 +661,7 @@ const char *mess_MAIL_RET     = {"scan_MAIL"};           // Ответ на те
 const char *mess_SMS_RET      = {"scan_SMS"};            // Ответ на тестовую  sms
 const char *mess_fMessageExternalWarning={"FME"};
 const char *mess_fMessageExternalWarning_info={"FMEI"};
+const char *mess_fMessageExternalWarning_Table={"FMET"};
 const char *mess_ExtWarningMinInterval= {"EMI"};
 
 // Дата время

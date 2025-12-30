@@ -2066,7 +2066,7 @@ void vUpdateStepperEEV(void *)
 	uint16_t _crc = 0;
 	memset(RWARN_bms, 0, sizeof(RWARN_bms));
 	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
-	RWARN_link_status = 0;
+	RWARN_link_status = RWARN_LinkErr_Unknown;
 	RWARN_NoLinkCnt = 0;
 	RWARN_Status = RWARN_St_Delay;
 	RWARN_timer = micros();
@@ -2393,24 +2393,31 @@ void vServiceHP(void *)
 #ifdef USE_REMOTE_WARNING
 			if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
 				uint32_t lt = rtcSAM3X8.unixtime();
-				if(RWARN_link_status != RWARN_NoLinkCnt && lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
-					if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+				if(RWARN_link_status != RWARN_LinkErr_NoLink && RWARN_link_status != RWARN_LinkErr_Error && RWARN_link_status != RWARN_LinkErr_Error_CRC
+						&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
+					if(HP.message.setMessage(pMESSAGE_EXT_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
 						RWARN_LastMessageSent = lt;
-						HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
-						RWARN_link_status = RWARN_NoLinkCnt;
+						if(RWARN_Status == RWARN_St_Error_Frame || RWARN_Status == RWARN_St_Error_CRC) {
+							HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_LINK);
+							if(RWARN_Status == RWARN_St_Error_CRC) {
+								HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_CRC);
+								RWARN_link_status = RWARN_LinkErr_Error_CRC;
+							} else RWARN_link_status = RWARN_LinkErr_Error;
+						} else {
+							HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
+							RWARN_link_status = RWARN_LinkErr_NoLink;
+						}
 					}
 				}
 			} else {
 				if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
 				if(RWARN_Status == RWARN_St_Read_Ok) {
-					RWARN_NoLinkCnt = 0;
-					RWARN_link_status = RWARN_LinkErr_Ok;
 					uint32_t lt = rtcSAM3X8.unixtime();
 					for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 						uint8_t _err = RWARN_bms[i].last_status & RWARN_status_error_mask;
 						if(RWARN_bms[i].last_status != ERR_BMS_Ok && RWARN_last_status[i] != _err
 								&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
-							if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+							if(HP.message.setMessage(pMESSAGE_EXT_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
 								RWARN_LastMessageSent = lt;
 								if(_err < RWARN_ERROR_TOTAL) HP.message.setMessage_add_text((char*)RWARN_ERROR_TEXT[_err]);
 								else {
@@ -2421,19 +2428,12 @@ void vServiceHP(void *)
 						}
 						RWARN_last_status[i] = _err;
 					}
+					RWARN_NoLinkCnt = 0;
+					RWARN_link_status = RWARN_LinkErr_Ok;
 					RWARN_timer = micros();
 					RWARN_Status = RWARN_St_Delay;
 				} else if(RWARN_Status == RWARN_St_Error_Frame || RWARN_Status == RWARN_St_Error_CRC) {
 					RWARN_Errors++;
-					uint32_t lt = rtcSAM3X8.unixtime();
-					if(RWARN_link_status != RWARN_LinkErr_Error && lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
-						if(HP.message.setMessage(pMESSAGE_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
-							RWARN_LastMessageSent = lt;
-							HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_LINK);
-							if(RWARN_Status == RWARN_St_Error_CRC) HP.message.setMessage_add_text((char*)RWARN_WARNING_ERR_CRC);
-							RWARN_link_status = RWARN_LinkErr_Error;
-						}
-					}
 					RWARN_timer = micros();
 					RWARN_Status = RWARN_St_Delay;
 				}

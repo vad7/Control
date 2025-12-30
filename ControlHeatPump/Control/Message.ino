@@ -211,6 +211,21 @@ void Message::get_messageSetting(char *var, char *ret)
 {
 	if(strcmp(var, mess_MAIL) == 0) {
 		if(GETBIT(messageSetting.flags, fMail)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
+	} else if(strcmp(var, mess_fMessageExternalWarning) == 0) {
+		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
+	} else if(strcmp(var, mess_fMessageExternalWarning_info) == 0) {
+		if(RWARN_link_status == RWARN_LinkErr_Ok) { strcat(ret, "Связь была "); _itoa(RWARN_NoLinkCnt, ret); strcat(ret, "с назад"); }
+		else if(RWARN_link_status == RWARN_LinkErr_NoLink) strcat(ret, (char*)RWARN_WARNING_NO_LINK);
+		else if(RWARN_link_status == RWARN_LinkErr_Error) strcat(ret, (char*)RWARN_WARNING_LINK_ERROR);
+		else if(RWARN_link_status == RWARN_LinkErr_Error_CRC) { strcat(ret, (char*)RWARN_WARNING_LINK_ERROR); strcat(ret, (char*)RWARN_WARNING_ERR_CRC); }
+		else strcat(ret, (char*)RWARN_WARNING_LINK_UNKNOWN);
+	} else if(strcmp(var, mess_fMessageExternalWarning_Table) == 0) {
+		ret += strlen(ret);
+		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
+			uint8_t st = RWARN_bms[i].last_status;
+			ret += m_snprintf(ret, 256, "<tr><td>%d</td><td>%s</td><td>%s</td>", i+1, !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Баланс..." : "Включен", (st & RWARN_status_error_mask) < RWARN_ERROR_TOTAL ? RWARN_ERROR_TEXT[st & RWARN_status_error_mask] : "Ошибка!");
+			ret += m_snprintf(ret, 256, "<td>%.3d</td><td>%.3d(%d)</td><td>%.3d(%d)</td><td>%.3d</td></tr>", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_min_string, RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms[i].bms_max_cell_mV - RWARN_bms[i].bms_min_cell_mV);
+		}
 	} else if(strcmp(var, mess_MAIL_AUTH) == 0) {
 		if(GETBIT(messageSetting.flags, fMailAUTH)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MAIL_INFO) == 0) {
@@ -229,20 +244,6 @@ void Message::get_messageSetting(char *var, char *ret)
 		if(GETBIT(messageSetting.flags, fMessageSD)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_MESS_WARNING) == 0) {
 		if(GETBIT(messageSetting.flags, fMessageWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
-	} else if(strcmp(var, mess_fMessageExternalWarning) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
-	} else if(strcmp(var, mess_fMessageExternalWarning_info) == 0) {
-		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) {
-			if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {
-				strcat(ret, "(");
-				strcat(ret, (char*)RWARN_WARNING_NO_LINK);
-				strcat(ret, ") ");
-			} else {
-				strcat(ret, "(связь была ");
-				_itoa(RWARN_NoLinkCnt, ret);
-				strcat(ret, "с назад) ");
-			}
-		}
 	} else if(strcmp(var, mess_SMTP_SERVER) == 0) { strcat(ret, messageSetting.smtp_server);
 	} else if(strcmp(var, mess_SMTP_IP) == 0) { strcat(ret, IPAddress2String(messageSetting.smtp_serverIP));
 	} else if(strcmp(var, mess_SMTP_PORT) == 0) { _itoa(messageSetting.smtp_port, ret);
@@ -769,7 +770,7 @@ boolean Message::sendMail()
 	// 7. Дополнительная информация если требуется добавляется в уведомление
 #ifdef USE_REMOTE_WARNING
 	if(messageData.ms == pMESSAGE_EXT_WARNING) {
-		strcpy(tempBuf, "\r\n ----- СОСТОЯНИЕ -----");
+		strcpy(tempBuf, "\n\n ----- СОСТОЯНИЕ -----");
 		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 			if(RWARN_bms[i].last_status < RWARN_ERROR_TOTAL) m_snprintf(tempBuf+strlen(tempBuf), 256, "\n\nBMS%d: %s", i+1, (char*)RWARN_ERROR_TEXT[RWARN_bms[i].last_status]);
 			else m_snprintf(tempBuf+strlen(tempBuf), 256, "BMS%d: Код ошибки %d", i+1, RWARN_bms[i].last_status);
@@ -780,16 +781,16 @@ boolean Message::sendMail()
 #ifdef USE_ELECTROMETER_SDM
 		strcat(tempBuf, "Текущее напряжение сети ТН: %d");
 		_itoa(HP.dSDM.get_voltage(), tempBuf);
-		strcat(tempBuf, "\n");
-		clientMessage.write(messageData.data, strlen(messageData.data));
+		strcat(tempBuf, "V\n");
 #endif
+		clientMessage.write(messageData.data, strlen(messageData.data));
 #ifdef WATTROUTER
 		strcpy(tempBuf, "Ваттроутер.\nТекущая мощность сети, Вт: ");
 		if(WR_Pnet == -32768) strcat(tempBuf, "-"); else _itoa(WR_Pnet, tempBuf);
 		strcat(tempBuf, "\nОт солнца, Вт: ");
 		_itoa(WR_LastSunPowerOut, tempBuf);
 		if(WR_LastSunSign != 1) strcat(tempBuf, WR_LastSunSign == 2 ? "*" : WR_LastSunSign == 3 ? "+" : "!");
-		strcat(tempBuf, "Напряжение АКБ: ");
+		strcat(tempBuf, "\nНапряжение АКБ: ");
 		_dtoa(tempBuf, WR_MAP_Ubat, 1);
 		strcat(tempBuf, "V\n");
 		clientMessage.write(messageData.data, strlen(messageData.data));

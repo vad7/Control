@@ -10,6 +10,7 @@ var Settings = false;
 window.onload = function() {
 	loadParam("get_oHP(WON),get_tblWR,get_WR(2)");
 	updateParam("get_WR(0),get_WR(1),get_WR(3),get_WR(4)");
+	updateParamPeriod("get_Message(FMEI),get_Message(FMET)", 10000);
 }
 function loadParam_after(paramid) {
 	if(edit_allowed && paramid.indexOf("et_WR(")!=-1) {
@@ -75,7 +76,25 @@ function loadParam_after(paramid) {
 </table>            
 </div>       
 <div class="row1">
-Излишки: <span id="get_wr-2">-</span> кВтч<br><br>
+Излишки: <span id="get_wr-2">-</span> кВтч<br>
+</div>
+<div class="row1">
+<h2>АКБ LiFePo4:</h2>
+<table>
+	<thead><tr>
+		<th>№</th>
+		<th>BMS</th>
+		<th>Состояние</th>
+		<th>АКБ, V</th>
+		<th>Мин. ячейка, V</th>
+		<th>Макс. ячейка, V</th>
+		<th>Дельта, V</th>
+	</tr></thead>
+	<tbody id="get_message-fmet"></tbody>
+</table>            
+</div>
+<div class="row1">
+<span id="get_message-fmei"></span><br>
 </div>
 <input type="checkbox" id="get_ohp-won" hidden>
 <span id="get_wr-1" hidden></span>
