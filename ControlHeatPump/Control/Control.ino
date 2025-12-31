@@ -2143,11 +2143,6 @@ void vUpdateStepperEEV(void *)
 				(*step_number)--;
 				steps_left++;
 			}
-			if(*step_number < 0) {
-				HP.dEEV.set_error(ERR_MIN_EEV);
-				steps_left = 0;
-				break;
-			}
 #if EEV_PHASE == PHASE_4  // 4 фазы движения
 			HP.dEEV.stepperEEV.stepOne(*step_number % 4);                   // Сделать один шаг //
 #else                     // остальные варианты  8 фаз движения
