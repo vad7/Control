@@ -3,6 +3,7 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 <script src='scripts.js'></script>
 <script>
+var upload_idx = 0;
 window.onload = function() {
 	var arr = document.getElementById('links').getElementsByTagName('a'); 
 	for (i=0; i<arr.length; i++) fix_href(arr[i]);
@@ -16,14 +17,18 @@ function send_files(id) {
 	if(fs.length == 0) return;
 	var mrk = {name:"*"+id+"*", toString: function(){return "";}};
 	upload_error = false;
-	if(id == 's') fs[0].settings = 1; else upload(mrk);
-	for(i = 0; i < fs.length && !upload_error; i++) {
-		upload(fs[i]);
-		if(upload_error && confirm("Повторить загрузку " + fs[i].name + "?")) { i--; upload_error = false; continue; }
+	if(id == 's') {
+		upload_idx = 0;
+		fs[0].settings = 1; 
+	} else upload(mrk);
+	for(; upload_idx < fs.length && !upload_error; upload_idx++) {
+		upload(fs[upload_idx]);
+		if(upload_error && confirm("Повторить загрузку " + fs[upload_idx].name + "?")) { upload_idx--; upload_error = false; continue; }
 	}
-	if(id != 's' && !upload_error) {
+	if(id != 's' && !upload_error && upload_idx == fs.length) {
 		mrk.name = "*"+id+"_END*";
 		upload(mrk);
+		upload_idx = 0;
 	}
 }
 function loadParam_after(paramid) {
