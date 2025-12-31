@@ -3269,7 +3269,6 @@ void HeatPump::vUpdate()
 			compressorOFF();
 		}
 		configHP();
-		command_completed = rtcSAM3X8.unixtime();       // поменялся режим
 		if(get_modeHouse() == pOFF) {    				// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
 			if(startPump != StartPump_AfterWork) {
 				HP.pump_in_pause_set(false);
@@ -3283,7 +3282,6 @@ void HeatPump::vUpdate()
 	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
 		if(!check_start_pause()) {
 			if(startPump >= StartPump_Start) {           // Остановить задачу насос
-			    command_completed = rtcSAM3X8.unixtime();// поменялся режим
 				startPump = StartPump_Stop;              // Поставить признак останова задачи насос
 			}
 			if(configHP()) {               // Конфигурируем насосы
