@@ -54,7 +54,6 @@ void vUpdateStepperEEV(void *);
 type_SEMAPHORE xModbusSemaphore;                 // Семафор Modbus, инвертор запас на счетчик
 type_SEMAPHORE xWebThreadSemaphore;              // Семафор сетевой веба и сетевой карты W5500
 type_SEMAPHORE xI2CSemaphore;                    // Семафор шины I2C, часы, память, мастер OneWire
-type_SEMAPHORE xLoadingWebSemaphore;             // Семафор загрузки веб морды в spi память
 uint16_t lastErrorFreeRtosCode;                     // код последней ошибки операционки нужен для отладки
 uint32_t startSupcStatusReg;                        // Состояние при старте SUPC Supply Controller Status Register - проверяем что с питание
 
@@ -615,7 +614,6 @@ x_I2C_init_std_message:
 	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
 	//vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
-	HP.dEEV.stepperEEV.xCommandQueue = xQueueCreate( EEV_QUEUE, sizeof( int ) );  // Создать очередь комманд для ЭРВ
 #endif
 
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
@@ -672,7 +670,6 @@ x_I2C_init_std_message:
 	eepromI2C.use_RTOS_delay = 1;       //vad711
 	//
 	// Инит семафоров
-	SemaphoreCreate(xLoadingWebSemaphore);
 	SemaphoreCreate(xWebThreadSemaphore);
 	SemaphoreCreate(xI2CSemaphore);
 	SemaphoreCreate(xModbusSemaphore);
@@ -2119,26 +2116,33 @@ void vUpdateStepperEEV(void *)
 		}
 #endif	// USE_REMOTE_WARNING
 #ifdef EEV_DEF // каждые 1ms
-		static int16_t steps_left = 0, cmd = 0;
 		// Полный цикл движения шаговика с разгребанием очереди команд,
 		// В очереди лежат АБСОЛЮТНЫЕ координаты
 		// При этом если очередь содержит более одной команды - просто суммируем все команды и двигаемся по итоговой сумме
 		// Это значит что шаговик не успевает за темпом выдачи команд программой. Экономим время
-		if(HP.dEEV.stepperEEV.suspend_work) {
-			if(HP.dEEV.stepperEEV.suspend_work != 255) HP.dEEV.stepperEEV.suspend_work--; // *1 ms
-			continue;
-		}
-		int16_t *step_number;
+		static int16_t steps_left = 0;
+		if(HP.dEEV.stepperEEV.check_suspend()) continue;
+		int16_t *step_number = &HP.dEEV.EEV;
 		if(steps_left == 0) {
 			// 1. Чтение очереди команд, для выяснения все таки куда надо двигаться, переходим на относительные координаты
-			step_number = &HP.dEEV.EEV; // получить текущее положение шаговика абсолютное в начале очереди
+			// получить текущее положение шаговика абсолютное в начале очереди
 			if(*step_number < 0) *step_number = 0;
-			while(xQueueReceive(HP.dEEV.stepperEEV.xCommandQueue,&cmd,0) == pdPASS) ;   // Читаем очередь пока есть чего читать
 			if(HP.dEEV.setZero) {
-				*step_number = (HP.dEEV.stepperEEV.number_of_steps + EEV_SET_ZERO_OVERRIDE + 7) / 8 * 8; // Если выполняется команда установки 0 то все остальные команды игнорируются до ее выполнения.
-				cmd = 0;
+				HP.dEEV.stepperEEV.new_pos = STEPMOTOR_POS_EMPTY;
+				*step_number = (HP.dEEV.stepperEEV.number_of_steps + EEV_SET_ZERO_OVERRIDE + 7) / 8 * 8; // Если выполняется команда установки 0, то все остальные команды игнорируются до ее выполнения.
+				steps_left = -*step_number;
+			} else {
+				if(HP.dEEV.stepperEEV.new_pos != STEPMOTOR_POS_EMPTY) {
+					int16_t _new = *step_number;
+					vPortEnterCritical();
+					if(HP.dEEV.stepperEEV.new_pos != STEPMOTOR_POS_EMPTY) {
+						_new = HP.dEEV.stepperEEV.new_pos;
+						HP.dEEV.stepperEEV.new_pos = STEPMOTOR_POS_EMPTY;
+					}
+					vPortExitCritical();
+					steps_left = _new - *step_number;
+				}
 			}
-			steps_left = cmd - *step_number;
 		}
 		// 2. Движение
 		if(steps_left != 0) {
@@ -2166,15 +2170,11 @@ void vUpdateStepperEEV(void *)
 			*step_number = 0;
 			HP.dEEV.setZero = false;
 		}
-
-		// 3. Остановить выполнение команад, если очередь пуста, но могли накидать пока двигались
-		if(xQueuePeek(HP.dEEV.stepperEEV.xCommandQueue,&cmd,0) == errQUEUE_EMPTY) {
+		if(HP.dEEV.stepperEEV.new_pos == STEPMOTOR_POS_EMPTY) {
 			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();                                   // выключить двигатель если нет удержания
 			HP.dEEV.stepperEEV.offBuzy();                                                            // признак Мотор остановлен
 			HP.dEEV.stepperEEV.suspend();
-			//vTaskSuspend(NULL);               // Приостановить задучу vUpdateStepperEEV
 		}
-		// Дошли до сюда новая, очередь не пуста и новая итерация по разбору очереди
 #endif // EEV_DEF
 	} // for
 	vTaskDelete( NULL);
@@ -2407,7 +2407,9 @@ void vServiceHP(void *)
 							HP.message.setMessage_add_text((char*)RWARN_WARNING_NO_LINK);
 							RWARN_link_status = RWARN_LinkErr_NoLink;
 						}
-					}
+					} else if(RWARN_Status == RWARN_St_Error_CRC) RWARN_link_status = RWARN_LinkErr_Error_CRC;
+					else if(RWARN_Status == RWARN_St_Error_Frame) RWARN_link_status = RWARN_LinkErr_Error;
+					else RWARN_link_status = RWARN_LinkErr_NoLink;
 				}
 			} else {
 				if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;

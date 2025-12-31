@@ -3281,15 +3281,15 @@ xContinueSearchHeader:
 		if(strcmp(nameFile, LOAD_FLASH_START) == 0) {  // начало загрузки вебморды в SPI Flash
 			if(!HP.get_fSPIFlash()) {
 				journal.jprintf("Upload: No SPI Flash installed!\n");
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
-			fWebUploadingFilesTo = 1;
-			if(SemaphoreTake(xLoadingWebSemaphore, 10) == pdFALSE) {
+			if(fWebUploadFiles) {
 				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
+			fWebUploadFiles = 1;
 			numFilesWeb = 0;
 			journal.jprintf_time("Start upload, erase SPI disk ");
 			SerialFlash.eraseAll();
@@ -3307,35 +3307,33 @@ xContinueSearchHeader:
 		} else if(strcmp(nameFile, LOAD_SD_START) == 0) {  // начало загрузки вебморды в SD
 			if(!HP.get_fSD()) {
 				journal.jprintf("Upload: No SD card available!\n");
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
-			fWebUploadingFilesTo = 2;
-			if(SemaphoreTake(xLoadingWebSemaphore, 10) == pdFALSE) {
+			if(fWebUploadFiles) {
 				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
+			fWebUploadFiles = 2;
 			numFilesWeb = 0;
 			journal.jprintf_time("Start upload to SD.\n");
 			return pNULL;
 		} else if(strcmp(nameFile, LOAD_FLASH_END) == 0 || strcmp(nameFile, LOAD_SD_END) == 0) {  // Окончание загрузки вебморды
-			if(SemaphoreTake(xLoadingWebSemaphore, 0) == pdFALSE) { // Семафор не захвачен (был захвачен ранее) все ок
-				journal.jprintf_time("Ok, %d files uploaded, free %.1f KB\n", numFilesWeb, fWebUploadingFilesTo == 1 ? (float)SerialFlash.free_size() / 1024 : (float)card.vol()->freeClusterCount() * card.vol()->blocksPerCluster() * 512 / 1024);
-				if(fWebUploadingFilesTo == 1) {// to Flash
+			if(fWebUploadFiles) { // Семафор не захвачен (был захвачен ранее) все ок
+				journal.jprintf_time("Ok, %d files uploaded, free %.1f KB\n", numFilesWeb, fWebUploadFiles == 1 ? (float)SerialFlash.free_size() / 1024 : (float)card.vol()->freeClusterCount() * card.vol()->blocksPerCluster() * 512 / 1024);
+				if(fWebUploadFiles == 1) {// to Flash
 					HP.set_fSPIFlash(initSpiDisk(false));
 				}
-				fWebUploadingFilesTo = 0;
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_OK;
 			} else { 	// семафор БЫЛ захвачен, ошибка, отдать обратно
 				journal.jprintf("%s: Unable to finish upload!\n", (char*) __FUNCTION__);
-				fWebUploadingFilesTo = 0;
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
 		} else { // загрузка отдельных файлов веб морды
-			if(SemaphoreTake(xLoadingWebSemaphore, 0) == pdFALSE) { // Cемафор занят - загрузка файла
+			if(fWebUploadFiles) { // Cемафор занят - загрузка файла
 				if(lenFile == 0) { // пустой файл - пропускаем
 					journal.jprintf("Upload: %s zero length, skip\n", nameFile);
 					return pNULL;
@@ -3347,7 +3345,7 @@ xContinueSearchHeader:
 				// thread - поток веб сервера,котрый обрабатывает post запрос
 				// ptr - указатель на начало данных (файла) в буфере Socket[thread].inPtr.
 				// buf_len - размер данных в буфере ptr (по сети осталось принять lenFile-buf_len)
-				if(fWebUploadingFilesTo == 1) {
+				if(fWebUploadFiles == 1) {
 					uint16_t numPoint = 0;
 					int32_t loadLen; // Обработанная (загруженная) длина
 					WEB_STORE_DEBUG_INFO(54);
@@ -3395,10 +3393,11 @@ xContinueSearchHeader:
 						numFilesWeb++;
 						return pNULL;
 					} else {
-						SemaphoreGive (xLoadingWebSemaphore);
+						if(loadLen) journal.jprintf("Connection lost!\n");
+						fWebUploadFiles = 0;
 						return pLOAD_ERR;
 					}
-				} else if(fWebUploadingFilesTo == 2) { // Запись на SD,
+				} else if(fWebUploadFiles == 2) { // Запись на SD,
 					WEB_STORE_DEBUG_INFO(54);
 					journal.jprintf("%s (%d) ", nameFile, lenFile);
 					for(uint16_t _timeout = 0; _timeout < 2000 && card.card()->isBusy(); _timeout++) _delay(1);
@@ -3444,7 +3443,7 @@ xContinueSearchHeader:
 						numFilesWeb++;
 						return pNULL;
 					} else {
-						SemaphoreGive (xLoadingWebSemaphore);
+						fWebUploadFiles = 0;
 						return pLOAD_ERR;
 					}
 				}
@@ -3452,13 +3451,13 @@ xContinueSearchHeader:
 				uint8_t ip[4];
 				W5100.readSnDIPR(Socket[thread].sock, ip);
 				journal.jprintf("Unable to upload file %s (%d.%d.%d.%d)!\n", nameFile, ip[0], ip[1], ip[2], ip[3]);
-				SemaphoreGive (xLoadingWebSemaphore);
+				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
 		}
 	} else {
 		journal.jprintf("%s: Upload: No web store!\n", (char*) __FUNCTION__);
-		SemaphoreGive (xLoadingWebSemaphore);
+		fWebUploadFiles = 0;
 		return pNO_DISK;
 	}
 	return pPOST_ERR; // До сюда добегать не должны

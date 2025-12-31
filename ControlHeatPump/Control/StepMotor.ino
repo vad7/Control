@@ -17,7 +17,7 @@
  */
 #include "StepMotor.h"
 
-void StepMotor::initStepMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4)
+void StepMotor::initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uint8_t motor_pin_2, uint8_t motor_pin_3, uint8_t motor_pin_4)
 {
 	this->number_of_steps = number_of_steps; // total number of steps for this motor
 	this->pin_count = 4;
@@ -35,25 +35,33 @@ void StepMotor::initStepMotor(int number_of_steps, int motor_pin_1, int motor_pi
 	pinMode(this->motor_pin_4, OUTPUT);
 	off();                     // Снять напряжение
 	suspend_work = true;
+	new_pos = STEPMOTOR_POS_EMPTY;
 }
 
-// Движение до steps_to_move 
-// На входе АБСОЛЮТНАЯ координата, в очередь уходит АБСОЛЮТНАЯ координата
-void StepMotor::step(int steps_to_move)
+bool StepMotor::check_suspend(void)
 {
-	if(xQueueSend(xCommandQueue, &steps_to_move, 20 / portTICK_PERIOD_MS) == errQUEUE_FULL) // команду на движение в очередь
-	{
-		journal.jprintf("$ERROR - Step motor command queue is FULL!\n");
-		return;
-	} else { // В очередь команад попала
-		buzy = true;                      // флаг начало движения
-		suspend_work = false;
+	if(suspend_work) {
+		if(suspend_work != 255) if(--suspend_work == 0) return false; // *1 ms
+		return true;
+	}
+	return false;
+}
+
+
+// Движение до pos_steps
+// На входе АБСОЛЮТНАЯ координата, в очередь уходит АБСОЛЮТНАЯ координата
+void StepMotor::step(int16_t pos_steps)
+{
+	if(pos_steps) {
+		buzy = true;                        // флаг начало движения
+		new_pos = pos_steps;
+		if(suspend_work == 255) suspend_work = 0;
 		//vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
 	}
 }
 
 // выставить один пин
-__attribute__((always_inline)) inline void StepMotor::setPinMotor(int pin, boolean val)
+__attribute__((always_inline)) inline void StepMotor::setPinMotor(uint8_t pin, boolean val)
 {
 #ifdef DRV_EEV_L9333                        // использование драйвера L9333 нужно инвертирование!!!
 	digitalWriteDirect(pin, !val);
@@ -64,7 +72,7 @@ __attribute__((always_inline)) inline void StepMotor::setPinMotor(int pin, boole
 /*
  * Движение на один шаг  в зависимости от выбранной последовательности
  */
-void StepMotor::stepOne(int thisStep)
+void StepMotor::stepOne(uint8_t thisStep)
 {
 #if EEV_PHASE == PHASE_8s    // движение 8 фаз полушаг (pav2000)
  //  SerialDbg.print("PHASE_8s ");

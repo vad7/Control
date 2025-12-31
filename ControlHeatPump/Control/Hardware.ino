@@ -772,8 +772,12 @@ int8_t devEEV::set_zero()
 	if(!setZero) {
 		journal.jprintf(" EEV: Set zero\n");
 		setZero = true;                                             // Признак ПРОЦЕССА обнуления счетчика шагов EEV  Ставить в начале!!
-		if(testMode != SAFE_TEST) stepperEEV.step(0);  // не  SAFE_TEST - работаем
-		else EEV = 0;                                               // SAFE_TEST только координаты меняем
+#ifdef TEST_BOARD
+	if(1)
+#else
+		if(testMode != SAFE_TEST)
+#endif
+			stepperEEV.step(0); else EEV = 0;       // SAFE_TEST - только координаты меняем
 	}
 	return OK;
 }
@@ -788,7 +792,12 @@ int8_t devEEV::set_EEV(int16_t x)
 		return err;
 	}
 	if(x < EEV_CLOSE_STEP) x = EEV_CLOSE_STEP; else if(x > _data.maxSteps) x = _data.maxSteps;
-	if(testMode != SAFE_TEST) stepperEEV.step(x); else EEV = x;       // SAFE_TEST - только координаты меняем
+#ifdef TEST_BOARD
+	if(1)
+#else
+	if(testMode != SAFE_TEST)
+#endif
+		stepperEEV.step(x); else EEV = x;       // SAFE_TEST - только координаты меняем
 	return err;
 }
 

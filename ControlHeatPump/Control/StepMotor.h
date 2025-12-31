@@ -21,33 +21,42 @@
 #include "Arduino.h"
 //#include "FreeRTOS_ARM.h"
 
+#define STEPMOTOR_POS_EMPTY -32767
+
 // library interface description
 class StepMotor {
   public:
-   void initStepMotor(int number_of_steps, int motor_pin_1, int motor_pin_2,int motor_pin_3, int motor_pin_4); // Иницилизация
-   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed; };// Установка скорости шагов в секунду
-   void step(int number_of_steps);                                     // Движение
+   void initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uint8_t motor_pin_2, uint8_t motor_pin_3, uint8_t motor_pin_4); // Иницилизация
+   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed;
+
+   SerialDbg.print("Set EEV step = ");
+   SerialDbg.println(step_delay);
+
+
+   };// Установка скорости шагов в секунду
+   void step(int16_t pos_steps);                                       // Движение на новое положение
    void set_pulse_waiting(void) { suspend_work = step_delay; }         // ожидать для следующего импульса
    void suspend(void) { suspend_work = 255; }                          // остановить работу EEV
    void resume(void) { suspend_work = 0; }                             // начать работу EEV
+   bool check_suspend(void);                                           // ожидать?
    inline boolean isBuzy()  {return buzy;}                             // True если мотор шагает
    inline void offBuzy()    {buzy=false;}                              // Установка признака - мотор остановлен
    void off();                                                         // выключить двигатель
    TaskHandle_t xHandleStepperEEV;                                     // Заголовок задачи шаговый двигатель двигается
-   QueueHandle_t xCommandQueue;                                        // очередь комманд на управление двигателем
   private:
-    void stepOne(int this_step);
-    inline void setPinMotor(int pin, boolean val);
+    void stepOne(uint8_t this_step);
+    inline void setPinMotor(uint8_t pin, boolean val);
+    int16_t new_pos;
     boolean buzy;
-    uint8_t suspend_work;                                               // ожидание, если 255 - останов, 2*ms
+    uint8_t suspend_work;                                               // ожидание ms, если 255 - останов
     uint8_t step_delay;                                                 // delay between steps, in ms, based on speed
-    int number_of_steps;                                                // total number of steps this motor can take
-    int pin_count;                                                      // how many pins are in use.
+    int16_t number_of_steps;                                            // total number of steps this motor can take
+    uint8_t pin_count;                                                  // how many pins are in use.
     // motor pin numbers:
-    int motor_pin_1;
-    int motor_pin_2;
-    int motor_pin_3;
-    int motor_pin_4;
+    uint8_t motor_pin_1;
+    uint8_t motor_pin_2;
+    uint8_t motor_pin_3;
+    uint8_t motor_pin_4;
     friend void vUpdateStepperEEV(void *);
 };
 #endif
