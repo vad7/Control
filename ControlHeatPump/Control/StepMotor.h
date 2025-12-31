@@ -27,13 +27,7 @@
 class StepMotor {
   public:
    void initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uint8_t motor_pin_2, uint8_t motor_pin_3, uint8_t motor_pin_4); // Иницилизация
-   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed;
-
-   SerialDbg.print("Set EEV step = ");
-   SerialDbg.println(step_delay);
-
-
-   };// Установка скорости шагов в секунду
+   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed; };// Установка скорости шагов в секунду
    void step(int16_t pos_steps);                                       // Движение на новое положение
    void set_pulse_waiting(void) { suspend_work = step_delay; }         // ожидать для следующего импульса
    void suspend(void) { suspend_work = 255; }                          // остановить работу EEV
