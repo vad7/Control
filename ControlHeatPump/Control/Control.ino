@@ -2128,20 +2128,10 @@ void vUpdateStepperEEV(void *)
 			// получить текущее положение шаговика абсолютное в начале очереди
 			if(*step_number < 0) *step_number = 0;
 			if(HP.dEEV.setZero) {
-				HP.dEEV.stepperEEV.new_pos = STEPMOTOR_POS_EMPTY;
 				*step_number = (HP.dEEV.stepperEEV.number_of_steps + EEV_SET_ZERO_OVERRIDE + 7) / 8 * 8; // Если выполняется команда установки 0, то все остальные команды игнорируются до ее выполнения.
 				steps_left = -*step_number;
 			} else {
-				if(HP.dEEV.stepperEEV.new_pos != STEPMOTOR_POS_EMPTY) {
-					int16_t _new = *step_number;
-					vPortEnterCritical();
-					if(HP.dEEV.stepperEEV.new_pos != STEPMOTOR_POS_EMPTY) {
-						_new = HP.dEEV.stepperEEV.new_pos;
-						HP.dEEV.stepperEEV.new_pos = STEPMOTOR_POS_EMPTY;
-					}
-					vPortExitCritical();
-					steps_left = _new - *step_number;
-				}
+				steps_left = HP.dEEV.stepperEEV.new_pos - *step_number;
 			}
 		}
 		// 2. Движение
@@ -2163,17 +2153,19 @@ void vUpdateStepperEEV(void *)
 #else                     // остальные варианты  8 фаз движения
 			HP.dEEV.stepperEEV.stepOne(*step_number % 8);                   // Сделать один шаг //
 #endif
-			HP.dEEV.stepperEEV.set_pulse_waiting();                         // Ожидать step_delay для следующего шага.
-			continue;
+			if(steps_left) {
+				HP.dEEV.stepperEEV.set_pulse_waiting();                         // Ожидать step_delay для следующего шага.
+				continue;
+			}
 		}
 		if(HP.dEEV.setZero) { // если стоит признак установки нуля, обнулить и сбросить признак
-			*step_number = 0;
+			*step_number = HP.dEEV.stepperEEV.new_pos = 0;
 			HP.dEEV.setZero = false;
 		}
-		if(HP.dEEV.stepperEEV.new_pos == STEPMOTOR_POS_EMPTY) {
+		if(HP.dEEV.stepperEEV.new_pos == *step_number) {
 			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();                                   // выключить двигатель если нет удержания
 			HP.dEEV.stepperEEV.offBuzy();                                                            // признак Мотор остановлен
-			HP.dEEV.stepperEEV.suspend();
+			if(HP.dEEV.stepperEEV.new_pos == *step_number) HP.dEEV.stepperEEV.suspend();
 		}
 #endif // EEV_DEF
 	} // for

@@ -792,6 +792,7 @@ int8_t devEEV::set_EEV(int16_t x)
 		return err;
 	}
 	if(x < EEV_CLOSE_STEP) x = EEV_CLOSE_STEP; else if(x > _data.maxSteps) x = _data.maxSteps;
+	if(EEV == x) return err;
 #ifdef TEST_BOARD
 	if(1)
 #else

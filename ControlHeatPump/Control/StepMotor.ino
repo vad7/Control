@@ -34,8 +34,7 @@ void StepMotor::initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uin
 	pinMode(this->motor_pin_3, OUTPUT);
 	pinMode(this->motor_pin_4, OUTPUT);
 	off();                     // Снять напряжение
-	suspend_work = true;
-	new_pos = STEPMOTOR_POS_EMPTY;
+	suspend();
 }
 
 bool StepMotor::check_suspend(void)
@@ -52,12 +51,10 @@ bool StepMotor::check_suspend(void)
 // На входе АБСОЛЮТНАЯ координата, в очередь уходит АБСОЛЮТНАЯ координата
 void StepMotor::step(int16_t pos_steps)
 {
-	if(pos_steps) {
-		buzy = true;                        // флаг начало движения
-		new_pos = pos_steps;
-		if(suspend_work == 255) suspend_work = 0;
-		//vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
-	}
+	buzy = true;                        // флаг начало движения
+	new_pos = pos_steps;
+	if(suspend_work == 255) suspend_work = 0;
+	//vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
 }
 
 // выставить один пин
