@@ -2153,18 +2153,18 @@ void vUpdateStepperEEV(void *)
 #else                     // остальные варианты  8 фаз движения
 			HP.dEEV.stepperEEV.stepOne(*step_number % 8);                   // Сделать один шаг //
 #endif
-			if(steps_left) {
-				HP.dEEV.stepperEEV.set_pulse_waiting();                         // Ожидать step_delay для следующего шага.
+			if(steps_left != 0) {
+				HP.dEEV.stepperEEV.set_pulse_waiting();                     // Ожидать step_delay для следующего шага.
 				continue;
 			}
 		}
 		if(HP.dEEV.setZero) { // если стоит признак установки нуля, обнулить и сбросить признак
-			*step_number = HP.dEEV.stepperEEV.new_pos = 0;
 			HP.dEEV.setZero = false;
+			*step_number = HP.dEEV.stepperEEV.new_pos = 0;
 		}
 		if(HP.dEEV.stepperEEV.new_pos == *step_number) {
-			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();                                   // выключить двигатель если нет удержания
-			HP.dEEV.stepperEEV.offBuzy();                                                            // признак Мотор остановлен
+			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();          // выключить двигатель если нет удержания
+			HP.dEEV.stepperEEV.offBuzy();                                   // признак Мотор остановлен
 			if(HP.dEEV.stepperEEV.new_pos == *step_number) HP.dEEV.stepperEEV.suspend();
 		}
 #endif // EEV_DEF

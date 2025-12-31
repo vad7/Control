@@ -39,10 +39,8 @@ void StepMotor::initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uin
 
 bool StepMotor::check_suspend(void)
 {
-	if(suspend_work) {
-		if(suspend_work != 255) if(--suspend_work == 0) return false; // *1 ms
-		return true;
-	}
+	if(suspend_work == 255) return true;
+	if(suspend_work && --suspend_work) return true; // *1 ms
 	return false;
 }
 
