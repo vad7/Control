@@ -21,8 +21,6 @@ void StepMotor::initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uin
 {
 	this->number_of_steps = number_of_steps; // total number of steps for this motor
 	this->pin_count = 4;
-	buzy = false;                              // мотор не двигается
-
 	// Arduino pins for the motor control connection:
 	this->motor_pin_1 = motor_pin_1;
 	this->motor_pin_2 = motor_pin_2;
@@ -33,26 +31,23 @@ void StepMotor::initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uin
 	pinMode(this->motor_pin_2, OUTPUT);
 	pinMode(this->motor_pin_3, OUTPUT);
 	pinMode(this->motor_pin_4, OUTPUT);
-	off();                     // Снять напряжение
+	motor_off();        // Снять напряжение
 	suspend();
 }
 
 bool StepMotor::check_suspend(void)
 {
-	if(suspend_work == 255) return true;
+	if(task == STEPMOTOR_TASK_STOP) return true;
 	if(suspend_work && --suspend_work) return true; // *1 ms
 	return false;
 }
 
-
 // Движение до pos_steps
 // На входе АБСОЛЮТНАЯ координата, в очередь уходит АБСОЛЮТНАЯ координата
-void StepMotor::step(int16_t pos_steps)
+void StepMotor::move_to_newpos(int16_t pos_steps)
 {
-	buzy = true;                        // флаг начало движения
 	new_pos = pos_steps;
-	if(suspend_work == 255) suspend_work = 0;
-	//vTaskResume(xHandleStepperEEV);   // Запустить движение если его еще нет
+	resume();
 }
 
 // выставить один пин
@@ -64,6 +59,7 @@ __attribute__((always_inline)) inline void StepMotor::setPinMotor(uint8_t pin, b
 	digitalWriteDirect(pin, val);
 #endif  
 }
+
 /*
  * Движение на один шаг  в зависимости от выбранной последовательности
  */
@@ -207,9 +203,8 @@ void StepMotor::stepOne(uint8_t thisStep)
  // SerialDbg.print("thisStep ");   SerialDbg.println(thisStep);    
 }
 
-
 // Снять напряжения с шаговика
-void StepMotor::off()
+void StepMotor::motor_off()
 {
   #ifdef DRV_EEV_L9333                        // использование драйвера L9333 нужно инвертирование!!!
   digitalWriteDirect(motor_pin_1, HIGH);
@@ -222,8 +217,4 @@ void StepMotor::off()
   digitalWriteDirect(motor_pin_3, LOW);
   digitalWriteDirect(motor_pin_4, LOW); 
 #endif 
-     
 }
-              
-
-

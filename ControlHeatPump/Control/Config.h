@@ -5877,6 +5877,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RWARN_PULSE_QT				3000			// bit length, microsec
 	#define RWARN_PACKET_DELAY			1000			// Задержка до следующего пакета, microsec
 	#define RWARN_WATCHDOG				600				// Сообщать, если нет связи более секунд
+	static const char *RWARN_BAT_NAMES[RWARN_BMS_NUM_MAX] =	{ "200", "340" };
 	#endif
 
 	//-----------------------------------------------------------------------------------------------------------------------------

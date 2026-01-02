@@ -719,6 +719,7 @@ public:
 	#ifdef EEV_DEF
 	TaskHandle_t xHandleUpdateEEV;                      // Заголовок задачи "Обновление ЭРВ"
 	#endif
+    TaskHandle_t xHandleStepperEEV;                     // Заголовок задачи шаговый двигатель и RWARN
 	TaskHandle_t xHandleReadSensor;                     // Заголовок задачи "Чтение датчиков"
 	TaskHandle_t xHandleSericeHP;						// Задача обслуживания ТН
 #ifdef WATTROUTER

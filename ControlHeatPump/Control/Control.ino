@@ -611,9 +611,8 @@ x_I2C_init_std_message:
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.dEEV.stepperEEV.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
-	//vTaskSuspend(HP.dEEV.stepperEEV.xHandleStepperEEV);                                 // Остановить задачу
 #endif
 
 	// ПРИОРИТЕТ 2 высокий - это управление ТН управление ЭРВ, сервис
@@ -2054,10 +2053,11 @@ xContinue:
 }
 #endif
 
-// Задача обеспечения движения шаговика EEV (StepperEEV)
+// Задача обеспечения движения шаговика EEV (StepperEEV) и внешних устройств (программный UART RX)
 void vUpdateStepperEEV(void *)
 { //const char *pcTaskName = "HP_UpdateStepperEEV\r\n";
   // Размер стека не позволяет использовать внутри jprintf.* !!!
+	static int16_t steps_left = 0;
 #ifdef USE_REMOTE_WARNING
 	uint8_t _bit = 0, _byte = 0, _idx = 0;
 	uint16_t _crc = 0;
@@ -2116,14 +2116,10 @@ void vUpdateStepperEEV(void *)
 		}
 #endif	// USE_REMOTE_WARNING
 #ifdef EEV_DEF // каждые 1ms
-		// Полный цикл движения шаговика с разгребанием очереди команд,
-		// В очереди лежат АБСОЛЮТНЫЕ координаты
-		// При этом если очередь содержит более одной команды - просто суммируем все команды и двигаемся по итоговой сумме
-		// Это значит что шаговик не успевает за темпом выдачи команд программой. Экономим время
-		static int16_t steps_left = 0;
+		// Полный цикл движения шаговика,
 		if(HP.dEEV.stepperEEV.check_suspend()) continue;
 		int16_t *step_number = &HP.dEEV.EEV;
-		if(steps_left == 0) {
+		if(HP.dEEV.stepperEEV.task != STEPMOTOR_TASK_MOVING) {
 			// 1. Чтение очереди команд, для выяснения все таки куда надо двигаться, переходим на относительные координаты
 			// получить текущее положение шаговика абсолютное в начале очереди
 			if(*step_number < 0) *step_number = 0;
@@ -2144,24 +2140,22 @@ void vUpdateStepperEEV(void *)
 				steps_left++;
 			}
 #if EEV_PHASE == PHASE_4  // 4 фазы движения
-			HP.dEEV.stepperEEV.stepOne(*step_number % 4);                   // Сделать один шаг //
+			HP.dEEV.stepperEEV.stepOne(*step_number % 4);          // Сделать один шаг //
 #else                     // остальные варианты  8 фаз движения
-			HP.dEEV.stepperEEV.stepOne(*step_number % 8);                   // Сделать один шаг //
+			HP.dEEV.stepperEEV.stepOne(*step_number % 8);          // Сделать один шаг //
 #endif
-			if(steps_left != 0) {
-				HP.dEEV.stepperEEV.set_pulse_waiting();                     // Ожидать step_delay для следующего шага.
-				continue;
-			}
+			HP.dEEV.stepperEEV.wait_moving();                      // Ожидать step_delay для следующего шага.
+			continue;
 		}
 		if(HP.dEEV.setZero) { // если стоит признак установки нуля, обнулить и сбросить признак
 			HP.dEEV.setZero = false;
 			*step_number = HP.dEEV.stepperEEV.new_pos = 0;
 		}
-		if(HP.dEEV.stepperEEV.new_pos == *step_number) {
-			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.off();          // выключить двигатель если нет удержания
-			HP.dEEV.stepperEEV.offBuzy();                                   // признак Мотор остановлен
-			if(HP.dEEV.stepperEEV.new_pos == *step_number) HP.dEEV.stepperEEV.suspend();
-		}
+		if(*step_number == HP.dEEV.stepperEEV.new_pos) {
+			HP.dEEV.stepperEEV.suspend();
+			if(!HP.dEEV.get_HoldMotor()) HP.dEEV.stepperEEV.motor_off(); // выключить двигатель, если нет удержания
+			if(*step_number != HP.dEEV.stepperEEV.new_pos) HP.dEEV.stepperEEV.move_to_newpos(HP.dEEV.stepperEEV.new_pos);
+		} else HP.dEEV.stepperEEV.resume();                         // еще команда появилась
 #endif // EEV_DEF
 	} // for
 	vTaskDelete( NULL);

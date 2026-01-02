@@ -3538,7 +3538,7 @@ boolean HeatPump::configHP()
 					//if(GETBIT(dEEV.get_flags(), fEEV_BoilerStartPos) && newpos > dEEV.get_BoilerStartPos()) newpos = dEEV.get_BoilerStartPos();
 					//if(dEEV.get_EEV() != newpos && newpos > dEEV.get_minEEV()) {
 						dEEV.set_EEV(newpos);
-						for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
+						for(uint8_t i = 1; i && dEEV.stepperEEV.is_buzy(); i++) _delay(100); // wait EEV stop
 #ifdef EEV_PREFER_PERCENT
 						journal.jprintf(" EEV go BoilerPos: %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
 #else
@@ -3734,7 +3734,7 @@ xNextStop:
 		dEEV.set_EEV(lastEEV);
 		journal.jprintf("LastPos:");
 	}
-	for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
+	for(uint8_t i = 1; i && dEEV.stepperEEV.is_buzy(); i++) _delay(100); // wait EEV stop
 #ifdef EEV_PREFER_PERCENT
 	journal.jprintf(" %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
 #else
@@ -3850,7 +3850,7 @@ xNextStop:
 				dEEV.set_EEV(lastEEV);
 				journal.jprintf("LastPos:");
 			}
-			for(uint8_t i = 1; i && dEEV.stepperEEV.isBuzy(); i++) _delay(100); // wait EEV stop
+			for(uint8_t i = 1; i && dEEV.stepperEEV.is_buzy(); i++) _delay(100); // wait EEV stop
 	#ifdef EEV_PREFER_PERCENT
 			journal.jprintf(" %.2d\n", dEEV.calc_percent(dEEV.get_EEV()));
 	#else

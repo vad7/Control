@@ -21,28 +21,30 @@
 #include "Arduino.h"
 //#include "FreeRTOS_ARM.h"
 
-#define STEPMOTOR_POS_EMPTY -32767
+// flags:
+#define STEPMOTOR_TASK_WORK		0
+#define STEPMOTOR_TASK_MOVING	1
+#define STEPMOTOR_TASK_STOP		2
 
 // library interface description
 class StepMotor {
   public:
    void initStepMotor(uint16_t number_of_steps, uint8_t motor_pin_1, uint8_t motor_pin_2, uint8_t motor_pin_3, uint8_t motor_pin_4); // Иницилизация
-   void setSpeed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed; };// Установка скорости шагов в секунду
-   void step(int16_t pos_steps);                                       // Движение на новое положение
-   void set_pulse_waiting(void) { suspend_work = step_delay; }         // ожидать для следующего импульса
-   void suspend(void) { suspend_work = 255; }                          // остановить работу EEV
-   void resume(void) { suspend_work = 0; }                             // начать работу EEV
+   void set_speed(uint8_t whatSpeed) { step_delay = 1000 / whatSpeed; };// Установка скорости шагов в секунду
+   void move_to_newpos(int16_t pos_steps);                             // Движение на новое положение
+   inline void wait_moving(void) { suspend_work = step_delay; task = STEPMOTOR_TASK_MOVING; }// ожидать для следующего импульса
+   inline void suspend(void) { task = STEPMOTOR_TASK_STOP; }           // остановить задачу EEV
+   inline void resume(void) { task = STEPMOTOR_TASK_WORK; }            // начать задачу EEV
    bool check_suspend(void);                                           // ожидать?
-   inline boolean isBuzy()  {return buzy;}                             // True если мотор шагает
-   inline void offBuzy()    {buzy=false;}                              // Установка признака - мотор остановлен
-   void off();                                                         // выключить двигатель
-   TaskHandle_t xHandleStepperEEV;                                     // Заголовок задачи шаговый двигатель двигается
+   inline bool is_buzy(void) { return task != STEPMOTOR_TASK_STOP; }   // True если мотор шагает
+   void motor_off(void);                                               // выключить двигатель
   private:
     void stepOne(uint8_t this_step);
     inline void setPinMotor(uint8_t pin, boolean val);
     int16_t new_pos;
-    boolean buzy;
-    uint8_t suspend_work;                                               // ожидание ms, если 255 - останов
+    uint8_t flags;
+    uint8_t task;
+    uint8_t suspend_work;                                               // ожидание ms
     uint8_t step_delay;                                                 // delay between steps, in ms, based on speed
     int16_t number_of_steps;                                            // total number of steps this motor can take
     uint8_t pin_count;                                                  // how many pins are in use.

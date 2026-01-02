@@ -725,7 +725,7 @@ void devEEV::InitStepper(void)
       #endif
     #endif  // DRV_EEV_L9333
 #endif // DEMO   
-    stepperEEV.setSpeed(_data.speedEEV);   // Установить скорость движения
+    stepperEEV.set_speed(_data.speedEEV);   // Установить скорость движения
 }
 
 void devEEV::after_load(void)
@@ -777,7 +777,7 @@ int8_t devEEV::set_zero()
 #else
 		if(testMode != SAFE_TEST)
 #endif
-			stepperEEV.step(0); else EEV = 0;       // SAFE_TEST - только координаты меняем
+			stepperEEV.move_to_newpos(0); else EEV = 0;       // SAFE_TEST - только координаты меняем
 	}
 	return OK;
 }
@@ -798,7 +798,7 @@ int8_t devEEV::set_EEV(int16_t x)
 #else
 	if(testMode != SAFE_TEST)
 #endif
-		stepperEEV.step(x); else EEV = x;       // SAFE_TEST - только координаты меняем
+		stepperEEV.move_to_newpos(x); else EEV = x;       // SAFE_TEST - только координаты меняем
 	return err;
 }
 
@@ -1232,7 +1232,7 @@ void devEEV::get_paramEEV(char *var, char *ret)
 		strcat(ret," (");
 		ret = dptoa(ret + m_strlen(ret), get_EEV() > 0 ? calc_percent(get_EEV()) : 0, 2);
 		strcpy(ret - 1, "%)");
-		if(stepperEEV.isBuzy()) strcat(ret, "⇔");  // признак движения
+		if(stepperEEV.is_buzy()) strcat(ret, "⇔");  // признак движения
 	} else if(strcmp(var, eev_OVERHEAT)==0){
 		_dtoa(ret, Overheat, 2);
 	} else if(strcmp(var, eev_ERROR)==0){  _itoa(err,ret);
@@ -1433,7 +1433,7 @@ boolean devEEV::set_paramEEV(char *var,float x)
 	} else if(strcmp(var, eev_PID2_delta)==0){
 		_data.pid2_delta=rd(x, 100); return true; // сотые
 	} else if(strcmp(var, eev_SPEED)==0){
-		if ((x>=5)&&(x<=120)) { stepperEEV.setSpeed(_data.speedEEV = x); return true;} else return false;	// шаги в секунду
+		if ((x>=5)&&(x<=120)) { stepperEEV.set_speed(_data.speedEEV = x); return true;} else return false;	// шаги в секунду
 #ifdef EEV_PREFER_PERCENT
 	} else if(strcmp(var, eev_MANUAL)==0){
 		if(x >= 0 && x <= 100) {
