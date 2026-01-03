@@ -198,11 +198,11 @@ enum { // last_error[n] =
 #define RWARN_ERROR_TOTAL			8				// максимальный номер внешнего предупреждения, нумерация с 1
 static const char *RWARN_ERROR_TEXT[RWARN_ERROR_TOTAL] =
 	{ "Ok", "Не отвечает", "Ошибка заголовка", "Ошибка настройки", "Большое R проводов", "ПереРазряд ячейки", "ПереЗаряд ячейки", "Разбег ячеек" };
-#define RWARN_status_on_off_mask		0b10000000
-#define RWARN_status_on_balancing_mask	0b01000000
+#define RWARN_status_on_off_mask		0b01000000
+#define RWARN_status_on_balancing_mask	0b10000000
 #define RWARN_status_error_mask			0b00111111
 struct RWARN_BMS {
-	uint8_t  last_status;	// bms_flags (b7=on/off, b6=balancing) + last_error:
+	uint8_t  last_status;	// bms_flags (b7=balancing, b6=on/off) + last_error
 	uint8_t  bms_min_string;
 	uint8_t  bms_max_string;
 	uint16_t bms_min_cell_mV;

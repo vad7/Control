@@ -2100,7 +2100,7 @@ void vUpdateStepperEEV(void *)
 								RWARN_Status = RWARN_St_Error_CRC;
 							} else {
 								RWARN_bms_num = MIN(RWARN_buf[0], RWARN_BMS_NUM_MAX);
-								memcpy((uint8_t *)RWARN_bms, RWARN_buf + sizeof(RWARN_bms_num), sizeof(RWARN_bms));
+								memcpy((uint8_t *)RWARN_bms, RWARN_buf + sizeof(RWARN_bms_num), sizeof(RWARN_bms[0]) * RWARN_bms_num);
 								RWARN_Status = RWARN_St_Read_Ok;
 							}
 						} else if(_idx < sizeof(RWARN_buf) - 2+1) _crc = _crc16(_crc, _byte);
