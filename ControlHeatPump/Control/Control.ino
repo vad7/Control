@@ -523,8 +523,8 @@ x_I2C_init_std_message:
 
 	// 10. Сетевые настройки
 	journal.jprintf("8. Setting Network . . .\n");
-
-	if(initW5200(true)) {   // Инициализация сети с выводом инфы в консоль
+	bool network_ok = initW5200(true);
+	if(network_ok) {   // Инициализация сети с выводом инфы в консоль
 		W5100.getMACAddress((uint8_t *)Socket[0].outBuf);
 		journal.jprintf(" MAC: %s\n", MAC2String((uint8_t *)Socket[0].outBuf));
 	}
@@ -534,17 +534,19 @@ x_I2C_init_std_message:
 	journal.jprintf("9. Setting time and clock . . .\n");
 	set_time();
 
-	// 12. Инициалазация уведомлений
-	journal.jprintf("10. Message update IP from DNS . . .\n");
-	HP.message.dnsUpdate();
+	// 12. Инициализация уведомлений
+	if(network_ok) {
+		journal.jprintf("10. Message update IP from DNS . . .\n");
+		if(network_ok) HP.message.dnsUpdate();
 
 	// 13. Инициалазация MQTT
 #ifdef MQTT
-	journal.jprintf("11. Client MQTT update IP from DNS . . .\n");
-	HP.clMQTT.dnsUpdate();
+		journal.jprintf("11. Client MQTT update IP from DNS . . .\n");
+		HP.clMQTT.dnsUpdate();
 #else
-	journal.jprintf("11. Client MQTT disabled by config\n");
+		journal.jprintf("11. Client MQTT disabled by config\n");
 #endif
+	}
 
 	// 14. Инициалазация Statistics
 	journal.jprintf("12. Statistics ");
@@ -597,7 +599,7 @@ x_I2C_init_std_message:
 	//HP.scan_OneWire(Socket[0].outBuf);
 #endif
 #ifdef WATTROUTER
-	WR_Init();
+	if(network_ok) WR_Init();
 #endif
 
 	// Создание задач FreeRTOS  ----------------------
@@ -2374,17 +2376,25 @@ void vServiceHP(void *)
 #ifdef USE_REMOTE_WARNING
 			if(RWARN_Status == RWARN_St_Read_Ok) {
 				uint32_t lt = rtcSAM3X8.unixtime();
+				bool _msg = false;
 				for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 					uint8_t _err = RWARN_bms[i].last_status & RWARN_status_error_mask;
-					if(RWARN_bms[i].last_status != ERR_BMS_Ok && RWARN_last_status[i] != _err
+					if(_err != ERR_BMS_Ok && _err != RWARN_last_status[i]
 							&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
-						if(HP.message.setMessage(pMESSAGE_EXT_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+						if(_msg || HP.message.setMessage(pMESSAGE_EXT_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
+							_msg = true;
 							RWARN_LastMessageSent = lt;
+							HP.message.setMessage_add_text(RWARN_MESSAGE_STR1);
+							HP.message.setMessage_add_int(i+1);
+							HP.message.setMessage_add_text(" (");
+							HP.message.setMessage_add_text((char*)RWARN_BAT_NAMES[i]);
+							HP.message.setMessage_add_text("): ");
 							if(_err < RWARN_ERROR_TOTAL) HP.message.setMessage_add_text((char*)RWARN_ERROR_TEXT[_err]);
 							else {
-								HP.message.setMessage_add_text((char*)"Код ");
+								HP.message.setMessage_add_text((char*)"Ошибка ");
 								HP.message.setMessage_add_int(_err);
 							}
+							HP.message.setMessage_add_text("\n");
 						}
 					}
 					RWARN_last_status[i] = _err;

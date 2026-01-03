@@ -637,7 +637,7 @@ int8_t HeatPump::load_motoHour()
 		motoHour.flags = p->flags;
 	}
  	memcpy(&motoHour_saved, &motoHour, sizeof(motoHour_saved));
-	journal.printf(" Load counters OK, read: %d bytes\n", sizeof(motoHour));
+	journal.jprintf(" Load counters OK, read: %d bytes\n", sizeof(motoHour));
 	return OK;
 }
 // Сборос сезонного счетчика моточасов

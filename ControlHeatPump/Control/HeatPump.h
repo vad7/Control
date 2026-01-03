@@ -194,6 +194,7 @@ enum { // last_error[n] =
 #define RWARN_WARNING_LINK_ERROR	"ОШИБКА СВЯЗИ!"
 #define RWARN_WARNING_ERR_LINK		"Ошибка передачи данных"
 #define RWARN_WARNING_ERR_CRC		" (CRC)"
+#define RWARN_MESSAGE_STR1			"АКБ №"
 #define RWARN_ERROR_TOTAL			8				// максимальный номер внешнего предупреждения, нумерация с 1
 static const char *RWARN_ERROR_TEXT[RWARN_ERROR_TOTAL] =
 	{ "Ok", "Не отвечает", "Ошибка заголовка", "Ошибка настройки", "Большое R проводов", "ПереРазряд ячейки", "ПереЗаряд ячейки", "Разбег ячеек" };

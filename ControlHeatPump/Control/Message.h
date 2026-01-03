@@ -93,7 +93,7 @@ class Message
      boolean setTestMail();                                                 // Установить (сформировать) тестовое письмо, отправка sendMessage();  
      boolean setTestSMS();                                                  // Установить (сформировать) тестовое СМС, отправка sendMessage();  
      boolean sendMessage();                                                 // Послать уведомление согласно выбранных настроек cформированное setMessage
-     void    setMessage_add_text(char *c);									// Добавить текст в конец уведомления
+     void    setMessage_add_text(const char *c);							// Добавить текст в конец уведомления
      void    setMessage_add_int(int32_t n);									// Добавить число в конец уведомления
      boolean dnsUpdate();                                                   // Обновление IP адресов серверов через dns 
      

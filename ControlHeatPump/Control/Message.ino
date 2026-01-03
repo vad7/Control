@@ -223,7 +223,7 @@ void Message::get_messageSetting(char *var, char *ret)
 		ret += strlen(ret);
 		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 			uint8_t st = RWARN_bms[i].last_status;
-			ret += m_snprintf(ret, 256, "<tr><td>%s</td><td>%s</td><td>%s</td>", RWARN_BAT_NAMES[i], !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Баланс..." : "Включен", (st & RWARN_status_error_mask) < RWARN_ERROR_TOTAL ? RWARN_ERROR_TEXT[st & RWARN_status_error_mask] : "Ошибка!");
+			ret += m_snprintf(ret, 256, "<tr><td>%s</td><td>%s</td><td>%s</td>", RWARN_BAT_NAMES[i], !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Балансировка" : "Включен", (st & RWARN_status_error_mask) < RWARN_ERROR_TOTAL ? RWARN_ERROR_TEXT[st & RWARN_status_error_mask] : "Ошибка!");
 			ret += m_snprintf(ret, 256, "<td>%.3d</td><td>%.3d(%d)</td><td>%.3d(%d)</td><td>%.3d</td></tr>", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_min_string, RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms[i].bms_max_cell_mV - RWARN_bms[i].bms_min_cell_mV);
 		}
 	} else if(strcmp(var, mess_MAIL_AUTH) == 0) {
@@ -462,7 +462,7 @@ bool Message::setMessage(MESSAGE ms, char *c, int p1) // может запуск
 }
 
 // Добавить текст в конец уведомления
-void Message::setMessage_add_text(char *c)
+void Message::setMessage_add_text(const char *c)
 {
 	strcat(messageData.data, c);
 }
@@ -768,22 +768,25 @@ boolean Message::sendMail()
 	clientMessage.write(messageData.data, strlen(messageData.data));
 
 	// 7. Дополнительная информация если требуется добавляется в уведомление
-#ifdef USE_REMOTE_WARNING
 	if(messageData.ms == pMESSAGE_EXT_WARNING) {
-		strcpy(tempBuf, "\n\n ----- СОСТОЯНИЕ -----");
+#ifdef USE_REMOTE_WARNING
+		strcpy(tempBuf, "\n\n ----- СОСТОЯНИЕ ----\n");
 		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
-			if(RWARN_bms[i].last_status < RWARN_ERROR_TOTAL) m_snprintf(tempBuf+strlen(tempBuf), 256, "\n\nBMS%d: %s", i+1, (char*)RWARN_ERROR_TEXT[RWARN_bms[i].last_status]);
-			else m_snprintf(tempBuf+strlen(tempBuf), 256, "BMS%d: Код ошибки %d", i+1, RWARN_bms[i].last_status);
-			m_snprintf(tempBuf+strlen(tempBuf), 256, "\nАКБ: %.3dV\nМин. ячейка[%d]: %.3dV\nМакс ячейка[%d]: %.3dV", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_string, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms[i].bms_max_cell_mV);
-			clientMessage.write(messageData.data, strlen(messageData.data));
+			uint8_t st = RWARN_bms[i].last_status;
+			m_snprintf(tempBuf+strlen(tempBuf), 256, "\nBMS%d: %s\n", i+1, !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Балансировка" : "Включен");
+			st &= RWARN_status_error_mask;
+			if(st < RWARN_ERROR_TOTAL) m_snprintf(tempBuf+strlen(tempBuf), 256, "Ошибка: %s", (char*)RWARN_ERROR_TEXT[st]);
+			else m_snprintf(tempBuf+strlen(tempBuf), 256, "Код ошибки %d", st);
+			m_snprintf(tempBuf+strlen(tempBuf), 256, "\nАКБ: %.3dV\nМин. ячейка[%d]: %.3dV\nМакс ячейка[%d]: %.3d\n", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_string, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms[i].bms_max_cell_mV);
+			clientMessage.write(tempBuf, strlen(tempBuf));
 		}
-		strcpy(tempBuf, "\n\n");
+		strcpy(tempBuf, "\n");
 #ifdef USE_ELECTROMETER_SDM
 		strcat(tempBuf, "Текущее напряжение сети ТН: %d");
 		_itoa(HP.dSDM.get_voltage(), tempBuf);
 		strcat(tempBuf, "V\n");
 #endif
-		clientMessage.write(messageData.data, strlen(messageData.data));
+		clientMessage.write(tempBuf, strlen(tempBuf));
 #ifdef WATTROUTER
 		strcpy(tempBuf, "Ваттроутер.\nТекущая мощность сети, Вт: ");
 		if(WR_Pnet == -32768) strcat(tempBuf, "-"); else _itoa(WR_Pnet, tempBuf);
@@ -793,7 +796,7 @@ boolean Message::sendMail()
 		strcat(tempBuf, "\nНапряжение АКБ: ");
 		_dtoa(tempBuf, WR_MAP_Ubat, 1);
 		strcat(tempBuf, "V\n");
-		clientMessage.write(messageData.data, strlen(messageData.data));
+		clientMessage.write(tempBuf, strlen(tempBuf));
 #endif
 	} else
 #endif

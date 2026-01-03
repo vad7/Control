@@ -164,7 +164,7 @@ void Journal::Format(void)
 	if(err == OK) jprintf("\nFormat I2C journal (size %d bytes) - Ok\n", JOURNAL_LEN);
 }
 #endif
-    
+
 // Печать только в консоль
 void Journal::printf(const char *format, ...)             
 {

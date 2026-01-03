@@ -57,6 +57,11 @@ class Journal :public Print
 public:
   void Init();                                          // Инициализация
   void printf(const char *format, ...);                 // Печать только в консоль
+
+  void printf2(char *format, ...);                 // Печать только в консоль
+
+
+
   void printf_time(const char *format, ...);            // Печать только в консоль
   void jprintf(const char *format, ...);                // Печать в консоль и журнал возвращает число записанных байт
   void jprintf_only(const char *format, ...);           // Печать ТОЛЬКО в журнал возвращает число записанных байт для использования в критических секциях кода
