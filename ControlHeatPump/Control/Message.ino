@@ -224,8 +224,8 @@ void Message::get_messageSetting(char *var, char *ret)
 		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 			uint8_t st = RWARN_bms[i].last_status;
 			ret += m_snprintf(ret, 256, "<tr><td>%s</td><td>%s</td><td>%s</td>", RWARN_BAT_NAMES[i], !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Балансировка" : "Включен", (st & RWARN_status_error_mask) < RWARN_ERROR_TOTAL ? RWARN_ERROR_TEXT[st & RWARN_status_error_mask] : "Ошибка!");
-			ret += m_snprintf(ret, 256, "<td>%.3d</td><td>%.3d(%d)/%.3d(%d)</td>", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_min_string, RWARN_bms_min_cell_mV_hist[i], RWARN_bms_min_string_hist[i]);
-			ret += m_snprintf(ret, 256, "<td>%.3d(%d)/%.3d(%d)</td><td>%.3d</td></tr>", RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms_max_cell_mV_hist[i], RWARN_bms_max_string_hist[i], RWARN_bms[i].bms_max_cell_mV - RWARN_bms[i].bms_min_cell_mV);
+			ret += m_snprintf(ret, 256, "<td>%.3d</td><td>%.3d(%d) / %.3d(%d)</td>", RWARN_bms[i].bms_total_mV, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_min_string, RWARN_bms_min_cell_mV_hist[i], RWARN_bms_min_string_hist[i]);
+			ret += m_snprintf(ret, 256, "<td>%.3d(%d) / %.3d(%d)</td><td>%.3d</td></tr>", RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string, RWARN_bms_max_cell_mV_hist[i], RWARN_bms_max_string_hist[i], RWARN_bms[i].bms_max_cell_mV - RWARN_bms[i].bms_min_cell_mV);
 		}
 	} else if(strcmp(var, mess_MAIL_AUTH) == 0) {
 		if(GETBIT(messageSetting.flags, fMailAUTH)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);

@@ -22,7 +22,7 @@ function send_files(id) {
 		fs[0].settings = 1; 
 	} else upload(mrk);
 	for(; upload_idx < fs.length && !upload_error; upload_idx++) {
-		if(!upload(fs[upload_idx] && confirm("Повторить загрузку " + fs[upload_idx].name + "?")) { upload_idx--; upload_error = false; continue; }
+		if(!upload(fs[upload_idx]) && confirm("Повторить загрузку " + fs[upload_idx].name + "?")) { upload_idx--; upload_error = false; continue; }
 	}
 	if(id != 's' && !upload_error && upload_idx == fs.length) {
 		mrk.name = "*"+id+"_END*";

@@ -811,36 +811,27 @@ var upload_error = false;
 
 function upload(file) {
 	maxRetries = 5;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-			var xhr = new XMLHttpRequest();
-//			xhr.upload.onprogress = function(event) { console.log(event.loaded + ' / ' + event.total); }
-//			xhr.onload = xhr.onerror = function() {
-//				if(this.status == 200) { console.log("success"); } else { console.log("error " + this.status); }
-//			};
-			xhr.open("POST", urlcontrol + (NeedLogin == 2 ? "/&&" + LPString : ""), false);
-            xhr.timeout = 30000;
-			xhr.setRequestHeader('Title', file.settings ? "*SETTINGS*" : encodeURIComponent(file.name));
-            xhr.send(file);
-            if (xhr.status === 0) {
-                throw new Error('Ошибка соединения');
-            } else if (xhr.status !== 200) {
-                throw new Error(`HTTP ${xhr.status}: ${xhr.statusText}`);
-            } else if (xhr.responseText && xhr.responseText.trim() !== "") {
-                throw new Error(xhr.responseText);
-            }
-            return true;
-        } catch (error) {
-            console.error(`Attempt ${attempt}/${maxRetries} failed:`, error.message);
-            if (attempt < maxRetries) {
-                wait(1000);
-                continue;
-            }
-            alert(`Upload failed after ${maxRetries} attempts: ${error.message}`);
-            upload_error = true;
-            return false;
-        }
+	upload_error = false;
+	var xhr;
+    for(let attempt = 0; attempt < maxRetries; attempt++) {
+		xhr = new XMLHttpRequest();
+//		xhr.upload.onprogress = function(event) { console.log(event.loaded + ' / ' + event.total); }
+//		xhr.onload = xhr.onerror = function() {
+//			if(this.status == 200) { console.log("success"); } else { console.log("error " + this.status); }
+//		};
+		xhr.open("POST", urlcontrol + (NeedLogin == 2 ? "/&&" + LPString : ""), false);
+		xhr.setRequestHeader('Title', file.settings ? "*SETTINGS*" : encodeURIComponent(file.name));
+		xhr.send(file);
+		if(xhr.status==200 && xhr.responseText!==null) {
+			if(xhr.responseText.trim()==="") return true;
+			if(xhr.responseText.trim().indexOf("Файлы загружены")===0) {
+				alert("Успешно - " + xhr.responseText);
+				return true;
+			}
+		}
     }
+	upload_error = true;
+	alert(xhr.responseText);
 }
 
 function autoheight() {
