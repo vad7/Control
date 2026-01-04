@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2026 by Vadim Kulakov vad7@yahoo.com, vad711
  * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмное обеспечение предназначено для управления
@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.207"				// Версия прошивки
+#define VERSION			"1.208"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта

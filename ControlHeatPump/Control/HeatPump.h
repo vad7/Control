@@ -205,8 +205,8 @@ struct RWARN_BMS {
 	uint8_t  last_status;	// bms_flags (b7=balancing, b6=on/off) + last_error
 	uint8_t  bms_min_string;
 	uint8_t  bms_max_string;
-	uint16_t bms_min_cell_mV;
-	uint16_t bms_max_cell_mV;
+	int16_t  bms_min_cell_mV;
+	int16_t  bms_max_cell_mV;
 	int32_t  bms_total_mV;
 } __attribute__ ((packed));
 uint8_t  RWARN_bms_num = 0;
@@ -215,6 +215,11 @@ uint8_t RWARN_last_status[RWARN_BMS_NUM_MAX];
 uint8_t RWARN_link_status;
 uint8_t  RWARN_buf[sizeof(RWARN_bms_num) + sizeof(RWARN_BMS) * RWARN_BMS_NUM_MAX + 2]; // RWARN_BMS + CRC16
 uint16_t RWARN_Errors = 0;
+int16_t  RWARN_bms_min_cell_mV_hist[RWARN_BMS_NUM_MAX];
+uint8_t  RWARN_bms_min_string_hist[RWARN_BMS_NUM_MAX];
+int16_t  RWARN_bms_max_cell_mV_hist[RWARN_BMS_NUM_MAX];
+uint8_t  RWARN_bms_max_string_hist[RWARN_BMS_NUM_MAX];
+
 volatile uint32_t RWARN_timer;			// microsec
 uint16_t RWARN_NoLinkCnt;
 uint32_t RWARN_LastMessageSent = 0;

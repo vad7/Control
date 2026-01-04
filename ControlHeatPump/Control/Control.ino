@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021 by Vadim Kulakov vad7@yahoo.com, vad711
+ * Copyright (c) 2016-2026 by Vadim Kulakov vad7@yahoo.com, vad711
  * &                       by Pavel Panfilov <firstlast2007@gmail.com> pav2000
  * "Народный контроллер" для тепловых насосов.
  * Данное програмноое обеспечение предназначено для управления
@@ -2065,6 +2065,8 @@ void vUpdateStepperEEV(void *)
 	uint16_t _crc = 0;
 	memset(RWARN_bms, 0, sizeof(RWARN_bms));
 	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
+	memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));
+	memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));
 	RWARN_link_status = RWARN_LinkErr_Unknown;
 	RWARN_NoLinkCnt = 0;
 	RWARN_Status = RWARN_St_Delay;
@@ -2379,11 +2381,18 @@ void vServiceHP(void *)
 				bool _msg = false;
 				for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 					uint8_t _err = RWARN_bms[i].last_status & RWARN_status_error_mask;
+					if(RWARN_bms_min_cell_mV_hist[i] == 0 || RWARN_bms_min_cell_mV_hist[i] > RWARN_bms[i].bms_min_cell_mV) {
+						RWARN_bms_min_cell_mV_hist[i] = RWARN_bms[i].bms_min_cell_mV;
+						RWARN_bms_min_string_hist[i] = RWARN_bms[i].bms_min_string;
+					}
+					if(RWARN_bms_max_cell_mV_hist[i] < RWARN_bms[i].bms_max_cell_mV) {
+						RWARN_bms_max_cell_mV_hist[i] = RWARN_bms[i].bms_max_cell_mV;
+						RWARN_bms_max_string_hist[i] = RWARN_bms[i].bms_max_string;
+					}
 					if(_err != ERR_BMS_Ok && _err != RWARN_last_status[i]
 							&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
 						if(_msg || HP.message.setMessage(pMESSAGE_EXT_WARNING, (char*)RWARN_WARNING_MSG, 0)) {
 							_msg = true;
-							RWARN_LastMessageSent = lt;
 							HP.message.setMessage_add_text(RWARN_MESSAGE_STR1);
 							HP.message.setMessage_add_int(i+1);
 							HP.message.setMessage_add_text(" (");
@@ -2399,6 +2408,7 @@ void vServiceHP(void *)
 					}
 					RWARN_last_status[i] = _err;
 				}
+				if(_msg) RWARN_LastMessageSent = lt;
 				RWARN_NoLinkCnt = 0;
 				RWARN_link_status = RWARN_LinkErr_Ok;
 				RWARN_timer = micros();
