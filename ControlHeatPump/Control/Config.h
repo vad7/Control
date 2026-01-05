@@ -5875,7 +5875,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RWARN_PIN					58				// (D58/A4) - X19.2 -> PC817.4+R4.7k->[+3.3V], R вместо VD10, C35 удалить
 	#define RWARN_PULSE_LEVEL			0				// UART active level
 	#define RWARN_PULSE_QT				3000			// bit length, microsec
-	#define RWARN_PACKET_DELAY			1000			// Задержка до следующего пакета, microsec
+	#define RWARN_PACKET_DELAY			100000UL		// Задержка до следующего пакета, microsec
 	#define RWARN_WATCHDOG				600				// Сообщать, если нет связи более секунд
 	static const char *RWARN_BAT_NAMES[RWARN_BMS_NUM_MAX] =	{ "200", "340" };
 	#endif

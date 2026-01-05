@@ -45,6 +45,7 @@
 #define fMessageSD       8                  // флаг уведомления "Проблемы с sd картой"
 #define fMessageWarning  9                  // флаг уведомления "Прочие уведомления"
 #define fMessageExternalWarning 10          // флаг уведомления "Внешние уведомления"
+#define fMessageExternalWarningLog 11       // флаг логировать "Внешние уведомления"
 // Рабочие флаги
 #define fWF_MessageSendError 	0			// ошибка отправки email
 #define fWF_SMSSendError 		1			// ошибка отправки SMS
@@ -100,16 +101,16 @@ class Message
      boolean set_messageSetting(char *var, char *c);                        // Установить параметр Уведомления из строки
      void    get_messageSetting(char *var, char *ret);                      // Получить параметр Уведомления по имени var, результат ДОБАВЛЯЕТСЯ в строку ret
      // Чтение отдельных параметров
-     boolean get_fMessageTemp(){return GETBIT(messageSetting.flags,fMessageTemp);}// чтение флага уведомлений Достижение граничной температуры
-     boolean get_fMessageLife(){return GETBIT(messageSetting.flags,fMessageLife);}// чтение флага уведомлений Сигнал жизния
-     type_messageHP *get_Settings(void) { return &messageSetting; }
+     inline bool get_fMessageTemp(){return GETBIT(messageSetting.flags,fMessageTemp);}// чтение флага уведомлений Достижение граничной температуры
+     inline bool get_fMessageLife(){return GETBIT(messageSetting.flags,fMessageLife);}// чтение флага уведомлений Сигнал жизния
+     inline type_messageHP *get_Settings(void) { return &messageSetting; }
      
-     int16_t get_mTIN(){return messageSetting.mTIN;}                        // чтение Критическая температура в доме
-     int16_t get_mTBOILER(){return messageSetting.mTBOILER;}                // чтение Критическая температура бойлера
-     int16_t get_mTCOMP(){return messageSetting.mTCOMP;}                    // чтение Критическая температура компрессора
+     inline int16_t get_mTIN(){return messageSetting.mTIN;}                        // чтение Критическая температура в доме
+     inline int16_t get_mTBOILER(){return messageSetting.mTBOILER;}                // чтение Критическая температура бойлера
+     inline int16_t get_mTCOMP(){return messageSetting.mTCOMP;}                    // чтение Критическая температура компрессора
 
-     uint8_t *get_save_addr(void) { return (uint8_t *)&messageSetting; } // Адрес структуры сохранения
-     uint16_t get_save_size(void) { return sizeof(messageSetting); } // Размер структуры сохранения
+     inline uint8_t *get_save_addr(void) { return (uint8_t *)&messageSetting; } // Адрес структуры сохранения
+     inline uint16_t get_save_size(void) { return sizeof(messageSetting); } // Размер структуры сохранения
      int32_t save(int32_t adr);                                             // Записать настройки в eeprom i2c на входе адрес с какого, на выходе конечный адрес, число меньше 0 это код ошибки
      int32_t load(int32_t adr);                                             // Считать настройки из eeprom i2c на входе адрес с какого, на выходе конечный адрес, число меньше 0 это код ошибки 
      int32_t loadFromBuf(int32_t adr, byte *buf);                           // Считать настройки из буфера на входе адрес с какого, на выходе конечный адрес, число меньше 0 это код ошибки 

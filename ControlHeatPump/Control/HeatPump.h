@@ -214,12 +214,14 @@ RWARN_BMS RWARN_bms[RWARN_BMS_NUM_MAX];
 uint8_t RWARN_last_status[RWARN_BMS_NUM_MAX];
 uint8_t RWARN_link_status;
 uint8_t  RWARN_buf[sizeof(RWARN_bms_num) + sizeof(RWARN_BMS) * RWARN_BMS_NUM_MAX + 2]; // RWARN_BMS + CRC16
-uint16_t RWARN_Errors = 0;
 int16_t  RWARN_bms_min_cell_mV_hist[RWARN_BMS_NUM_MAX];
 uint8_t  RWARN_bms_min_string_hist[RWARN_BMS_NUM_MAX];
+uint32_t RWARN_bms_min_time_hist[RWARN_BMS_NUM_MAX];
 int16_t  RWARN_bms_max_cell_mV_hist[RWARN_BMS_NUM_MAX];
 uint8_t  RWARN_bms_max_string_hist[RWARN_BMS_NUM_MAX];
-
+uint32_t RWARN_bms_max_time_hist[RWARN_BMS_NUM_MAX];
+uint16_t RWARN_Errors = 0;
+uint8_t  RWARN_Error_Last_Status = 0;
 volatile uint32_t RWARN_timer;			// microsec
 uint16_t RWARN_NoLinkCnt;
 uint32_t RWARN_LastMessageSent = 0;

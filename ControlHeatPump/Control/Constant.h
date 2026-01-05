@@ -662,7 +662,10 @@ const char *mess_SMS_RET      = {"scan_SMS"};            // Ответ на те
 const char *mess_fMessageExternalWarning={"FME"};
 const char *mess_fMessageExternalWarning_info={"FMEI"};
 const char *mess_fMessageExternalWarning_Table={"FMET"};
+const char *mess_fMessageExternalWarning_MinMax={"FMEM"};
 const char *mess_ExtWarningMinInterval= {"EMI"};
+const char *mess_ExtWarningResetMinMax= {"ERES"};
+const char *mess_fMessageExternalWarningLog={"FMEL"};
 
 // Дата время
 const char *time_TIME       = {"TIME"};         // текущее время  12:45 без секунд

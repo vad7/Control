@@ -2067,6 +2067,8 @@ void vUpdateStepperEEV(void *)
 	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
 	memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));
 	memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));
+	memset(RWARN_bms_min_time_hist, 0, sizeof(RWARN_bms_min_time_hist));
+	memset(RWARN_bms_max_time_hist, 0, sizeof(RWARN_bms_max_time_hist));
 	RWARN_link_status = RWARN_LinkErr_Unknown;
 	RWARN_NoLinkCnt = 0;
 	RWARN_Status = RWARN_St_Delay;
@@ -2094,6 +2096,15 @@ void vUpdateStepperEEV(void *)
 				}
 			} else if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT / 3) {
 				RWARN_timer += RWARN_PULSE_QT;
+
+
+				if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT-100) {
+					SerialDbg.print("T");SerialDbg.print(_bit);SerialDbg.print(":");SerialDbg.println(m - RWARN_timer);
+				}
+
+
+
+
 				if(_bit == 9) { // Stop bit
 					if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) {
 						RWARN_buf[_idx++] = _byte;
@@ -2384,10 +2395,14 @@ void vServiceHP(void *)
 					if(RWARN_bms_min_cell_mV_hist[i] == 0 || RWARN_bms_min_cell_mV_hist[i] > RWARN_bms[i].bms_min_cell_mV) {
 						RWARN_bms_min_cell_mV_hist[i] = RWARN_bms[i].bms_min_cell_mV;
 						RWARN_bms_min_string_hist[i] = RWARN_bms[i].bms_min_string;
+						RWARN_bms_min_time_hist[i] = lt;
+						if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarningLog)) journal.jprintf_time("BMS%d: MIN = %.3d(%d)\n", i+1, RWARN_bms[i].bms_min_cell_mV, RWARN_bms[i].bms_min_string);
 					}
 					if(RWARN_bms_max_cell_mV_hist[i] < RWARN_bms[i].bms_max_cell_mV) {
 						RWARN_bms_max_cell_mV_hist[i] = RWARN_bms[i].bms_max_cell_mV;
 						RWARN_bms_max_string_hist[i] = RWARN_bms[i].bms_max_string;
+						RWARN_bms_max_time_hist[i] = lt;
+						if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarningLog)) journal.jprintf_time("BMS%d: MAX = %.3d(%d)\n", i+1, RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string);
 					}
 					if(_err != ERR_BMS_Ok && _err != RWARN_last_status[i]
 							&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
@@ -2405,8 +2420,8 @@ void vServiceHP(void *)
 							}
 							HP.message.setMessage_add_text("\n");
 						}
+						RWARN_last_status[i] = _err;
 					}
-					RWARN_last_status[i] = _err;
 				}
 				if(_msg) RWARN_LastMessageSent = lt;
 				RWARN_NoLinkCnt = 0;
@@ -2417,6 +2432,7 @@ void vServiceHP(void *)
 				if(RWARN_Status == RWARN_St_Error_Frame || RWARN_Status == RWARN_St_Error_CRC) {
 					RWARN_Errors++;
 					RWARN_timer = micros();
+					RWARN_Error_Last_Status = RWARN_Status;
 					RWARN_Status = RWARN_St_Delay;
 				}
 				if(RWARN_NoLinkCnt > RWARN_WATCHDOG) {

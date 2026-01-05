@@ -1375,11 +1375,12 @@ xSaveStats:
 							RWARN_NoLinkCnt);
 					strcat(strReturn, "|");
 					_itoa(RWARN_Errors, strReturn);
-					if(RWARN_link_status == RWARN_LinkErr_Error || RWARN_link_status == RWARN_LinkErr_Error_CRC || RWARN_link_status == RWARN_LinkErr_NoLink) {
+					if(RWARN_link_status == RWARN_LinkErr_Error || RWARN_link_status == RWARN_LinkErr_Error_CRC || RWARN_link_status == RWARN_LinkErr_NoLink || RWARN_Error_Last_Status) {
 						strcat(strReturn, " - ");
 						if(RWARN_link_status == RWARN_LinkErr_NoLink) strcat(strReturn, RWARN_WARNING_NO_LINK);
 						else if(RWARN_link_status == RWARN_LinkErr_Error) strcat(strReturn, RWARN_WARNING_LINK_ERROR);
 						else if(RWARN_link_status == RWARN_LinkErr_Error_CRC) { strcat(strReturn, RWARN_WARNING_LINK_ERROR); strcat(strReturn, RWARN_WARNING_ERR_CRC); }
+						else strcat(strReturn, RWARN_Error_Last_Status == RWARN_St_Error_CRC ? "CRC" : "Frame");
 					}
 					strcat(strReturn, ";");
 				//}
