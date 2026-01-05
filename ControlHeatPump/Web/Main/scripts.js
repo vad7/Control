@@ -813,7 +813,7 @@ function upload(file) {
 	maxRetries = 5;
 	upload_error = false;
 	var xhr;
-    for(let attempt = 0; attempt < maxRetries; attempt++) {
+    for(let attempt = 1; attempt <= maxRetries; attempt++) {
 		xhr = new XMLHttpRequest();
 //		xhr.upload.onprogress = function(event) { console.log(event.loaded + ' / ' + event.total); }
 //		xhr.onload = xhr.onerror = function() {
@@ -829,9 +829,9 @@ function upload(file) {
 				return true;
 			}
 		}
+		alert("Ошибка загрузки (" + attempt + "): " + file.name);
     }
 	upload_error = true;
-	alert(xhr.responseText);
 }
 
 function autoheight() {

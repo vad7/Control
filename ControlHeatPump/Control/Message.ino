@@ -790,7 +790,7 @@ boolean Message::sendMail()
 	// 7. Дополнительная информация если требуется добавляется в уведомление
 	if(messageData.ms == pMESSAGE_EXT_WARNING) {
 #ifdef USE_REMOTE_WARNING
-		strcpy(tempBuf, "\n ----- СОСТОЯНИЕ ----\n");
+		strcpy(tempBuf, "\nПОСЛЕДНЕЕ СОСТОЯНИЕ:\n");
 		for(uint8_t i = 0; i < RWARN_bms_num; i++) {
 			uint8_t st = RWARN_bms[i].last_status;
 			m_snprintf(tempBuf+strlen(tempBuf), 256, "\nBMS%d: %s\n", i+1, !(st & RWARN_status_on_off_mask) ? "ВЫКЛЮЧЕН" : (st & RWARN_status_on_balancing_mask) ? "Балансировка" : "Включен");

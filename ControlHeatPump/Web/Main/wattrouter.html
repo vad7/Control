@@ -50,10 +50,10 @@ function loadParam_after(paramid) {
 		}
 	}
    	if(paramid.indexOf("(FMEI)")!=-1 && (element = document.getElementById("get_message-fmei"))) {
-		element.style = element.text.indexOf("Связь была")!=-1 ? "color:initial;font-weight:normal" : "color:red;font-weight:bold"; 
+		element.style = element.value.indexOf("Связь была")!=-1 ? "color:initial;font-weight:normal" : "color:red;font-weight:bold"; 
 	}
    	if(paramid.indexOf("(FMEM)")!=-1 && (element = document.getElementById("get_message-fmem"))) {
-		if(element.text.trim()!=="") setTimeout(function() { alert(element.text) }, 1);
+		if(element.value.trim()!=="") setTimeout(function() { alert(element.value) }, 1);
 	}                          
 }
 </script>
