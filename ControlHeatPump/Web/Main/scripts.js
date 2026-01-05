@@ -885,9 +885,7 @@ function setKanalog() {
 }
 
 function updateParam(paramids) {
-	setInterval(function() {
-		loadParam(paramids)
-	}, urlupdate);
+	setInterval(function() { loadParam(paramids) }, urlupdate);
 	loadParam(paramids);
 }
 

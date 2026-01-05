@@ -51,6 +51,9 @@ function loadParam_after(paramid) {
 	}
    	if(paramid.indexOf("(FMEI)")!=-1 && (element = document.getElementById("get_message-fmei"))) {
 		element.style = element.text.indexOf("Связь была")!=-1 ? "color:initial;font-weight:normal" : "color:red;font-weight:bold"; 
+	}
+   	if(paramid.indexOf("(FMEM)")!=-1 && (element = document.getElementById("get_message-fmem"))) {
+		if(element.text.trim()!=="") setTimeout(function() { alert(element.text) }, 1);
 	}                          
 }
 </script>
@@ -90,12 +93,13 @@ function loadParam_after(paramid) {
 		<th width="15%">Состояние</th>
 		<th width="12%">АКБ, V</th>
 		<th width="17%">Мин. ячейка, V</th>
-		<th width="17%">Макс. ячейка, V</th>
-		<th width="12%">Дельта, V</th></tr></thead>
+		<th width="17%">Макс. ячейка, V <input value="?" type="submit" onclick='loadParam("get_Message(FMEM)");'></th>
+		<th width="12%">Дельта, V <input value="&#9851;" type="submit" onclick='if(confirm("ОЧИСТИТЬ МИН/МАКС?")) loadParam("get_Message(ERES)");'></th></tr></thead>
 	<tbody id="get_message-fmet"></tbody>
 </table>            
 </div>
 <input type="checkbox" id="get_ohp-won" hidden>
 <span id="get_wr-1" hidden></span>
+<span id="get_message-fmem" hidden></span>
 </div>
 </body></html>
