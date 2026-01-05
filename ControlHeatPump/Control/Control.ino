@@ -2096,15 +2096,6 @@ void vUpdateStepperEEV(void *)
 				}
 			} else if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT / 3) {
 				RWARN_timer += RWARN_PULSE_QT;
-
-
-				if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT-100) {
-					SerialDbg.print("T");SerialDbg.print(_bit);SerialDbg.print(":");SerialDbg.println(m - RWARN_timer);
-				}
-
-
-
-
 				if(_bit == 9) { // Stop bit
 					if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) {
 						RWARN_buf[_idx++] = _byte;
