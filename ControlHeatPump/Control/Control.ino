@@ -2452,7 +2452,8 @@ void vServiceHP(void *)
 						else if(RWARN_Status == RWARN_St_Error_Frame) RWARN_link_status = RWARN_LinkErr_Error;
 						else RWARN_link_status = RWARN_LinkErr_NoLink;
 					}
-				} else if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
+				}
+				if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
 			}
 #endif
 		}
