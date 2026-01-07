@@ -166,26 +166,34 @@ uint8_t OneWire::reset(void)
 	uint8_t r;
 	uint8_t retries = 125;
 
-	noInterrupts();
+	//noInterrupts();
 	DIRECT_MODE_INPUT(reg, mask);
-	interrupts();
+	//interrupts();
 	// wait until the wire is high... just in case
 	do {
 		if (--retries == 0) return 0;
 		delayMicroseconds(2);
-	} while ( !DIRECT_READ(reg, mask));
-
-	noInterrupts();
+	} while (!DIRECT_READ(reg, mask));
+	yield();
+	//noInterrupts();
 	DIRECT_WRITE_LOW(reg, mask);
 	DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
-	interrupts();
-	delayMicroseconds(480);
+	//interrupts();
+
+	delayMicroseconds(240);
+	yield();
+	delayMicroseconds(240);
+	yield();
+
 	noInterrupts();
 	DIRECT_MODE_INPUT(reg, mask);	// allow it to float
 	delayMicroseconds(70);
 	r = !DIRECT_READ(reg, mask);
 	interrupts();
-	delayMicroseconds(410);
+	delayMicroseconds(200);
+	yield();
+	delayMicroseconds(210);
+	yield();
 	return r;
 }
 
@@ -250,24 +258,24 @@ void OneWire::write(uint8_t v, uint8_t power /* = 0 */) {
     uint8_t bitMask;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-	OneWire::write_bit( (bitMask & v)?1:0);
+    	OneWire::write_bit( (bitMask & v)?1:0);
     }
     if ( !power) {
-	noInterrupts();
-	DIRECT_MODE_INPUT(baseReg, bitmask);
-	DIRECT_WRITE_LOW(baseReg, bitmask);
-	interrupts();
+//		noInterrupts();
+		DIRECT_MODE_INPUT(baseReg, bitmask);
+		DIRECT_WRITE_LOW(baseReg, bitmask);
+//		interrupts();
     }
+    yield();
 }
 
 void OneWire::write_bytes(const uint8_t *buf, uint16_t count, bool power /* = 0 */) {
-  for (uint16_t i = 0 ; i < count ; i++)
-    write(buf[i]);
+  for (uint16_t i = 0 ; i < count ; i++) write(buf[i]);
   if (!power) {
-    noInterrupts();
+//    noInterrupts();
     DIRECT_MODE_INPUT(baseReg, bitmask);
     DIRECT_WRITE_LOW(baseReg, bitmask);
-    interrupts();
+//    interrupts();
   }
 }
 
@@ -279,8 +287,9 @@ uint8_t OneWire::read() {
     uint8_t r = 0;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-	if ( OneWire::read_bit()) r |= bitMask;
+    	if ( OneWire::read_bit()) r |= bitMask;
     }
+    yield();
     return r;
 }
 
@@ -311,9 +320,9 @@ void OneWire::skip()
 
 void OneWire::depower()
 {
-	noInterrupts();
+//	noInterrupts();
 	DIRECT_MODE_INPUT(baseReg, bitmask);
-	interrupts();
+//	interrupts();
 }
 
 #if ONEWIRE_SEARCH

@@ -97,7 +97,9 @@ __attribute__((always_inline)) inline uint8_t TwoWire::WaitTransmission(uint8_t 
 	uint16_t _timeout;
 	InterruptOccured = 1;
 	while((ret = TransmissionStatus()) == 0) {
-		if(use_RTOS_delay) { RTOS_delay(1); }
+		if(use_RTOS_delay) {
+			RTOS_delay(1);
+		} else if((_timeout & 255) == 255) yield();
 		if(InterruptOccured) {
 			_timeout = use_RTOS_delay ? I2C_TIMEOUT_MS : I2C_TIMEOUT;
 			InterruptOccured = 0;
@@ -153,7 +155,9 @@ size_t TwoWire::requestFrom(uint8_t address, uint8_t *buffer, size_t quantity, u
 	uint16_t _timeout = 0;
 	InterruptOccured = 1;
 	while((ret = TransmissionStatus()) == 0) {
-		if(use_RTOS_delay) { RTOS_delay(1); }
+		if(use_RTOS_delay) {
+			RTOS_delay(1);
+		} else if((_timeout & 255) == 255) yield();
 		if(InterruptOccured) {
 			_timeout = use_RTOS_delay ? I2C_TIMEOUT_MS : I2C_TIMEOUT;
 			InterruptOccured = 0;
@@ -234,7 +238,9 @@ uint8_t TwoWire::endTransmissionReceive(uint8_t use_RTOS_delay)
 	uint16_t _timeout = 0;
 	InterruptOccured = 1;
 	while((ret = TransmissionStatus()) == 0) {
-		if(use_RTOS_delay) { RTOS_delay(1); }
+		if(use_RTOS_delay) {
+			RTOS_delay(1);
+		} else if((_timeout & 255) == 255) yield();
 		if(InterruptOccured) {
 			_timeout = use_RTOS_delay ? I2C_TIMEOUT_MS : I2C_TIMEOUT;
 			InterruptOccured = 0;

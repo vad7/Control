@@ -88,16 +88,17 @@ __attribute__((always_inline)) inline uint8_t DS2482::read_status(bool setPtr)
 uint8_t DS2482::busyWait(bool setReadPtr)
 {
 	uint8_t status;
-	int loopCount = 100;
+	uint8_t loopCount = 200;
 	while((status = read_status(setReadPtr)) & DS2482_STATUS_BUSY)
 	{
 		if(status == DS2482_I2C_ERROR) break;
-		if (--loopCount <= 0)
+		if (--loopCount == 0)
 		{
 //			mTimeout = 1;
 			break;
 		}
-		delayMicroseconds(20);
+		delayMicroseconds(10);
+		yield();
 		setReadPtr = false;
 	}
 	return status;

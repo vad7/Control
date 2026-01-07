@@ -146,6 +146,12 @@ __attribute__((always_inline)) inline void _delay(int t) // Функция за�
   else delay(t);
 }
 
+// Called in delay(), weak
+void yield(void)
+{
+	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) taskYIELD();
+}
+
 // Остановить шедулер задач, возврат 1, если получилось
 uint8_t TaskSuspendAll(void) {
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
@@ -613,7 +619,7 @@ x_I2C_init_std_message:
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",60,NULL,4,&HP.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
 #endif
 
@@ -1616,9 +1622,9 @@ void vReadSensor(void *)
 #ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
 		HP.dSDM.get_readState(0); // Основная группа регистров
 #endif
+
 		HP.calculatePower();  // Расчет мощностей и СОР
 		Stats.Update();
-
 #if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
 		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
 			int32_t tm = GetTickCount() - ttime;
@@ -2074,7 +2080,7 @@ void vUpdateStepperEEV(void *)
 	RWARN_Status = RWARN_St_Delay;
 	RWARN_timer = micros();
 #endif
-	uint32_t mmm = micros();;
+	static uint32_t mmm = micros();;
 	for(;;) {
 		vTaskDelay(1);
 #ifdef USE_REMOTE_WARNING
