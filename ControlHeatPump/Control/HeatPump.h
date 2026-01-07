@@ -222,7 +222,7 @@ uint8_t  RWARN_bms_max_string_hist[RWARN_BMS_NUM_MAX];
 uint32_t RWARN_bms_max_time_hist[RWARN_BMS_NUM_MAX];
 uint16_t RWARN_Errors = 0;
 uint8_t  RWARN_Error_Last_Status = 0;
-volatile uint32_t RWARN_timer;			// microsec
+uint32_t RWARN_timer;			// microsec
 uint16_t RWARN_NoLinkCnt;
 uint32_t RWARN_LastMessageSent = 0;
 #define RWARN_St_Read_Wait			0

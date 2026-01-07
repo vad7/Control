@@ -1366,21 +1366,21 @@ xSaveStats:
 				strReturn += m_snprintf(strReturn, 256, "Задача насосы - %s|%d;", StartPump_STR[HP.startPump], HP.pump_in_pause_timer);
 #ifdef USE_REMOTE_WARNING
 				//if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarning)) {
-					strReturn += m_snprintf(strReturn, 256, "Ошибок связи с BMS АКБ, pin D%d [%s, %ds]", RWARN_PIN,
+					strReturn += m_snprintf(strReturn, 256, "Ошибок связи с BMS АКБ, pin D%d [%s, %ds] ", RWARN_PIN,
 							RWARN_Status == RWARN_St_Reading ? "Read"
 									: RWARN_Status == RWARN_St_Read_Ok ? "Ok"
 											: RWARN_Status == RWARN_St_Delay ? "Delay"
 													: RWARN_Status == RWARN_St_Error_Frame ? "Err-FR"
 															: RWARN_Status == RWARN_St_Error_CRC ? "Err-CRC" : "Wait",
 							RWARN_NoLinkCnt);
+					if(RWARN_Error_Last_Status) strcat(strReturn, RWARN_Error_Last_Status == RWARN_St_Error_CRC ? "CRC" : "Frame");
 					strcat(strReturn, "|");
 					_itoa(RWARN_Errors, strReturn);
-					if(RWARN_link_status == RWARN_LinkErr_Error || RWARN_link_status == RWARN_LinkErr_Error_CRC || RWARN_link_status == RWARN_LinkErr_NoLink || RWARN_Error_Last_Status) {
+					if(RWARN_link_status == RWARN_LinkErr_Error || RWARN_link_status == RWARN_LinkErr_Error_CRC || RWARN_link_status == RWARN_LinkErr_NoLink) {
 						strcat(strReturn, " - ");
 						if(RWARN_link_status == RWARN_LinkErr_NoLink) strcat(strReturn, RWARN_WARNING_NO_LINK);
 						else if(RWARN_link_status == RWARN_LinkErr_Error) strcat(strReturn, RWARN_WARNING_LINK_ERROR);
 						else if(RWARN_link_status == RWARN_LinkErr_Error_CRC) { strcat(strReturn, RWARN_WARNING_LINK_ERROR); strcat(strReturn, RWARN_WARNING_ERR_CRC); }
-						else strcat(strReturn, RWARN_Error_Last_Status == RWARN_St_Error_CRC ? "CRC" : "Frame");
 					}
 					strcat(strReturn, ";");
 				//}

@@ -24,7 +24,7 @@
   else    g_APinDescription[pin].pPort -> PIO_CODR = g_APinDescription[pin].ulPin;
 }
 
-// Быстрый чтение из порта
+// Быстрое чтение из порта
  __attribute__((always_inline)) inline int digitalReadDirect(int pin){
   return !!(g_APinDescription[pin].pPort -> PIO_PDSR & g_APinDescription[pin].ulPin);
 }

@@ -2074,6 +2074,7 @@ void vUpdateStepperEEV(void *)
 	RWARN_Status = RWARN_St_Delay;
 	RWARN_timer = micros();
 #endif
+	uint32_t mmm = micros();;
 	for(;;) {
 		vTaskDelay(1);
 #ifdef USE_REMOTE_WARNING
@@ -2094,7 +2095,7 @@ void vUpdateStepperEEV(void *)
 					_byte = 0;
 					_bit = 1;
 				}
-			} else if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT / 3) {
+			} else if(m - RWARN_timer >= RWARN_PULSE_QT + RWARN_PULSE_QT / 6) {
 				RWARN_timer += RWARN_PULSE_QT;
 				if(_bit == 9) { // Stop bit
 					if(digitalReadDirect(RWARN_PIN) != RWARN_PULSE_LEVEL) {
@@ -2120,6 +2121,17 @@ void vUpdateStepperEEV(void *)
 			if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) RWARN_timer = m;
 			else if(m - RWARN_timer >= RWARN_PACKET_DELAY) RWARN_Status = RWARN_St_Read_Wait;
 		}
+
+		if(m - mmm >= 1500) {
+
+			SerialDbg.print("\n$"); SerialDbg.println(m - mmm);
+
+
+		}
+		mmm = m;
+
+
+
 #endif	// USE_REMOTE_WARNING
 #ifdef EEV_DEF // каждые 1ms
 		// Полный цикл движения шаговика,
