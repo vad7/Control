@@ -619,7 +619,7 @@ x_I2C_init_std_message:
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
-	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",60,NULL,4,&HP.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vUpdateStepperEEV,"StepperEEV",40,NULL,4,&HP.xHandleStepperEEV)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)  set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*40; // 50, 100, 150, до обрезки стеков было 200
 #endif
 
@@ -2080,7 +2080,6 @@ void vUpdateStepperEEV(void *)
 	RWARN_Status = RWARN_St_Delay;
 	RWARN_timer = micros();
 #endif
-	static uint32_t mmm = micros();;
 	for(;;) {
 		vTaskDelay(1);
 #ifdef USE_REMOTE_WARNING
@@ -2127,17 +2126,6 @@ void vUpdateStepperEEV(void *)
 			if(digitalReadDirect(RWARN_PIN) == RWARN_PULSE_LEVEL) RWARN_timer = m;
 			else if(m - RWARN_timer >= RWARN_PACKET_DELAY) RWARN_Status = RWARN_St_Read_Wait;
 		}
-
-		if(m - mmm >= 1500) {
-
-			SerialDbg.print("\n$"); SerialDbg.println(m - mmm);
-
-
-		}
-		mmm = m;
-
-
-
 #endif	// USE_REMOTE_WARNING
 #ifdef EEV_DEF // каждые 1ms
 		// Полный цикл движения шаговика,
