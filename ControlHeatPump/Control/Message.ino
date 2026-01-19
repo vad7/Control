@@ -452,7 +452,7 @@ bool Message::setMessage(MESSAGE ms, char *c, int p1) // может запуск
   if (((GETBIT(messageSetting.flags, fMessageTemp)) == 0) && (ms == pMESSAGE_TEMP))         return false;
   if (((GETBIT(messageSetting.flags, fMessageSD)) == 0) && (ms == pMESSAGE_SD))             return false;
   if (((GETBIT(messageSetting.flags, fMessageWarning)) == 0) && (ms == pMESSAGE_WARNING))   return false;
-  if (((GETBIT(messageSetting.flags, fMessageExternalWarning)) == 0) && (ms == pMESSAGE_EXT_WARNING)) return false;
+  if (!GETBIT(messageSetting.flags, fMessageExternalWarning) && ms == pMESSAGE_EXT_WARNING) return false;
   // else if (((messageSetting.GETBIT(fMessageTemp))&&(ms==pMESSAGE_TEMP))&&((sTemp[TIN].get_Temp()<messageSetting.mTIN)||(sTemp[TBOILER].get_Temp()<messageSetting.mTBOILER)||(sTemp[TCOMP].get_Temp()>messageSetting.mTCOMP)))  return false;  // выходим, температуры в границах!!
 
   // Проверка на дублирование сообщения. Тестовые сообщения и сообщения жизни  можно посылать многократно  подряд

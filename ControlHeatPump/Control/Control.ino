@@ -2418,6 +2418,7 @@ void vServiceHP(void *)
 							HP.message.setMessage_add_text("\n");
 						}
 						RWARN_last_status[i] = _err;
+						journal.jprintf_time("BMS%d ERROR: %d\n", i+1, _err);
 					}
 				}
 				if(_msg) RWARN_LastMessageSent = lt;
@@ -2451,6 +2452,7 @@ void vServiceHP(void *)
 						} else if(RWARN_Status == RWARN_St_Error_CRC) RWARN_link_status = RWARN_LinkErr_Error_CRC;
 						else if(RWARN_Status == RWARN_St_Error_Frame) RWARN_link_status = RWARN_LinkErr_Error;
 						else RWARN_link_status = RWARN_LinkErr_NoLink;
+						journal.jprintf_time("BMS LINK ERROR: %d\n", RWARN_Status);
 					}
 				}
 				if(++RWARN_NoLinkCnt == 0) RWARN_NoLinkCnt--;
