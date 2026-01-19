@@ -446,14 +446,13 @@ bool Message::setMessage(MESSAGE ms, char *c, int p1) // может запуск
   if(waitSend) return false; // Есть активное сообщение - ждем отправку
   //  SerialDbg.print(c);SerialDbg.print(" : ");SerialDbg.print(ms);SerialDbg.println("-5");
   // Проверка необходимости отправки уведомления
-  if (((GETBIT(messageSetting.flags, fMessageReset)) == 0) && (ms == pMESSAGE_RESET))       return false; // Попытка отправить не разрешенное сообщение
-  if (((GETBIT(messageSetting.flags, fMessageError)) == 0) && (ms == pMESSAGE_ERROR))       return false;
-  if (((GETBIT(messageSetting.flags, fMessageLife)) == 0) && (ms == pMESSAGE_LIFE))         return false;
-  if (((GETBIT(messageSetting.flags, fMessageTemp)) == 0) && (ms == pMESSAGE_TEMP))         return false;
-  if (((GETBIT(messageSetting.flags, fMessageSD)) == 0) && (ms == pMESSAGE_SD))             return false;
-  if (((GETBIT(messageSetting.flags, fMessageWarning)) == 0) && (ms == pMESSAGE_WARNING))   return false;
-  if (!GETBIT(messageSetting.flags, fMessageExternalWarning) && ms == pMESSAGE_EXT_WARNING) return false;
-  // else if (((messageSetting.GETBIT(fMessageTemp))&&(ms==pMESSAGE_TEMP))&&((sTemp[TIN].get_Temp()<messageSetting.mTIN)||(sTemp[TBOILER].get_Temp()<messageSetting.mTBOILER)||(sTemp[TCOMP].get_Temp()>messageSetting.mTCOMP)))  return false;  // выходим, температуры в границах!!
+  if(ms == pMESSAGE_RESET && !GETBIT(messageSetting.flags, fMessageReset)) return false; // Попытка отправить не разрешенное сообщение
+  if(ms == pMESSAGE_ERROR && !GETBIT(messageSetting.flags, fMessageError)) return false;
+  if(ms == pMESSAGE_LIFE && !GETBIT(messageSetting.flags, fMessageLife)) return false;
+  if(ms == pMESSAGE_TEMP && !GETBIT(messageSetting.flags, fMessageTemp)) return false;
+  if(ms == pMESSAGE_SD && !GETBIT(messageSetting.flags, fMessageSD)) return false;
+  if(ms == pMESSAGE_WARNING && !GETBIT(messageSetting.flags, fMessageWarning)) return false;
+  if(ms == pMESSAGE_EXT_WARNING && !GETBIT(messageSetting.flags, fMessageExternalWarning)) return false;
 
   // Проверка на дублирование сообщения. Тестовые сообщения и сообщения жизни  можно посылать многократно  подряд
   if ((rtcSAM3X8.unixtime() - sendTime < REPEAT_TIME) && (messageData.ms == ms) && ((ms != pMESSAGE_TESTMAIL) && (ms != pMESSAGE_TESTSMS) && (ms != pMESSAGE_LIFE))) //дублирующие сообщения поcылаются с интервалом
