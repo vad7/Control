@@ -2073,8 +2073,10 @@ void vUpdateStepperEEV(void *)
 	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
 	memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));
 	memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));
+	memset(RWARN_bms_delta_cell_mV_hist, 0, sizeof(RWARN_bms_delta_cell_mV_hist));
 	memset(RWARN_bms_min_time_hist, 0, sizeof(RWARN_bms_min_time_hist));
 	memset(RWARN_bms_max_time_hist, 0, sizeof(RWARN_bms_max_time_hist));
+	memset(RWARN_bms_delta_time_hist, 0, sizeof(RWARN_bms_delta_time_hist));
 	RWARN_link_status = RWARN_LinkErr_Unknown;
 	RWARN_NoLinkCnt = 0;
 	RWARN_Status = RWARN_St_Delay;
@@ -2400,6 +2402,11 @@ void vServiceHP(void *)
 						RWARN_bms_max_string_hist[i] = RWARN_bms[i].bms_max_string;
 						RWARN_bms_max_time_hist[i] = lt;
 						if(GETBIT(HP.message.get_Settings()->flags, fMessageExternalWarningLog)) journal.jprintf_time("BMS%d: MAX = %.3d(%d)\n", i+1, RWARN_bms[i].bms_max_cell_mV, RWARN_bms[i].bms_max_string);
+					}
+					int16_t _delta = RWARN_bms[i].bms_max_cell_mV - RWARN_bms[i].bms_min_cell_mV;
+					if(_delta > RWARN_bms_delta_cell_mV_hist[i]) {
+						RWARN_bms_delta_cell_mV_hist[i] = _delta;
+						RWARN_bms_delta_time_hist[i] = lt;
 					}
 					if(_err != ERR_BMS_Ok && _err != RWARN_last_status[i]
 							&& lt > RWARN_LastMessageSent + HP.message.get_Settings()->ExtWarningMinInterval * 60 * 60) {
