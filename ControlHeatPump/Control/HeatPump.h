@@ -222,6 +222,12 @@ uint8_t  RWARN_bms_max_string_hist[RWARN_BMS_NUM_MAX];
 uint32_t RWARN_bms_max_time_hist[RWARN_BMS_NUM_MAX];
 int16_t  RWARN_bms_delta_cell_mV_hist[RWARN_BMS_NUM_MAX];
 uint32_t RWARN_bms_delta_time_hist[RWARN_BMS_NUM_MAX];
+#define  RWARN_BMS_MIN_MAX_ARRAY_CLEAR { memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));\
+	memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));\
+	memset(RWARN_bms_delta_cell_mV_hist, 0, sizeof(RWARN_bms_delta_cell_mV_hist));\
+	memset(RWARN_bms_min_time_hist, 0, sizeof(RWARN_bms_min_time_hist));\
+	memset(RWARN_bms_max_time_hist, 0, sizeof(RWARN_bms_max_time_hist));\
+	memset(RWARN_bms_delta_time_hist, 0, sizeof(RWARN_bms_delta_time_hist)); }
 uint16_t RWARN_Errors = 0;
 uint8_t  RWARN_Error_Last_Status = 0;
 uint32_t RWARN_timer;			// microsec

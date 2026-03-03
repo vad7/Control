@@ -2071,12 +2071,7 @@ void vUpdateStepperEEV(void *)
 	uint16_t _crc = 0;
 	memset(RWARN_bms, 0, sizeof(RWARN_bms));
 	memset(RWARN_last_status, 0, sizeof(RWARN_last_status));
-	memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));
-	memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));
-	memset(RWARN_bms_delta_cell_mV_hist, 0, sizeof(RWARN_bms_delta_cell_mV_hist));
-	memset(RWARN_bms_min_time_hist, 0, sizeof(RWARN_bms_min_time_hist));
-	memset(RWARN_bms_max_time_hist, 0, sizeof(RWARN_bms_max_time_hist));
-	memset(RWARN_bms_delta_time_hist, 0, sizeof(RWARN_bms_delta_time_hist));
+	RWARN_BMS_MIN_MAX_ARRAY_CLEAR;
 	RWARN_link_status = RWARN_LinkErr_Unknown;
 	RWARN_NoLinkCnt = 0;
 	RWARN_Status = RWARN_St_Delay;

@@ -239,11 +239,8 @@ void Message::get_messageSetting(char *var, char *ret)
 		if(GETBIT(messageSetting.flags, fMessageExternalWarning)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_fMessageExternalWarningLog) == 0) {
 		if(GETBIT(messageSetting.flags, fMessageExternalWarningLog)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
-	} else if(strcmp(var, mess_ExtWarningResetMinMax) == 0){
-		memset(RWARN_bms_min_cell_mV_hist, 0, sizeof(RWARN_bms_min_cell_mV_hist));
-		memset(RWARN_bms_max_cell_mV_hist, 0, sizeof(RWARN_bms_max_cell_mV_hist));
-		memset(RWARN_bms_min_time_hist, 0, sizeof(RWARN_bms_min_time_hist));
-		memset(RWARN_bms_max_time_hist, 0, sizeof(RWARN_bms_max_time_hist));
+	} else if(strcmp(var, mess_ExtWarningResetMinMax) == 0){ // get_Message(ERES)
+		RWARN_BMS_MIN_MAX_ARRAY_CLEAR;
 	} else if(strcmp(var, mess_MAIL) == 0) {
 			if(GETBIT(messageSetting.flags, fMail)) strcat(ret, (char*) cOne); else strcat(ret, (char*) cZero);
 	} else if(strcmp(var, mess_fMessageExternalWarning) == 0) {
