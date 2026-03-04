@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.209"				// Версия прошивки
+#define VERSION			"1.210"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -865,6 +865,7 @@ const char *prof_TimeStart      = {"TS"};
 const char *prof_TimeEnd        = {"TE"};
 const char *prof_fSwitchProfileNext_OnError= {"F2"};
 const char *prof_fSwitchProfileNext_ByTime= {"F3"};
+const char *prof_fSwitchProfileNext_OnBackupPower= {"F4"};
 const char *prof_fAutoSwitchProf_mode={"ASM"};
 const char *prof_fHP_ProfilesSwitchByTime={"TM"};
 const char prof_DailySwitch[] 	= "DS";

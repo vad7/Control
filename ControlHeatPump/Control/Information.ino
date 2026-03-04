@@ -1254,6 +1254,7 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		return true;
 	} else if(strcmp(var, prof_fSwitchProfileNext_OnError) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_OnError); else SETBIT0(dataProfile.flags, fSwitchProfileNext_OnError); return true;
 	} else if(strcmp(var, prof_fSwitchProfileNext_ByTime) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_ByTime); else SETBIT0(dataProfile.flags, fSwitchProfileNext_ByTime); return true;
+	} else if(strcmp(var, prof_fSwitchProfileNext_OnBackupPower) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_OnBackupPower); else SETBIT0(dataProfile.flags, fSwitchProfileNext_OnBackupPower); return true;
 	// параметры только чтение
 	} else if(strcmp(var, prof_NUM_PROFILE) == 0) {
 		return true;
@@ -1274,6 +1275,7 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 	if(strcmp(var, prof_fHP_ProfilesSwitchByTime)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfilesSwitchByTime), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_OnError)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_OnError), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_ByTime)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_ByTime), ret); }else
+	if(strcmp(var, prof_fSwitchProfileNext_OnBackupPower)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_OnBackupPower), ret); }else
 	if(strcmp(var, prof_TimeStart)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeStart / 10, dataProfile.TimeStart % 10); return ret; }else
 	if(strcmp(var, prof_TimeEnd)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeEnd / 10, dataProfile.TimeEnd % 10); return ret; }else
 	if(strcmp(var, prof_ProfileNext)==0) { if(dataProfile.ProfileNext) _itoa(dataProfile.ProfileNext, ret); else strcat(ret, "-"); return ret; }else

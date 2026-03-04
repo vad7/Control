@@ -319,7 +319,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fNextionOnWhileWork		11				// Включать дисплей, когда компрессор работает
 #define fWebStoreOnSPIFlash		12				// флаг, что веб морда лежит на SPI Flash, иначе на SD карте
 #define fLogWirelessSensors		13				// Логировать обмен между беспроводными датчиками
-#define fBackupPower			14				// Использование резервного питания от генератора (ограничение мощности)
+#define fBackupPower			14				// Использование резервного питания (ограничение мощности)
 #define fModbusLogErrors		15              // флаг писать в лог нерегулярные ошибки Modbus
 //  type_optionHP.flags2:
 #define f2BackupPowerAuto		0               // Автоматически определять работу от генератора (через датчик SGENERATOR)

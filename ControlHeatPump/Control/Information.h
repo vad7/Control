@@ -249,6 +249,7 @@ struct type_setting_cool {
 #define fPro_Main					1	// Основной профиль (нельзя авто-переключаться по расписанию)
 #define fSwitchProfileNext_OnError	2	// Переключать на ProfileNext при ошибке
 #define fSwitchProfileNext_ByTime	3	// Переключать на ProfileNext по времени (когда не рабочее время профиля)
+#define fSwitchProfileNext_OnBackupPower 4	// Переключать на ProfileNext при резервном питании
 
 struct type_dataProfile               // Хранение общих данных
 {

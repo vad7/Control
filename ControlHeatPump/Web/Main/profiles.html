@@ -8,7 +8,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_Prof(ID),get_Prof(NAME),get_Prof(DATE),get_Prof(NOTE),get_Prof(ENABLE),get_Prof(NUM),get_Prof(PN),get_Prof(TS),get_Prof(TE),get_Prof(F2),get_Prof(F3),get_Prof(TM)");
+	loadParam("get_Prof(ID),get_Prof(NAME),get_Prof(DATE),get_Prof(NOTE),get_Prof(ENABLE),get_Prof(NUM),get_Prof(PN),get_Prof(TS),get_Prof(TE),get_Prof(F2),get_Prof(F3),get_Prof(F4),get_Prof(TM)");
 };
 function loadParam_after(paramid) {
 	if(paramid.match(/^eraseProfile|^loadProfile|^set_SAVE/)) location.reload();
@@ -72,6 +72,12 @@ function erase_Profile(p) {
 			<td>Переключаться на другой профиль по Времени</td>
 			<td>
 				<input type="checkbox" id="get_prof-f3" onchange="setParam('get_Prof(F3)');">
+			</td>
+		</tr>
+		<tr>
+			<td>Переключаться на другой профиль при попытке пуска компрессора на резервном источнике</td>
+			<td>
+				<input type="checkbox" id="get_prof-f4" onchange="setParam('get_Prof(F4)');">
 			</td>
 		</tr>
 		<tr>

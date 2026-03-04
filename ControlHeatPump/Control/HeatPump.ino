@@ -2165,10 +2165,11 @@ xGoWait:
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
+		if(!is_comp_or_heater_on() || get_errcode() != OK) return;
 	}
 
 	// 10. Сохранение состояния  -------------------------------------------------------------------------------
-	if(get_State() != pSTARTING_HP) return;                   // Могли нажать кнопку стоп, выход из процесса запуска
+	if(get_State() != pSTARTING_HP) return; // Могли нажать кнопку стоп, выход из процесса запуска
 	setState(pWORK_HP);
 #ifdef RHEAT
 	RHEAT_prev_temp = STARTTEMP;
@@ -3680,8 +3681,13 @@ xNextStop:
 				return;
 			}
 		}
-	}
+	} else
 #endif
+	if(GETBIT(Option.flags, fBackupPower) && GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnBackupPower)) { // переключение профиля, если задано
+		SwitchToProfile(Prof.dataProfile.ProfileNext);
+		return;
+	}
+
 	if(ResetFC() != OK) {                                // Сброс инвертора если нужно
 		set_Error(ERR_RESET_FC, (char*) __FUNCTION__);
 		return;
@@ -4277,7 +4283,7 @@ xWait:
 			else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
 			break;
 		case pCHANGE_PROFILE:
-			if(Prof.id != Option.numProf) HP.SwitchToProfile(Option.numProf);
+			if(Prof.id != Option.numProf) SwitchToProfile(Option.numProf);
 			break;
 		default:                                                         // Не известная команда
 			journal.jprintf("Unknown command: %d !!!", command);
