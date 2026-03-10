@@ -5790,7 +5790,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define WR_Error_Read_PowerMeter_Max	3						// Количество ошибок подряд для ошибки
 
 	#define WR_Load_pins_Boiler_INDEX		0						// Индекс бойлера в массиве WR_Load_pins
-	#define WR_Boiler_Hysteresis			100						// Гистерезис бойлера, сотые градуса
+	#define WR_Boiler_Hysteresis			50						// Гистерезис бойлера, сотые градуса
 	#define WR_Boiler_Substitution_INDEX	3						// Если бойлер нагрет - Индекс подменной нагрузки для бойлера, должен быть больше индекса бойлера
 	#define PIN_WR_Boiler_Substitution		13						// R_10(X2.2). Если бойлер нагрет, то переключаем выход контактором и продолжаем с другой нагрузкой
 	#define WR_Boiler_Substitution_swtime	50						// Время переключения контактора, мсек

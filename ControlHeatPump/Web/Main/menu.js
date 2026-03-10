@@ -28,6 +28,7 @@
 	<ul>\
 		<li class="stats"><a href="stats.html">По дням</a></li>\
 		<li class="history"><a href="history.html">Детально</a></li>\
+		<li class="charts"><a href="charts.html">Графики</a></li>\
 	</ul>\
 </li>\
 <li name="USR" class="setsensors sensorst sensorsp eev relay invertor heater has-children">\
@@ -61,7 +62,6 @@
 	<input type="checkbox" name="group-5" id="group-5">\
 	<label for="group-5"><i class="menu-icon menu-icon-debug"></i>Отладка ТН</label>\
 	<ul>\
-		<li class="charts"><a href="charts.html">Графики</a></li>\
 		<li class="test"><a href="test.html">Тестирование</a></li>\
 		<li class="modbus"><a href="modbus.html">Modbus</a></li>\
 		<li class="log"><a href="log.html">Журнал</a></li>\
