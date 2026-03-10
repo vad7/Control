@@ -99,7 +99,7 @@ window.onload = function() {
 		<td>Включать догрев, если компрессор не нагрел бойлер до температуры догрева<sup>5</sup></td>
 		<td><input id="get_boiler-ahf" type="checkbox" onchange="setParam('get_Boiler(AHF)');"></td>
 	</tr><tr>
-		<td>По "расписанию только для тэна" включать всегда тэн, иначе с температуры догрева - гистерезис</td>
+		<td>Включать тэн по "расписанию только для тэна", иначе с температуры догрева минус гистерезис</td>
 		<td><input id="get_boiler-tp" type="checkbox" onchange="setParam('get_Boiler(TP)');"></td>
 	</tr><tr>
 		<td><b>ПИД</b></td><td></td>

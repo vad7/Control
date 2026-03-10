@@ -1171,8 +1171,8 @@ xSaveStats:
 			strcat(strReturn,"UART_SPEED|Скорость отладочного порта, бод|");_itoa(UART_SPEED,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_EEV|Период управления ЭРВ, мсек|");_itoa(TIME_EEV,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"TIME_WEB_SERVER|Период опроса web сервера "); strcat(strReturn,nameWiznet);strcat(strReturn,", мсек|");_itoa(TIME_WEB_SERVER,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"TIME_I2C_UPDATE |Период синхронизации внутренних часов с I2C часами, мсек|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"MODBUS_PORT_NUM|Используемый порт для обмена по Modbus RTU|Serial");
+			strcat(strReturn,"TIME_I2C_UPDATE|Период синхронизации внутренних часов с I2C часами, мсек|");_itoa(TIME_I2C_UPDATE,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"MODBUS_PORT_NUM|Используемый порт Modbus RTU для частотника, счетчика|Serial");
 			if(&MODBUS_PORT_NUM == &Serial1) strcat(strReturn,"1");
 			else if(&MODBUS_PORT_NUM == &Serial2) strcat(strReturn,"2");
 			else if(&MODBUS_PORT_NUM == &Serial3) strcat(strReturn,"3");
@@ -1182,6 +1182,18 @@ xSaveStats:
 			else strcat(strReturn,"?");
 			strcat(strReturn,";");
 			strcat(strReturn,"MODBUS_PORT_SPEED|Скорость обмена, бод|");_itoa(MODBUS_PORT_SPEED,strReturn);strcat(strReturn,";");
+#ifdef HEATER_MODBUS_PORT
+			strcat(strReturn,"HEATER_MODBUS_PORT|Используемый порт Modbus RTU для Котла|Serial");
+			if(&HEATER_MODBUS_PORT == &Serial1) i = 1;
+			else if(&HEATER_MODBUS_PORT == &Serial2) i = 2;
+			else if(&HEATER_MODBUS_PORT == &Serial3) i = 3;
+#ifdef USE_SERIAL4
+			else if(&HEATER_MODBUS_PORT == &Serial4) i = 4;
+#endif
+			else i = 0;
+			_itoa(i, strReturn);
+			strcat(strReturn,";HEATER_MODBUS_SPEED|Скорость обмена, бод|");_itoa(HEATER_MODBUS_SPEED,strReturn);strcat(strReturn,";");
+#endif
 			strcat(strReturn,"MODBUS_PORT_CONFIG|Конфигурация порта|8N1;");
 			strcat(strReturn,"MODBUS_TIME_WAIT|Максимальное время ожидания освобождения порта, мсек|");_itoa(MODBUS_TIME_WAIT,strReturn);strcat(strReturn,";");
 			// Частотник
@@ -1212,23 +1224,23 @@ xSaveStats:
 			else strcat(strReturn,"?");
 			strcat(strReturn,";");
 			strcat(strReturn,"NEXTION_PORT_SPEED|Скорость обмена (бод)|");_itoa(NEXTION_PORT_SPEED,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"NEXTION_UPDATE|Время обновления информации на дисплее Nextionмсек)|");_itoa(NEXTION_UPDATE,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"NEXTION_UPDATE|Время обновления информации на дисплее Nextion (мсек)|");_itoa(NEXTION_UPDATE,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"NEXTION_READ|Время опроса дисплея Nextion (мсек)|");_itoa(NEXTION_READ,strReturn);strcat(strReturn,";");
 			// Карта
 			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "SD_FAT_VERSION|Версия библиотеки SdFat|%s;", SD_FAT_VERSION);
 			strReturn += m_snprintf(strReturn += strlen(strReturn), 128, "USE_SD_CRC|SD - Использовать проверку CRC|%c;", USE_SD_CRC ? '0'+USE_SD_CRC : USE_SD_CRC_FOR_WRITE ? 'W' : '-');
 			strcat(strReturn,"SD_REPEAT|SD - Число попыток чтения, при неудаче переход на работу без карты|");_itoa(SD_REPEAT,strReturn);strcat(strReturn,";");
 
-			// W5200
-			strcat(strReturn,"W5200_THREAD|Число потоков для сетевого чипа (web сервера) "); strcat(strReturn,nameWiznet);strcat(strReturn,"|");_itoa(W5200_THREAD,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"W5200_TIME_WAIT|Время ожидания захвата мютекса, для управления потоками, мсек|");_itoa( W5200_TIME_WAIT,strReturn);strcat(strReturn,";");
-			strcat(strReturn,"STACK_vWebX|Размер стека для задачи одного web потока "); strcat(strReturn,nameWiznet);strcat(strReturn," (х4 байта)|");_itoa(STACK_vWebX,strReturn);//strcat(strReturn,";");
-
 			ADD_WEBDELIM(strReturn);  continue;
 		} // end CONST
 
 		if (strcmp(str,"CONST1")==0)   // Команда CONST1 Информация очень большая по этому разбито на 2 запроса CONST CONST1
 		{
+			// W5200
+			strcat(strReturn,"W5200_THREAD|Число потоков для сетевого чипа (web сервера) "); strcat(strReturn,nameWiznet);strcat(strReturn,"|");_itoa(W5200_THREAD,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"W5200_TIME_WAIT|Время ожидания захвата мютекса, для управления потоками, мсек|");_itoa( W5200_TIME_WAIT,strReturn);strcat(strReturn,";");
+			strcat(strReturn,"STACK_vWebX|Размер стека для задачи одного web потока "); strcat(strReturn,nameWiznet);strcat(strReturn," (х4 байта)|");_itoa(STACK_vWebX,strReturn);//strcat(strReturn,";");
+
 			strcat(strReturn,"W5200_NUM_PING|Число попыток пинга до определения потери связи |");_itoa(W5200_NUM_PING,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"W5200_MAX_LEN|Размер аппаратного буфера  сетевого чипа "); strcat(strReturn,nameWiznet);strcat(strReturn," (байт)|");_itoa(W5200_MAX_LEN,strReturn);strcat(strReturn,";");
 			strcat(strReturn,"INDEX_FILE|Файл загружаемый по умолчанию|");strcat(strReturn,INDEX_FILE);strcat(strReturn,";");

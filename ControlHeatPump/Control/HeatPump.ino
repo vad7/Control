@@ -157,10 +157,31 @@ void HeatPump::initHeatPump()
 	dEEV.initEEV();                                           // Инициализация ЭРВ
 #endif
 
-	// Инициалаизация модбаса  перед частотником и счетчиком
-	journal.jprintf("Init Modbus RTU via RS485:");
-	if(Modbus.initModbus() == OK) journal.jprintf(" OK\r\n");  //  выводим сообщение об установлении связи
-	else journal.jprintf(" not present config\r\n"); 	       //  нет в конфигурации
+	// Инициализация модбаса
+	journal.jprintf("Modbus RTU (RS485) ports: ");
+	if(Modbus.initModbus() == OK) {
+#ifdef MODBUS_PORT_NUM
+		if(&MODBUS_PORT_NUM == &Serial1) i = 1;
+		else if(&MODBUS_PORT_NUM == &Serial2) i = 2;
+		else if(&MODBUS_PORT_NUM == &Serial3) i = 3;
+#ifdef USE_SERIAL4
+		else if(&MODBUS_PORT_NUM == &Serial4) i = 4;
+#endif
+		else i = 0;
+		journal.jprintf("%d at %d", i, MODBUS_PORT_SPEED);
+#endif
+#ifdef HEATER_MODBUS_PORT
+		if(&HEATER_MODBUS_PORT == &Serial1) i = 1;
+		else if(&HEATER_MODBUS_PORT == &Serial2) i = 2;
+		else if(&HEATER_MODBUS_PORT == &Serial3) i = 3;
+#ifdef USE_SERIAL4
+		else if(&HEATER_MODBUS_PORT == &Serial4) i = 4;
+#endif
+		else i = 0;
+		journal.jprintf(", %d at %d", i, HEATER_MODBUS_SPEED);
+#endif
+		journal.jprintf("\n");
+	} else journal.jprintf("not present\n"); 	       //  нет в конфигурации
 #ifdef USE_ELECTROMETER_SDM
 	HP.dSDM.initSDM();                              // Инициализация счетчика
 #endif
@@ -2284,7 +2305,7 @@ void HeatPump::resetPID()
 
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
 // Проверка на необходимость греть бойлер дополнительным тэном (true - надо греть) ВСЕ РЕЖИМЫ
-boolean HeatPump::boilerAddHeat()
+boolean HeatPump::boilerAddHeat(int16_t target)
 {
 	if(get_State() != pWORK_HP) return false; // работа ТЭНа бойлера разрешена если только работает ТН, в противном случае выкл
 	if(GETBIT(Option.flags, fBackupPower) && !HeatBoilerUrgently)  { // если переключение на ходу на резервный источник то сбросить догрев бойлера
@@ -2328,33 +2349,39 @@ boolean HeatPump::boilerAddHeat()
 	if(GETBIT(Prof.SaveON.flags, fBoilerON)) { // Бойлер включен
 		if(scheduleBoiler()) { // Если разрешено согласно расписания
 			if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
-				int16_t b_target = get_boilerTempTarget();
-				if(!flagRBOILER && (T < b_target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
+				if(!flagRBOILER && (T < target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
 					flagRBOILER = true;
 					return false;
 				}
 				if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, то догрев не включаем
 				else {
-					if(T < b_target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating || dRelay[RBOILER].get_Relay()
+					if(T < target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating || dRelay[RBOILER].get_Relay()
 							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerScheduleForHeating))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
 						return true;
 					}
 					// бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
 
 				}
-			} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
-				return flagRBOILER = onBoiler;
+			} else {
+				if(T >= target) return false;
+				if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) {
+					if(dRelay[RBOILER].get_Relay() || T < target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp)) return true;
+				} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
+					return flagRBOILER = onBoiler;
+				}
 			}
 			// ТЭН не используется (сняты все флажки)
-		} else if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
+		} else {
 			if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && T < Prof.Boiler.tempRBOILER) {
 				if(dRelay[RBOILER].get_Relay() || T < Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating) return true;
 			}
-			if(GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
+			if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
+				if(GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
 #ifdef RPUMPBH	// насос бойлера
-				if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
+					if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
 #endif
-				if(!onBoiler /*check_start_pause()*/) return true;
+						if(!onBoiler /*check_start_pause()*/) return true;
+				}
 			}
 		}
 	}
@@ -2385,8 +2412,9 @@ boolean HeatPump::scheduleBoiler()
 // возврат что надо делать компрессору, функция НЕ управляет компрессором а только выдает необходимость включения компрессора
 MODE_COMP  HeatPump::UpdateBoiler()
 {
+	int16_t TRG = get_boilerTempTarget();   // целевая температура
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
-	if(boilerAddHeat()) { // Дополнительный нагреватель бойлера - нужно греть
+	if(boilerAddHeat(TRG)) { // Дополнительный нагреватель бойлера - нужно греть
 		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || get_State() == pWAIT_HP) { // Если ТН выключен или выключается
 			dRelay[RBOILER].set_OFF();
 			flagRBOILER = false;
@@ -2436,7 +2464,6 @@ MODE_COMP  HeatPump::UpdateBoiler()
 	}
 	uint8_t _is_on = (is_heater_on() << 1) | (is_compressor_on() << 0);		// b1(_HEATR_) - Котел, b0(_COMPR_) - Компрессор
 	int16_t T = sTemp[TBOILER].get_Temp();  // текущая температура
-	int16_t TRG = get_boilerTempTarget();   // целевая температура
 #ifdef RPUMPBH
 	if(GETBIT(Prof.Boiler.flags, fBoilerTogetherHeat) && (Status.modWork & pHEAT)) { // Режим одновременного нагрева бойлера с отоплением
 		if(!_is_on || T > TRG) {

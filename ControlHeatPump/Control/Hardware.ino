@@ -232,12 +232,12 @@ void sensorADC::initSensorADC(uint8_t sensor, uint8_t pinA, uint16_t filter_size
 	 // Проверка на ошибки именно здесь обрабатывются ошибки и передаются на верх
 	 if(Value < cfg.minValue) {
 		 err = ERR_ANALOG_MIN;
-		 set_Error(err, name);
+		 if(HP.get_State() != pOFF_HP) set_Error(err, name);
 		 return err;
 	 }
 	 if(Value > cfg.maxValue) {
 		 err = ERR_ANALOG_MAX;
-		 set_Error(err, name);
+		 if(HP.get_State() != pOFF_HP) set_Error(err, name);
 		 return err;
 	 }
 	 // Дошли до сюда значит ошибок нет
@@ -330,7 +330,7 @@ int8_t sensorDiditalInput::Read(boolean fast)
 	if(type == pALARM && Input == alarmInput)     // Срабатывание аварийного датчика (только его!)
 	{
 		err = ERR_DINPUT;
-		set_Error(err, name);
+		if(HP.get_State() != pOFF_HP) set_Error(err, name);
 	}
 	return err;
 }
@@ -1611,7 +1611,7 @@ boolean devSDM::check_link()
 		float band;
 		if(((errModbus=Modbus.readHoldingRegistersFloat(SDM_MODBUS_ADR, SDM_BAUD_RATE, &band)) == OK) && (band == SDM_SPEED)) {
 			SETBIT1(flags, fSDMLink);
-			journal.jprintf("%s, found, link OK, band rate:%.0f modbus address:%d\n", name, band, SDM_MODBUS_ADR);
+			journal.jprintf("%s, found, link OK, modbus address: %d\n", name, SDM_MODBUS_ADR);
 			return true;
 		} else {
 #ifdef SDM_BLOCK                     // если стоит флаг блокировки связи
@@ -1619,7 +1619,7 @@ boolean devSDM::check_link()
 #else
 			SETBIT1(flags, fSDMLink);
 #endif
-			journal.jprintf("Error %d, %s, no connect.\n", errModbus, name);
+			journal.jprintf("Error %d, %s, no connect!\n", errModbus, name);
 		}
 #endif
 		_delay(SDM_DELAY_REPEAD);

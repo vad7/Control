@@ -69,7 +69,7 @@ int8_t devVaconFC::initFC()
 	if(!Modbus.get_present()) // modbus отсутствует
 	{
 		SETBIT0(flags, fFC); // Инвертор не работает
-		journal.jprintf("%s, modbus not found, block.\n", name);
+		journal.jprintf("%s, modbus not found, block!\n", name);
 		err = ERR_NO_MODBUS;
 		return err;
 	} else if(DEVICEFC == true) SETBIT1(flags, fFC); // наличие частотника в текушей конфигурации
@@ -452,7 +452,7 @@ bool devVaconFC::check_blockFC()
 #endif
             SETBIT1(flags, fErrFC); // Установить флаг
             note = (char*)noteFC_NO;
-            set_Error(err, (char*)name); // Подъем ошибки на верх и останов ТН
+            if(HP.get_State() != pOFF_HP) set_Error(err, (char*)name); // Подъем ошибки на верх и останов ТН
             return true;
 		}
     } else {
