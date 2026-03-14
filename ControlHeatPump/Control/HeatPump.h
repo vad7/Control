@@ -268,7 +268,7 @@ struct {
 } WR;
 
 #ifdef WEATHER_FORECAST
-uint8_t WF_BoilerTargetPercent = 100;
+uint8_t WF_BoilerTargetPercent = 0;		// Процент от максимальной температуры нагрева бойлера по погоде (100 - греть макс)
 #endif
 #ifdef WR_LOG_DAYS_POWER_EXCESS
 int32_t WR_Power_Excess = 0;			// Излишки ваттроутера

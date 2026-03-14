@@ -1288,7 +1288,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 
 #ifdef WEATHER_FORECAST
 			if(active && rtcSAM3X8.get_days() != WF_Day) {
-				WF_BoilerTargetPercent = 100;
+				WF_BoilerTargetPercent = 0;
 				if(rtcSAM3X8.get_hours() == WR.WF_Time / 10 && rtcSAM3X8.get_minutes() >= (WR.WF_Time % 10) * 10 && strlen(HP.Option.WF_ReqServer)) {
 					int err = Send_HTTP_Request(HP.Option.WF_ReqServer, NULL, HP.Option.WF_ReqText, 4);
 					if(err == OK) err = WF_ProcessForecast(Socket[MAIN_WEB_TASK].outBuf);
