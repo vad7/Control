@@ -1739,7 +1739,7 @@ boolean HeatPump::switchBoiler(boolean b)
 #endif
 #ifdef R3WAY
 	dRelay[R3WAY].set_Relay(b);            // Установить в нужное положение 3-х ходового
-	Pump_HeatFloor(b);
+	Pump_HeatFloor(!b);
 #else // Нет трехходового - схема с двумя насосами
 	// ставим сюда код переключения ГВС/отопление в зависимости от onBoiler=true - ГВС
 	if(b) { // переключение на ГВС
@@ -2183,6 +2183,14 @@ xGoWait:
 	if(start_compressor_now) {
 		if(HeaterNeedOn) {
 			heaterON();                          // Включаем котел
+			if(!is_comp_or_heater_on() || get_errcode() != OK) return;
+			if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) {
+				if(Status.modWork & pBOILER) {
+					switchBoiler(true); // включить бойлер
+				} else {
+					Pumps(ON); // включить насосы
+				}
+			}
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
@@ -3315,6 +3323,15 @@ void HeatPump::vUpdate()
 			if(configHP()) {               // Конфигурируем насосы
 				if(HeaterNeedOn) {
 					heaterON();                          // Включаем котел
+					if(get_State() != pOFF_HP && get_State() != pSTOPING_HP && error == OK) {
+						if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) {
+							if(Status.modWork & pBOILER) {
+								switchBoiler(true); // включить бойлер
+							} else {
+								Pumps(ON); // включить насосы
+							}
+						}
+					}
 				} else {
 					compressorON();                      // Включаем компрессор
 				}
@@ -3503,18 +3520,18 @@ boolean HeatPump::configHP()
 #ifdef DEBUG_MODWORK
 			journal.printf_time("Pumps stopped\n");
 #endif
+			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) {
 #ifdef USE_HEATER
-			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) {
 				dHeater.HeaterValve_On();
-			}
 #endif
-			Pumps(ON);                                                     // включить насосы
-			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) {
+				if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) Pumps(ON); // включить насосы
 #ifdef USE_HEATER
 				dHeater.set_target(dHeater.get_settings()->heat_tempout, dHeater.get_settings()->heat_power_max);
 #endif
-			} else
+			} else {
+				Pumps(ON);                                                  // включить насосы
 				dFC.set_target(dFC.get_startFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool());   // установить стартовую частоту
+			}
 		}
 		#ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
 			dRelay[RSUPERBOILER].set_OFF();                             // Евгений добавил выключить супербойлер
@@ -3546,9 +3563,10 @@ boolean HeatPump::configHP()
 					goto xStartCompOrHeater;
 				}
 #ifdef USE_HEATER
+				dHeater.HeaterValve_On();
 				dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
 #endif
-				switchBoiler(true);                                        // включить бойлер
+				if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) switchBoiler(true); // включить бойлер
 			} else { // Компрессор
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) { // Греть нужно котлом, останавливаем компрессор
 					compressorOFF();
@@ -4106,7 +4124,7 @@ void HeatPump::heaterON()
 		journal.jprintf_time("heaterON > modWork:%X[%s]\n",get_modWork(),codeRet[Status.ret]);
 #endif
 #ifdef USE_HEATER
-	dHeater.HeaterValve_On();		// Переключиться на Котел
+	dHeater.HeaterValve_On(); // Переключиться на Котел, хотя уже должны
 #endif
 	// 2. Задержка перед включением
 #ifdef DEBUG_MODWORK
@@ -4162,6 +4180,20 @@ void HeatPump::heaterON()
 	  	dHeater.Heater_Start();										// Включить
 #endif
 		if(error) return;							    			// Ошибка - выходим
+		if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) { // Включение после, отработка пауз и температуры
+			journal.jprintf("Waiting to heat up\n");
+			if(dHeater.set.wait_heating_pipes_time != 0) {
+				_delay(dHeater.set.wait_heating_pipes_time * 4000);
+			}
+#ifdef THEATER
+			if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
+				while(HP.sTemp[TIN].get_Temp() < (HP.get_modWork() & pBOILER ? HP.Prof.Boiler.tempPID : HP.Prof.Heat.tempPID)) {
+					if(HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_errcode()) return;  // ТН выключен или выключается - выходим
+					_delay(1000);
+				}
+			}
+#endif
+		}
 	}
 }
 

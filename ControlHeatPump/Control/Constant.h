@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.211"				// Версия прошивки
+#define VERSION			"1.212"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -961,6 +961,9 @@ const char *Wheater_fHeater_USE_Relay_RH_3WAY	= {"R3"};
 const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
 const char *Wheater_fHeater_USE_Relay_Modbus_3WAY={"RW"};
 const char *Wheater_fHeater_BoilerInHeatingMode	= {"BH"};
+const char *Wheater_fHeater_Heating_Pipes		= {"3A"};
+const char *Wheater_fHeater_Heating_Pipes_Temp	= {"3T"};
+const char *Wheater_wait_heating_pipes_time		= {"3P"};
 const char *Wheater_heat_tempout				= {"T"};
 const char *Wheater_heat_power_min				= {"PN"};
 const char *Wheater_heat_power_max				= {"PM"};
