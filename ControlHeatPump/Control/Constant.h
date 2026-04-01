@@ -1177,7 +1177,7 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_NO_POWER_WHILE_WORK -93		// Пропало электричество во время работы
 #define ERR_HEATER_ADAPTER_LINK	-94		// Ошибка связи с адаптером котла
 #define ERR_HEATER_LINK		-95			// Ошибка связи с котлом
-#define ERR_HEATER_STOP		-96			// Коьтел внезапно остановился
+#define ERR_HEATER_STOP		-96			// Котел внезапно остановился
 
 #define ERR_ERRMAX			-96 		// Последняя ошибка
 
@@ -1499,12 +1499,14 @@ enum MODE_COMP
 
 //  Перечисляемый тип - что надо делать или какой режим отопления выбран (первые три)
 #define MODE_HP uint8_t
-#define pOFF		0             // Выключить
-#define pHEAT		0x01          // Отопление
-#define pCOOL		0x02          // Охлаждение
-#define pBOILER		0x04          // Бойлер
-#define pDEFROST	0x08          // Разморозка воздушника
-#define pCONTINUE	0x80          // флаг Продолжения
+// get_modeHouse() и get_modWork()
+#define pOFF		0			// Выключено
+#define pHEAT		0x01		// Отопление
+#define pCOOL		0x02		// Охлаждение
+// только get_modWork()
+#define pBOILER		0x04		// Бойлер
+#define pDEFROST	0x08		// Разморозка воздушника
+#define pCONTINUE	0x80		// флаг Продолжения
 
 const char *MODE_HP_STR[] = { "Off", "Heat", "Cool", "Boil", "Defrost", "C" };
 const char MODE_HOUSE_WEBSTR[] = "Выключено:0;Отопление:0;Охлаждение:0;";

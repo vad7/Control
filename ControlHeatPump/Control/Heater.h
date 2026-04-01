@@ -101,7 +101,7 @@ struct type_heater_read {
 #define fHeater_USE_Relay_Modbus		3		// Использовать Modbus реле для запуска Котла
 #define fHeater_USE_Relay_Modbus_3WAY	4		// Использовать Modbus реле для переключения Котел - ТН
 #define fHeater_Heating_Pipes			5		// Прогрев трассы, насосы включаются после этого
-#define fHeater_Heating_Pipes_Temp		6		// Прогрев трассы до достижения целевой температуры подачи
+#define fHeater_Heating_Pipes_Temp		6		// Прогрев трассы до текущей температуры бойлера
 #define fHeater_BoilerInHeatingMode		7		// Греть бойлер в режиме отопления, иначе используются раздельные режимы котла - Отопление/ГВС.
 
 struct type_HeaterSettings {					// Структура для сохранения настроек

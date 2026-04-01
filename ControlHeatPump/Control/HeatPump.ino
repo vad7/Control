@@ -1738,16 +1738,28 @@ boolean HeatPump::switchBoiler(boolean b)
 	journal.printf(" swBoiler(%d): %X, mW:%d\n", b, onBoiler, get_modWork());
 #endif
 #ifdef R3WAY
-	dRelay[R3WAY].set_Relay(b);            // Установить в нужное положение 3-х ходового
+	if(b) {
+#ifdef HEATER_BOILER_DONT_USE_RPUMPO
+		if(is_heater_on()) {
+			dRelay[RPUMPO].set_OFF();	// насос отопления выключить (в котле встроенный работает на )
+			_delay(DELAY_AFTER_SWITCH_RELAY);
+		}
+#endif
+		Switch_R3WAY(true);								// Установить в нужное положение 3-х ходовой
+	} else {
+		Switch_R3WAY(false);								// Установить в нужное положение 3-х ходовой
+		dRelay[RPUMPO].set_ON();
+		_delay(DELAY_AFTER_SWITCH_RELAY);
+	}
 	Pump_HeatFloor(!b);
-#else // Нет трехходового - схема с двумя насосами
+#else // Нет трехходового - схема с двумя насосами с обратными клапанами
 	// ставим сюда код переключения ГВС/отопление в зависимости от onBoiler=true - ГВС
 	if(b) { // переключение на ГВС
 #ifdef RPUMPBH
 		dRelay[RPUMPBH].set_ON();    // ГВС - включить
 #endif
 		Pump_HeatFloor(false);		 // выключить насос ТП
-		dRelay[RPUMPO].set_OFF();    // файнкойлы выключить
+		dRelay[RPUMPO].set_OFF();    // насос отопления выключить
 		
 	} else { // Переключение с ГВС на Отопление/охлаждение идет анализ по режиму работы дома
 #ifdef RPUMPBH
@@ -1759,7 +1771,7 @@ boolean HeatPump::switchBoiler(boolean b)
 		//    if (Status.modWork == pBOILER)  return onBoiler; // Идет сброс тепла паузу на переключение делать не надо ***
 		} else { // пауза ИЛИ работа дома не задействована - все выключить
 			Pump_HeatFloor(false);
-			dRelay[RPUMPO].set_OFF();    // файнкойлы
+			dRelay[RPUMPO].set_OFF();    // насос отопления
 		}
 	}
 #endif // закрытие Нет трехходового - схема с двумя насосами
@@ -1780,6 +1792,7 @@ boolean HeatPump::switchBoiler(boolean b)
 	} else onBoiler = b;
 	return onBoiler;
 }
+
 // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
 // Если реле нет то ничего не делает возвращает false
 // Проверяет паузу 60 секунд после включения компрессора, и только после этого начинает управлять EVI
@@ -1799,12 +1812,29 @@ boolean HeatPump::checkEVI()
 #endif
 
 #ifdef RPUMPFL
-void HeatPump::Pump_HeatFloor(boolean On)
+void HeatPump::Pump_HeatFloor(bool On)
 {
 	if(On) {
 		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor)) || (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor))))
 			dRelay[RPUMPFL].set_ON();
 	} else dRelay[RPUMPFL].set_Relay(error ? -fR_StatusAllOff : -fR_StatusMain);
+}
+#else
+void HeatPump::Pump_HeatFloor(boolean) { }
+#endif
+
+#ifdef R3WAY
+void HeatPump::Switch_R3WAY(bool On)
+{
+	bool st = dRelay[R3WAY].get_Relay();
+	if(On) dRelay[R3WAY].set_ON(); else dRelay[R3WAY].set_ON();
+	if(st != On) {
+#ifdef SWITCH_TIME_R3WAY
+		_delay(SWITCH_TIME_R3WAY);
+#else
+		_delay(DELAY_AFTER_SWITCH_RELAY);
+#endif
+	}
 }
 #else
 void HeatPump::Pump_HeatFloor(boolean) { }
@@ -1822,16 +1852,15 @@ void HeatPump::Pumps(boolean b)
 #endif
 	int16_t delayed = 0;	// сек
 #ifdef R3WAY                // Если определен трехходовой то в начале переключаем его (при выключении что бы остыл теплообменник)
-if(b && (get_modWork() & pBOILER)){
-        dRelay[R3WAY].set_Relay(true);               // скорее всего это пуск ТН (не переключение) по этому надо включить ГВС
-        _delay(DELAY_AFTER_SWITCH_RELAY);
+	if(b && (get_modWork() & pBOILER)){
+		Switch_R3WAY(true);
 		onBoiler = true;
 		offBoiler = 0;
 	} else {
-		dRelay[R3WAY].set_Relay(false);              // скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС
-	    if(onBoiler && get_State() == pWORK_HP) {    // Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
+		Switch_R3WAY(false); 						// скорее всего это выключение ТН (не переключение) по этому надо выключить ГВС
+	    if(onBoiler && get_State() == pWORK_HP) {	// Если грели бойлер и теперь ТН работает, то обеспечить дополнительное время (delayBoilerSW сек) для прокачивания гликоля - т.к разные уставки по температуре подачи
 	    	journal.jprintf(" Pause %d s, Boiler->Pause\n", Option.delayBoilerSW);
-	    	_delay((delayed = Option.delayBoilerSW) * 1000);    // выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
+	    	_delay((delayed = Option.delayBoilerSW) * 1000);    // выравниваем температуру в контуре отопления/ГВС, чтобы сразу защиты не сработали
 	    }
 	}
 #endif
@@ -2183,14 +2212,7 @@ xGoWait:
 	if(start_compressor_now) {
 		if(HeaterNeedOn) {
 			heaterON();                          // Включаем котел
-			if(!is_comp_or_heater_on() || get_errcode() != OK) return;
-			if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) {
-				if(Status.modWork & pBOILER) {
-					switchBoiler(true); // включить бойлер
-				} else {
-					Pumps(ON); // включить насосы
-				}
-			}
+			heater_heating_pump();
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
@@ -3269,12 +3291,12 @@ void HeatPump::vUpdate()
 		if(get_modeHouse() == pHEAT && sTemp[TIN].get_Temp() > get_targetTempCool() + Prof.Cool.dTemp) {
 			set_mode(pCOOL);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("SET MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+			journal.jprintf("SET MODE=0x%X\n", get_modeHouse());
 #endif
 		} else if(get_modeHouse() == pCOOL && sTemp[TIN].get_Temp() < get_targetTempHeat() - Prof.Heat.dTemp) {
 			set_mode(pHEAT);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("SET MODE=%s\n", MODE_HP_STR[get_modeHouse()]);
+			journal.jprintf("SET MODE=0x%X\n", get_modeHouse());
 #endif
 		}
 	}
@@ -3323,15 +3345,7 @@ void HeatPump::vUpdate()
 			if(configHP()) {               // Конфигурируем насосы
 				if(HeaterNeedOn) {
 					heaterON();                          // Включаем котел
-					if(get_State() != pOFF_HP && get_State() != pSTOPING_HP && error == OK) {
-						if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) {
-							if(Status.modWork & pBOILER) {
-								switchBoiler(true); // включить бойлер
-							} else {
-								Pumps(ON); // включить насосы
-							}
-						}
-					}
+					heater_heating_pump();
 				} else {
 					compressorON();                      // Включаем компрессор
 				}
@@ -3525,6 +3539,11 @@ boolean HeatPump::configHP()
 				dHeater.HeaterValve_On();
 #endif
 				if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) Pumps(ON); // включить насосы
+				else {
+#ifdef R3WAY
+					Switch_R3WAY(false);
+#endif
+				}
 #ifdef USE_HEATER
 				dHeater.set_target(dHeater.get_settings()->heat_tempout, dHeater.get_settings()->heat_power_max);
 #endif
@@ -3567,6 +3586,9 @@ boolean HeatPump::configHP()
 				dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
 #endif
 				if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) switchBoiler(true); // включить бойлер
+#ifdef R3WAY
+				else if(sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() - HEATER_PREHEAT_HYSTERESIS) Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
+#endif
 			} else { // Компрессор
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) { // Греть нужно котлом, останавливаем компрессор
 					compressorOFF();
@@ -3799,7 +3821,7 @@ xNextStop:
 #endif // EEV_DEF
 
 	// 4. Управление компрессором
-	if (get_errcode()==OK)                                 // Компрессор включить если нет ошибок
+	if(get_errcode()==OK)                                 // Компрессор включить если нет ошибок
 	{
 		// Дополнительные защиты перед пуском компрессора
 		if (startPump) {                                     // Проверка задачи насос - должен быть выключен
@@ -4124,7 +4146,7 @@ void HeatPump::heaterON()
 		journal.jprintf_time("heaterON > modWork:%X[%s]\n",get_modWork(),codeRet[Status.ret]);
 #endif
 #ifdef USE_HEATER
-	dHeater.HeaterValve_On(); // Переключиться на Котел, хотя уже должны
+	if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) dHeater.HeaterValve_On(); // Переключиться на Котел, хотя уже должны
 #endif
 	// 2. Задержка перед включением
 #ifdef DEBUG_MODWORK
@@ -4159,19 +4181,18 @@ void HeatPump::heaterON()
 		}
 
 		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
-
-#ifdef FLOW_CONTROL      // если надо проверяем поток (защита от отказа насосов) ERR_MIN_FLOW
-		 if(sFrequency[FLOWCON].get_checkFlow() && sFrequency[FLOWCON].get_Value() < sFrequency[FLOWCON].get_minValue()) {  // Поток меньше минимального
-			_delay(TIME_READ_SENSOR);
-			if(sFrequency[FLOWCON].get_Value() < sFrequency[FLOWCON].get_minValue()) {  // Поток меньше минимального
-				journal.jprintf(" Flow %s: %.3d\n", sFrequency[FLOWCON].get_name(), sFrequency[FLOWCON].get_Value());
-				set_Error(ERR_MIN_FLOW, (char*) sFrequency[FLOWCON].get_name());
-				return;
-			}
-		}
-#endif
-
-		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
+// проток не проверяется, так как котел и СО разделены гидрострелкой, а насос СО могли и не включить
+//#ifdef FLOW_CONTROL      // если надо проверяем поток (защита от отказа насосов) ERR_MIN_FLOW
+//		 if(sFrequency[FLOWCON].get_checkFlow() && sFrequency[FLOWCON].get_Value() < sFrequency[FLOWCON].get_minValue()) {  // Поток меньше минимального
+//			_delay(TIME_READ_SENSOR);
+//			if(sFrequency[FLOWCON].get_Value() < sFrequency[FLOWCON].get_minValue()) {  // Поток меньше минимального
+//				journal.jprintf(" Flow %s: %.3d\n", sFrequency[FLOWCON].get_name(), sFrequency[FLOWCON].get_Value());
+//				set_Error(ERR_MIN_FLOW, (char*) sFrequency[FLOWCON].get_name());
+//				return;
+//			}
+//		}
+//		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || is_next_command_stop() || error) return;
+//#endif
 
 		resetPID();													// Инициализировать переменные ПИД регулятора
 		if(Charts_when_comp_on) task_updstat_chars = 0;
@@ -4180,20 +4201,6 @@ void HeatPump::heaterON()
 	  	dHeater.Heater_Start();										// Включить
 #endif
 		if(error) return;							    			// Ошибка - выходим
-		if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes)) { // Включение после, отработка пауз и температуры
-			journal.jprintf("Waiting to heat up\n");
-			if(dHeater.set.wait_heating_pipes_time != 0) {
-				_delay(dHeater.set.wait_heating_pipes_time * 4000);
-			}
-#ifdef THEATER
-			if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
-				while(HP.sTemp[TIN].get_Temp() < (HP.get_modWork() & pBOILER ? HP.Prof.Boiler.tempPID : HP.Prof.Heat.tempPID)) {
-					if(HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_errcode()) return;  // ТН выключен или выключается - выходим
-					_delay(1000);
-				}
-			}
-#endif
-		}
 	}
 }
 
@@ -4214,6 +4221,33 @@ void HeatPump::heaterOFF()
 		offBoiler = rtcSAM3X8.unixtime();
 	}
 #endif
+}
+
+// Котел греет трубу
+void HeatPump::heater_heating_pump(void)
+{
+	if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) || get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
+	journal.jprintf("Waiting to heat up\n");
+	if(dHeater.set.wait_heating_pipes_time != 0) {
+		_delay(dHeater.set.wait_heating_pipes_time * 4000);
+	}
+#ifdef THEATER
+	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
+		uint32_t st = rtcSAM3X8.unixtime();
+		while(HP.sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? sTemp[TBOILER].get_Temp() : FEED)) {
+			_delay(TIME_READ_SENSOR);
+			if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
+			if(rtcSAM3X8.unixtime() - st > HEATER_PREHEAT_MAX_TIME) break;
+		}
+	}
+#else
+	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
+#endif
+	if(Status.modWork & pBOILER) {
+		switchBoiler(true); // включить бойлер
+	} else {
+		Pumps(ON); // включить насосы
+	}
 }
 
 // ОБРАБОТЧИК КОМАНД УПРАВЛЕНИЯ ТН
