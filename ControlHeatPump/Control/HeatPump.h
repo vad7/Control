@@ -354,7 +354,7 @@ struct type_statusHP
 };
 
 #if defined(R3WAY)
-#define BOILER_HEATING_NOW HP.dRelay[R3WAY].get_Relay()
+#define IS_BOILER_HEATING HP.dRelay[R3WAY].get_Relay()
 #elif defined(RPUMPBH)
 #define IS_BOILER_HEATING (HP.dRelay[RPUMPBH].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay())
 #else
@@ -730,7 +730,7 @@ private:
 	void compressorOFF();                 // попытка выключить компрессор с учетом всех защит
 	void heaterON();                      // попытка включить котел с учетом всех защит
 	void heaterOFF();                     // попытка выключить котел с учетом всех защит
-	void heater_heating_pump(void);       // Котел греет трубу, если нужно
+	void heater_heating_tube(void);       // Котел греет трубу, если нужно
 	boolean check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса

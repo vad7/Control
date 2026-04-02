@@ -950,7 +950,6 @@ const char *boil_HeatUrgently = {"URG"};				 // флаг Срочно нужно
 const char *boil_DischargeDelta={"DD"};                  // Сброс тепла в отопление при приближении подачи к максимальной/догреву на °С
 const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть ГВС без ТЭНа при работе от генератора
 const char *boil_WF_MinTarget = {"WT"};
-const char *boil_fBoilerScheduleForHeating={"TP"};
 const char *boil_fBoilerHeatingOnly={"HO"};
 const char *boil_delayOffPump = {"DO"};
 
@@ -1515,9 +1514,9 @@ const char MODE_HOUSE_WEBSTR[] = "Выключено:0;Отопление:0;Ох
 enum TYPE_COMMAND         
 {
   pEMPTY,                        // 0 Команд нет
-  pSTART,                        // 1 Пуск теплового насоса (РУКАМИ)
-  pAUTOSTART,                    // 2 Пуск теплового насоса (автоматический pRESTART pREPEAT)
-  pSTOP,                         // 3 Стоп теплового насоса
+  pSTART,                        // 1 Пуск (РУКАМИ)
+  pAUTOSTART,                    // 2 Пуск (автоматический pRESTART pREPEAT)
+  pSTOP,                         // 3 Стоп
   pRESET,                        // 4 Сброс контроллера
   pRESTART,                      // 5 Пуск ТН после сброса контроллера (отличается от pREPEAT только задержкой)
   pREPEAT,                       // 6 Повторный пуск ТН (определяется числом попыток повторного пуска)

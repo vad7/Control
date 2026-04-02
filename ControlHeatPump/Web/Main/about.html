@@ -5,7 +5,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_config,get_configNote");
+	loadParam("get_config,get_configNote,get_version");
 }
 </script>
 </head>
@@ -14,7 +14,7 @@ window.onload = function() {
 <div class="content">
 	<h1>О контроллере</h1>
 	<div class="row1">
-		<h2>Народный контроллер теплового насоса.<br><br>
+		<h2>Народный контроллер теплового насоса. Версия <span id="get_version"></span><br><br>
 		<a href="const.html">Конфигурация</a>: <span id="get_config"></span><br>
 		Описание: <span id="get_confignote"></span><br><br><br>
 		Разработка прошивки контроллера: vad711, pav2000<br/>

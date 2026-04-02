@@ -309,9 +309,9 @@ function setTM(s) {
 8. 'Сохранить статистику' - Запись накопленных данных за последний день.<br>
 <br>
 <input type="submit" value="Сброс cети" onclick='loadParam("RESET_NET")'>
-<input type="submit" value="Сброс контроллера" onclick='if(confirm("Перезагрузить контроллер?")) loadParam("RESET_DUE");'>
-<input type="submit" value="Сброс сезонных счетчиков" onclick='if(document.getElementById("reset_code").value=="RESET") loadParam("RESET_CNT_S,RELOAD")'>
-<input type="submit" value="Сброс настроек HP" onclick='if(document.getElementById("reset_code").value=="RESET") loadParam("RESET_SETTINGS");'> Введите RESET: <input id="reset_code" size="7">
+<input type="submit" value="Перезагрузка контроллера" onclick='if(confirm("Перезагрузить контроллер?")) loadParam("RESET_DUE");'>
+<input type="submit" value="Очистка сезонных счетчиков" onclick='if(document.getElementById("reset_code").value=="RESET") loadParam("RESET_CNT_S,RELOAD")'>
+<input type="submit" value="Очистка настроек HP" onclick='if(document.getElementById("reset_code").value=="RESET") loadParam("RESET_SETTINGS");'> Введите RESET: <input id="reset_code" size="7">
 <br><p>Для сброса всех счетчиков используйте запрос RESET_CNT_ALL</p>
 <br>
 </div>	

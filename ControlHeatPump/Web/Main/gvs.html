@@ -31,7 +31,7 @@ $(document).ready(function() {
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(TP),get_Boiler(H),get_Boiler(CP)");
+	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(H),get_Boiler(CP)");
 	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO),get_Boiler(HO)");
 };
 </script>
@@ -98,9 +98,6 @@ window.onload = function() {
 	</tr><tr>
 		<td>Включать догрев, если компрессор не нагрел бойлер до температуры догрева<sup>5</sup></td>
 		<td><input id="get_boiler-ahf" type="checkbox" onchange="setParam('get_Boiler(AHF)');"></td>
-	</tr><tr>
-		<td>Включать тэн по "расписанию только для тэна", иначе с температуры догрева минус гистерезис</td>
-		<td><input id="get_boiler-tp" type="checkbox" onchange="setParam('get_Boiler(TP)');"></td>
 	</tr><tr>
 		<td><b>ПИД</b></td><td></td>
 	</tr><tr>

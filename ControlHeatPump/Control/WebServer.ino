@@ -1805,17 +1805,24 @@ xSaveStats:
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
 				{
-					if ((pm>=0)&&(pm<I2C_PROFIL_NUM)) _itoa(HP.Prof.save((int8_t)pm),strReturn); else strcat(strReturn,"E29");  ADD_WEBDELIM(strReturn) ;    continue;
+					if ((pm>=0)&&(pm<I2C_PROFIL_NUM)) _itoa(HP.Prof.save((int8_t)pm),strReturn); else strcat(strReturn,"E29");
 				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 			// -----------------------------------------------------------------------------
-			if (strcmp(str,"loadProfile")==0)  // Функция loadProfile загрузка профиля в текущий
+			if(strcmp(str,"loadProfile")==0)  // Функция loadProfile загрузка профиля в текущий
 			{
-				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
-				else
-				{
-					if ((pm>=0)&&(pm<I2C_PROFIL_NUM)) _itoa(HP.Prof.load((int8_t)pm),strReturn); else strcat(strReturn,"E29");  ADD_WEBDELIM(strReturn) ;    continue;
+				pm = my_atof(x);
+				i = int16_t(pm);
+				if(pm == ATOF_ERROR || i < 0 || i >= I2C_PROFIL_NUM) strcat(strReturn, "E29 - Неверный номер!");
+				else {
+					i = HP.Prof.load(i);
+					if(i == ERR_HEADER_EEPROM) strcat(strReturn, "E19 - Битый профиль!");
+					else if(i == ERR_LOAD_PROFILE) strcat(strReturn, "E62 - Ошибка загрузки!");
+					else if(i == ERR_CRC16_PROFILE) strcat(strReturn, "E63 - Ошибка CRC!");
+					else _itoa(i, strReturn);
 				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 			// -----------------------------------------------------------------------------
 			if (strcmp(str,"infoProfile")==0)  // Функция infoProfile получить информацию о профиле
@@ -1823,8 +1830,9 @@ xSaveStats:
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
 				{
-					if ((pm>=0)&&(pm<I2C_PROFIL_NUM)) HP.Prof.get_info(strReturn,(int8_t)pm); else strcat(strReturn,"E29");  ADD_WEBDELIM(strReturn) ;    continue;
+					if ((pm>=0)&&(pm<I2C_PROFIL_NUM)) HP.Prof.get_info(strReturn,(int8_t)pm); else strcat(strReturn,"E29");
 				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 			// -----------------------------------------------------------------------------
 			if (strcmp(str,"eraseProfile")==0)  // Функция eraseProfile стереть профиль
@@ -1832,11 +1840,11 @@ xSaveStats:
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования   - завершить запрос с ошибкой
 				else
 				{
-					if (pm==HP.Prof.get_idProfile())  {strcat(strReturn,"E30");}  // попытка стереть текущий профиль
+					if (pm==HP.Prof.get_idProfile())  {strcat(strReturn,"E30 - Нельзя стереть текущий профиль!");}  // попытка стереть текущий профиль
 					else if((pm>=0)&&(pm<I2C_PROFIL_NUM)) { _itoa(HP.Prof.erase((int8_t)pm),strReturn); HP.Prof.update_list(HP.Prof.get_idProfile()); }
 					else strcat(strReturn,"E29");
-					ADD_WEBDELIM(strReturn) ;    continue;
 				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 			// -----------------------------------------------------------------------------
 			if (strcmp(str,"set_listProf")==0)  // Функция set_listProf - загрузить профиль из списка
@@ -1851,8 +1859,8 @@ xSaveStats:
 							HP.sendCommand(pCHANGE_PROFILE);
 						}
 					} else strcat(strReturn,"E29");
-					ADD_WEBDELIM(strReturn) ;    continue;
 				}
+				ADD_WEBDELIM(strReturn); continue;
 			}
 
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////

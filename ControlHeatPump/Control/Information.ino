@@ -422,10 +422,17 @@ void Journal::_write(char *dataPtr)
 void Profile::initProfile()
 {
   err=OK;
-  strcpy(dataProfile.name,"unknow");
-  strcpy(dataProfile.note,"default profile");
+  memset(&SaveON, 0, sizeof(SaveON));
+  memset(&Heat, 0, sizeof(Heat));
+  memset(&Cool, 0, sizeof(Cool));
+  memset(&Boiler, 0, sizeof(Boiler));
+  memset(&dataProfile, 0, sizeof(dataProfile));
+  memset(&DailySwitch, 0, sizeof(DailySwitch));
+  DailySwitchStateT = 0;
+
+  strcpy(dataProfile.name,"Профиль "); _itoa(id + 1, dataProfile.name);
+  strcpy(dataProfile.note,"");
   dataProfile.flags=0x00;
-  id=0;
   
   // Состояние ТН структура SaveON
   SaveON.magic=0x55;                   // признак данных, должно быть  0x55
@@ -434,24 +441,23 @@ void Profile::initProfile()
   
   // Охлаждение
   Cool.Rule=pHYSTERESIS,               // алгоритм гистерезис, интервальный режим
-  Cool.Temp1=2000;                     // Целевая температура дома
-  Cool.Temp2=1200;                     // Целевая температура Обратки
-  SETBIT0(Cool.flags,fTarget);         // Что является целью ПИД - значения true (температура в доме), false (температура обратки).
+  Cool.Temp1=2400;                     // Целевая температура дома
+  Cool.Temp2=1000;                     // Целевая температура Обратки
+  SETBIT1(Cool.flags,fTarget);         // Что является целью ПИД - значения true (температура в доме), false (температура обратки).
   SETBIT0(Cool.flags,fWeather);        // флаг Погодозависмости
-  Cool.dTemp=200;                      // Гистерезис целевой температуры
-  Cool.pid_time=90;                    // Постоянная интегрирования времени в секундах ПИД ТН
-  Cool.pid.Kp=1;                      // Пропорциональная составляющая ПИД ТН
-  Cool.pid.Ki=0;                       // Интегральная составляющая ПИД ТН
-  Cool.pid.Kd=3;                       // Дифференциальная составляющая ПИД ТН
-  Cool.tempPID=2200;                // Целевая температура ПИД
+  Cool.dTemp=050;                      // Гистерезис целевой температуры
+  Cool.dTempGen = 20;
+  Cool.tempPID=1500;                   // Целевая температура ПИД
+  Cool.pid_time=60;                    // Постоянная интегрирования времени в секундах ПИД ТН
+  Cool.pid.Kp=4000;                    // Пропорциональная составляющая ПИД ТН
+  Cool.pid.Ki=0300;                    // Интегральная составляющая ПИД ТН
+  Cool.pid.Kd=1000;                    // Дифференциальная составляющая ПИД ТН
   Cool.delayOffPump = DEF_DELAY_OFF_PUMP;
  
  // Защиты
-  Cool.tempInLim=1000;                    // Tемпература подачи (минимальная)
-  Cool.tempOutLim=3500;                   // Tемпература обратки (макс)
-  Cool.MaxDeltaTempOut=1500;                        // Максимальная разность температур конденсатора.
-  
- // Cool.P1=0;
+  Cool.tempInLim=700;                   // Tемпература подачи (минимальная)
+  Cool.tempOutLim=3000;                 // Tемпература обратки (макс)
+  Cool.MaxDeltaTempOut=2200;            // Максимальная разность температур входа - выхода отопления.
   
 // Отопление
   Heat.Rule=pPID,              		 // алгоритм гистерезис, интервальный режим
@@ -460,54 +466,49 @@ void Profile::initProfile()
   SETBIT1(Heat.flags,fTarget);         // Что является целью ПИД - значения true (температура в доме), false (температура обратки).
   SETBIT1(Heat.flags,fWeather);        // флаг Погодозависмости
   Heat.dTemp=050;                      // Гистерезис целевой температуры
+  Heat.tempPID=2500;                   // Целевая температура ПИД
   Heat.pid_time=60;                    // Постоянная интегрирования времени в секундах ПИД ТН
-  Heat.pid.Kp=100;                      // Пропорциональная составляющая ПИД ТН
-  Heat.pid.Ki=480;                       // Интегральная составляющая ПИД ТН
-  Heat.pid.Kd=10;                       // Дифференциальная составляющая ПИД ТН
-  Heat.tempPID=3200;                // Целевая температура ПИД
+  Heat.pid.Kp=4000;                    // Пропорциональная составляющая ПИД ТН
+  Heat.pid.Ki=0300;                    // Интегральная составляющая ПИД ТН
+  Heat.pid.Kd=1000;                    // Дифференциальная составляющая ПИД ТН
   Heat.add_delta_temp = 150;	 	   // Добавка температуры к установке бойлера, в градусах
   Heat.add_delta_hour = 5;		   	   // Начальный Час добавки температуры к установке бойлера
   Heat.add_delta_end_hour = 6;         // Конечный Час добавки температуры к установке
-  Heat.tempInLim=4700;                    // Tемпература подачи (макс)
-  Heat.tempOutLim=-5;                      // Tемпература обратки (минимальная)
-  Heat.MaxDeltaTempOut=1500;                        // Максимальная разность температур конденсатора.
-  Heat.kWeatherPID=0;                    // Коэффициент погодозависимости в СОТЫХ градуса на градус
+  Heat.tempInLim=4700;                 // Tемпература подачи (макс)
+  Heat.tempOutLim=-500;                // Tемпература обратки (минимальная)
+  Heat.MaxDeltaTempOut=1500;           // Максимальная разность температур конденсатора.
+  Heat.kWeatherPID=0;                  // Коэффициент погодозависимости в СОТЫХ градуса на градус
   Heat.WeatherBase = 0;
   Heat.WeatherTargetRange = 0;
   Heat.delayOffPump = DEF_DELAY_OFF_PUMP;
   
- // Heat.P1=0;
- 
  // Бойлер
-  SETBIT1(Boiler.flags,fSchedule);      // !save! флаг Использование расписания выключено
-  SETBIT0(Boiler.flags,fTurboBoiler);    // !save! флаг использование ТЭН для нагрева  выключено
-  SETBIT0(Boiler.flags,fLegionella);    // !save! флаг легионелла раз внеделю греть бойлер  выключено
-  SETBIT0(Boiler.flags,fCirculation);   // !save! флагУправления циркуляционным насосом ГВС  выключено
-  SETBIT1(Boiler.flags,fAddHeating);    // флаг флаг догрева ГВС ТЭНом
-  SETBIT1(Boiler.flags,fScheduleAddHeating);
+  SETBIT0(Boiler.flags,fSchedule);      // флаг Использование расписания выключено
+  SETBIT0(Boiler.flags,fTurboBoiler);   // флаг использование ТЭН для нагрева  выключено
+  SETBIT0(Boiler.flags,fLegionella);    // флаг легионелла раз внеделю греть бойлер  выключено
+  SETBIT0(Boiler.flags,fCirculation);   // флаг Управления циркуляционным насосом ГВС  выключено
+  SETBIT0(Boiler.flags,fAddHeating);    // флаг флаг догрева ГВС ТЭНом
+  SETBIT0(Boiler.flags,fScheduleAddHeating);
   SETBIT0(Boiler.flags,fResetHeat);     // флаг Сброса лишнего тепла в СО
-  Boiler.TempTarget=5000;               // !save! Целевая температура бойлера
-  Boiler.dTemp=500;                     // !save! гистерезис целевой температуры
-  Boiler.tempInLim=5400;                   // !save! Tемпература подачи максимальная
-  for (uint8_t i=0;i<7; i++) Boiler.Schedule[i]=0;             // !save! Расписание бойлера
+  Boiler.TempTarget=5000;               // Целевая температура бойлера
+  Boiler.dTemp=500;                     // гистерезис целевой температуры
+  Boiler.tempInLim=5400;                // Tемпература подачи максимальная
+  for (uint8_t i=0;i<7; i++) Boiler.Schedule[i]=0;// Расписание бойлера
   Boiler.Circul_Work=60*3;              // Время  работы насоса ГВС секунды (fCirculation)
   Boiler.Circul_Pause=60*10;            // Пауза в работе насоса ГВС  секунды (fCirculation)
-  Boiler.Reset_Time=30;                 // время сброса излишков тепла в секундах (fResetHeat)
-  Boiler.pid_time=20;                   // Постоянная интегрирования времени в секундах ПИД ГВС
-  Boiler.pid.Kp=1;                      // Пропорциональная составляющая ПИД ГВС
-  Boiler.pid.Ki=0;                      // Интегральная составляющая ПИД ГВС
-  Boiler.pid.Kd=3;                      // Дифференциальная составляющая ПИД ГВС
-  Boiler.tempPID=3800;                  // Целевая температура ПИД ГВС
-  Boiler.tempRBOILER=3500;              // Температура ГВС при котором включается бойлер и отключатся ТН
+  Boiler.tempPID=5000;                  // Целевая температура ПИД ГВС
+  Boiler.pid_time=40;                   // Постоянная интегрирования времени в секундах ПИД ГВС
+  Boiler.pid.Kp=1500;                   // Пропорциональная составляющая ПИД ГВС
+  Boiler.pid.Ki=0300;                   // Интегральная составляющая ПИД ГВС
+  Boiler.pid.Kd=1000;                   // Дифференциальная составляющая ПИД ГВС
+  Boiler.tempRBOILER=4000;              // Температура ГВС при котором включается бойлер и отключатся ТН
   Boiler.dAddHeating = HYSTERESIS_BoilerAddHeat;
-  Boiler.add_delta_temp = 1800;		    // Добавка температуры к установке бойлера, в градусах
+  Boiler.add_delta_temp = 1000;		    // Добавка температуры к установке бойлера, в градусах
   Boiler.add_delta_hour = 6;		    // Начальный Час добавки температуры к установке бойлера
   Boiler.add_delta_end_hour = 6;        // Конечный Час добавки температуры к установке
+  Boiler.Reset_Time=30;                 // время сброса излишков тепла в секундах (fResetHeat)
   Boiler.DischargeDelta = 10;
-  Boiler.delayOffPump = 60;
-
-  DailySwitchStateT = 0;
-
+  Boiler.delayOffPump = 70;
 }
 
 // Охлаждение Установить параметры ТН из числа (float)
@@ -766,7 +767,6 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(strcmp(var,boil_delayOffPump)==0)	{ Boiler.delayOffPump = x; return true;} else
 	if(strcmp(var,hp_WorkPause)==0)         { if(x >= 0) { Boiler.WorkPause = x; return true; } else return false; } else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(x) SETBIT1(Boiler.flags, fBoilerOnGenerator); else SETBIT0(Boiler.flags, fBoilerOnGenerator); return true; } else
-	if(strcmp(var,boil_fBoilerScheduleForHeating)==0){ if(x) SETBIT1(Boiler.flags, fBoilerScheduleForHeating); else SETBIT0(Boiler.flags, fBoilerScheduleForHeating); return true; } else
 	if(strcmp(var,boil_fBoilerHeatingOnly)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHeatingOnly); else SETBIT0(Boiler.flags, fBoilerHeatingOnly); return true; } else
 	return false;
 }
@@ -816,15 +816,8 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_DischargeDelta)==0){  _dtoa(ret, Boiler.DischargeDelta, 1); return ret;  }else
 	if(strcmp(var,hp_WorkPause)==0) {        _itoa(Boiler.WorkPause, ret); return ret; } else
 	if(strcmp(var,boil_HeatUrgently)==0){if(HP.HeatBoilerUrgently) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
-	if(strcmp(var,boil_delayOffPump)==0){
-#ifdef RPUMPBH	// насос бойлера
-		return _itoa(Boiler.delayOffPump, ret);
-#else
-		return strcat(ret, "-");
-#endif
-	}else
+	if(strcmp(var,boil_delayOffPump)==0){ return _itoa(Boiler.delayOffPump, ret); }else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
-	if(strcmp(var,boil_fBoilerScheduleForHeating)==0){ if(GETBIT(Boiler.flags, fBoilerScheduleForHeating)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_fBoilerHeatingOnly)==0){ if(GETBIT(Boiler.flags, fBoilerHeatingOnly)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TargetTemp)==0) {
 xTargetTemp:
@@ -1054,7 +1047,7 @@ int16_t  Profile::save(int8_t num)
   return get_sizeProfile();
 }
 
-// загрузить профайл num из еепром память
+// загрузить профайл num из еепром память, возврат адрес начала в EEPROM или ошибка (если < 0)
 int32_t Profile::load(int8_t num)
 {
   byte magic;
@@ -1062,8 +1055,12 @@ int32_t Profile::load(int8_t num)
    
   if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return err=ERR_LOAD_PROFILE;}  adr=adr+sizeof(magic); // прочитать заголовок
  
-  if (magic == PROFILE_EMPTY) {journal.jprintf(" Profile %d is empty\n", num + 1); return OK;}     // профиль пустой, загружать нечего, выходим
-  if (magic != PROFILE_MAGIC)  {journal.jprintf(" Profile %d is bad format\n", num + 1); return OK; }    // профиль битый, читать нечего выходим
+  if(magic == PROFILE_EMPTY) { // профиль пустой
+	  id = num;
+	  initProfile();
+	  return OK;
+  }
+  if(magic != PROFILE_MAGIC)  { return ERR_HEADER_EEPROM; }   // профиль битый, читать нечего выходим
 
   #ifdef LOAD_VERIFICATION
     if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf(" Error load profile %d, CRC16 is wrong!\n", num + 1); return err;}  // проверка контрольной суммы перед чтением

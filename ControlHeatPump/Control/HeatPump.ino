@@ -1155,8 +1155,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var, option_DefrostStartDTemp)==0) { Option.DefrostStartDTemp = rd(x, 100); return true; }
 	else if(strcmp(var, option_DefrostTempSteam)==0) { Option.DefrostTempSteam = rd(x, 100); return true; }
 #endif
-	else if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ Option.ModbusMinTimeBetweenTransaction = x; return OK; }
-	else if(strcmp(var, option_ModbusResponseTimeout)==0){ Option.ModbusResponseTimeout = x; return OK; }
+	else if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ Option.ModbusMinTimeBetweenTransaction = x; return true; }
+	else if(strcmp(var, option_ModbusResponseTimeout)==0){ Option.ModbusResponseTimeout = x; return true; }
 	else if(strcmp(var, option_fBackupPower)==0)  {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
 	else if(strcmp(var,option_Generator_Start_Time)==0){ Option.Generator_Start_Time = n; return true; }
 	else if(strcmp(var, option_f2BackupPowerAuto) == 0) {
@@ -2212,7 +2212,7 @@ xGoWait:
 	if(start_compressor_now) {
 		if(HeaterNeedOn) {
 			heaterON();                          // Включаем котел
-			heater_heating_pump();
+			heater_heating_tube();
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
@@ -2378,7 +2378,7 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 	// Догрев бойлера
 	if(GETBIT(Prof.SaveON.flags, fBoilerON)) { // Бойлер включен
 		if(scheduleBoiler()) { // Если разрешено согласно расписания
-			if(GETBIT(Prof.Boiler.flags, fAddHeating)) { // Включен догрев
+			if(GETBIT(Prof.Boiler.flags, fAddHeating) && !GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) { // Включен догрев и не включен нагрев только тэном
 				if(!flagRBOILER && (T < target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
 					flagRBOILER = true;
 					return false;
@@ -2386,7 +2386,7 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 				if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, то догрев не включаем
 				else {
 					if(T < target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating || dRelay[RBOILER].get_Relay()
-							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fBoilerScheduleForHeating))) || GETBIT(Prof.Boiler.flags, fTurboBoiler))) {  // Греем тэном
+							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fTurboBoiler))))) {  // Греем тэном
 						return true;
 					}
 					// бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
@@ -3345,7 +3345,7 @@ void HeatPump::vUpdate()
 			if(configHP()) {               // Конфигурируем насосы
 				if(HeaterNeedOn) {
 					heaterON();                          // Включаем котел
-					heater_heating_pump();
+					heater_heating_tube();
 				} else {
 					compressorON();                      // Включаем компрессор
 				}
@@ -4224,7 +4224,7 @@ void HeatPump::heaterOFF()
 }
 
 // Котел греет трубу
-void HeatPump::heater_heating_pump(void)
+void HeatPump::heater_heating_tube(void)
 {
 	if(!GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) || get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
 	journal.jprintf("Waiting to heat up\n");

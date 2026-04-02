@@ -1486,10 +1486,10 @@ void vReadSensor_delay1ms(int32_t ms)
 #endif
 		}
 		// 4. Отработка пауз, всегда они разные в зависимости от состояния ТН
-		while(xTaskGetTickCount() - _upd_delay_timer < _upd_delay) {
+		do {
 			vTaskDelay(TIME_vUpdateTick);
 			HP.runCommand();
-		}
+		} while(xTaskGetTickCount() - _upd_delay_timer < _upd_delay);
 		_upd_delay_timer = xTaskGetTickCount();
 		switch (HP.get_State())  // Состояние ТН
 		{

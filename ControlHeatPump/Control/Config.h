@@ -5017,7 +5017,7 @@ const char *noteTemp[] = {"Температура улицы",
 // =============================================== C O N F I G   7 ===================================================================
 // -----------------------------------------------------------------------------------------------------------------------------------
 #ifdef CONFIG_7    // Имя и описание конфигурации и ОСОБЕННОСТИ конфигурации ---------------------------------------------------------
-//	#define TEST_BOARD 				// Тестовая плата!
+	#define TEST_BOARD 		2		// Тестовая плата! (2 - тестовая, где I2C addr=0x50 и LED на D44)
 
 	#define CONFIG_NAME   "vad7"
 	#define CONFIG_NOTE   "Частотник,Охлаждение,ЭРВ,РТО,ТП,Котел,ВаттРоутер. (Vacon 10,HLP068T4LC6,B3-052-46-HQ,HE 4.0,ETS 6-25)"
@@ -5084,12 +5084,15 @@ const char *noteTemp[] = {"Температура улицы",
 	#ifdef TEST_BOARD
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
 //		#define DEBUG_NATIVE_USB		// Отладка через второй USB порт (Native)
-		//#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
+		#define DEBUG_MODWORK           // Вывод в консоль состояние HP при работе
 //		#define NEXTION_DEBUG 			// Отладка дисплея Nextion - отправка
 //		#define NEXTION_DEBUG2 			// Отладка дисплея Nextion - прием
 //		#define DEBUG_PID				// Отладка ПИДа
 		#define USE_RC_CLOCK_SOURCE		// Использовать RC цепочку для часов
 		#define I2C_FRAM_MEMORY  0		// 1 - FRAM память
+		#if TEST_BOARD == 2
+			#define I2C_ADR_EEPROM    0x50 // Адрес чипа на шине I2C (тестовая №2)
+		#endif
 		#undef ONEWIRE_DS2482
 		#undef ONEWIRE_DS2482_SECOND
 		#undef ONEWIRE_DS2482_THIRD
@@ -5115,7 +5118,9 @@ const char *noteTemp[] = {"Температура улицы",
 		#define I2C_MEMORY_TOTAL  1024   	   // Итоговый размер I2C памяти в килобитах
 		#define I2C_PAGE_EEPROM   64           // Размер страницы для чтения, байты
 	#else // все остальное
-		#define I2C_ADR_EEPROM    0x57         // Адрес чипа на шине I2C
+		#ifndef I2C_ADR_EEPROM
+	  		#define I2C_ADR_EEPROM    0x57     // Адрес чипа на шине I2C
+		#endif
 		#define I2C_SIZE_EEPROM   32	       // Объем чипа в килобитах
 		#define I2C_MEMORY_TOTAL  I2C_SIZE_EEPROM // Итоговый размер I2C памяти в килобитах
 		#define I2C_PAGE_EEPROM   32           // Размер страницы для чтения, байты
@@ -5382,7 +5387,8 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PIN_DEVICE_BATH_HEATER     33 // X37.2(EEV23) -> Relay(-12V)(+12V=X38.1) -> подает DA9(5V) -> провод -> реле 5V -> пускатель нагревателя
 	// устройства AC 220V
 	#define PIN_DEVICE_RPUMPO          47 //[R_2] Реле включения насоса выходного контура  (отопление и ГВС)
-	#define PIN_DEVICE_RPUMPBH         48 //[R_3] Реле насоса НАГРЕВА бойлера (ГВС) - не циркуляция
+	//#define PIN_DEVICE_RPUMPBH         48 //[R_3] Реле насоса НАГРЕВА бойлера (ГВС) - не циркуляция
+	#define PIN_DEVICE_R3WAY           48 // [R_3] 3-ходовой кран. Переключение системы СО - ГВС
 	#define PIN_DEVICE_RPUMPI          49 //[R_4] Реле включения насоса входного контура  (геоконтур)
 	#define PIN_DEVICE_RBOILER         11 //[R_8] Включение ТЭНа бойлера (SSR, PWM). PWM - Dimmer(10000W).SCR, GND - Dimmer.[MOC3023.2](Cut MOC3023.2 to Dimmer.GND!)
 	#define PIN_PWM_ZERO_CROSS         12 // X17.2(-), X1.2(+) - EL817C.4(pullup to X1.1(3.3V) - R75k), [Dimmer(10000W).Zero - Zero] - R15k - PC817C.1, Dimmer.GND - PC817C.2
@@ -5396,7 +5402,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#endif
 	#define PIN_SUN_INVERTOR2_EN       34 // X37.1(EEV23) -> PC817C.2, +12V - 1k - PC817C.1 -> Relay board 220V
 	#define PIN_HEATER_ON              69 // Включение котла на нагрев
-	#define PIN_HEATER_3WAY            35 // 3-х ходовое реле ТН, (#16, бывший X38.2 до DA19.7B)->Relay12V SWITCH [-]->3WAY 220V, X36.2-12V, X41.1-GND, ВКЛ - работа ТН(компрессора), иначе котла.
+	#define PIN_HEATER_3WAY            35 // 3-х ходовое реле ТН - Котел, (#16, бывший X38.2 до DA19.7B)->Relay12V SWITCH [-]->3WAY 220V, X36.2-12V, X41.1-GND, ВКЛ - работа ТН(компрессора), иначе котла.
 	// Free: -
 	//#define PIN_DEVICE_GEN             34 // X37.1(EEV23) -> Relay(-12V)(+12V=X41.2)
 	//#define PIN_DEVICE_RSUPERBOILER    11 //[R_8] реле насоса супербойлера
@@ -5451,7 +5457,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// Массив ног соглано индексов
 	const uint8_t pinsRelay[RNUMBER] = { PIN_DEVICE_RCOMP,       // ++ Реле включения компрессора (через пускатель)
 										PIN_DEVICE_RPUMPO,      // ++ Реле включения насоса выходного контура  (отопление и ГВС)
-										PIN_DEVICE_RPUMPBH,     // ++ Реле насоса НАГРЕВА бойлера (ГВС) - не путать с циркуляцией
+										PIN_DEVICE_R3WAY,
 										PIN_DEVICE_RPUMPI,      // ++ Реле включения насоса входного контура  (геоконтур)
 										PIN_DEVICE_RBOILER,     // ++ Включение ТЭНа бойлера
 										PIN_DEVICE_R4WAY,    	// ++ 4-ходовой реверсивный клапан
@@ -5468,7 +5474,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// Описание реле
 	const char *noteRelay[RNUMBER] = { "Реле включения компрессора",
 									 "Реле включения насоса отопления",
-									 "Реле насоса нагрева бойлера",
+									 "Реле 3-х ходового ГВС - СО",
 									 "Реле включения насоса геоконтура",
 									 "Реле включение ТЭНа бойлера",
 									 "Реверсивный клапан",
@@ -5480,12 +5486,12 @@ const char *noteTemp[] = {"Температура улицы",
 									 "Реле генератора",
 									 "Реле солнечного инвертора",
 									 "Реле Котла",
-									 "Реле 3-х ходового крана ТН"
+									 "Реле 3-х ходового ТН - Котел"
 								   };
 	//  Имя реле
 	const char *nameRelay[RNUMBER] = { "RCOMP",          // Реле включения компрессора
 									 "RPUMPO",         // Реле включения насоса отопления
-									 "RPUMPBH",        // Реле насоса НАГРЕВА бойлера (ГВС) - не путать с циркуляцией
+									 "R3WAY",
 									 "RPUMPI",         // Реле включения насоса геоконтура
 									 "RBOILER",        // Реле включение ТЭНа бойлера
 									 "R4WAY",           // 4-ходовой реверсивный клапан
