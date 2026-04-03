@@ -220,6 +220,8 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
 #define fHP_ProfilesSwitchByTime 12			// Профили меняются по расписанию
+#define fHP_Heater_Heating_pipes 13			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
+
 
 // Флаги настроек, Option.flags:
 #define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой

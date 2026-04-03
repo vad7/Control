@@ -49,11 +49,11 @@ int8_t set_time(void)
 	rtcSAM3X8.init();                             // Запуск внутренних часов
 	uint32_t t = TimeToUnixTime(getTime_RtcI2C());
 	if(!(HP.get_updateNTP() && ((HP.get_UpdateByHTTP() && set_time_HTTP(false)) || (!HP.get_UpdateByHTTP() && set_time_NTP(false))))) { // Обновить время по NTP
-		if(t > SEC_1970_TO_2000 + 366*24*60*60) {
+		if(t > SEC_1970_TO_2000 + 26*366*24*60*60) {
 			rtcSAM3X8.set_clock(t);                // Установить внутренние часы по i2c
 			journal.jprintf(" Time updated from I2C RTC: %s %s\n", NowDateToStr(), NowTimeToStr());
 		} else {
-			journal.jprintf("Error I2C RTC\n");
+			journal.jprintf("Wrong time in DS3232!\n");
 		}
 	}
 	
@@ -185,8 +185,6 @@ bool set_time_NTP(bool upd_vars)
 	boolean flag = false;
 	IPAddress ip(0, 0, 0, 0);
 
-	journal.jprintf_time("Update time from NTP server: %s\n", HP.get_serverNTP());
-	//1. Установить адрес  не забываем работаетм через один сокет, опреации строго последовательные,иначе настройки сбиваются
 	WDT_Restart(WDT);                                        // Сбросить вачдог  при ошибке долго ждем
 
 	// Если запущен шедулер то захватываем семафор
@@ -195,8 +193,12 @@ bool set_time_NTP(bool upd_vars)
 	}  // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
 	// DNS запрос для определения адреса
 
+	journal.jprintf_time("Update time from NTP server: %s\n", HP.get_serverNTP());
+	//1. Установить адрес  не забываем работаетм через один сокет, опреации строго последовательные,иначе настройки сбиваются
+
 	if(check_address(HP.get_serverNTP(), ip) == 0) {
 		SemaphoreGive(xWebThreadSemaphore);
+		journal.jprintf(" address fail\n");
 		return false;
 	}  // DNS - ошибка выходим
 

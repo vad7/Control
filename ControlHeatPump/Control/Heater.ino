@@ -163,7 +163,7 @@ void devHeater::HeaterValve_On()
 {
 #ifdef USE_HEATER
 #ifdef RH_3WAY
-	if(!GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) HP.dRelay[RH_3WAY].set_ON();
+	if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) HP.dRelay[RH_3WAY].set_ON();
 #endif
 #ifdef HEATER_MODBUS_3WAY_ID
 	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
@@ -179,11 +179,11 @@ void devHeater::HeaterValve_On()
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
+		SETBIT1(HP.work_flags, fHP_HeaterValveOn);
 		journal.jprintf("Heater valve ON, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif
-	SETBIT1(HP.work_flags, fHP_HeaterValveOn);
 #endif
 }
 
@@ -213,11 +213,11 @@ void devHeater::HeaterValve_Off()
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
+		SETBIT0(HP.work_flags, fHP_HeaterValveOn);
 		journal.jprintf("Heater valve OFF, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif
-	SETBIT0(HP.work_flags, fHP_HeaterValveOn);
 #endif
 }
 
@@ -288,10 +288,10 @@ int8_t devHeater::set_target(uint16_t temp, uint8_t power_max)
 		case NORMAL:
 		case HARD_TEST:
 			if(temp && prev_temp != temp) {
-				if(HP.get_modWork() & pBOILER) reg1 = HM_SET_T_BOILER;
+				if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) && (HP.get_modWork() & pBOILER)) reg1 = HM_SET_T_BOILER;
 				else {
-					reg1 = HM_SET_T_Flow;
-					temp *= 10;
+					reg1 = HM_SET_T_Flow; // регистр в десятых градуса
+					temp *= 10;			// регистр состояния тоже в десятых
 				}
 				int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, reg1, temp);
 				if(err) {

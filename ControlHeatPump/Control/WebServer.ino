@@ -686,35 +686,42 @@ void parserGET(uint8_t thread, int8_t )
 			web_fill_tag_select(strReturn, MODE_HOUSE_WEBSTR, HP.get_modeHouse());
 			ADD_WEBDELIM(strReturn); continue;
 		}
-		if (strcmp(str,"get_relayOut")==0)  // Функция Строка выходных насосов: RPUMPO = Вкл, RPUMPBH = Бойлер
+		if(strncmp(str,"get_relayOut", 12)==0)  // Функция Строка выходных насосов: RPUMPO = Вкл, RPUMPBH = Бойлер
 		{
+			str += 12;
+			if(*str == 'V') { // get_relayOutV - ГВС / СО
+#if defined(R3WAY) && !defined(HEATER_BOILER_DONT_USE_RPUMPO)
+				strcat(strReturn, HP.dRelay[R3WAY].get_Relay() ? "ГВС" : "СО");
+#else
+				strcat(strReturn, "СО");
+#endif
+			} else {
 #ifdef RPUMPBH
-			i = HP.dRelay[RPUMPBH].get_Relay();
+				i = HP.dRelay[RPUMPBH].get_Relay();
 #else
 	#ifdef RSUPERBOILER
-			i = HP.dRelay[RSUPERBOILER].get_Relay();
+				i = HP.dRelay[RSUPERBOILER].get_Relay();
 	#else
-			i = 0;
+				i = 0;
 	#endif
 #endif
-			if(HP.dRelay[PUMP_OUT].get_Relay()) {
-				strcat(strReturn,  "Вкл");
+				if(HP.dRelay[PUMP_OUT].get_Relay()) {
+					strcat(strReturn,  "Вкл");
 #ifdef RPUMPFL
-				if(HP.dRelay[RPUMPFL].get_Relay()) {
-					strcat(strReturn,  ", ТП");
-				}
+					if(HP.dRelay[RPUMPFL].get_Relay()) strcat(strReturn,  ", ТП");
 #endif
-				if(i) strcat(strReturn,  ", ");
-			} else {
-#ifdef RPUMPFL
-				if(HP.dRelay[RPUMPFL].get_Relay()) {
-					strcat(strReturn,  "ТП");
 					if(i) strcat(strReturn,  ", ");
-				} else
+				} else {
+#ifdef RPUMPFL
+					if(HP.dRelay[RPUMPFL].get_Relay()) {
+						strcat(strReturn,  "ТП");
+						if(i) strcat(strReturn,  ", ");
+					} else
 #endif
-					if(!i) strcat(strReturn,  "Выкл");
+						if(!i) strcat(strReturn,  "Выкл");
+				}
+				if(i) strcat(strReturn, "ГВС");
 			}
-			if(i) strcat(strReturn, "ГВС");
 			ADD_WEBDELIM(strReturn) ;    continue;
 		}
 		if (strcmp(str,"get_testMode")==0)  // Функция get_testMode
