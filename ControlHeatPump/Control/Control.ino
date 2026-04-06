@@ -1852,6 +1852,7 @@ void vServiceHP(void *)
 					} else HP.pump_in_pause_timer--;
 				}
 			}
+			if(HP.R3WAY_Off_timer && --HP.R3WAY_Off_timer == 0) HP.Switch_R3WAY(false);
 
 			//  Синхронизация часов с I2C часами если стоит соответсвующий флаг
 			static uint32_t _old_time = GetTickCount();

@@ -709,6 +709,9 @@ public:
 	uint32_t stopHeater;                  // время выключения котла
 	TYPE_COMMAND command;                 // Текущая команда управления ТН
 	TYPE_COMMAND next_command;            // Следующая команда управления ТН
+#ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
+	uint16_t R3WAY_Off_timer;             // Таймер до выключения крана R3WAY, сек
+#endif
 
 private:
 	void    StartResume(boolean start);    // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки
@@ -732,7 +735,7 @@ private:
 	void compressorOFF();                 // попытка выключить компрессор с учетом всех защит
 	void heaterON();                      // попытка включить котел с учетом всех защит
 	void heaterOFF();                     // попытка выключить котел с учетом всех защит
-	void heater_heating_tube(void);       // Котел греет трубу, если нужно
+	void heater_heating_pipes(void);      // Котел греет трубу, если нужно
 	boolean check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса
@@ -758,7 +761,6 @@ private:
 	uint32_t command_completed;			  // Время отработки команды
 	boolean  compressor_in_pause;         // Компрессор в паузе
 	boolean  heater_in_pause;             // Котел в паузе
-
 // Сетевые настройки
 	type_NetworkHP Network;                 // Структура для хранения сетевых настроек
 	uint32_t countResSocket;                // Число сбросов сокетов

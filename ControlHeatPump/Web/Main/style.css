@@ -119,8 +119,9 @@ body.test #get_tblrelay span{display:none}
 .visualization #get_temp-tevaout	{margin-top:230px;margin-left:260px}
 .visualization #get_temp-tcompin	{margin-top:185px;margin-left:420px}
 .visualization #get_temp-tconout	{margin-top:330px;margin-left:540px}
-.visualization #get_temp-tconing	{margin-top:330px;margin-left:710px}
-.visualization #get_temp-tconoutg	{margin-top:185px;margin-left:710px}
+.visualization #get_temp-tconing	{margin-top:335px;margin-left:810px}
+.visualization #get_temp-tconoutg	{margin-top:185px;margin-left:810px}
+.visualization #get_temp-theater	{margin-top:335px;margin-left:710px}
 .visualization #get_temp-tcomp		{margin-top:151px;margin-left:487px}
 .visualization #get_pfc-info1		{margin-top:260px;margin-left:487px}.visualization #get_pfc-info1:after{content:"";}
 .visualization #get_pfc-cfc			{margin-top:283px;margin-left:487px}.visualization #get_pfc-cfc:after{content:""}
@@ -131,7 +132,7 @@ body.test #get_tblrelay span{display:none}
 .visualization #get_overheat		{margin-top:353px;margin-left:370px;text-align:center}
 .visualization #get_peev-pospp		{margin-top:330px;margin-left:370px;text-align:center}.visualization #get_peev-pospp:after{content:"";}
 .visualization #get_flow-floweva	{margin-top:238px;margin-left:103px}.visualization #get_flow-floweva:after{margin-left:3px;content:"м³ч";}
-.visualization #get_flow-flowcon	{margin-top:280px;margin-left:710px}.visualization #get_flow-flowcon:after{margin-left:3px;content:"м³ч";}
+.visualization #get_flow-flowcon	{margin-top:226px;margin-left:810px}.visualization #get_flow-flowcon:after{margin-left:3px;content:"м³ч";}
 .visualization #get_overcool		{margin-top:353px;margin-left:540px}.visualization #get_overcool:before{content:"Δ"}
 .visualization #get_relay-rboiler	{margin-top:102px;margin-left:743px}.visualization #get_relay-rboiler:after{content:""}
 .visualization #get_relay-rsun		{margin-top:73px;margin-left:15px}.visualization #get_relay-rsun:after{content:""}

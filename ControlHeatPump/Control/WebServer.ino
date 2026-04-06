@@ -686,42 +686,37 @@ void parserGET(uint8_t thread, int8_t )
 			web_fill_tag_select(strReturn, MODE_HOUSE_WEBSTR, HP.get_modeHouse());
 			ADD_WEBDELIM(strReturn); continue;
 		}
-		if(strncmp(str,"get_relayOut", 12)==0)  // Функция Строка выходных насосов: RPUMPO = Вкл, RPUMPBH = Бойлер
+		if(strcmp(str,"get_relayOut")==0)  // Функция Строка выходных насосов: RPUMPO = Вкл, RPUMPBH = Бойлер
 		{
-			str += 12;
-			if(*str == 'V') { // get_relayOutV - ГВС / СО
-#if defined(R3WAY) && !defined(HEATER_BOILER_DONT_USE_RPUMPO)
-				strcat(strReturn, HP.dRelay[R3WAY].get_Relay() ? "ГВС" : "СО");
-#else
-				strcat(strReturn, "СО");
-#endif
-			} else {
 #ifdef RPUMPBH
-				i = HP.dRelay[RPUMPBH].get_Relay();
+			i = HP.dRelay[RPUMPBH].get_Relay();
 #else
 	#ifdef RSUPERBOILER
-				i = HP.dRelay[RSUPERBOILER].get_Relay();
+			i = HP.dRelay[RSUPERBOILER].get_Relay();
 	#else
-				i = 0;
+		#if defined(R3WAY)
+			i = HP.dRelay[R3WAY].get_Relay();
+		#else
+			i = 0;
+		#endif
 	#endif
 #endif
-				if(HP.dRelay[PUMP_OUT].get_Relay()) {
-					strcat(strReturn,  "Вкл");
+			if(HP.dRelay[PUMP_OUT].get_Relay()) {
+				strcat(strReturn,  "Вкл");
 #ifdef RPUMPFL
-					if(HP.dRelay[RPUMPFL].get_Relay()) strcat(strReturn,  ", ТП");
+				if(HP.dRelay[RPUMPFL].get_Relay()) strcat(strReturn,  ", ТП");
 #endif
+				if(i) strcat(strReturn,  ", ");
+			} else {
+#ifdef RPUMPFL
+				if(HP.dRelay[RPUMPFL].get_Relay()) {
+					strcat(strReturn,  "ТП");
 					if(i) strcat(strReturn,  ", ");
-				} else {
-#ifdef RPUMPFL
-					if(HP.dRelay[RPUMPFL].get_Relay()) {
-						strcat(strReturn,  "ТП");
-						if(i) strcat(strReturn,  ", ");
-					} else
+				} else
 #endif
-						if(!i) strcat(strReturn,  "Выкл");
-				}
-				if(i) strcat(strReturn, "ГВС");
+					if(!i) strcat(strReturn,  "Выкл");
 			}
+			if(i) strcat(strReturn, "ГВС");
 			ADD_WEBDELIM(strReturn) ;    continue;
 		}
 		if (strcmp(str,"get_testMode")==0)  // Функция get_testMode
@@ -839,7 +834,11 @@ xSaveStats:
 		}
 		if (strcmp(str,"get_fullCOP")==0)  //  получение полного COP
 		{
-			if (HP.fullCOP!=-1000) _dtoa(strReturn, HP.fullCOP, 2); else strcat(strReturn,"-"); ADD_WEBDELIM(strReturn); continue;
+			if(HP.is_heater_on()) strcat(strReturn,"Котел");
+			else {
+				if(HP.fullCOP!=-1000) _dtoa(strReturn, HP.fullCOP, 2); else strcat(strReturn,"-");
+			}
+			ADD_WEBDELIM(strReturn); continue;
 		}
 		if(strncmp(str, "get_Power", 9) == 0)
 		{
