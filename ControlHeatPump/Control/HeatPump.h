@@ -295,7 +295,7 @@ struct type_optionHP
  char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
  char     WF_ReqText[128];				// Тело GET запроса
 #endif
- uint16_t Generator_Start_Time;			// Время запуска генератора
+ uint16_t Generator_Start_Time;			// Время запуска генератора, сек
  uint8_t  ModbusMinTimeBetweenTransaction;
  uint8_t  ModbusResponseTimeout;
  uint8_t  nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
@@ -417,14 +417,15 @@ public:
 	bool     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН, false - не получилось
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
 	void     runCommand(void);              // Выполнить команду по управлению ТН
-	char *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
-	boolean is_next_command_stop() { return next_command == pSTOP || next_command == pREPEAT; }
-	uint8_t is_pause();					// Возвращает 1, если ТН в паузе
+	char    *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
+	boolean  is_next_command_stop() { return command == pSTOP || next_command == pSTOP || next_command == pREPEAT; }
+	uint8_t  is_pause();					// Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
 	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
 	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
-	void 	relayAllOFF();              // Все реле выключить
-	void	HandleNoPower(void);		// Обработать пропадание питания
+	void 	 relayAllOFF();              // Все реле выключить
+	void	 HandleNoPower(void);		// Обработать пропадание питания
+	bool     DelaySec(uint16_t s);		// Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать
 
 // Строковые функции
 	char *StateToStr();                 // Получить состояние ТН в виде строки

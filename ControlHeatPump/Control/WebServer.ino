@@ -834,7 +834,7 @@ xSaveStats:
 		}
 		if (strcmp(str,"get_fullCOP")==0)  //  получение полного COP
 		{
-			if(HP.is_heater_on()) strcat(strReturn,"Котел");
+			if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) strcat(strReturn,"Котел");
 			else {
 				if(HP.fullCOP!=-1000) _dtoa(strReturn, HP.fullCOP, 2); else strcat(strReturn,"-");
 			}

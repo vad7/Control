@@ -219,7 +219,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define DELAY_REPEAT_FAST 			120		        // Задержка перед повторным быстрым включением ТН, сек
 #endif
 #ifndef EEV_DELAY_BEFORE_SET_BOILER_POS
-#define EEV_DELAY_BEFORE_SET_BOILER_POS 8000		// Задержка установки позиции для бойлера при переходе с отопления на бойлер во время работы, если она включена, мс
+#define EEV_DELAY_BEFORE_SET_BOILER_POS 8           // Задержка установки позиции для бойлера при переходе с отопления на бойлер во время работы, если она включена, сек
 #endif
 #define PUMPS_STOP_DELAY_ON_ERROR	30				// Задержка остановки работающих насосов при останове ТН по ошибке
 
@@ -963,6 +963,7 @@ const char *Wheater_fHeater_BoilerInHeatingMode	= {"BH"};
 const char *Wheater_fHeater_Heating_Pipes		= {"3A"};
 const char *Wheater_fHeater_Heating_Pipes_Temp	= {"3T"};
 const char *Wheater_wait_heating_pipes_time		= {"3P"};
+const char *Wheater_wait_heating_pipes_time_max	= {"3PM"};
 const char *Wheater_heat_tempout				= {"T"};
 const char *Wheater_heat_power_min				= {"PN"};
 const char *Wheater_heat_power_max				= {"PM"};

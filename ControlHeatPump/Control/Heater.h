@@ -119,6 +119,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 	uint8_t  ModbusMinTimeBetweenTransaction;	// Минимальная пауза между транзакциями, мсек
 	uint8_t  ModbusResponseTimeout;				// Таймаут ожидания ответа по Modbus, мсек
 	uint8_t  wait_heating_pipes_time;			// Время ожидания прогрева трассы, 4 * сек
+	uint8_t  wait_heating_pipes_time_max;		// Максимальное время ожидания прогрева трассы по температуре, 4 * сек
 };
 
 // Рабочие флаги (fwork)

@@ -1829,7 +1829,9 @@ void vServiceHP(void *)
 			if(HP.startPump > StartPump_Stop) {  // Если разрешена работа насоса (0 - останов задачи, > 1 - работа)
 				if(HP.startPump == StartPump_AfterWork) { // Отработка после останова компрессора/котла
 					if(HP.pump_in_pause_timer == 1) {
-						HP.Pumps(OFF);
+			   		   	HP.dRelay[PUMP_OUT].set_OFF();          		// насос отопления
+					   	HP.Pump_HeatFloor(0); 							// насос ТП
+						//HP.Pumps(OFF);
 						if(HP.get_State() == pOFF_HP) {
 							HP.startPump = StartPump_Stop;				// Задача насосов в паузе выключена
 						} else if(HP.get_workPump()) {
