@@ -1290,6 +1290,7 @@ void vReadSensor_delay1ms(int32_t ms)
 #endif
 		if(GETBIT(HP.Option.flags, fBackupPower)) {
 			if(!HP.fBackupPowerOffDelay) {			// Нужно уменьшить нагрузку
+				journal.jprintf_time("Switched to Backup power!\n");
 #ifdef RBOILER
 				if(!HP.HeatBoilerUrgently) HP.dRelay[RBOILER].set_OFF();		// выключить тэн бойлера
 #endif
@@ -1303,10 +1304,11 @@ void vReadSensor_delay1ms(int32_t ms)
 					}
 				}
 #endif
-				if(HP.is_compressor_on() && HP.dFC.get_target() > HP.dFC.get_maxFreqGen()) {
-					HP.dFC.set_target(HP.dFC.get_maxFreqGen(), true, HP.dFC.get_minFreq(), HP.dFC.get_maxFreq());
+				if(HP.is_compressor_on()) {
+					if(HP.dFC.get_maxFreqGen() && HP.dFC.get_target() > HP.dFC.get_maxFreqGen()) {
+						HP.dFC.set_target(HP.dFC.get_maxFreqGen(), true, HP.dFC.get_minFreq(), HP.dFC.get_maxFreq());
+					}
 				}
-				journal.jprintf_time("Switched to Backup power!\n");
 				HP.fBackupPowerOffDelay = RETURN_FROM_GENERATOR_DELAY / 10;
 			}
 		}
@@ -1389,57 +1391,66 @@ void vReadSensor_delay1ms(int32_t ms)
 			} // НЕ РЕЖИМ ОЖИДАНИЕ if HP.get_State()==pWORK_HP)
 		}
 		if(HP.Task_vUpdate_run) {
-			// 3. Расписание проверка всегда
-			uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
-			if(d) {
-				// время профиля вышло, переключаемся на связанный
-				journal.jprintf("Switch profile by time to %d\n", d);
-				HP.SwitchToProfile(--d);
-			} else {  // error: jump to label [-fpermissive] GCC
-				// Переключение расписания, когда текущий месяц и дясятидневка совпадают; если пропустили из-за выключенного НК или работы,
-				// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
-				if(HP.Schdlr.IsShedulerOn() && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[HP.Schdlr.sch_data.Active] & fSch_AS_DontSwitch)) {
-					d = rtcSAM3X8.get_days();
-					if(Scheduler_check_day != d) {
-						Scheduler_check_day = d;
-						d /= 10;
-						if(d > 2) d = 2;
-						bool need_save = false;
-						for(uint8_t i = 0; i < MAX_CALENDARS; i++) {
-							if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i]) {
-								if((HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & ~fSch_AS_Changed) == ((rtcSAM3X8.get_months() << 2) | d)) {
-									if(HP.Schdlr.sch_data.Active != i && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed)) {
-										journal.jprintf_time("Schedule %d selected\n", i + 1);
-										HP.Schdlr.sch_data.Active = i;
-										HP.Schdlr.sch_data.AutoSelectMonthWeek[i] |= fSch_AS_Changed;
+			if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_MaxPowerOnBackup() && HP.power220 > HP.dFC.get_MaxPowerOnBackup()) {
+				if(HP.Prof.dataProfile.flags & ((1<<fSwitchProfileNext_OnBackupPower)|(1<<fSwitchProfileNext_OnError))) { // переключение профиля, если задано
+					HP.SwitchToProfile(HP.Prof.dataProfile.ProfileNext);
+				} else {
+					HP.sendCommand(pWAIT);
+				}
+			} else {
+				// 3. Расписание проверка всегда
+				uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
+				if(d) {
+					// время профиля вышло, переключаемся на связанный
+					d--;
+					journal.jprintf("Switch profile by time to %d\n", d);
+					HP.SwitchToProfile(d);
+				} else {  // error: jump to label [-fpermissive] GCC
+					// Переключение расписания, когда текущий месяц и дясятидневка совпадают; если пропустили из-за выключенного НК или работы,
+					// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
+					if(HP.Schdlr.IsShedulerOn() && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[HP.Schdlr.sch_data.Active] & fSch_AS_DontSwitch)) {
+						d = rtcSAM3X8.get_days();
+						if(Scheduler_check_day != d) {
+							Scheduler_check_day = d;
+							d /= 10;
+							if(d > 2) d = 2;
+							bool need_save = false;
+							for(uint8_t i = 0; i < MAX_CALENDARS; i++) {
+								if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i]) {
+									if((HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & ~fSch_AS_Changed) == ((rtcSAM3X8.get_months() << 2) | d)) {
+										if(HP.Schdlr.sch_data.Active != i && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed)) {
+											journal.jprintf_time("Schedule %d selected\n", i + 1);
+											HP.Schdlr.sch_data.Active = i;
+											HP.Schdlr.sch_data.AutoSelectMonthWeek[i] |= fSch_AS_Changed;
+											need_save = true;
+										}
+									} else if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed) {
+										HP.Schdlr.sch_data.AutoSelectMonthWeek[i] &= ~fSch_AS_Changed;
 										need_save = true;
 									}
-								} else if(HP.Schdlr.sch_data.AutoSelectMonthWeek[i] & fSch_AS_Changed) {
-									HP.Schdlr.sch_data.AutoSelectMonthWeek[i] &= ~fSch_AS_Changed;
-									need_save = true;
 								}
 							}
+							if(need_save) HP.Schdlr.save();
 						}
-						if(need_save) HP.Schdlr.save();
 					}
-				}
-				int8_t _profile = HP.Schdlr.calc_active_profile(); // Какой профиль ДОЛЖЕН быть сейчас активен
-				if(_profile != SCHDLR_NotActive) {                 // Расписание активно
-					int8_t _curr_profile = HP.get_State() == pWORK_HP ? HP.Prof.get_idProfile() : SCHDLR_Profile_off;
-					if(_profile != _curr_profile && HP.isCommand() == pEMPTY) { // новый режим и ни чего не выполняется?
-						if(_profile == SCHDLR_Profile_off) {
-							HP.sendCommand(pWAIT);
-						} else if(HP.Prof.get_idProfile() != _profile) {
-							HP.SwitchToProfile(_profile);
-						} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
-							HP.sendCommand(pRESUME);
+					int8_t _profile = HP.Schdlr.calc_active_profile(); // Какой профиль ДОЛЖЕН быть сейчас активен
+					if(_profile != SCHDLR_NotActive) {                 // Расписание активно
+						int8_t _curr_profile = HP.get_State() == pWORK_HP ? HP.Prof.get_idProfile() : SCHDLR_Profile_off;
+						if(_profile != _curr_profile && HP.isCommand() == pEMPTY) { // новый режим и ни чего не выполняется?
+							if(_profile == SCHDLR_Profile_off) {
+								HP.sendCommand(pWAIT);
+							} else if(HP.Prof.get_idProfile() != _profile) {
+								HP.SwitchToProfile(_profile);
+							} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
+								HP.sendCommand(pRESUME);
+							}
+							HP.runCommand();
 						}
+					} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
+						// Нет расписания, Есть питание, Не на бакапе
+						HP.sendCommand(pRESUME);
 						HP.runCommand();
 					}
-				} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
-					// Нет расписания, Есть питание, Не на бакапе
-					HP.sendCommand(pRESUME);
-					HP.runCommand();
 				}
 			}
 		}

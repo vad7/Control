@@ -1861,7 +1861,7 @@ xSaveStats:
 						HP.Option.numProf = pm;
 						if(HP.Prof.id != HP.Option.numProf) {
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
-							SETBIT0(HP.work_flags, fHP_ProfilesSwitchByTime);
+							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchByTime);
 							HP.sendCommand(pCHANGE_PROFILE);
 						}
 					} else strcat(strReturn,"E29");

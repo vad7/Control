@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.212"				// Версия прошивки
+#define VERSION			"1.213"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -756,6 +756,7 @@ const char *fc_FC_TargetTemp	 = {"TT"};
 const char *fc_FC_C_COOLER_FAN_STR={"FS"};
 const char *fc_MaxPower			= {"MP"};
 const char *fc_MaxPowerBoiler	= {"MPB"};
+const char *fc_MaxPowerOnBackup	= {"MPR"};
 #ifdef DEFROST
 const char *fc_defrostFreq		= {"DFF"};
 #endif

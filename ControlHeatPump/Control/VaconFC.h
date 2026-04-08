@@ -411,6 +411,7 @@ public:
   uint16_t get_PidMaxStep(){return _data.PidMaxStep;}
   uint16_t get_MaxPower() { return _data.MaxPower; }
   uint16_t get_MaxPowerBoiler() { return _data.MaxPowerBoiler; }
+  uint16_t get_MaxPowerOnBackup() { return _data.MaxPowerOnBackup; }
 #ifdef DEFROST
   int16_t get_defrostFreq(){ return _data.defrostFreq; }
 #endif
@@ -529,6 +530,7 @@ public:
 	  uint16_t MaxPowerBoiler;			// Максимальная мощность инвертора при нагреве бойлера, Вт
 	  int8_t   FC_MaxTemp;				// Максимальная температура внутри инвертора, градусы, 0 - не проверяется
 	  int8_t   FC_TargetTemp;			// Целевая температура внутри инвертора, градусы, 0 - не регулируется
+	  uint16_t MaxPowerOnBackup;		// Максимальная мощность инвертора на резервном источнике питания, Вт
 #ifdef DEFROST
 	  int16_t  defrostFreq;             // Скорость инвертора при разморозки в 0.01 %
 #endif

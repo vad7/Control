@@ -180,7 +180,7 @@ void devHeater::HeaterValve_On()
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		SETBIT1(HP.work_flags, fHP_HeaterValveOn);
-		journal.jprintf("Heater valve ON, wait\n");
+		if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve ON, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif
@@ -214,7 +214,7 @@ void devHeater::HeaterValve_Off()
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		SETBIT0(HP.work_flags, fHP_HeaterValveOn);
-		journal.jprintf("Heater valve OFF, wait\n");
+		if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve OFF, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif
@@ -226,10 +226,9 @@ void devHeater::WaitPumpOff()
 {
 	int32_t d = set.pump_work_time_after_stop * 10;
 	d -= rtcSAM3X8.unixtime() - (HP.stopHeater ? HP.stopHeater : HP.get_startDT());
-	if(d > 0) journal.jprintf("Wait Heater pump stop: %d s\n", d);
-	for(; d > 0; d--) { // задержка после выкл котла (постциркуляция насоса)
-		_delay(1000);
-		if(HP.get_errcode() || HP.is_next_command_stop() || HP.get_State() == pSTOPING_HP) return; // прерваться по ошибке или по команде
+	if(d > 0) {
+		journal.jprintf("Wait Heater pump stop: %d s\n", d);
+		HP.DelaySec(d);
 	}
 }
 
