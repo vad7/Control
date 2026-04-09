@@ -1050,88 +1050,86 @@ int16_t  Profile::save(int8_t num)
 // загрузить профайл num из еепром память, возврат адрес начала в EEPROM или ошибка (если < 0)
 int32_t Profile::load(int8_t num)
 {
-  byte magic;
-  int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;     // вычислить адрес начала данных
-   
-  if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return err=ERR_LOAD_PROFILE;}  adr=adr+sizeof(magic); // прочитать заголовок
- 
-  if(magic == PROFILE_EMPTY) { // профиль пустой
-	  id = num;
-	  initProfile();
-	  return OK;
-  }
-  if(magic != PROFILE_MAGIC)  { return ERR_HEADER_EEPROM; }   // профиль битый, читать нечего выходим
+	byte magic;
+	int32_t adr = I2C_PROFILE_EEPROM + get_sizeProfile() * num;     // вычислить адрес начала данных
 
-  #ifdef LOAD_VERIFICATION
-    if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf(" Error load profile %d, CRC16 is wrong!\n", num + 1); return err;}  // проверка контрольной суммы перед чтением
-  #endif
+	if (readEEPROM_I2C(adr, (byte*)&magic, sizeof(magic))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return err=ERR_LOAD_PROFILE;}  adr=adr+sizeof(magic); // прочитать заголовок
 
-  uint16_t crc16;
-  if (readEEPROM_I2C(adr, (byte*)&crc16, sizeof(crc16))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(crc16); // прочитать crc16
-  if (readEEPROM_I2C(adr, (byte*)&dataProfile, sizeof(dataProfile))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(dataProfile); // прочитать данные
-  id = num;
-  
+	if(magic == PROFILE_EMPTY) { // профиль пустой
+		id = num;
+		initProfile();
+		journal.jprintf(" Profile %d is EMPTY!\n", num + 1);
+	} else {
+		if(magic != PROFILE_MAGIC)  { return ERR_HEADER_EEPROM; }   // профиль битый, читать нечего выходим
+#ifdef LOAD_VERIFICATION
+		if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf(" Error load profile %d, CRC16 is wrong!\n", num + 1); return err;}  // проверка контрольной суммы перед чтением
+#endif
+		uint16_t crc16;
+		if (readEEPROM_I2C(adr, (byte*)&crc16, sizeof(crc16))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(crc16); // прочитать crc16
+		if (readEEPROM_I2C(adr, (byte*)&dataProfile, sizeof(dataProfile))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(dataProfile); // прочитать данные
+		id = num;
+
 //  #ifdef LOAD_VERIFICATION
 //  if (dataProfile.len!=get_sizeProfile())  { set_Error(ERR_BAD_LEN_PROFILE,(char*)nameHeatPump); return err=ERR_BAD_LEN_PROFILE;}   // длины не совпали
 //  #endif
   
-  // Выключение дневных реле, кроме HTTP!
-  if(DailySwitch_on & ~DailySwitch_on_MASK_OFF) {
-	  for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
-		  if(DailySwitch[i].Device == 0) break;
-		  if(!GETBIT(DailySwitch_on, i)) continue;
-		  if(DailySwitch[i].Device >= RNUMBER) {
-			  DailySwitch_on |= 1<<(DailySwitch[i].Device - RNUMBER + 24);
-			  continue;
-		  } else HP.dRelay[DailySwitch[i].Device].set_Relay(-fR_StatusDaily); // OFF
-	  }
-	  DailySwitch_on &= DailySwitch_on_MASK_OFF;
-  }
+	  // Выключение дневных реле, кроме HTTP!
+		if(DailySwitch_on & ~DailySwitch_on_MASK_OFF) {
+		  for(uint8_t i = 0; i < DAILY_SWITCH_MAX; i++) {
+			  if(DailySwitch[i].Device == 0) break;
+			  if(!GETBIT(DailySwitch_on, i)) continue;
+			  if(DailySwitch[i].Device >= RNUMBER) {
+				  DailySwitch_on |= 1<<(DailySwitch[i].Device - RNUMBER + 24);
+				  continue;
+			  } else HP.dRelay[DailySwitch[i].Device].set_Relay(-fR_StatusDaily); // OFF
+		  }
+		  DailySwitch_on &= DailySwitch_on_MASK_OFF;
+		}
 
-  magic = TaskSuspendAll(); // Запрет других задач
-  // читаем основные данные
-  if(readEEPROM_I2C(adr, (byte*) &SaveON, sizeof(SaveON))) err = ERR_LOAD_PROFILE; // прочитать состояние ТН
-  else if(readEEPROM_I2C(adr += sizeof(SaveON), (byte*) &Cool, sizeof(Cool))) err = ERR_LOAD_PROFILE; // прочитать настройки охлаждения
-  else if(readEEPROM_I2C(adr += sizeof(Cool), (byte*) &Heat, sizeof(Heat))) err = ERR_LOAD_PROFILE; // прочитать настройки отопления
-  else if(readEEPROM_I2C(adr += sizeof(Heat), (byte*) &Boiler, sizeof(Boiler))) err = ERR_LOAD_PROFILE; // прочитать настройки ГВС
-  else if(readEEPROM_I2C(adr += sizeof(Boiler), (byte*) &DailySwitch, sizeof(DailySwitch))) err = ERR_LOAD_PROFILE; // прочитать настройки DailySwitch
-  adr += sizeof(DailySwitch);
+		magic = TaskSuspendAll(); // Запрет других задач
+		// читаем основные данные
+		if(readEEPROM_I2C(adr, (byte*) &SaveON, sizeof(SaveON))) err = ERR_LOAD_PROFILE; // прочитать состояние ТН
+		else if(readEEPROM_I2C(adr += sizeof(SaveON), (byte*) &Cool, sizeof(Cool))) err = ERR_LOAD_PROFILE; // прочитать настройки охлаждения
+		else if(readEEPROM_I2C(adr += sizeof(Cool), (byte*) &Heat, sizeof(Heat))) err = ERR_LOAD_PROFILE; // прочитать настройки отопления
+		else if(readEEPROM_I2C(adr += sizeof(Heat), (byte*) &Boiler, sizeof(Boiler))) err = ERR_LOAD_PROFILE; // прочитать настройки ГВС
+		else if(readEEPROM_I2C(adr += sizeof(Boiler), (byte*) &DailySwitch, sizeof(DailySwitch))) err = ERR_LOAD_PROFILE; // прочитать настройки DailySwitch
+		adr += sizeof(DailySwitch);
 
-  if(magic) xTaskResumeAll(); // Разрешение других задач
-  if(err) {
-	  set_Error(err, (char*) nameHeatPump);
-	  return err;
-  }
- 
-// ВСЕ ОК
-   #ifdef LOAD_VERIFICATION
-  // проверка контрольной суммы
-  if(crc16!=get_crc16_mem()) { set_Error(ERR_CRC16_PROFILE,(char*)nameHeatPump); return err=ERR_CRC16_PROFILE;}                                                           // прочитать crc16
-  if (get_sizeProfile() != adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num))  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;} // Проверка длины
-    journal.jprintf(" Load profile %d OK, read: %d bytes, crc: %04x\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num),crc16);
-  #else
-    journal.jprintf(" Load profile %d OK, read: %d bytes VERIFICATION OFF!\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num));
-  #endif
-  update_list(num); 
-   
-//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме легионелла
-//  if (GETBIT(HP.Prof.Boiler.flags,fLegionella)) {HP.sTemp[TBOILER].set_maxTemp(LEGIONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for legionella\n", HP.sTemp[TBOILER].get_maxTemp());}
-//  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
-//  #endif
+		if(magic) xTaskResumeAll(); // Разрешение других задач
+		if(err) {
+		  set_Error(err, (char*) nameHeatPump);
+		  return err;
+		}
+
+	// ВСЕ ОК
+#ifdef LOAD_VERIFICATION
+	  // проверка контрольной суммы
+	  if(crc16!=get_crc16_mem()) { set_Error(ERR_CRC16_PROFILE,(char*)nameHeatPump); return err=ERR_CRC16_PROFILE;}                                                           // прочитать crc16
+	  if (get_sizeProfile() != adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num))  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;} // Проверка длины
+		journal.jprintf(" Load profile %d OK, read: %d bytes, crc: %04x\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num),crc16);
+#else
+		journal.jprintf(" Load profile %d OK, read: %d bytes VERIFICATION OFF!\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num));
+#endif
+	}
+	update_list(num);
+
+	//  #ifdef TBOILER // Изменение максимальной температуры при включенном режиме легионелла
+	//  if (GETBIT(HP.Prof.Boiler.flags,fLegionella)) {HP.sTemp[TBOILER].set_maxTemp(LEGIONELLA_TEMP+300);journal.jprintf(" Set boiler max t=%.2d for legionella\n", HP.sTemp[TBOILER].get_maxTemp());}
+	//  else HP.sTemp[TBOILER].set_maxTemp(MAXTEMP[TBOILER]);
+	//  #endif
 
 #ifdef WATTROUTER
-  WR_Loads = SaveON.WR_Loads;
-  if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh = WR_Loads;
+	WR_Loads = SaveON.WR_Loads;
+	if(GETBIT(WR.Flags, WR_fActive)) WR_Refresh = WR_Loads;
 #endif
 
-  if(SaveON.bTIN == 0) { // Первоначальное заполнение
+	if(SaveON.bTIN == 0) { // Первоначальное заполнение
 	  for(uint8_t i = 0; i < TNUMBER; i++) {
 		  if(HP.sTemp[i].get_setup_flags() & ((1<<fTEMP_as_TIN_average) | (1<<fTEMP_as_TIN_min))) SaveON.bTIN |= (1<<i);
 	  }
-  }
-
-  return adr;
- }
+	}
+	return adr;
+}
 
 /*
 // Считать настройки из буфера на входе адрес с какого, на выходе код ошибки (меньше нуля)
@@ -1426,7 +1424,8 @@ int32_t Profile::erase(int8_t num)
 // ДОБАВЛЯЕТ к строке с - список возможных конфигураций num - текущий профиль,
 char *Profile::get_list(char *c/*,int8_t num*/)
 {
-  return strcat(c,list);
+
+	return strcat(c,list);
 }
 
 // Устанавливает текущий профиль из номера списка, новый профиль;
@@ -1439,15 +1438,17 @@ int8_t Profile::set_list(int8_t num)
 }
 
 // обновить список имен профилей, запоминается в строке list
-// Возможно что будет отсутвовать выбранный элемент - это нормально
-// такое будет догда когда текущйий профиль не отмечен что учасвует в списке
+// Возможно что будет отсутствовать выбранный элемент - это нормально
+// такое будет догда когда текущий профиль не отмечен что учавствует в списке
+// Формат, пример: "1. Профиль1:1;2. Профиль2:0;", после ":1" - выбран в списке
 int8_t Profile::update_list(int8_t num)
 {
 	byte b;
 	uint32_t adr;
 	char *p = list;
+	bool inlist = false;
 	list[0] = '\0';														// стереть список
-	for(uint8_t i = 0; i < I2C_PROFIL_NUM; i++) {								// перебор по всем профилям
+	for(uint8_t i = 0; i < I2C_PROFIL_NUM; i++) {						// перебор по всем профилям
 		adr = I2C_PROFILE_EEPROM + get_sizeProfile() * i;				// вычислить адрес начала профиля
 		if(readEEPROM_I2C(adr, (byte*) &b, sizeof(b))) continue;
 		if(b != PROFILE_MAGIC) continue;								// заголовок не верен, данных нет, пропускаем чтение профиля это не ошибка
@@ -1461,8 +1462,15 @@ int8_t Profile::update_list(int8_t num)
 			p += strlen(p);
 			adr += (uint8_t *)&dataProfile.name - (uint8_t *)&dataProfile.flags;
 			readEEPROM_I2C(adr, (byte*) p, LEN_PROFILE_NAME);
-			if(i == num) strcat(p, ":1;"); else strcat(p, ":0;");
+			if(i == num) {
+				strcat(p, ":1;");
+				inlist = true;
+			} else strcat(p, ":0;");
 		}
+	}
+	if(!inlist && (char*)&list + sizeof(list) - p > 6 && num < I2C_PROFIL_NUM) { // num нет в списке
+		_itoa(num + 1, p);
+		strcat(p, ".:1;");
 	}
 	return OK;
 }

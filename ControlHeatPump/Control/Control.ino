@@ -1280,10 +1280,12 @@ void vReadSensor_delay1ms(int32_t ms)
 				if(--HP.fBackupPowerOffDelay == 0) {
 					journal.jprintf_time("Switched to Normal power!\n");
 					HP.Option.flags &= ~(1<<fBackupPower);
-					if(GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
-						HP.work_flags &= ~(1<<fHP_BackupNoPwrWAIT);
-						HP.sendCommand(pRESUME);
+					if(GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) HP.work_flags &= ~(1<<fHP_BackupNoPwrWAIT);
+					if(HP.profile_prev && HP.get_modWork() == pOFF) {
+						HP.SwitchToProfile(HP.profile_prev);
+						HP.profile_prev = 0;
 					}
+					if(HP.get_State() == pWAIT_HP) HP.sendCommand(pRESUME);
 				}
 			} else HP.Option.flags &= ~(1<<fBackupPower);
 		}
@@ -1392,11 +1394,7 @@ void vReadSensor_delay1ms(int32_t ms)
 		}
 		if(HP.Task_vUpdate_run) {
 			if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_MaxPowerOnBackup() && HP.power220 > HP.dFC.get_MaxPowerOnBackup()) {
-				if(HP.Prof.dataProfile.flags & ((1<<fSwitchProfileNext_OnBackupPower)|(1<<fSwitchProfileNext_OnError))) { // переключение профиля, если задано
-					HP.SwitchToProfile(HP.Prof.dataProfile.ProfileNext);
-				} else {
-					HP.sendCommand(pWAIT);
-				}
+				if(!HP.Check_Switch_Profile_On_Backup()) HP.sendCommand(pWAIT);
 			} else {
 				// 3. Расписание проверка всегда
 				uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);

@@ -517,6 +517,7 @@ public:
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
 	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль (+опции SWITCH_PROF_*)
+	bool Check_Switch_Profile_On_Backup(void);				// Проверка и переключение на другой профиль на резервном источнике питания
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения
 	RULE_HP get_ruleHeat(){return Prof.Heat.Rule;}           // Получить алгоритм отопления
@@ -713,6 +714,7 @@ public:
 #ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
 	uint16_t R3WAY_Off_timer;             // Таймер до выключения крана R3WAY, сек
 #endif
+	int8_t  profile_prev;				// предыдущий профиль 0 или [1..I2C_PROFIL_NUM], будет возврат при необходимости (например, после перехода с резерва на основной источник питания)
 
 private:
 	void    StartResume(bool start);      // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки

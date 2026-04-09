@@ -307,7 +307,7 @@ class Profile                         // Класс профиль
 				// данные контрольная сумма считается с этого места
 				sizeof(dataProfile) + sizeof(SaveON) + sizeof(Cool) + sizeof(Heat) + sizeof(Boiler)	+ sizeof(DailySwitch);
     };
-    int8_t id;												// Номер профайла 0..I2C_PROFIL_NUM-1
+    int8_t id;												// Текущий номер профиля 0..I2C_PROFIL_NUM-1
  private:
     uint16_t get_crc16_mem();                               // Расчитать контрольную сумму
     int8_t   check_crc16_eeprom(int8_t num);                // Проверить контрольную сумму ПРОФИЛЯ в EEPROM для данных на выходе ошибка, длина определяется из заголовка

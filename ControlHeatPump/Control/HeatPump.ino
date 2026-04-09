@@ -101,7 +101,7 @@ void HeatPump::process_error(void)
 			}
 #endif
 			if(num_repeat < get_nStart()) {                // есть еще попытки
-				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext > 0 && num_repeat_prof >= Option.nStartNextProf) {
+				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext && num_repeat_prof >= Option.nStartNextProf) {
 					SwitchToProfile((Prof.dataProfile.ProfileNext - 1) | SWITCH_PROF_BY_ERROR);
 				}
 				sendCommand(pREPEAT);                  // Повторный пуск ТН
@@ -125,6 +125,7 @@ void HeatPump::initHeatPump()
 	fBackupPowerOffDelay = 0;
 	pump_in_pause_timer = 0;
 	R3WAY_Off_timer = 0;
+	profile_prev = 0;
 	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchByTime);
 #ifdef TEST_BOARD
 	testMode = SAFE_TEST;
@@ -1316,10 +1317,10 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_DELAY_BOILER_OFF)==0) {return _itoa(Option.delayBoilerOff,ret);} else   // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
 	if(strcmp(var,option_ModbusMinTimeBetweenTransaction)==0){ return _itoa(Option.ModbusMinTimeBetweenTransaction, ret); } else
 	if(strcmp(var,option_ModbusResponseTimeout)==0){ return _itoa(Option.ModbusResponseTimeout, ret); } else
-	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags,fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
+	if(strcmp(var,option_fBackupPower)==0)     {if(GETBIT(Option.flags, fBackupPower)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);}else // флаг Использование резервного питания от генератора (ограничение мощности)
 	if(strcmp(var,option_Generator_Start_Time) == 0){ return _itoa(Option.Generator_Start_Time, ret); } else
 	if(strcmp(var,option_fBackupPowerInfo)==0) { // Работа от генератора
-	   if(GETBIT(Option.flags,fBackupPower)
+	   if(GETBIT(Option.flags, fBackupPower)
 	#ifdef USE_UPS
 		   && !NO_Power
 	#endif
@@ -2312,6 +2313,10 @@ void HeatPump::StopWait(bool stop)
 #ifdef AUTO_START_GENERATOR
 	if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
 #endif
+	if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
+		HP.SwitchToProfile(HP.profile_prev);
+		HP.profile_prev = 0;
+	}
 	return;
 }
 
@@ -3524,13 +3529,14 @@ bool HeatPump::configHP()
 			if(dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
 		#endif
 		Pumps(OFF);
+		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
+			HP.SwitchToProfile(HP.profile_prev);
+			HP.profile_prev = 0;
+		}
 		//switchBoiler(false);                                            // выключить бойлер
 		//_delay(DELAY_AFTER_SWITCH_RELAY);                               // Задержка
 	} else {
-		if(GETBIT(Option.flags, fBackupPower) && GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnBackupPower)) { // переключение профиля, если задано
-			SwitchToProfile(Prof.dataProfile.ProfileNext);
-			return false;
-		}
+		if(Check_Switch_Profile_On_Backup()) return false;
 		if((conf & pHEAT)) {    // Отопление
 			if(Switch_R4WAY(false)) return false; 								// 4-х ходовой на нагрев
 			if(((_is_on & _COMPR_) && !GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((_is_on & _HEATER_) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater))) {
@@ -4289,125 +4295,132 @@ void HeatPump::runCommand(void)
 {
 	if(!GETBIT(work_flags, fHP_NewCommand)) return;
 	SETBIT0(work_flags, fHP_NewCommand);
-	uint16_t i;
-	while(1) {
-		journal.jprintf_time("Run: %s\n", get_command_name(command));
-
-		switch(command)
-		{
-		case pEMPTY:  return; break;     // 0 Команд нет
-		case pSTART:                          // 1 Пуск теплового насоса
-			num_repeat = num_repeat_prof = 0; // обнулить счетчик повторных пусков
-			StartResume(_START_);              // включить ТН
-			break;
-		case pAUTOSTART:                      // 2 Пуск теплового насоса автоматический
-			StartResume(_START_);              // включить ТН
-			break;
-		case pSTOP:                           // 3 Стоп теплового насоса
-		    PauseStart = 0;
-			StopWait(_STOP_);                  // Выключить ТН
-			break;
-		case pRESET:                          // 4 Сброс контроллера
-		    PauseStart = 0;
-			StopWait(_STOP_);                  // Выключить ТН
-			journal.jprintf_time("$SOFTWARE RESET . . .\n\n");
-			save_motoHour();
-			Stats.SaveStats(0);
-			Stats.SaveHistory(0);
-			_delay(500);                      // задержка что бы вывести сообщение в консоль
-			Software_Reset() ;                // Сброс
-			break;
-		case pREPEAT:
-			if(NO_Power) {                    // Нет питания - ожидание
-				NO_Power = 2;
-				goto xWait;
-			}
-			StopWait(_STOP_);                 // Попытка запустит ТН (по числу пусков)
-			num_repeat++;                     // увеличить счетчик повторов пуска ТН
-			num_repeat_prof++;
-			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
-			PauseStart = 1;   					// Запустить выполнение отложенного старта
-			break;
-		case pREPEAT_FAST:
-			if(NO_Power) {                      // Нет питания - ожидание
-				NO_Power = 2;
-				goto xWait;
-			}
-			StopWait(_STOP_);                   // Попытка запустит ТН (по числу пусков)
-			num_repeat++;                       // увеличить счетчик повторов пуска ТН
-			num_repeat_prof++;
-			journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
-			PauseStart = 2;   					// Запустить выполнение отложенного старта
-			break;
-		case pRESTART:
-			// Stop();                          // пуск Тн после сброса - есть задержка
-			journal.jprintf("Restart %s . . .\n",(char*)nameHeatPump);
-			PauseStart = 1;						// Запустить выполнение отложенного старта
-			break;
-		case pNETWORK:
-			_delay(1000);               						// задержка что бы вывести сообщение в консоль и на веб морду
-			if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) { // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
-				journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexWebThreadBuzy);
-				command = pEMPTY;
-				return;
-			}
+	TYPE_COMMAND cmd = command;
+	journal.jprintf_time("Run: %s\n", get_command_name(cmd));
+	if(next_command != pEMPTY) { // следующая команда
+		command = next_command;
+		next_command = pEMPTY;
+	} else command = pEMPTY;   // Сбросить команду
+	switch(cmd)
+	{
+	case pEMPTY:
+		break;                            // 0 Команд нет
+	case pSTART:                          // 1 Пуск теплового насоса
+		num_repeat = num_repeat_prof = 0; // обнулить счетчик повторных пусков
+		StartResume(_START_);              // включить ТН
+		break;
+	case pAUTOSTART:                      // 2 Пуск теплового насоса автоматический
+		StartResume(_START_);              // включить ТН
+		break;
+	case pSTOP:                           // 3 Стоп теплового насоса
+		PauseStart = 0;
+		StopWait(_STOP_);                  // Выключить ТН
+		break;
+	case pRESET:                          // 4 Сброс контроллера
+		PauseStart = 0;
+		StopWait(_STOP_);                  // Выключить ТН
+		journal.jprintf_time("$SOFTWARE RESET . . .\n\n");
+		save_motoHour();
+		Stats.SaveStats(0);
+		Stats.SaveHistory(0);
+		_delay(500);                      // задержка что бы вывести сообщение в консоль
+		Software_Reset() ;                // Сброс
+		break;
+	case pREPEAT:
+		if(NO_Power) {                    // Нет питания - ожидание
+			NO_Power = 2;
+			goto xWait;
+		}
+		StopWait(_STOP_);                 // Попытка запустит ТН (по числу пусков)
+		num_repeat++;                     // увеличить счетчик повторов пуска ТН
+		num_repeat_prof++;
+		journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
+		PauseStart = 1;   					// Запустить выполнение отложенного старта
+		break;
+	case pREPEAT_FAST:
+		if(NO_Power) {                      // Нет питания - ожидание
+			NO_Power = 2;
+			goto xWait;
+		}
+		StopWait(_STOP_);                   // Попытка запустит ТН (по числу пусков)
+		num_repeat++;                       // увеличить счетчик повторов пуска ТН
+		num_repeat_prof++;
+		journal.jprintf("Repeat start %s (attempts remaining %d) . . .\n",(char*)nameHeatPump,get_nStart()-num_repeat);
+		PauseStart = 2;   					// Запустить выполнение отложенного старта
+		break;
+	case pRESTART:
+		// Stop();                          // пуск Тн после сброса - есть задержка
+		journal.jprintf("Restart %s . . .\n",(char*)nameHeatPump);
+		PauseStart = 1;						// Запустить выполнение отложенного старта
+		break;
+	case pNETWORK:
+		_delay(1000);               						// задержка что бы вывести сообщение в консоль и на веб морду
+		if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS))==pdFALSE) { // Захват мютекса потока или ОЖИДАНИНЕ W5200_TIME_WAIT
+			journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexWebThreadBuzy);
+		} else {
 			initW5200(true);                                  // Инициализация сети с выводом инфы в консоль
-			for (i=0;i<W5200_THREAD;i++) SETBIT1(Socket[i].flags,fABORT_SOCK);                                 // Признак инициализации сокета, надо прерывать передачу в сервере
-			SemaphoreGive(xWebThreadSemaphore);                                                                // Мютекс потока отдать
-			break;
+			for(uint8_t i=0;i<W5200_THREAD;i++) SETBIT1(Socket[i].flags,fABORT_SOCK);  // Признак инициализации сокета, надо прерывать передачу в сервере
+			SemaphoreGive(xWebThreadSemaphore);                                        // Мютекс потока отдать
+		}
+		break;
 //		case pSFORMAT:                                             // Форматировать журнал в I2C памяти
 //			#ifdef I2C_EEPROM_64KB
 //				_delay(2000);              				           // задержка что бы вывести сообщение в консоль и на веб морду
 //				Stats.Format();                                    // Послать команду форматирование статистики
 //			#endif
 //			break;
-		case pPROG_FC:                                             // Программировать инвертор первоначальными данными (настройка инвертора)
-		    #ifndef FC_VACON  // Omron , если в ваком будет определен метод progFC этот дефайн убрать
-            dFC.progFC();
-            #endif
-			break;
-		case pSAVE:                                                      // Сохранить настройки
-			_delay(2000);              				      		 // задержка что бы вывести сообщение в консоль и на веб морду
-			save();                                            // сохранить настройки
-			break;
-		case pWAIT:   // Перевод в состояние ожидания  - особенность возможна блокировка задач - используем семафор
+	case pPROG_FC:                                             // Программировать инвертор первоначальными данными (настройка инвертора)
+		#ifndef FC_VACON  // Omron , если в ваком будет определен метод progFC этот дефайн убрать
+		dFC.progFC();
+		#endif
+		break;
+	case pSAVE:                                                      // Сохранить настройки
+		_delay(2000);              				      		 // задержка что бы вывести сообщение в консоль и на веб морду
+		save();                                            // сохранить настройки
+		break;
+	case pWAIT:   // Перевод в состояние ожидания  - особенность возможна блокировка задач - используем семафор
 xWait:
-			if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
-			{
-				SetTask_vUpdate(false);
-				StopWait(_WAIT_);                                  // Ожидание
-				SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
-				SetTask_vUpdate(true);
-			}
-			else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
-			break;
-		case pRESUME:   // Восстановление работы после ожиданияя -особенность возможна блокировка задач - используем семафор
-			if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
-			{
-				StartResume(_RESUME_);                             // восстановление ТН
-				SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
-				SetTask_vUpdate(true);
-			}
-			else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
-			break;
-		case pCHANGE_PROFILE:
-			if(Prof.id != Option.numProf) SwitchToProfile(Option.numProf);
-			break;
-		default:                                                         // Не известная команда
-			journal.jprintf("Unknown command: %d !!!", command);
-			break;
+		if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
+		{
+			SetTask_vUpdate(false);
+			StopWait(_WAIT_);                                  // Ожидание
+			SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
+			SetTask_vUpdate(true);
 		}
-		if(command != pSFORMAT && command != pSAVE && command != pNETWORK) command_completed = rtcSAM3X8.unixtime();
-		if(next_command != pEMPTY) { // следующая команда
-			command = next_command;
-			next_command = pEMPTY;
-			SETBIT1(work_flags, fHP_NewCommand);
-			_delay(TIME_vUpdateTick);
-		} else {
-			command=pEMPTY;   // Сбросить команду
-			break;
+		else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
+		break;
+	case pRESUME:   // Восстановление работы после ожиданияя -особенность возможна блокировка задач - используем семафор
+		if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
+		{
+			StartResume(_RESUME_);                             // восстановление ТН
+			SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
+			SetTask_vUpdate(true);
+		}
+		else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
+		break;
+	case pCHANGE_PROFILE:
+		if(Prof.id != Option.numProf) SwitchToProfile(Option.numProf);
+		break;
+	default:                                                         // Не известная команда
+		journal.jprintf("Unknown command: %d !!!", cmd);
+		break;
+	}
+	if(cmd != pSFORMAT && cmd != pSAVE && cmd != pNETWORK) command_completed = rtcSAM3X8.unixtime();
+	if(command || next_command) SETBIT1(work_flags, fHP_NewCommand);
+}
+
+// True - Переключились
+bool HeatPump::Check_Switch_Profile_On_Backup(void)
+{
+	if(GETBIT(Option.flags, fBackupPower) && GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnBackupPower) && HP.Prof.dataProfile.ProfileNext) { // переключение профиля, если задано
+		int8_t prev = Prof.id;
+		SwitchToProfile(Prof.dataProfile.ProfileNext - 1);
+		if(prev != Prof.id) {
+			profile_prev = prev;
+			return true;
 		}
 	}
+	return false;
 }
 
 // Переключиться на другой профиль (0..I2C_PROFIL_NUM),
@@ -4444,17 +4457,18 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
 		return;
 	}
-	if(HP.get_State() != pOFF_HP) {
-		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
-		if(p) {
-			_profile = p - 1;
-			if(Prof.id == _profile) {
-				SemaphoreGive(xI2CSemaphore);
-				return;
-			}
-			journal.jprintf("Switch profile by time to %d\n", p + 1);
-		}
-	}
+//	if(HP.get_State() != pOFF_HP) {
+//		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
+//		if(p) {
+//			_profile = p - 1;
+//			if(Prof.id == _profile) {
+//				journal.jprintf("Skip change profile by time - the same\n");
+//				SemaphoreGive(xI2CSemaphore);
+//				return;
+//			}
+//			journal.jprintf("Switch profile by time to %d\n", p + 1);
+//		}
+//	}
 	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
@@ -4490,7 +4504,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			if(!(_tmp.mode & pCOOL)) frestart = true;
 		}
 	}
-	if(frestart) { // Если направление работы ТН разное
+	if(frestart && get_State() != pWORK_HP) { // Если направление работы ТН разное
 		if(!sendCommand(pWAIT)) return;
 		uint8_t i = DELAY_BEFORE_STOP_IN_PUMP + (get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump) + 1;
 		while(isCommand()) { // ждем отработки команды
@@ -4498,15 +4512,12 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			if(!--i) break;
 		}
 	}
-	//vTaskSuspendAll();	// без проверки
-	Prof.load(_profile);
-	//xTaskResumeAll();
-	num_repeat_prof = 0;
-	if(_profile == Prof.id) {
+	if(Prof.load(_profile) > 0 && _profile == Prof.id) {
+		num_repeat_prof = 0;
 		if(_by_error_check_mode) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
 		journal.jprintf_time("Set profile to %d\n", _profile + 1);
 	} else journal.jprintf_time("Failed sеt profile to %d\n", _profile + 1);
-	if(frestart) while(!sendCommand(pRESUME)) _delay(100);
+	if(frestart) sendCommand(pRESUME);
 }
 
 // Обработать пропадание питания
