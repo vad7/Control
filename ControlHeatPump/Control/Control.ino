@@ -1282,7 +1282,7 @@ void vReadSensor_delay1ms(int32_t ms)
 					HP.Option.flags &= ~(1<<fBackupPower);
 					if(GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) HP.work_flags &= ~(1<<fHP_BackupNoPwrWAIT);
 					if(HP.profile_prev && HP.get_modWork() == pOFF) {
-						HP.SwitchToProfile(HP.profile_prev);
+						HP.SwitchToProfile(HP.profile_prev - 1);
 						HP.profile_prev = 0;
 					}
 					if(HP.get_State() == pWAIT_HP) HP.sendCommand(pRESUME);
@@ -1395,7 +1395,7 @@ void vReadSensor_delay1ms(int32_t ms)
 		if(HP.Task_vUpdate_run) {
 			if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_MaxPowerOnBackup() && HP.power220 > HP.dFC.get_MaxPowerOnBackup()) {
 				if(!HP.Check_Switch_Profile_On_Backup()) HP.sendCommand(pWAIT);
-			} else {
+			} else if(HP.profile_prev == 0) { // идет работа на резерве, пропускаем переключения профилей до конца итерации
 				// 3. Расписание проверка всегда
 				uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
 				if(d) {
@@ -1404,7 +1404,7 @@ void vReadSensor_delay1ms(int32_t ms)
 					journal.jprintf("Switch profile by time to %d\n", d);
 					HP.SwitchToProfile(d);
 				} else {  // error: jump to label [-fpermissive] GCC
-					// Переключение расписания, когда текущий месяц и дясятидневка совпадают; если пропустили из-за выключенного НК или работы,
+					// Переключение расписания, когда текущий месяц и десятидневка совпадают; если пропустили из-за выключенного НК или работы,
 					// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
 					if(HP.Schdlr.IsShedulerOn() && !(HP.Schdlr.sch_data.AutoSelectMonthWeek[HP.Schdlr.sch_data.Active] & fSch_AS_DontSwitch)) {
 						d = rtcSAM3X8.get_days();

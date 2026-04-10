@@ -2064,13 +2064,15 @@ xGoWait:
 	}
 	// Дана команда старт - но возможно надо переходить в ожидание
 	// Определяем что делать
-	int8_t profile = Schdlr.calc_active_profile();
-	if((profile != SCHDLR_NotActive) && (start)) { // расписание активно и дана команда
-		if(profile == SCHDLR_Profile_off) {
-			goto xGoWait;
-		} else if(profile != Prof.get_idProfile()) {
-			Prof.load(profile);
-			journal.jprintf("Profile changed to #%d\n", profile);
+	if(profile_prev == 0) {
+		int8_t profile = Schdlr.calc_active_profile();
+		if((profile != SCHDLR_NotActive) && (start)) { // расписание активно и дана команда
+			if(profile == SCHDLR_Profile_off) {
+				goto xGoWait;
+			} else if(profile != Prof.get_idProfile()) {
+				Prof.load(profile);
+				journal.jprintf("Profile changed to #%d\n", profile);
+			}
 		}
 	}
 	if(startWait) {
@@ -2314,7 +2316,7 @@ void HeatPump::StopWait(bool stop)
 	if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
 #endif
 	if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-		HP.SwitchToProfile(HP.profile_prev);
+		HP.SwitchToProfile(HP.profile_prev - 1);
 		HP.profile_prev = 0;
 	}
 	return;
@@ -3530,7 +3532,7 @@ bool HeatPump::configHP()
 		#endif
 		Pumps(OFF);
 		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-			HP.SwitchToProfile(HP.profile_prev);
+			HP.SwitchToProfile(HP.profile_prev - 1);
 			HP.profile_prev = 0;
 		}
 		//switchBoiler(false);                                            // выключить бойлер
@@ -4416,7 +4418,7 @@ bool HeatPump::Check_Switch_Profile_On_Backup(void)
 		int8_t prev = Prof.id;
 		SwitchToProfile(Prof.dataProfile.ProfileNext - 1);
 		if(prev != Prof.id) {
-			profile_prev = prev;
+			profile_prev = prev + 1;
 			return true;
 		}
 	}
