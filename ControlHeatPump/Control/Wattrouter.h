@@ -112,6 +112,12 @@ uint8_t WF_BoilerTargetPercent = 0;		// Процент от максимальн
 int32_t WR_Power_Excess = 0;			// Излишки ваттроутера
 #endif
 
+#ifdef WR_PowerMeter_Modbus
+bool WR_PowerMeter_New = false;
+#else
+unsigned long Web0_FreqTime;
+#endif
+
 void WR_Process(void);
 void WR_Init(void);
 void WR_Switch_Load(uint8_t idx, boolean On);
@@ -126,7 +132,9 @@ int16_t WR_Read_MAP(void);
 #endif
 #ifdef PWM_CALC_POWER_ARRAY
 void WR_Calc_Power_Array_NewMeter(int32_t power);
+void WR_Calc_Power_Array_Start(int8_t load_idx);
 #endif
+void WR_ReadPowerMeter(void);
 void WR_ReadPowerMeter(void);
 
 #endif

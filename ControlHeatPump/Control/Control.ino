@@ -46,6 +46,7 @@
 #include "MQTT.h"
 #include "Statistics.h"
 #include "LCD2004.h"
+#include "Wattrouter.h"
 
 void vUpdateStepperEEV(void *);
 #include "StepMotor.h"

@@ -18,8 +18,9 @@
 // --------------------------------------------------------------------------------
 // Описание базовых классов для работы Теплового Насоса
 // --------------------------------------------------------------------------------
-#ifndef HeatPump_h
-#define HeatPump_h
+#ifndef HEATPUMP_H
+#define HEATPUMP_H
+
 #include "Constant.h"                       // Вся конфигурация и константы проекта Должен быть первым !!!!
 #include "Hardware.h"
 #include "Message.h"
@@ -29,25 +30,12 @@
 #include "VaconFC.h"
 #include "Scheduler.h"
 #include "Heater.h"
-#ifdef WATTROUTER
-#include "Wattrouter.h"
-#endif
 
 
 extern char *MAC2String(byte* mac);
 
 int32_t updatePID(int32_t errorPid, PID_STRUCT &pid, PID_WORK_STRUCT &pidw);
 void UpdatePIDbyTime(uint16_t new_time, uint16_t curr_time, PID_STRUCT &pid);
-
-/*/ Структура для хранения заголовка при сохранении настроек EEPROM
-struct type_headerEEPROM    // РАЗМЕР 1+1+2+2=6 байт
-{
-//  byte magic;               // признак данных, должно быть  0xaa
-//  byte zero;                // признак данных, должно быть  0x00
-  uint16_t ver;             // номер версии для сохранения
-  uint16_t len;             // длина данных, сколько записано байт в еепром
- };
-*/
 
 // Структура описывающая текущее состояние ТН (хранится только в памяти)
 struct type_status
@@ -69,6 +57,7 @@ struct type_status
 #else
 	#define I2C_COUNT_EEPROM_HEADER 0xAC
 #endif
+
 struct type_motoHour_old
 {
 	  byte Header;      // признак данных
@@ -103,7 +92,6 @@ struct type_motoHour
   uint32_t R2;      // моточасы котла сбрасываемый счетчик (сезон) [минуты]
 #endif
 };
-
 TEST_MODE testMode;					// Значение режима тестирования
 
 int32_t motohour_OUT_work = 0; 		// рабочий для счетчиков - энергия отопления, Вт
@@ -115,6 +103,7 @@ boolean Charts_when_comp_on = true;	// Графики в памяти тольк
 #else
 boolean Charts_when_comp_on = false;
 #endif
+
 uint8_t Request_LowConsume = 0xFF;
 uint8_t Calc_COP_skip_timer = 0;	// Пропустить расчет COP на время *TIME_READ_SENSOR
 uint32_t DailySwitch_on = 0;		// Битовый массив включенных дневных реле, b24..31 - выключить HTTP реле
@@ -189,13 +178,8 @@ volatile uint8_t RWARN_Status;			// при старте = RWARN_St_Delay
 #define RWARN_LinkErr_NoLink		2
 #define RWARN_LinkErr_Error			3
 #define RWARN_LinkErr_Error_CRC		4
-#endif
+#endif //  USE_REMOTE_WARNING
 
-#ifdef WR_PowerMeter_Modbus
-bool WR_PowerMeter_New = false;
-#else
-unsigned long Web0_FreqTime;
-#endif
 static uint32_t web_last_run;				// последний запуск web_server(), тики
 
 type_WebSecurity WebSec_user;				// хеш паролей
@@ -251,58 +235,57 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define f2ReadMPPT				7				// Периодически читать данные солнечного контроллера, даже если не работает Ваттроутер
 
 // Структура для хранения опций теплового насоса.
-struct type_optionHP
-{
- uint8_t  ver;							// номер версии для сохранения
- int8_t   numProf;						// Номер профиля включаемый при загрузке, выбор вручную только через веб "set_listProf", 0..I2C_PROFIL_NUM
- uint16_t flags;						// Флаги опций до 16 флагов
- uint8_t  nStart;						// Число попыток начала/продолжения работы
- uint8_t  sleep;						// Время засыпания дисплея минуты
- uint8_t  dim;							// Яркость дисплея %
- uint8_t  DailySwitchHysteresis;			// Гистерезис для переключения реле по температуре, десятые градуса
- uint16_t tChart;						// период сбора статистики в секундах!!
- uint16_t delayOnPump;					// Задержка включения компрессора/котла после включения насосов (сек).
- uint16_t delayOffPump;					// Задержка выключения насосов отопления при ошибке или при нагреве бойлера, сек
- uint16_t delayStartRes;				// Задержка включения ТН после внезапного сброса контроллера (сек.)
- uint16_t delayRepeadStart;				// Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
- uint16_t delayDefrostOn;				// ДЛЯ ВОЗДУШНОГО ТН Задержка после срабатывания датчика перед включением разморозки (секунды)
- uint16_t delayDefrostOff;				// ДЛЯ ВОЗДУШНОГО ТН Задержка перед выключением разморозки (секунды)
- uint16_t delayR4WAY;					// Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
- uint16_t delayBoilerSW;                // Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
- uint16_t delayBoilerOff;               // Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
- int16_t  SunRegGeoTemp;				// Солнечный коллектор - Температура начала регенерации геоконтура с помощью СК, в сотых градуса
- uint8_t  SwitchHeaterHPTime;			// Время переключения Котел - ТН, сек
- uint8_t  Modbus_Attempts;				// Modbus - попыток чтения/записи при ошибке (кроме инвертора и счетчика)
- int16_t  SunTDelta;					// Солнечный коллектор - Дельта температур для включения, сотые градуса
- int16_t  SunGTDelta;					// Солнечный коллектор - Дельта температур жидкости для выключения, сотые градуса
- int16_t  SunRegGeoTempGOff;			// Температура жидкости для выключения регенерации
- uint16_t maxBackupPower;		     	// Максимальная мощность при питании от генератора (Вт)
- int16_t  SunTempOn;					// Солнечный коллектор - Температура выше которой открывается СК
- int16_t  SunTempOff;					// Солнечный коллектор - Температура ниже которой закрывается СК
- uint16_t MinCompressorOn;              // Минимальное время работы компрессора в секундах
- uint16_t flags2;						// Флаги #2 до 16 флагов
- uint16_t SunMinWorktime;				// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
- uint16_t SunMinPause;					// Солнечный коллектор - минимальное время паузы после останова СК, сек
+struct type_optionHP {
+	uint8_t ver;						// номер версии для сохранения
+	int8_t numProf;						// Номер профиля включаемый при загрузке, выбор вручную только через веб "set_listProf", 0..I2C_PROFIL_NUM
+	uint16_t flags;						// Флаги опций до 16 флагов
+	uint8_t nStart;						// Число попыток начала/продолжения работы
+	uint8_t sleep;						// Время засыпания дисплея минуты
+	uint8_t dim;						// Яркость дисплея %
+	uint8_t DailySwitchHysteresis;		// Гистерезис для переключения реле по температуре, десятые градуса
+	uint16_t tChart;					// период сбора статистики в секундах!!
+	uint16_t delayOnPump;				// Задержка включения компрессора/котла после включения насосов (сек).
+	uint16_t delayOffPump;				// Задержка выключения насосов отопления при ошибке или при нагреве бойлера, сек
+	uint16_t delayStartRes;				// Задержка включения ТН после внезапного сброса контроллера (сек.)
+	uint16_t delayRepeadStart;			// Задержка перед повторным включениме ТН при ошибке (попытки пуска) секунды
+	uint16_t delayDefrostOn;			// ДЛЯ ВОЗДУШНОГО ТН Задержка после срабатывания датчика перед включением разморозки (секунды)
+	uint16_t delayDefrostOff;			// ДЛЯ ВОЗДУШНОГО ТН Задержка перед выключением разморозки (секунды)
+	uint16_t delayR4WAY;				// Задержка между переключением 4-х ходового клапана и включением компрессора, для выравнивания давлений (сек). Если включены эти опции (переключение тепло-холод)
+	uint16_t delayBoilerSW;				// Пауза (сек) после переключение ГВС - выравниваем температуру в контуре отопления/ГВС что бы сразу защиты не сработали
+	uint16_t delayBoilerOff;			// Время (сек) на сколько блокируются защиты при переходе с ГВС на отопление и охлаждение слишком горяче после ГВС
+	int16_t SunRegGeoTemp;				// Солнечный коллектор - Температура начала регенерации геоконтура с помощью СК, в сотых градуса
+	uint8_t SwitchHeaterHPTime;			// Время переключения Котел - ТН, сек
+	uint8_t Modbus_Attempts;			// Modbus - попыток чтения/записи при ошибке (кроме инвертора и счетчика)
+	int16_t SunTDelta;					// Солнечный коллектор - Дельта температур для включения, сотые градуса
+	int16_t SunGTDelta;					// Солнечный коллектор - Дельта температур жидкости для выключения, сотые градуса
+	int16_t SunRegGeoTempGOff;			// Температура жидкости для выключения регенерации
+	uint16_t maxBackupPower;			// Максимальная мощность при питании от генератора (Вт)
+	int16_t SunTempOn;					// Солнечный коллектор - Температура выше которой открывается СК
+	int16_t SunTempOff;					// Солнечный коллектор - Температура ниже которой закрывается СК
+	uint16_t MinCompressorOn;			// Минимальное время работы компрессора в секундах
+	uint16_t flags2;					// Флаги #2 до 16 флагов
+	uint16_t SunMinWorktime;			// Солнечный коллектор - минимальное время работы, после которого будут проверятся границы, сек
+	uint16_t SunMinPause;				// Солнечный коллектор - минимальное время паузы после останова СК, сек
 #ifdef DEFROST
- int16_t  DefrostTempLimit;				// температура TEVAIN выше которой разморозка не включается, сотые градуса
- int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка, сотые градуса
- int16_t  DefrostTempSteam;				// температура ниже которой оттаиваем паром, сотые градуса
- int16_t  DefrostTempEnd;				// температура окончания отттайки, сотые градуса
+	int16_t  DefrostTempLimit;			// температура TEVAIN выше которой разморозка не включается, сотые градуса
+	int16_t  DefrostStartDTemp;			// Разница температур TOUT-TEVAIN более которой начнется оттайка, сотые градуса
+	int16_t  DefrostTempSteam;			// температура ниже которой оттаиваем паром, сотые градуса
+	int16_t  DefrostTempEnd;			// температура окончания отттайки, сотые градуса
 #endif
- char     Microart_pass[PASS_LEN+1];	// Пароль для Микроарт Малины
+	char Microart_pass[PASS_LEN + 1];	// Пароль для Микроарт Малины
 #ifdef WEATHER_FORECAST
- int8_t   WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
- char     WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
- char     WF_ReqText[128];				// Тело GET запроса
+	int8_t WF_MinTemp;					// Минимальная прогнозируемая температура по ощущению для использования прогноза, градусы
+	char WF_ReqServer[24];				// Сервер прогноза погоды по протоколу http
+	char WF_ReqText[128];				// Тело GET запроса
 #endif
- uint16_t Generator_Start_Time;			// Время запуска генератора, сек
- uint8_t  ModbusMinTimeBetweenTransaction;
- uint8_t  ModbusResponseTimeout;
- uint8_t  nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
- uint8_t  Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек
- int8_t   WF_AddCloudByMonth[12];		// + к облачности по месяцам, %
-};// __attribute__((packed));
-
+	uint16_t Generator_Start_Time;		// Время запуска генератора, сек
+	uint8_t ModbusMinTimeBetweenTransaction;
+	uint8_t ModbusResponseTimeout;
+	uint8_t nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
+	uint8_t Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек
+	int8_t WF_AddCloudByMonth[12];		// + к облачности по месяцам, %
+};
+// __attribute__((packed));
 
 //  Работа с отдельными флагами type_DateTimeHP
 #define fDT_Update        0                // флаг Обновление часов c сервером раз в сутки и при старте
@@ -388,11 +371,11 @@ public:
 	void set_mode(MODE_HP b) {Prof.SaveON.mode=b;}           // Установить режим работы отопления
 	void set_nextMode();                                     // Переключение на следующий режим работы отопления (последовательный перебор режимов)
 
-	#ifdef R4WAY
+#ifdef R4WAY
 	__attribute__((always_inline)) inline  boolean is_HP_Heating() { return !dRelay[R4WAY].get_Relay(); } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
-	#else
+#else
 	__attribute__((always_inline)) inline  boolean is_HP_Heating() { return true; } 	// true = Режим нагрева отопления или бойлера, false = охлаждение
-	#endif
+#endif
 	boolean IsWorkingNow() { return !(get_State() == pOFF_HP && PauseStart == 0); }				// Включен ТН или нет
 	boolean CheckAvailableWork();							// проверить есть ли работа для ТН
 
@@ -443,7 +426,6 @@ public:
 //  ===================  К Л А С С Ы  ===========================
 // Датчики
 	sensorTemp sTemp[TNUMBER];          // Датчики температуры
-
 #ifdef SENSOR_IP                    // Получение данных удаленного датчика
 	sensorIP sIP[IPNUMBER];           // Массив удаленных датчиков
 #endif
@@ -472,10 +454,10 @@ public:
 	Message message;                     // Класс уведомления
 	Profile Prof;                        // Текуший профиль
 	Scheduler Schdlr;					// Расписание
-
-	#ifdef MQTT
+#ifdef MQTT
 	  clientMQTT clMQTT;                // MQTT клиент
-	#endif
+#endif
+
 // Сетевые настройки
 	boolean set_network(char *var, char *c);        // Установить параметр из строки
 	char*   get_network(char *var,char *ret);       // Получить параметр из строки
@@ -549,9 +531,9 @@ public:
 	uint16_t get_maxBackupPower() {return Option.maxBackupPower;};      // Максимальная мощность при питании от генератора (Вт)
 	uint8_t  get_BackupPower() {return GETBIT(Option.flags,fBackupPower);}// получить флаг использования генератора (ограничение мощности)
 	boolean  set_BackupPower(boolean f) {if(f)SETBIT1(Option.flags,fBackupPower);else SETBIT0(Option.flags,fBackupPower);return GETBIT(Option.flags,fBackupPower);}// установить флаг использования генератора (ограничение мощности)
-	#ifdef SGENERATOR
+#ifdef SGENERATOR
 	void     check_fBackupPower(void) { Option.flags = (Option.flags & ~(1<<fBackupPower)) | ((sInput[SGENERATOR].get_Input() == sInput[SGENERATOR].get_alarmInput())<<fBackupPower); };
-	#endif
+#endif
 
 	uint8_t  get_nStart() {return Option.nStart;};                      // получить максимальное число попыток пуска ТН
 	uint8_t  get_sleep() {return Option.sleep;}                         //
@@ -647,15 +629,14 @@ public:
 	int32_t fullCOP;									// Полный СОР, сотые
 
 // Удаленные датчики
-	#ifdef SENSOR_IP
+#ifdef SENSOR_IP
 	boolean updateLinkIP();                    // Обновить ВСЕ привязки удаленных датчиков
-	#endif
-
+#endif
 
 	TaskHandle_t xHandleUpdate;                         // Заголовок задачи "Обновление ТН"
-	#ifdef EEV_DEF
+#ifdef EEV_DEF
 	TaskHandle_t xHandleUpdateEEV;                      // Заголовок задачи "Обновление ЭРВ"
-	#endif
+#endif
     TaskHandle_t xHandleStepperEEV;                     // Заголовок задачи шаговый двигатель и RWARN
 	TaskHandle_t xHandleReadSensor;                     // Заголовок задачи "Чтение датчиков"
 	TaskHandle_t xHandleSericeHP;						// Задача обслуживания ТН
@@ -663,18 +644,18 @@ public:
 	TaskHandle_t xWattrouter;							// Задача Ваттроутер
 #endif
 	TaskHandle_t xHandleUpdateWeb0;                     // Заголовок задачи "Веб сервер" в зависимости от потоков
-	#if    W5200_THREAD > 1
+#if W5200_THREAD > 1
 	TaskHandle_t xHandleUpdateWeb1;                     // Заголовок задачи "Веб сервер"
-	#endif
-	#if    W5200_THREAD > 2
+#endif
+#if W5200_THREAD > 2
 	TaskHandle_t xHandleUpdateWeb2;                     // Заголовок задачи "Веб сервер"
-	#endif
-	#if    W5200_THREAD > 3
+#endif
+#if W5200_THREAD > 3
 	TaskHandle_t xHandleUpdateWeb3;                     // Заголовок задачи "Веб сервер"
-	#endif
-	#ifdef LCD2004
+#endif
+#ifdef LCD2004
 	TaskHandle_t xHandleKeysLCD;
-	#endif
+#endif
 
 	type_SEMAPHORE xCommandSemaphore;    // Семафор команды
 	boolean Task_vUpdate_run;				// задача vUpdate работает
@@ -778,7 +759,9 @@ private:
 	boolean onBoiler;                     // Если true то идет нагрев бойлера ТН (не ТЭНом)
 	boolean onLegionella;                 // Если true то идет Обеззараживание
 
-	friend void set_Error(int8_t err, char *nam );// Установка критической ошибки для класса ТН
+	friend void set_Error(int8_t err, char *nam); // Установка критической ошибки для класса ТН
 };
 
+
 #endif
+
