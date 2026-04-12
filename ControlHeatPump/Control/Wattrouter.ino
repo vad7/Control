@@ -491,7 +491,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 					if(--WR_Invertor2_off_cnt < -WR_INVERTOR2_SUN_ON_TIMER) {
 						WR_Invertor2_off_cnt = 0;
 						if(GETBIT(WR.Flags, WR_fLog)) journal.jprintf("WR: Sun=%d, Net=%d\n", WR_LastSunPowerOut, WR_Pnet);
-						HP.dRelay[RSOLINV].set_ON();
+						HP.dRelay[RSOLINV].set_Relay(fR_StatusSun);
 						WR_Invertor2_off_cnt = 0;
 					}
 				}

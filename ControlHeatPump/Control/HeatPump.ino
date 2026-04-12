@@ -1721,8 +1721,7 @@ void HeatPump::getTargetTempStr2(char *rstr)
 void HeatPump::relayAllOFF()
 {
 	uint8_t i;
-	//journal.jprintf(" All relay off\n");
-	for(i=0;i<RNUMBER;i++) dRelay[i].set_OFF();         // Выключить все реле;
+	for(i = 0; i < RNUMBER; i++) dRelay[i].set_OFF();
 }                               
 
 // Переключение на бойлер или обратно (true-бойлер false-отопление/охлаждение) возврат onBoiler
@@ -2465,12 +2464,14 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			return pCOMP_OFF;
 		}
 		if(!GETBIT(Option.flags, fBackupPower) || (GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && GETBIT(Prof.Boiler.flags, fBoilerOnGenerator)) /*|| HeatBoilerUrgently*/) {
-			// Включение ТЭНа бойлера, если не питание от резервного источника
-			dRelay[RBOILER].set_ON();
-			#ifdef RPUMPBH
-			if(!onBoiler && GETBIT(work_flags, fHP_BoilerTogetherHeat)) dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
-			#endif
-			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
+			if(!dRelay[RBOILER].get_Relay()) {
+				// Включение ТЭНа бойлера, если не питание от резервного источника
+				dRelay[RBOILER].set_ON();
+				#ifdef RPUMPBH
+				if(!onBoiler && GETBIT(work_flags, fHP_BoilerTogetherHeat)) dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
+				#endif
+				SETBIT0(work_flags, fHP_BoilerTogetherHeat);
+			}
 		}
 		//if(!GETBIT(Prof.Boiler.flags, fTurboBoiler)) return pCOMP_OFF;
 	} else {
@@ -2514,9 +2515,14 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
 			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
 		} else if(FEED > T + HYSTERESIS_BoilerTogetherHeatSt) {
-			SETBIT1(work_flags, fHP_BoilerTogetherHeat);
-			dRelay[RPUMPBH].set_ON();    // насос ГВС - включить
-			return pCOMP_OFF;
+#ifdef RBOILER
+			if(!dRelay[RBOILER].get_Relay())
+#endif
+			{
+				SETBIT1(work_flags, fHP_BoilerTogetherHeat);
+				dRelay[RPUMPBH].set_ON();    // насос ГВС - включить
+				return pCOMP_OFF;
+			}
 		} else if(FEED <= T + HYSTERESIS_BoilerTogetherHeatEn) {
 			dRelay[RPUMPBH].set_OFF();   // насос ГВС - выключить
 			SETBIT0(work_flags, fHP_BoilerTogetherHeat);
