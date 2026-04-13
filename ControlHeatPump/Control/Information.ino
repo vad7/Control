@@ -487,8 +487,8 @@ void Profile::initProfile()
   SETBIT0(Boiler.flags,fTurboBoiler);   // флаг использование ТЭН для нагрева  выключено
   SETBIT0(Boiler.flags,fLegionella);    // флаг легионелла раз внеделю греть бойлер  выключено
   SETBIT0(Boiler.flags,fCirculation);   // флаг Управления циркуляционным насосом ГВС  выключено
-  SETBIT0(Boiler.flags,fAddHeating);    // флаг флаг догрева ГВС ТЭНом
-  SETBIT0(Boiler.flags,fScheduleAddHeating);
+  SETBIT0(Boiler.flags,fAddHeatElement);    // флаг флаг догрева ГВС ТЭНом
+  SETBIT0(Boiler.flags,fScheduleHeatElement);
   SETBIT0(Boiler.flags,fResetHeat);     // флаг Сброса лишнего тепла в СО
   Boiler.TempTarget=5000;               // Целевая температура бойлера
   Boiler.dTemp=500;                     // гистерезис целевой температуры
@@ -501,8 +501,8 @@ void Profile::initProfile()
   Boiler.pid.Kp=1500;                   // Пропорциональная составляющая ПИД ГВС
   Boiler.pid.Ki=0300;                   // Интегральная составляющая ПИД ГВС
   Boiler.pid.Kd=1000;                   // Дифференциальная составляющая ПИД ГВС
-  Boiler.tempRBOILER=4000;              // Температура ГВС при котором включается бойлер и отключатся ТН
-  Boiler.dAddHeating = HYSTERESIS_BoilerAddHeat;
+  Boiler.TempHeatElement=4000;              // Температура ГВС при котором включается бойлер и отключатся ТН
+  Boiler.dHeatElement = HYSTERESIS_BoilerAddHeat;
   Boiler.add_delta_temp = 1000;		    // Добавка температуры к установке бойлера, в градусах
   Boiler.add_delta_hour = 6;		    // Начальный Час добавки температуры к установке бойлера
   Boiler.add_delta_end_hour = 6;        // Конечный Час добавки температуры к установке
@@ -722,8 +722,8 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(x == ATOF_ERROR) return false;   // Ошибка преобразования короме расписания - это не число
 	if(strcmp(var,boil_BOILER_ON)==0)		{ if(x) SETBIT1(SaveON.flags,fBoilerON); else SETBIT0(SaveON.flags,fBoilerON); return true;} else
 	if(strcmp(var,hp_fUseHeater)==0)		{ if(!HP.is_comp_or_heater_on() && HP.get_modWork() == pOFF) { if(x) SETBIT1(SaveON.flags,fBoiler_UseHeater); else SETBIT0(SaveON.flags,fBoiler_UseHeater); } return true;} else
-	if(strcmp(var,boil_SCHEDULER_ON)==0)	{ if(x) SETBIT1(Boiler.flags,fSchedule); else { SETBIT0(Boiler.flags,fSchedule); SETBIT0(Boiler.flags,fScheduleAddHeating); } return true;} else
-	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){if(x) {SETBIT1(Boiler.flags,fScheduleAddHeating); SETBIT1(Boiler.flags,fSchedule); } else SETBIT0(Boiler.flags,fScheduleAddHeating); return true;} else
+	if(strcmp(var,boil_SCHEDULER_ON)==0)	{ if(x) SETBIT1(Boiler.flags,fSchedule); else { SETBIT0(Boiler.flags,fSchedule); SETBIT0(Boiler.flags,fScheduleHeatElement); } return true;} else
+	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){if(x) {SETBIT1(Boiler.flags,fScheduleHeatElement); SETBIT1(Boiler.flags,fSchedule); } else SETBIT0(Boiler.flags,fScheduleHeatElement); return true;} else
 	if(strcmp(var,boil_TOGETHER_HEAT)==0)	{ if(x) SETBIT1(Boiler.flags,fBoilerTogetherHeat); else {
 												SETBIT0(Boiler.flags,fBoilerTogetherHeat);
 #ifdef RPUMPBH
@@ -755,19 +755,19 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(strcmp(var,boil_BOIL_DIF)==0)		{ if((x>=0)&&(x<=32)) {Boiler.pid.Kd=rd(x, 1000); return true;} else return false; } else   // Дифференциальная составляющая ПИД ГВС
 #endif
 	if(strcmp(var,boil_BOIL_TEMP)==0)		{ if((x>=5)&&(x<=70)) {Boiler.tempPID=rd(x, 100); return true;} else return false; } else   // Целевая темпеартура ПИД ГВС
-	if(strcmp(var,boil_ADD_HEATING)==0)		{ if(x) SETBIT1(Boiler.flags,fAddHeating); else SETBIT0(Boiler.flags,fAddHeating); return true;} else  // флаг использования тена для догрева ГВС
-	if(strcmp(var,boil_fAddHeatingForce)==0){ if(x) SETBIT1(Boiler.flags,fAddHeatingForce); else SETBIT0(Boiler.flags,fAddHeatingForce); return true;} else
+	if(strcmp(var,boil_ADD_HEATING)==0)		{ if(x) SETBIT1(Boiler.flags,fAddHeatElement); else SETBIT0(Boiler.flags,fAddHeatElement); return true;} else  // флаг использования тена для догрева ГВС
+	if(strcmp(var,boil_fAddHeatElementForce)==0){ if(x) SETBIT1(Boiler.flags,fAddHeatElementForce); else SETBIT0(Boiler.flags,fAddHeatElementForce); return true;} else
 	if(strcmp(var,boil_HeatUrgently)==0)    { HP.set_HeatBoilerUrgently(x); return true;} else
 	if(strcmp(var,hp_SUN)==0) 				{ Boiler.flags = (Boiler.flags & ~(1<<fBoilerUseSun)) | ((x!=0)<<fBoilerUseSun); return true; }else
-	if(strcmp(var,boil_TEMP_RBOILER)==0)	{ if((x>=0)&&(x<=90))  {Boiler.tempRBOILER=rd(x, 100); return true;} else return false;} else   // температура включения догрева бойлера
-	if(strcmp(var,boil_dAddHeating)==0)	    { Boiler.dAddHeating = rd(x, 100); return true;} else
+	if(strcmp(var,boil_TempHeatElement)==0)	{ if((x>=0)&&(x<=90))  {Boiler.TempHeatElement=rd(x, 100); return true;} else return false;} else   // температура включения догрева бойлера
+	if(strcmp(var,boil_dAddHeating)==0)	    { Boiler.dHeatElement = rd(x, 100); return true;} else
 	if(strcmp(var,boil_WF_MinTarget)==0)    { Boiler.WF_MinTarget = rd(x, 100); return true;} else
 	if(strcmp(var,boil_WR_Target)==0)       { Boiler.WR_Target = rd(x, 100); return true;} else
 	if(strcmp(var,boil_DischargeDelta)==0)	{ Boiler.DischargeDelta = rd(x, 10); return true;} else
 	if(strcmp(var,boil_delayOffPump)==0)	{ Boiler.delayOffPump = x; return true;} else
 	if(strcmp(var,hp_WorkPause)==0)         { if(x >= 0) { Boiler.WorkPause = x; return true; } else return false; } else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(x) SETBIT1(Boiler.flags, fBoilerOnGenerator); else SETBIT0(Boiler.flags, fBoilerOnGenerator); return true; } else
-	if(strcmp(var,boil_fBoilerHeatingOnly)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHeatingOnly); else SETBIT0(Boiler.flags, fBoilerHeatingOnly); return true; } else
+	if(strcmp(var,boil_fBoilerHeatElementOnly)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHeatElementOnly); else SETBIT0(Boiler.flags, fBoilerHeatElementOnly); return true; } else
 	return false;
 }
 
@@ -778,7 +778,7 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_BOILER_ON)==0){       if (GETBIT(SaveON.flags,fBoilerON))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,hp_fUseHeater)==0){       if (GETBIT(SaveON.flags,fBoiler_UseHeater))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_SCHEDULER_ON)==0){    if (GETBIT(Boiler.flags,fSchedule))   return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
-	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){ if (GETBIT(Boiler.flags,fScheduleAddHeating)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_SCHEDULER_ADDHEAT)==0){ if (GETBIT(Boiler.flags,fScheduleHeatElement)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TOGETHER_HEAT)==0){ if (GETBIT(Boiler.flags,fBoilerTogetherHeat)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_fBoilerPID)==0){ if (GETBIT(Boiler.flags,fBoilerPID)) return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TURBO_BOILER)==0){    if (GETBIT(Boiler.flags,fTurboBoiler))return  strcat(ret,(char*)cOne); else return  strcat(ret,(char*)cZero); }else
@@ -806,11 +806,11 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_BOIL_DIF)==0){        _dtoa(ret,Boiler.pid.Kd,3); return ret;       }else                            // Дифференциальная составляющая ПИД ГВС
 #endif
 	if(strcmp(var,boil_BOIL_TEMP)==0){       _dtoa(ret,Boiler.tempPID/10,1); return ret;       }else                            // Целевая темпеартура ПИД ГВС
-	if(strcmp(var,boil_ADD_HEATING)==0){     if(GETBIT(Boiler.flags,fAddHeating)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else   // флаг использования тена для догрева ГВС
-	if(strcmp(var,boil_fAddHeatingForce)==0){if(GETBIT(Boiler.flags,fAddHeatingForce)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_ADD_HEATING)==0){     if(GETBIT(Boiler.flags,fAddHeatElement)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else   // флаг использования тена для догрева ГВС
+	if(strcmp(var,boil_fAddHeatElementForce)==0){if(GETBIT(Boiler.flags,fAddHeatElementForce)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,hp_SUN)==0) { if(GETBIT(Boiler.flags,fBoilerUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
-	if(strcmp(var,boil_TEMP_RBOILER)==0){    _dtoa(ret,Boiler.tempRBOILER/10,1); return ret;    }else                            // температура включения догрева бойлера
-	if(strcmp(var,boil_dAddHeating)==0){        _dtoa(ret,Boiler.dAddHeating/10,1); return ret;       }else
+	if(strcmp(var,boil_TEMP_RBOILER)==0){    _dtoa(ret,Boiler.TempHeatElement/10,1); return ret;    }else                            // температура включения догрева бойлера
+	if(strcmp(var,boil_dAddHeating)==0){        _dtoa(ret,Boiler.dHeatElement/10,1); return ret;       }else
 	if(strcmp(var,boil_WF_MinTarget)==0){    _dtoa(ret,Boiler.WF_MinTarget/10,1); return ret;    }else
 	if(strcmp(var,boil_WR_Target)==0){       _dtoa(ret,Boiler.WR_Target/10,1); return ret;       }else
 	if(strcmp(var,boil_DischargeDelta)==0){  _dtoa(ret, Boiler.DischargeDelta, 1); return ret;  }else
@@ -818,11 +818,11 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_HeatUrgently)==0){if(HP.HeatBoilerUrgently) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_delayOffPump)==0){ return _itoa(Boiler.delayOffPump, ret); }else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
-	if(strcmp(var,boil_fBoilerHeatingOnly)==0){ if(GETBIT(Boiler.flags, fBoilerHeatingOnly)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerHeatElementOnly)==0){ if(GETBIT(Boiler.flags, fBoilerHeatElementOnly)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TargetTemp)==0) {
 xTargetTemp:
-	 if(GETBIT(HP.Prof.Boiler.flags, fAddHeating)) { // режим догрева
-		 _dtoa(ret, (GETBIT(HP.Prof.Boiler.flags, fTurboBoiler) ? Boiler.tempRBOILER : HP.Boiler_Target_AddHeating()) / 10, 1);
+	 if(GETBIT(HP.Prof.Boiler.flags, fAddHeatElement)) { // режим догрева
+		 _dtoa(ret, (GETBIT(HP.Prof.Boiler.flags, fTurboBoiler) ? Boiler.TempHeatElement : HP.Boiler_Target_AddHeating()) / 10, 1);
 		 strcat(ret, "/");
 	 }
 	 _dtoa(ret, HP.get_boilerTempTarget() / 10, 1);
@@ -999,8 +999,8 @@ int8_t  Profile::convert_to_new_version(void)
 				Heat.Rule = (RULE_HP)Heat._reserved_;
 				uint16_t _f = (uint16_t)Boiler.tempInLim;
 				memmove((uint8_t *)&Boiler + 2, (uint8_t *)&Boiler, 10);
-				SETBIT0(_f, fBoilerPID); _f |= (GETBIT(_f, fBoilerHeatingOnly)<<fBoilerPID);
-				SETBIT0(_f, fBoilerHeatingOnly);
+				SETBIT0(_f, fBoilerPID); _f |= (GETBIT(_f, fBoilerHeatElementOnly)<<fBoilerPID);
+				SETBIT0(_f, fBoilerHeatElementOnly);
 				Boiler.flags = _f;
 				Boiler.WorkPause = Heat.WorkPause;
 			}

@@ -3314,7 +3314,7 @@ xContinueSearchHeader:
 			}
 			if(fWebUploadFiles) {
 				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
-				fWebUploadFiles = 0;
+				//fWebUploadFiles = 0; - отключено, чтобы продолжить загрузку без очистки, на новых версиях хрома стало выдаваться "Upload: Empty data!"
 				return pLOAD_ERR;
 			}
 			fWebUploadFiles = 1;

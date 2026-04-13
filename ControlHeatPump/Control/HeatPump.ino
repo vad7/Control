@@ -18,7 +18,6 @@
 // --------------------------------------------------------------------------------
 // Описание базового класса для работы Теплового Насоса
 // --------------------------------------------------------------------------------
-
 #include "HeatPump.h"
 
 // константы для упрощения читаемости кода (используются только в этом файле)
@@ -1673,7 +1672,7 @@ int16_t HeatPump::get_boilerTempTarget()
 #if defined(WATTROUTER) && defined(WEATHER_FORECAST) && defined(WR_Load_pins_Boiler_INDEX)
 	if(h < TARIF_NIGHT_END && WF_BoilerTargetPercent < WF_BOILER_MAX_CLOUDS && GETBIT(WR_Loads, WR_Load_pins_Boiler_INDEX) && GETBIT(WR.Flags, WR_fActive)) {
 		ret = Prof.Boiler.WF_MinTarget + (ret - Prof.Boiler.WF_MinTarget) * WF_BoilerTargetPercent / 100;
-		if(ret < Prof.Boiler.tempRBOILER) ret = Prof.Boiler.tempRBOILER;
+		if(ret < Prof.Boiler.TempHeatElement) ret = Prof.Boiler.TempHeatElement;
 	}
 #endif
 	return ret;
@@ -2349,7 +2348,7 @@ void HeatPump::resetPID()
 
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
 // Проверка на необходимость греть бойлер дополнительным тэном (true - надо греть) ВСЕ РЕЖИМЫ
-boolean HeatPump::boilerAddHeat(int16_t target)
+boolean HeatPump::BoilerHeatElement(int16_t target)
 {
 	if(get_State() != pWORK_HP) return false; // работа ТЭНа бойлера разрешена если только работает ТН, в противном случае выкл
 	if(GETBIT(Option.flags, fBackupPower) && !HeatBoilerUrgently)  { // если переключение на ходу на резервный источник то сбросить догрев бойлера
@@ -2362,7 +2361,7 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 		if(rtcSAM3X8.get_day_of_week() == LEGIONELLA_DAY && rtcSAM3X8.get_hours() == LEGIONELLA_HOUR && rtcSAM3X8.get_minutes() <= 2 && !onLegionella) { // Надо начитать процесс обеззараживания
 			startLegionella = rtcSAM3X8.unixtime();
 			onLegionella = true;
-			journal.jprintf(" Cycle start legionella, %.2dC°\n", sTemp[TBOILER].get_Temp());
+			journal.jprintf(" Anti-Legionella - START, %.2dC°\n", sTemp[TBOILER].get_Temp());
 		}
 		if(onLegionella) {   // Обеззараживание нужно
 			if(startLegionella + LEGIONELLA_TIME > rtcSAM3X8.unixtime()) { // Время цикла еще не исчерпано
@@ -2373,34 +2372,34 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 				else {  // Вариант работы только до достижение темперaтуpы и сразу выключение
 					onLegionella = false;
 					startLegionella = 0;
-					journal.jprintf(" Legionella cycle finished, %.2dC°\n", sTemp[TBOILER].get_Temp());
+					journal.jprintf(" Anti-Legionella cycle finished, %.2dC°\n", sTemp[TBOILER].get_Temp());
 					return false;
 				}
 #endif
 			} else {  // Время вышло, выключаем, и идем дальше по алгоритму
 				onLegionella = false;
 				startLegionella = 0;
-				journal.jprintf(" Legionella cycle end, %.2dC°\n", sTemp[TBOILER].get_Temp());
+				journal.jprintf(" Anti-Legionella cycle end, %.2dC°\n", sTemp[TBOILER].get_Temp());
 			}
 		}
 	} else if(onLegionella) { // если легионеллу отключили на ходу выключаем и идем дальше по алгоритму
 		onLegionella = false;
 		startLegionella = 0;
-		journal.jprintf(" Off legionella\n");
+		journal.jprintf(" Anti-Legionella - OFF\n");
 	}
 
 	// Догрев бойлера
 	if(GETBIT(Prof.SaveON.flags, fBoilerON)) { // Бойлер включен
 		if(scheduleBoiler()) { // Если разрешено согласно расписания
-			if(GETBIT(Prof.Boiler.flags, fAddHeating) && !GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) { // Включен догрев и не включен нагрев только тэном
+			if(GETBIT(Prof.Boiler.flags, fAddHeatElement) && !GETBIT(Prof.Boiler.flags, fBoilerHeatElementOnly)) { // Включен догрев и не включен нагрев только тэном
 				if(!flagRBOILER && (T < target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp))) {  // Бойлер ниже гистерезиса - ставим признак необходимости включения Догрева (но пока не включаем ТЭН)
 					flagRBOILER = true;
 					return false;
 				}
 				if(!flagRBOILER || (onBoiler && !GETBIT(Prof.Boiler.flags, fTurboBoiler))) return false; // флажка нет или работает бойлер, то догрев не включаем
 				else {
-					if(T < target && (T >= Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating || dRelay[RBOILER].get_Relay()
-							|| (Prof.Boiler.flags & ((1<<fAddHeatingForce) | (1<<fTurboBoiler))))) {  // Греем тэном
+					if(T < target && (T >= Prof.Boiler.TempHeatElement - Prof.Boiler.dHeatElement || dRelay[RBOILER].get_Relay()
+							|| (Prof.Boiler.flags & ((1<<fAddHeatElementForce) | (1<<fTurboBoiler))))) {  // Греем тэном
 						return true;
 					}
 					// бойлер выше целевой температуры - цель достигнута или греть тэном еще рано
@@ -2408,7 +2407,7 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 				}
 			} else {
 				if(T >= target) return false;
-				if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) {
+				if(GETBIT(Prof.Boiler.flags, fBoilerHeatElementOnly)) {
 					if(dRelay[RBOILER].get_Relay() || T < target - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp)) return true;
 				} else if(GETBIT(Prof.Boiler.flags, fTurboBoiler)) { // Греем до упора вместе с компрессором
 					return flagRBOILER = onBoiler;
@@ -2416,11 +2415,11 @@ boolean HeatPump::boilerAddHeat(int16_t target)
 			}
 			// ТЭН не используется (сняты все флажки)
 		} else {
-			if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && T < Prof.Boiler.tempRBOILER) {
-				if(dRelay[RBOILER].get_Relay() || T < Prof.Boiler.tempRBOILER - Prof.Boiler.dAddHeating) return true;
+			if(GETBIT(Prof.Boiler.flags, fBoilerHeatElementOnly) && T < Prof.Boiler.TempHeatElement) {
+				if(dRelay[RBOILER].get_Relay() || T < Prof.Boiler.TempHeatElement - Prof.Boiler.dHeatElement) return true;
 			}
-			if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
-				if(GETBIT(Prof.Boiler.flags, fAddHeatingForce) && compressor_in_pause && T <= Prof.Boiler.tempRBOILER) {
+			if(GETBIT(Prof.Boiler.flags, fAddHeatElement)) {
+				if(GETBIT(Prof.Boiler.flags, fAddHeatElementForce) && compressor_in_pause && T <= Prof.Boiler.TempHeatElement) {
 #ifdef RPUMPBH	// насос бойлера
 					if(!dRelay[RPUMPBH].get_Relay())  // Не включаем тэн во время работы насоса бойлера
 #endif
@@ -2458,13 +2457,13 @@ MODE_COMP  HeatPump::UpdateBoiler()
 {
 	int16_t TRG = get_boilerTempTarget();   // целевая температура
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
-	if(boilerAddHeat(TRG)) { // Дополнительный нагреватель бойлера - нужно греть
+	if(BoilerHeatElement(TRG)) { // Дополнительный нагреватель бойлера - нужно греть
 		if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || get_State() == pWAIT_HP) { // Если ТН выключен или выключается
 			dRelay[RBOILER].set_OFF();
 			flagRBOILER = false;
 			return pCOMP_OFF;
 		}
-		if(!GETBIT(Option.flags, fBackupPower) || (GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly) && GETBIT(Prof.Boiler.flags, fBoilerOnGenerator)) /*|| HeatBoilerUrgently*/) {
+		if(!GETBIT(Option.flags, fBackupPower) || (GETBIT(Prof.Boiler.flags, fBoilerHeatElementOnly) && GETBIT(Prof.Boiler.flags, fBoilerOnGenerator)) /*|| HeatBoilerUrgently*/) {
 			if(!dRelay[RBOILER].get_Relay()) {
 				// Включение ТЭНа бойлера, если не питание от резервного источника
 				dRelay[RBOILER].set_ON();
@@ -2492,10 +2491,10 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		return pCOMP_OFF;
 	}
 #endif
-	if(!GETBIT(Prof.SaveON.flags,fBoilerON) || (!scheduleBoiler() && !GETBIT(Prof.Boiler.flags,fScheduleAddHeating))) // Если запрещено греть бойлер согласно расписания ИЛИ  Бойлер выключен, выходим и можно смотреть отопление
+	if(!GETBIT(Prof.SaveON.flags,fBoilerON) || (!scheduleBoiler() && !GETBIT(Prof.Boiler.flags,fScheduleHeatElement))) // Если запрещено греть бойлер согласно расписания ИЛИ  Бойлер выключен, выходим и можно смотреть отопление
 	{
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
-		if(GETBIT(Prof.Boiler.flags, fAddHeating)) {
+		if(GETBIT(Prof.Boiler.flags, fAddHeatElement)) {
 			dRelay[RBOILER].set_OFF();
 			flagRBOILER=false; // Выключение
 		}
@@ -2530,7 +2529,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		} else if(_is_on) return pCOMP_OFF; // догреваем до конца, только потом возможен экслюзивный нагрев бойлера
 	}
 #endif
-	if(GETBIT(Prof.Boiler.flags, fBoilerHeatingOnly)) return pCOMP_OFF;		// выбран только ТЭН
+	if(GETBIT(Prof.Boiler.flags, fBoilerHeatElementOnly)) return pCOMP_OFF;		// выбран только ТЭН
 
 	// -----------------------------------------------------------------------------------------------------
 	// Сброс излишней энергии в систему отопления по температуре подачи/конденсации
@@ -2573,10 +2572,10 @@ MODE_COMP  HeatPump::UpdateBoiler()
 		}
 
 		// Отслеживание выключения (с учетом догрева)
-		if(GETBIT(Prof.Boiler.flags, fAddHeating))// режим догрева
+		if(GETBIT(Prof.Boiler.flags, fAddHeatElement))// режим догрева
 		{
 			if(T > Boiler_Target_AddHeating()) {
-				if(Status.prev == pBh1 && T < Prof.Boiler.tempRBOILER) { // не догрели в прошлый раз
+				if(Status.prev == pBh1 && T < Prof.Boiler.TempHeatElement) { // не догрели в прошлый раз
 					Status.ret = pBh4; return pCOMP_ON;
 				}
 				Status.ret = pBh22; return pCOMP_OFF; // Температура выше целевой температуры ДОГРЕВА надо выключаться!
@@ -2614,7 +2613,7 @@ MODE_COMP  HeatPump::UpdateBoiler()
 			set_HeatBoilerUrgently(false);
 			return pCOMP_OFF;  // Температура выше целевой температуры БОЙЛЕРА надо выключаться!
 		}
-		if(GETBIT(Prof.Boiler.flags, fAddHeating) && T > Boiler_Target_AddHeating()) {// режим догрева
+		if(GETBIT(Prof.Boiler.flags, fAddHeatElement) && T > Boiler_Target_AddHeating()) {// режим догрева
 			Status.ret=pBp22; return pCOMP_OFF;  // Температура выше целевой температуры ДОГРЕВА надо выключаться!
 		}
 		if(!onBoiler && T < TRG - (HeatBoilerUrgently ? 10 : Prof.Boiler.dTemp)) { // Отслеживание включения

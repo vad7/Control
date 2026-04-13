@@ -942,8 +942,8 @@ const char *boil_BOIL_IN      = {"PI"};                  // Интегральн
 const char *boil_BOIL_DIF     = {"PD"};                  // Дифференциальная составляющая ПИД ГВС
 const char *boil_BOIL_TEMP    = {"TEMP"};                // Целевая температура ПИД ГВС
 const char *boil_ADD_HEATING  = {"ADDH"};                // флаг ДОГРЕВА ГВС ТЭНом
-const char *boil_fAddHeatingForce={"AHF"};               // флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
-const char *boil_TEMP_RBOILER = {"TEMPR"};               // температура включения догрева бойлера
+const char *boil_fAddHeatElementForce={"AHF"};           // флаг Включать догрев, если компрессор не нагрел бойлер до температуры догрева
+const char *boil_TempHeatElement={"TEMPR"};              // температура включения догрева бойлера
 const char *boil_TOGETHER_HEAT= {"TGHEAT"};              // флаг Греть совместно с отоплением, если ТН работает на отопление
 const char *boil_fBoilerPID   = {"PID"};                 // флаг ПИД вкл/выкл
 const char *boil_dAddHeating     = {"dAH"};				 // Гистерезис нагрева бойлера до температуры догрева, в сотых градуса
@@ -951,7 +951,7 @@ const char *boil_HeatUrgently = {"URG"};				 // флаг Срочно нужно
 const char *boil_DischargeDelta={"DD"};                  // Сброс тепла в отопление при приближении подачи к максимальной/догреву на °С
 const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть ГВС без ТЭНа при работе от генератора
 const char *boil_WF_MinTarget = {"WT"};
-const char *boil_fBoilerHeatingOnly={"HO"};
+const char *boil_fBoilerHeatElementOnly={"HO"};
 const char *boil_delayOffPump = {"DO"};
 
 // Heater

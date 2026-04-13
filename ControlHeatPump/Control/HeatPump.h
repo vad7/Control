@@ -21,6 +21,7 @@
 #ifndef HEATPUMP_H
 #define HEATPUMP_H
 
+#include <Arduino.h>
 #include "Constant.h"                       // Вся конфигурация и константы проекта Должен быть первым !!!!
 #include "Hardware.h"
 #include "Message.h"
@@ -551,7 +552,7 @@ public:
 
 // Бойлер ТН
 	int16_t get_boilerTempTarget();					          // Получить целевую температуру бойлера с учетом корректировки
-	__attribute__((always_inline)) inline int16_t Boiler_Target_AddHeating() { return Prof.Boiler.tempRBOILER - (onBoiler || HeatBoilerUrgently ? 0 : Prof.Boiler.dAddHeating); }
+	__attribute__((always_inline)) inline int16_t Boiler_Target_AddHeating() { return Prof.Boiler.TempHeatElement - (onBoiler || HeatBoilerUrgently ? 0 : Prof.Boiler.dHeatElement); }
 	boolean get_Circulation(){return GETBIT(Prof.Boiler.flags,fCirculation);} // Нужно ли управлять циркуляционным насосом болйлера
 	uint16_t get_CirculWork(){ return Prof.Boiler.Circul_Work; }            // Время  работы насоса ГВС секунды (fCirculation)
 	uint16_t get_CirculPause(){ return Prof.Boiler.Circul_Pause;}           // Пауза в работе насоса ГВС  секунды (fCirculation)
@@ -709,7 +710,7 @@ private:
 	void    defrost();                    // Все что касается разморозки воздушника
 
 	void resetSettingHP();                // Функция сброса настроек охлаждения и отопления
-	boolean boilerAddHeat(int16_t target);// Проверка на необходимость греть бойлер дополнительным теном (true - надо греть)
+	boolean BoilerHeatElement(int16_t target);// Проверка на необходимость греть бойлер дополнительным теном (true - надо греть)
 	boolean switchBoiler(boolean b);      // Переключение на нагрев бойлера ТН true-бойлер false-отопление/охлаждение
 	boolean checkEVI();                   // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
 	MODE_COMP UpdateHeat();               // Итерация нагрев  вход true - делаем, false - ТОЛЬКО проверяем выход что сделано или надо сделать

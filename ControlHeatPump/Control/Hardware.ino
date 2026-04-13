@@ -2256,7 +2256,7 @@ int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,
 // Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
 {
-	int8_t cnt = HP.Option.Modbus_Attempts;
+	uint8_t cnt = HP.Option.Modbus_Attempts;
 	while(1) {
 		// Если шедулер запущен то захватываем семафор
 		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
@@ -2281,7 +2281,7 @@ int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num
 			err = translateErr(result);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
 		}
-		if(cnt == 1) break;
+		if(cnt <= 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
@@ -2291,7 +2291,7 @@ int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num
 // Получить значение num регистров в виде uint16_t, повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
 {
-	int8_t cnt = HP.Option.Modbus_Attempts;
+	uint8_t cnt = HP.Option.Modbus_Attempts;
 	while(1) {
 		// Если шедулер запущен то захватываем семафор
 		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
@@ -2315,7 +2315,7 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 			err = translateErr(result);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
-		if(cnt == 1) break;
+		if(cnt <= 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
@@ -2325,7 +2325,7 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 // Записать значение регистра в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
 int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data)
 {
-	int8_t cnt = HP.Option.Modbus_Attempts;
+	uint8_t cnt = HP.Option.Modbus_Attempts;
 	while(1) {
 		// Если шедулер запущен то захватываем семафор
 		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
@@ -2349,7 +2349,7 @@ int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t da
 			err = translateErr(result);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
-		if(cnt == 1) break;
+		if(cnt <= 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
@@ -2418,7 +2418,7 @@ int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
 // установить битовый вход функция Modbus function 0x05 Write Single Coil, при ошибке повторить Modbus_Attempts раз
 int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 {
-	int8_t cnt = HP.Option.Modbus_Attempts;
+	uint8_t cnt = HP.Option.Modbus_Attempts;
 	while(1) {
 		// Если шедулер запущен то захватываем семафор
 		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
@@ -2441,7 +2441,7 @@ int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 			err = translateErr(result);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
 		}
-		if(cnt == 1) break;
+		if(cnt <= 1) break;
 		_delay(MODBUS_REPEAT_DELAY);
 		cnt--;
 	}
