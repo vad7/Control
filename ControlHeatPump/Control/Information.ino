@@ -809,7 +809,7 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_ADD_HEATING)==0){     if(GETBIT(Boiler.flags,fAddHeatElement)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else   // флаг использования тена для догрева ГВС
 	if(strcmp(var,boil_fAddHeatElementForce)==0){if(GETBIT(Boiler.flags,fAddHeatElementForce)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,hp_SUN)==0) { if(GETBIT(Boiler.flags,fBoilerUseSun)) return strcat(ret,(char*)cOne);else return strcat(ret,(char*)cZero);} else
-	if(strcmp(var,boil_TEMP_RBOILER)==0){    _dtoa(ret,Boiler.TempHeatElement/10,1); return ret;    }else                            // температура включения догрева бойлера
+	if(strcmp(var,boil_TempHeatElement)==0){    _dtoa(ret,Boiler.TempHeatElement/10,1); return ret;    }else                            // температура включения догрева бойлера
 	if(strcmp(var,boil_dAddHeating)==0){        _dtoa(ret,Boiler.dHeatElement/10,1); return ret;       }else
 	if(strcmp(var,boil_WF_MinTarget)==0){    _dtoa(ret,Boiler.WF_MinTarget/10,1); return ret;    }else
 	if(strcmp(var,boil_WR_Target)==0){       _dtoa(ret,Boiler.WR_Target/10,1); return ret;       }else

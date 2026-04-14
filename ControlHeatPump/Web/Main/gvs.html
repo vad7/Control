@@ -44,10 +44,7 @@ window.onload = function() {
 </h1><br>
 	<table><tbody><tr><td><h2>Параметры ГВС</h2></td><td style="text-align:right" nowrap><span style="font-size:1em"><input type="checkbox" id="get_boiler-urg" onchange="setParam('get_Boiler(URG)');"> - Нагреть срочно <sup>11</sup></span></td></tr></tbody></table>
 	<table border="1" rules="rows"><thead>
-	<tr>
-		<th>Параметр</th>
-		<th>Значение</th>
-	</tr>
+	<tr><th width="60%">Параметр</th><th width="40%">Значение</th></tr>
 	</thead><tbody>
 	<tr>
 		<td>Включение нагрева бойлера</td>
@@ -61,17 +58,6 @@ window.onload = function() {
 	</tr><tr>
 		<td>Гистерезис целевой температуры °C [0..30]<sup>1</sup></td>
 		<td nowrap><input id="get_boiler-dtrg" type="number" min="0" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(DTRG)');"></td>
-	</tr><tr>
-		<td><b>Использование ночного тарифа</b></td><td></td>
-	</tr><tr>
-		<td>Добавка к целевой температуре по часам C° [-50..50]<sup>2</sup></td>
-		<td nowrap><input id="get_boiler-adt" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADT)');"></td>
-	</tr><tr>
-		<td>Начальный час добавки к целевой температуре [0..23]</td>
-		<td nowrap><input id="get_boiler-adh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADH)');"></td>
-	</tr><tr>
-		<td>Конечный час добавки к целевой температуре [0..23]</td>
-		<td nowrap><input id="get_boiler-adeh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADEH)');"></td>
 	</tr><tr>
 		<td><b>Встроенный ТЭН</b></td><td></td>
 	</tr><tr>
@@ -98,6 +84,17 @@ window.onload = function() {
 	</tr><tr>
 		<td>Включать догрев, если компрессор не нагрел бойлер до температуры догрева<sup>5</sup></td>
 		<td><input id="get_boiler-ahf" type="checkbox" onchange="setParam('get_Boiler(AHF)');"></td>
+	</tr><tr>
+		<td><b>Использование ночного тарифа</b></td><td></td>
+	</tr><tr>
+		<td>Добавка к целевой температуре по часам C° [-50..50]<sup>2</sup></td>
+		<td nowrap><input id="get_boiler-adt" type="number" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADT)');"></td>
+	</tr><tr>
+		<td>Начальный час добавки к целевой температуре [0..23]</td>
+		<td nowrap><input id="get_boiler-adh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADH)');"></td>
+	</tr><tr>
+		<td>Конечный час добавки к целевой температуре [0..23]</td>
+		<td nowrap><input id="get_boiler-adeh" type="number" min="0" max="23" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(ADEH)');"></td>
 	</tr><tr>
 		<td><b>ПИД</b></td><td></td>
 	</tr><tr>
