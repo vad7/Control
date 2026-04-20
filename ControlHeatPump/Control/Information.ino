@@ -768,6 +768,7 @@ boolean Profile::set_boiler(char *var, char *c)
 	if(strcmp(var,hp_WorkPause)==0)         { if(x >= 0) { Boiler.WorkPause = x; return true; } else return false; } else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(x) SETBIT1(Boiler.flags, fBoilerOnGenerator); else SETBIT0(Boiler.flags, fBoilerOnGenerator); return true; } else
 	if(strcmp(var,boil_fBoilerHeatElementOnly)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHeatElementOnly); else SETBIT0(Boiler.flags, fBoilerHeatElementOnly); return true; } else
+	if(strcmp(var,boil_fBoilerHoldR3WAY)==0){ if(x) SETBIT1(Boiler.flags, fBoilerHoldR3WAY); else SETBIT0(Boiler.flags, fBoilerHoldR3WAY); return true; } else
 	return false;
 }
 
@@ -819,6 +820,7 @@ char* Profile::get_boiler(char *var, char *ret)
 	if(strcmp(var,boil_delayOffPump)==0){ return _itoa(Boiler.delayOffPump, ret); }else
 	if(strcmp(var,boil_fBoilerOnGenerator)==0){ if(GETBIT(Boiler.flags, fBoilerOnGenerator)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_fBoilerHeatElementOnly)==0){ if(GETBIT(Boiler.flags, fBoilerHeatElementOnly)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
+	if(strcmp(var,boil_fBoilerHoldR3WAY)==0){ if(GETBIT(Boiler.flags, fBoilerHoldR3WAY)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero); }else
 	if(strcmp(var,boil_TargetTemp)==0) {
 xTargetTemp:
 	 if(GETBIT(HP.Prof.Boiler.flags, fAddHeatElement)) { // режим догрева

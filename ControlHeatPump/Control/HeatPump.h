@@ -339,8 +339,8 @@ struct type_statusHP
  uint32_t pumpCO_OFF;                     // Время выключения насоса системы отопления
 };
 
-#if defined(R3WAY)
-#define IS_BOILER_HEATING HP.dRelay[R3WAY].get_Relay()
+#if defined(R3WAY) && !defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
+#define IS_BOILER_HEATING (HP.dRelay[R3WAY].get_Relay() && HP.dRelay[PUMP_OUT].get_Relay())
 #elif defined(RPUMPBH)
 #define IS_BOILER_HEATING (HP.dRelay[RPUMPBH].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay())
 #else
@@ -407,7 +407,7 @@ public:
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
 	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
 	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
-	void 	 relayAllOFF();              // Все реле выключить
+	void 	 relayAllOFF();              // Все реле выключить, кроме некоторых
 	void	 HandleNoPower(void);		// Обработать пропадание питания
 	bool     DelaySec(uint16_t s);		// Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать
 

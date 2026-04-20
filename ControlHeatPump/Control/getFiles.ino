@@ -233,14 +233,14 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Конечный час добавки к целевой температуре: ");HP.Prof.get_paramHeatHP((char*)ADD_DELTA_END_HOUR,Socket[thread].outBuf);STR_END;
        
      if (HP.get_ruleHeat()!=pHYSTERESIS)
-         {
+     {
          strcat(Socket[thread].outBuf," - ПИД -\r\n");
          strcat(Socket[thread].outBuf,"Целевая температура подачи ПИД ТН (C°): ");HP.Prof.get_paramHeatHP((char*)hp_TEMP_PID,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Постоянная интегрирования времени в секундах ПИД ТН: ");HP.Prof.get_paramHeatHP((char*)hp_HP_TIME,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Пропорциональная составляющая ПИД ТН: ");HP.Prof.get_paramHeatHP((char*)hp_HP_PRO,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Интегральная составляющая ПИД ТН: ");HP.Prof.get_paramHeatHP((char*)hp_HP_IN,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Дифференциальная составляющая ПИД ТН: ");HP.Prof.get_paramHeatHP((char*)hp_HP_DIF,Socket[thread].outBuf);STR_END;
-         }
+     }
          
      strcat(Socket[thread].outBuf,"  - Опции -\r\n"); 
      strcat(Socket[thread].outBuf,"Теплый пол: ");HP.Prof.get_paramHeatHP((char*)hp_HEAT_FLOOR,Socket[thread].outBuf);STR_END;
@@ -262,14 +262,14 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Гистерезис целевой температуры (C°): ");HP.Prof.get_paramCoolHP((char*)hp_DTEMP,Socket[thread].outBuf);STR_END;
 
      if (HP.get_ruleCool()!=pHYSTERESIS)
-         {
+     {
          strcat(Socket[thread].outBuf," - ПИД -\r\n");	
          strcat(Socket[thread].outBuf,"Целевая температура подачи ПИД ТН (C°): ");HP.Prof.get_paramCoolHP((char*)hp_TEMP_PID,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Постоянная интегрирования времени в секундах ПИД ТН: ");HP.Prof.get_paramCoolHP((char*)hp_HP_TIME,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Пропорциональная составляющая ПИД ТН: ");HP.Prof.get_paramCoolHP((char*)hp_HP_PRO,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Интегральная составляющая ПИД ТН: ");HP.Prof.get_paramCoolHP((char*)hp_HP_IN,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Дифференциальная составляющая ПИД ТН: ");HP.Prof.get_paramCoolHP((char*)hp_HP_DIF,Socket[thread].outBuf);STR_END;
-         }
+     }
      strcat(Socket[thread].outBuf," - Опции -\r\n"); 
      strcat(Socket[thread].outBuf,"Теплый пол: ");HP.Prof.get_paramCoolHP((char*)hp_HEAT_FLOOR,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Использовать солнечный коллектор (TSUN*+2°>TEVAOUTG): ");HP.Prof.get_paramCoolHP((char*)hp_SUN,Socket[thread].outBuf);STR_END;
@@ -300,7 +300,7 @@ void get_txtSettings(uint8_t thread, char *filename)
      
      
      if (HP.dFC.get_present()) // Только для инвертора
-         {
+     {
          strcat(Socket[thread].outBuf," - ПИД -\r\n");
          strcat(Socket[thread].outBuf,"Использовать ПИД управление инвертором: ");HP.Prof.get_boiler((char*)boil_fBoilerPID,Socket[thread].outBuf);STR_END;  
          strcat(Socket[thread].outBuf,"Целевая температура подачи (C°): ");HP.Prof.get_boiler((char*)boil_BOIL_TEMP,Socket[thread].outBuf);STR_END;
@@ -308,7 +308,7 @@ void get_txtSettings(uint8_t thread, char *filename)
          strcat(Socket[thread].outBuf,"Пропорциональная составляющая: ");HP.Prof.get_boiler((char*)boil_BOIL_PRO,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Интегральная составляющая: ");HP.Prof.get_boiler((char*)boil_BOIL_IN,Socket[thread].outBuf);STR_END;
          strcat(Socket[thread].outBuf,"Дифференциальная составляющая: ");HP.Prof.get_boiler((char*)boil_BOIL_DIF,Socket[thread].outBuf);STR_END;
-         }
+     }
          
      strcat(Socket[thread].outBuf," - Защиты при работе теплового насоса -\r\n");
      strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_boiler((char*)boil_TEMP_MAX,Socket[thread].outBuf);STR_END;

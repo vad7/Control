@@ -174,13 +174,13 @@ void devHeater::HeaterValve_On()
 				set_Error(err, (char*)__FUNCTION__);
 				return;
 			}
+			if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve ON\n");
 		}
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(!GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		SETBIT1(HP.work_flags, fHP_HeaterValveOn);
-		if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve ON, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif
@@ -208,13 +208,13 @@ void devHeater::HeaterValve_Off()
 				set_Error(err, (char*)__FUNCTION__);
 				return;
 			}
+			if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve OFF\n");
 		}
 	}
 #endif
 #if defined(RH_3WAY) || defined(HEATER_MODBUS_3WAY_ID)
 	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) {
 		SETBIT0(HP.work_flags, fHP_HeaterValveOn);
-		if(GETBIT(HP.Option.flags2, f2modWorkLog)) journal.jprintf("Heater valve OFF, wait\n");
 		_delay(HP.Option.SwitchHeaterHPTime * 1000);	// Ожидание переключения
 	}
 #endif

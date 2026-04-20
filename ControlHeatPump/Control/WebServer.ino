@@ -695,7 +695,13 @@ void parserGET(uint8_t thread, int8_t )
 			i = HP.dRelay[RSUPERBOILER].get_Relay();
 	#else
 		#if defined(R3WAY)
+			#if defined(BOILER_R3WAY_BEFORE_HEATER_3WAY)
+			i = HP.dRelay[R3WAY].get_Relay() && ((HP.get_modWork() & pBOILER) || HP.is_heater_on());
+			#elif defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
 			i = HP.dRelay[R3WAY].get_Relay();
+			#else
+			i = HP.dRelay[R3WAY].get_Relay() && HP.dRelay[PUMP_OUT].get_Relay();
+			#endif
 		#else
 			i = 0;
 		#endif

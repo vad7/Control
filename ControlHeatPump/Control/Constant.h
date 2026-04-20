@@ -24,7 +24,7 @@
 #include "Config.h"                         // Цепляем сразу конфигурацию
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.213"				// Версия прошивки
+#define VERSION			"1.214"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -953,6 +953,7 @@ const char *boil_fBoilerOnGenerator={"WG"};              // флаг Греть 
 const char *boil_WF_MinTarget = {"WT"};
 const char *boil_fBoilerHeatElementOnly={"HO"};
 const char *boil_delayOffPump = {"DO"};
+const char *boil_fBoilerHoldR3WAY={"HR"};
 
 // Heater
 const char *Wheater_fHeater_Opentherm 			= {"OT"};

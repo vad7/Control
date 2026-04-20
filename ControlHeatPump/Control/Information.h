@@ -129,7 +129,7 @@ struct type_SaveON {
 #define fBoilerUseSun		9		  	// флаг использования солнечного коллектора
 #define fAddHeatElementForce 10			// флаг Включать догрев тэном, если компрессор не нагрел бойлер до температуры догрева
 #define fBoilerOnGenerator  11			// Греть бойлер на генераторе
-#define fBoiler_reserved	12			// -
+#define fBoilerHoldR3WAY	12			// Удерживать кран Бойлер-СО на бойлере после останова нагрева
 #define fBoilerCircSchedule 13		  	// флаг Рециркуляция ГВС по расписанию
 #define fBoilerPID			14			// Использовать ПИД
 
