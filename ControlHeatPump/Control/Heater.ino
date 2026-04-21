@@ -377,8 +377,8 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, GETBIT(HP.work_flags, fHP_HeaterValveOn) ? "Котел" : "ТН"); } else
-	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
-	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
 	if(strcmp(var, Wheater_Errors)==0) 					{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
