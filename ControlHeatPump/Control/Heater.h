@@ -124,7 +124,8 @@ struct type_HeaterSettings {					// Структура для сохранени
 
 // Рабочие флаги (fwork)
 #define fHeater_LinkAdapterOk			0		// Есть связь по Modbus с адаптером
-#define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом
+#define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом, после подряд нескольких fHeater_CmdNotResponse
+#define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 
 class devHeater
 {

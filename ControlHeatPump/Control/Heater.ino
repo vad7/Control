@@ -91,6 +91,7 @@ void devHeater::Heater_Stop()
 			set_Error(err, (char*)__FUNCTION__);
 			return;
 		}
+		_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
 		int16_t status;
 		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);
 		if(err) {
@@ -138,6 +139,7 @@ void devHeater::Heater_Start()
 			set_Error(err, (char*)__FUNCTION__);
 			return;
 		}
+		_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
 		int16_t status;
 		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);	// Получить регистр состояния записи
 		if(err) {
@@ -236,24 +238,32 @@ void devHeater::WaitPumpOff()
 // Вызывается из задачи чтения датчиков, group: 0 - состояние линка с котлом, 1 - данные
 int8_t devHeater::read_state(uint8_t group)
 {
-	if(group == 0 || !GETBIT(fwork, fHeater_LinkHeaterOk)) {
+	if(group == 0 || !GETBIT(fwork, fHeater_LinkAdapterOk) || !GETBIT(fwork, fHeater_LinkHeaterOk)) { // группа 0 или если нет связи
 		uint16_t r;
-		if((err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r))) {
-			if(HP.IsWorkingNow() && (testMode == NORMAL || testMode == HARD_TEST)) set_Error(err, (char*)__FUNCTION__);
-			err_num_total++;
-		} else {
-			if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) SETBIT1(fwork, fHeater_LinkHeaterOk); else SETBIT0(fwork, fHeater_LinkHeaterOk);
+		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
+		if(err == OK) {
+			if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) {
+				err_num = 0;
+				SETBIT0(fwork, fHeater_CmdNotResponse);
+				SETBIT1(fwork, fHeater_LinkHeaterOk);
+			} else {
+				SETBIT1(fwork, fHeater_CmdNotResponse);
+				if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
+			}
 		}
 	} else {
 		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_START_DATA, sizeof(data), (uint16_t*)&data);
-		if(err) err_num_total++;
 	}
 	if(err) {
 		if(testMode != NORMAL && testMode != HARD_TEST) {
 			SETBIT1(fwork, fHeater_LinkAdapterOk);
 			err = OK;
 		} else {
-			if(HP.IsWorkingNow()) set_Error(err, (char*)__FUNCTION__);
+			err_num_total++;
+			if(HP.IsWorkingNow()) {
+				journal.jprintf("%s Modbus error %d\n", HEATER_NAME, err);
+				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
+			}
 			SETBIT0(fwork, fHeater_LinkAdapterOk);
 		}
 	} else {
@@ -261,7 +271,7 @@ int8_t devHeater::read_state(uint8_t group)
 	}
 	if(group && (testMode == NORMAL || testMode == HARD_TEST)) {
 		if(HP.is_heater_on()) {
-			if(GETBIT(fwork, fHeater_LinkHeaterOk)) {
+			if(!GETBIT(fwork, fHeater_LinkHeaterOk)) {
 				set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
 			} else if(data.Status == 0) {
 				set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
@@ -309,6 +319,7 @@ int8_t devHeater::set_target(uint16_t temp, uint8_t power_max)
 			}
 			int16_t status;
 			if(temp && prev_temp != temp) {
+				_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
 				err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + reg1, 1, (uint16_t*)&status);	// Получить регистр состояния записи
 				if(err) {
 					err_num_total++;
@@ -321,6 +332,7 @@ int8_t devHeater::set_target(uint16_t temp, uint8_t power_max)
 				} else prev_temp = temp;
 			}
 			if(PowerMaxCurrent != power_max) {
+				if(prev_temp == temp) _delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание, если сверху не ждали
 				err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_POWER, 1, (uint16_t*)&status);	// Получить регистр состояния записи
 				if(err) {
 					err_num_total++;
@@ -372,7 +384,10 @@ void devHeater::get_info(char* buf)
 bool devHeater::get_param(char *var, char *ret)
 {
 	ret += strlen(ret);
-	if(strcmp(var, Wheater_LinkHeaterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk), ret); } else
+	if(strcmp(var, Wheater_LinkHeaterOk)==0)			{ if(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkAdapterOk) && GETBIT(fwork, fHeater_LinkHeaterOk)) {
+																strcat(ret, "Ok");
+																if(GETBIT(fwork, fHeater_CmdNotResponse)) strcat(ret, "?");
+															} else strcat(ret, "Нет"); } else
 	if(strcmp(var, Wheater_fLinkAdapterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkAdapterOk), ret); } else
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else

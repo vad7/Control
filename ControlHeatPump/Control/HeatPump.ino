@@ -3622,7 +3622,7 @@ bool HeatPump::configHP()
 			if(!GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) if(Switch_R4WAY(false)) return false; // 4-х ходовой на нагрев
 		#if defined(R3WAY) && defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
 			if(!GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) {
-				set_Error(ERR_WRONG_HARD_STATE, "BOILER");
+				set_Error(ERR_WRONG_HARD_STATE, (char*)"BOILER");
 				return false;
 			}
 		#endif
