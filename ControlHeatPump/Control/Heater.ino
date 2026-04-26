@@ -354,6 +354,14 @@ int8_t devHeater::set_target(uint16_t temp, uint8_t power_max)
 	return err;
 }
 
+// Проверка работает ли котел
+bool devHeater::CheckIsHeaterOn(void)
+{
+	if(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk)) {
+		return (data.Status & HEATER_HEAT_ON_MASK) ?  true : false;
+	} else return HP.is_heater_on();
+}
+
 // Получить информацию
 void devHeater::get_info(char* buf)
 {

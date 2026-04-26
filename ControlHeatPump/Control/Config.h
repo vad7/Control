@@ -5403,7 +5403,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PIN_DEVICE_RBOILER         11 //[R_8] Включение ТЭНа бойлера (SSR, PWM). PWM - Dimmer(10000W).SCR, GND - Dimmer.[MOC3023.2](Cut MOC3023.2 to Dimmer.GND!)
 	#define PIN_PWM_ZERO_CROSS         12 // X17.2(-), X1.2(+) - EL817C.4(pullup to X1.1(3.3V) - R75k), [Dimmer(10000W).Zero - Zero] - R15k - PC817C.1, Dimmer.GND - PC817C.2
 	#define PIN_DEVICE_R4WAY           51 //[R_6] 4-ходовой клапан
-	#define PIN_DEVICE_RPUMPFL         50 //[R_5 реле насоса Теплого Пола
+	#define PIN_DEVICE_RPUMPFL         50 //[R_5] реле насоса Теплого Пола
 	#ifdef USE_SUN_COLLECTOR
 		#define PIN_DEVICE_RSUN        46 //[R_1] Реле включения насоса солнечного коллектора
 		#define PIN_DEVICE_RSUN_ON     53 //[R_7] Реле включение шарового крана солнечного коллектора

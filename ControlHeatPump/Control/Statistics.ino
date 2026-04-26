@@ -523,7 +523,7 @@ void Statistics::Update()
 #endif
 #ifdef USE_HEATER
 		case STATS_OBJ_Heater:
-			if(!HP.is_heater_on()) continue;
+			if(!HP.dHeater.CheckIsHeaterOn()) continue;
 			break;
 #endif
 		case STATS_OBJ_Compressor:
@@ -1154,7 +1154,7 @@ void Statistics::History()
 			break;
 #ifdef USE_HEATER
 		case STATS_OBJ_Heater:
-			int_to_dec_str(HP.dHeater.data.Power, 1, &buf, 0); // %
+			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // %
 			break;
 #endif
 		case STATS_OBJ_Power:

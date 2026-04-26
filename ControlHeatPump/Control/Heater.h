@@ -147,6 +147,7 @@ public:
 	void 	HeaterValve_On();						// Переключиться на котел
 	void 	HeaterValve_Off();						// Переключиться на ТН
 	void	WaitPumpOff();							// Ожидать постциркуляцию насоса
+	bool	CheckIsHeaterOn(void);					// Проверка работает ли котел
 
 	int8_t   err;									// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
