@@ -139,6 +139,7 @@ public:
 	bool	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
 	int8_t	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
 	void	get_info(char* buf);					// Получить информацию
+	void 	DumpJournal(void);
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
 
 	void 	Heater_Start();							// Включить котел

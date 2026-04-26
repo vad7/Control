@@ -270,15 +270,17 @@ int8_t devHeater::read_state(uint8_t group)
 		SETBIT1(fwork, fHeater_LinkAdapterOk);
 	}
 	if(group && (testMode == NORMAL || testMode == HARD_TEST)) {
+		uint16_t _status = data.Status & HEATER_HEAT_ON_MASK;
 		if(HP.is_heater_on()) {
 			if(!GETBIT(fwork, fHeater_LinkHeaterOk)) {
 				set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
-			} else if(data.Status == 0) {
+			} else if(!_status) {
 				set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
 			}
-		} else if(data.Status) {
-			journal.jprintf("%s is working -> STOP\n", HEATER_NAME);
-			Heater_Stop();
+		} else if(_status) {
+			journal.jprintf("%s is working!\n", HEATER_NAME);
+			DumpJournal();
+			//Heater_Stop();
 		}
 	}
 	return err;
@@ -377,6 +379,14 @@ void devHeater::get_info(char* buf)
 				if(GETBIT(d, HM_ERROR_OVERHEAT)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_OVERHEAT_S);
 			}
 		}
+	}
+}
+
+void devHeater::DumpJournal(void)
+{
+	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
+		journal.jprintf(" Heater:%X,%d%% tF:%.1d tB:%.1d ", data.Status, data.Power, data.T_Flow, data.T_Boiler);
+		journal.jprintf("P:%.1d E:%d,%d\n", data.P_OUT, data.Error, data.Error2);
 	}
 }
 

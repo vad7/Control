@@ -4713,6 +4713,9 @@ int8_t HeatPump::save_DumpJournal(boolean f)
 		if(i < 2) ((journal).*(fn))("[%.2d]", PressToTemp(sADC[i].get_Value()));
 	}
 	((journal).*(fn))(cStrEnd);
+#ifdef USE_HEATER
+	if(work_flags & ((1<<fHP_HeaterOn) | (1<<fHP_HeaterWasOn))) dHeater.DumpJournal();
+#endif
 	return OK;
 }
 
