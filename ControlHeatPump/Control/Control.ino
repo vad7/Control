@@ -1439,7 +1439,7 @@ void vReadSensor_delay1ms(int32_t ms)
 							if(_profile == SCHDLR_Profile_off) {
 								HP.sendCommand(pWAIT);
 							} else if(HP.Prof.get_idProfile() != _profile) {
-								HP.SwitchToProfile(_profile);
+								HP.SwitchToProfile(_profile + SWITCH_PROF_BY_SCHEDULER);
 							} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 								HP.sendCommand(pRESUME);
 							}

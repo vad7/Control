@@ -3323,20 +3323,9 @@ xContinueSearchHeader:
 				//fWebUploadFiles = 0; - отключено, чтобы продолжить загрузку без очистки, на новых версиях хрома стало выдаваться "Upload: Empty data!"
 				return pLOAD_ERR;
 			}
-			fWebUploadFiles = 1;
+			fWebUploadFiles = 2;
 			numFilesWeb = 0;
-			journal.jprintf_time("Start upload, erase SPI disk ");
-			SerialFlash.eraseAll();
-			while(SerialFlash.ready() == false) {
-				SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
-				vTaskDelay(100 / portTICK_PERIOD_MS);
-				if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
-					journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);
-					return pLOAD_ERR;
-				} // если не удается захватить мютекс, то ошибка и выход
-				journal.jprintf(".");
-			}
-			journal.jprintf(" Ok, free %d bytes\n", SerialFlash.free_size());
+			journal.jprintf_time("Start upload to SPI flash\n");
 			return pNULL;
 		} else if(strcmp(nameFile, LOAD_SD_START) == 0) {  // начало загрузки вебморды в SD
 			if(!HP.get_fSD()) {
@@ -3349,14 +3338,14 @@ xContinueSearchHeader:
 				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
-			fWebUploadFiles = 2;
+			fWebUploadFiles = 1;
 			numFilesWeb = 0;
 			journal.jprintf_time("Start upload to SD.\n");
 			return pNULL;
 		} else if(strcmp(nameFile, LOAD_FLASH_END) == 0 || strcmp(nameFile, LOAD_SD_END) == 0) {  // Окончание загрузки вебморды
 			if(fWebUploadFiles) { // Семафор не захвачен (был захвачен ранее) все ок
-				journal.jprintf_time("Ok, %d files uploaded, free %.1f KB\n", numFilesWeb, fWebUploadFiles == 1 ? (float)SerialFlash.free_size() / 1024 : (float)card.vol()->freeClusterCount() * card.vol()->blocksPerCluster() * 512 / 1024);
-				if(fWebUploadFiles == 1) {// to Flash
+				journal.jprintf_time("Ok, %d files uploaded, free %.1f KB\n", numFilesWeb, fWebUploadFiles > 1 ? (float)SerialFlash.free_size() / 1024 : (float)card.vol()->freeClusterCount() * card.vol()->blocksPerCluster() * 512 / 1024);
+				if(fWebUploadFiles > 1) {// to Flash
 					HP.set_fSPIFlash(initSpiDisk(false));
 				}
 				fWebUploadFiles = 0;
@@ -3379,10 +3368,24 @@ xContinueSearchHeader:
 				// thread - поток веб сервера,котрый обрабатывает post запрос
 				// ptr - указатель на начало данных (файла) в буфере Socket[thread].inPtr.
 				// buf_len - размер данных в буфере ptr (по сети осталось принять lenFile-buf_len)
-				if(fWebUploadFiles == 1) {
+				if(fWebUploadFiles > 1) {
 					uint16_t numPoint = 0;
 					int32_t loadLen; // Обработанная (загруженная) длина
 					WEB_STORE_DEBUG_INFO(54);
+					if(fWebUploadFiles == 2 && (SerialFlash.exists(nameFile) || (uint32_t)lenFile > SerialFlash.free_size())) { // Очистка флеша
+						SerialFlash.eraseAll();
+						while(SerialFlash.ready() == false) {
+							SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
+							vTaskDelay(100 / portTICK_PERIOD_MS);
+							if(SemaphoreTake(xWebThreadSemaphore, (3 * W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) { // получить семафор веб морды
+								journal.jprintf("%s: Socket %d %s\n", (char*) __FUNCTION__, Socket[thread].sock, MutexWebThreadBuzy);
+								return pLOAD_ERR; // если не удается захватить мютекс, то ошибка и выход
+							}
+							journal.jprintf(".");
+						}
+						journal.jprintf("\nСleared Ok, free %d bytes\n", SerialFlash.free_size());
+					}
+					fWebUploadFiles = 3;
 					journal.jprintf("%s (%d) ", nameFile, lenFile);
 					loadLen = SerialFlash.free_size();
 					if(lenFile > loadLen) {
@@ -3431,7 +3434,7 @@ xContinueSearchHeader:
 						fWebUploadFiles = 0;
 						return pLOAD_ERR;
 					}
-				} else if(fWebUploadFiles == 2) { // Запись на SD,
+				} else if(fWebUploadFiles == 1) { // Запись на SD
 					WEB_STORE_DEBUG_INFO(54);
 					journal.jprintf("%s (%d) ", nameFile, lenFile);
 					for(uint16_t _timeout = 0; _timeout < 2000 && card.card()->isBusy(); _timeout++) _delay(1);

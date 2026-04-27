@@ -1,0 +1,28 @@
+<html lang="ru"><head><title>Ручное управление насосами. Народный контроллер ТН</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script type='text/javascript' src='scripts.js'></script>
+<script type="text/javascript">
+window.onload = function() {
+	updateParam("get_Relay(RPUMPO)");
+}
+function switch_pumps() {
+	element = document.getElementById("get_relay-rpumpo");
+	if(confirm(element.checked ? "Включить?" : "Выключить?")) {
+		setParam('get_Relay(RPUMPO)'); 
+		setParam('get_Relay(RPUMPFL)','get_relay-rpumpo');
+	}
+}
+</script>
+</head>
+<body class="about">
+<div id="menu" class="menu"><script src="menu.js"></script></div>
+<div class="content">
+	<h1>Управление насосами</h1>
+	<div class="row1">
+	<h2>Включить насосы отопления: <input type="checkbox" id="get_relay-rpumpo" onchange="switch_pumps();"></h2>
+	</div>
+</div>
+</body>
+</html>

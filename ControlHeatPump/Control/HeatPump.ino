@@ -1831,13 +1831,27 @@ void HeatPump::Pump_HeatFloor(boolean) { }
 #endif
 
 #ifdef R3WAY
-void HeatPump::Switch_R3WAY(bool On)
+// 1 - Вкл, 0 - Выкл, -1 - Выкл без ожидания времени выключения
+void HeatPump::Switch_R3WAY(int8_t On)
 {
 	bool st = dRelay[R3WAY].get_Relay();
-	dRelay[R3WAY].set_Relay(On ? fR_StatusMain : -fR_StatusMain);
-	if(st != On) {
+	if(On) {
+#ifdef R3WAYOFF
+		dRelay[R3WAYOFF].set_Relay(-fR_StatusMain);
+#endif
+		dRelay[R3WAY].set_Relay(fR_StatusMain);
+	} else {
+		dRelay[R3WAY].set_Relay(-fR_StatusMain);
+#ifdef R3WAYOFF
+		dRelay[R3WAYOFF].set_Relay(fR_StatusMain);
+#endif
+	}
+	if(On != -1 && st != On) {
 #ifdef SWITCH_TIME_R3WAY
 		DelaySec(SWITCH_TIME_R3WAY);
+	#ifdef R3WAYOFF
+		if(!On) dRelay[R3WAYOFF].set_Relay(-fR_StatusMain);
+	#endif
 #else
 		_delay(DELAY_AFTER_SWITCH_RELAY);
 #endif
@@ -2641,31 +2655,31 @@ MODE_COMP  HeatPump::UpdateBoiler()
 #ifdef USE_HEATER
 		else if(_is_on & _HEATER_) {	// Котел
 
-			if(FEED > Prof.Boiler.tempInLim - dHeater.set.boiler_protect_temp_dt * 10) { // Подача ограничение
-				if(dHeater.PowerMaxCurrent > dHeater.set.boiler_power_min) { // установка минимальной мощности, если еще не установили
-					dHeater.set_target(0, dHeater.set.boiler_power_min);
-					Status.ret = pBp6;
-					resetPID();
-				}
-				return pCOMP_NONE;
-			}
-			if(xTaskGetTickCount() - updatePidBoiler < get_timeBoiler() * 1000) { Status.ret = pBp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
-			updatePidBoiler = xTaskGetTickCount();
-			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
-			Status.ret = pBp12;
-			int16_t newFC = updatePID(Prof.Boiler.tempPID - FEED, Prof.Boiler.pid, pidw);
-	#ifndef PID_FORMULA2
-			newFC += dHeater.PowerMaxCurrent;
-	#endif
-			if(newFC > dHeater.set.boiler_power_max) newFC = dHeater.set.boiler_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
-			else if(newFC < dHeater.set.boiler_power_min) newFC = dHeater.set.boiler_power_min;
-			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
-			{
-	#ifdef DEBUG_MODWORK
-				journal.jprintf(" HT> %d\n", newFC);
-	#endif
-				dHeater.set_target(0, newFC);
-			}
+//			if(FEED > Prof.Boiler.tempInLim - dHeater.set.boiler_protect_temp_dt * 10) { // Подача ограничение
+//				if(dHeater.PowerMaxCurrent > dHeater.set.boiler_power_min) { // установка минимальной мощности, если еще не установили
+//					dHeater.set_target(0, dHeater.set.boiler_power_min);
+//					Status.ret = pBp6;
+//					resetPID();
+//				}
+//				return pCOMP_NONE;
+//			}
+//			if(xTaskGetTickCount() - updatePidBoiler < get_timeBoiler() * 1000) { Status.ret = pBp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
+//			updatePidBoiler = xTaskGetTickCount();
+//			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
+//			Status.ret = pBp12;
+//			int16_t newFC = updatePID(Prof.Boiler.tempPID - FEED, Prof.Boiler.pid, pidw);
+//	#ifndef PID_FORMULA2
+//			newFC += dHeater.PowerMaxCurrent;
+//	#endif
+//			if(newFC > dHeater.set.boiler_power_max) newFC = dHeater.set.boiler_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
+//			else if(newFC < dHeater.set.boiler_power_min) newFC = dHeater.set.boiler_power_min;
+//			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
+//			{
+//	#ifdef DEBUG_MODWORK
+//				journal.jprintf(" HT> %d\n", newFC);
+//	#endif
+//				dHeater.set_target(0, newFC);
+//			}
 			return pCOMP_NONE;
 #endif
 		} else if(_is_on & _COMPR_) {									// Компрессор
@@ -2945,31 +2959,31 @@ MODE_COMP HeatPump::UpdateHeat()
 #ifdef USE_HEATER
 		else if(_is_on & _HEATER_) {	// Котел
 
-			if(FEED > Prof.Heat.tempInLim - dHeater.set.heat_protect_temp_dt * 10) { // Подача ограничение
-				if(dHeater.PowerMaxCurrent > dHeater.set.heat_power_min) { // установка минимальной мощности, если еще не установили
-					dHeater.set_target(0, dHeater.set.heat_power_min);
-					Status.ret = pHp6;
-					resetPID();
-				}
-				return pCOMP_NONE;
-			}
-			if(xTaskGetTickCount() - updatePidTime < get_timeHeat() * 1000) { Status.ret = pHp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
-			updatePidBoiler = xTaskGetTickCount();
-			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
-			Status.ret = pHp12;
-			int16_t newFC = updatePID(Prof.Heat.tempPID - FEED, Prof.Heat.pid, pidw);
-	#ifndef PID_FORMULA2
-			newFC += dHeater.PowerMaxCurrent;
-	#endif
-			if(newFC > dHeater.set.heat_power_max) newFC = dHeater.set.heat_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
-			else if(newFC < dHeater.set.heat_power_min) newFC = dHeater.set.heat_power_min;
-			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
-			{
-	#ifdef DEBUG_MODWORK
-				journal.jprintf(" HT> %d\n", newFC);
-	#endif
-				dHeater.set_target(0, newFC);
-			}
+//			if(FEED > Prof.Heat.tempInLim - dHeater.set.heat_protect_temp_dt * 10) { // Подача ограничение
+//				if(dHeater.PowerMaxCurrent > dHeater.set.heat_power_min) { // установка минимальной мощности, если еще не установили
+//					dHeater.set_target(0, dHeater.set.heat_power_min);
+//					Status.ret = pHp6;
+//					resetPID();
+//				}
+//				return pCOMP_NONE;
+//			}
+//			if(xTaskGetTickCount() - updatePidTime < get_timeHeat() * 1000) { Status.ret = pHp11; return pCOMP_NONE; } // время обновления ПИДа еше не пришло
+//			updatePidBoiler = xTaskGetTickCount();
+//			// Одна итерация ПИД регулятора (на выходе: алг.1 - ИЗМЕНЕНИЕ частоты, алг.2 - сама частота)
+//			Status.ret = pHp12;
+//			int16_t newFC = updatePID(Prof.Heat.tempPID - FEED, Prof.Heat.pid, pidw);
+//	#ifndef PID_FORMULA2
+//			newFC += dHeater.PowerMaxCurrent;
+//	#endif
+//			if(newFC > dHeater.set.heat_power_max) newFC = dHeater.set.heat_power_max;  // ограничение диапазона ОТДЕЛЬНО для ГВС!!!! (меньше мощность)
+//			else if(newFC < dHeater.set.heat_power_min) newFC = dHeater.set.heat_power_min;
+//			if(dHeater.PowerMaxCurrent != newFC)                                      // Установка частоты если нужно менять
+//			{
+//	#ifdef DEBUG_MODWORK
+//				journal.jprintf(" HT> %d\n", newFC);
+//	#endif
+//				dHeater.set_target(0, newFC);
+//			}
 			return pCOMP_NONE;
 #endif
 
@@ -3580,14 +3594,14 @@ bool HeatPump::configHP()
 					dHeater.HeaterValve_On();
 	#endif
 	#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp()) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);
 					} else
 	#endif
 						Pumps(ON); // включить насосы
 	#ifdef USE_HEATER
-					dHeater.set_target(dHeater.get_settings()->heat_tempout, dHeater.get_settings()->heat_power_max);
+					dHeater.set_target(Prof.Heat.tempPID);
 	#endif
 				} else {
 	#ifdef USE_HEATER
@@ -3633,7 +3647,7 @@ bool HeatPump::configHP()
 						goto xBoilerStartCompOrHeater;
 					}
 	#ifdef USE_HEATER
-					dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
+					dHeater.set_target(Prof.Boiler.tempPID);
 	#endif
 					switchBoiler(true); // включить бойлер
 				} else { // Компрессор
@@ -3689,7 +3703,7 @@ bool HeatPump::configHP()
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) {
 					dHeater.HeaterValve_On();
 			#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp()) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
 					} else 						// и не включать сразу насосы
@@ -3700,7 +3714,7 @@ bool HeatPump::configHP()
 					Pumps(ON);					// включить насосы
 				if(Status.ret < pBp5) {
 		#ifdef USE_HEATER
-					if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) dHeater.set_target(dHeater.get_settings()->boiler_tempout, dHeater.get_settings()->boiler_power_max);
+					if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) dHeater.set_target(Prof.Boiler.tempPID);
 					else
 		#endif
 						dFC.set_target(dFC.get_startFreqBoiler(),true,dFC.get_minFreqBoiler(),dFC.get_maxFreqBoiler()); // установить стартовую частоту
@@ -4282,7 +4296,7 @@ void HeatPump::heater_heating_pipes(void)
 #ifdef THEATER
 	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
 		uint16_t t = dHeater.set.wait_heating_pipes_time_max * 4;
-		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? sTemp[TBOILER].get_Temp() : FEED)) {
+		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? sTemp[TBOILER].get_Temp() : FEED) + HEATER_PREHEAT_HYSTERESIS) {
 			if(DelaySec(1) || !is_heater_on() || !GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
 				SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 				return;
@@ -4472,10 +4486,15 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		} _tmp2;
 	};
 	bool _by_error_check_mode;
+	bool _by_scheduler;
 	if(_profile & SWITCH_PROF_BY_ERROR) {
 		_profile &= ~SWITCH_PROF_BY_ERROR;
 		_by_error_check_mode = true;
 	} else _by_error_check_mode = false;
+	if(_profile & SWITCH_PROF_BY_SCHEDULER) {
+		_profile &= ~SWITCH_PROF_BY_SCHEDULER;
+		_by_scheduler = true;
+	} else _by_scheduler = false;
 	if(Prof.id == _profile) return;
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
@@ -4487,18 +4506,18 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
 		return;
 	}
-//	if(HP.get_State() != pOFF_HP) {
-//		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
-//		if(p) {
-//			_profile = p - 1;
-//			if(Prof.id == _profile) {
-//				journal.jprintf("Skip change profile by time - the same\n");
-//				SemaphoreGive(xI2CSemaphore);
-//				return;
-//			}
-//			journal.jprintf("Switch profile by time to %d\n", p + 1);
-//		}
-//	}
+	if(_by_scheduler) {
+		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
+		if(p) {
+			_profile = p - 1;
+			if(Prof.id == _profile) {
+				journal.jprintf("Skip change profile by time - the same\n");
+				SemaphoreGive(xI2CSemaphore);
+				return;
+			}
+			journal.jprintf("Switch profile by time to %d\n", p + 1);
+		}
+	}
 	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);

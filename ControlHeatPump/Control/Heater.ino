@@ -26,15 +26,14 @@ void devHeater::init()
 	err_num = 0;
 	err_num_total = 0;
 	fwork = 0;
-	prev_temp = 0;
-	prev_boiler_temp = 0;
-	PowerMaxCurrent = 0;
+	curr_temp = 0;
+	curr_boiler_temp = 0;
 
 	set.setup_flags = (0<<fHeater_Opentherm) | (1<<fHeater_USE_Relay_RHEATER) | (1<<fHeater_USE_Relay_RH_3WAY) | (0<<fHeater_USE_Relay_Modbus) | (0<<fHeater_USE_Relay_Modbus_3WAY);
-	set.heat_tempout = 100;
-	set.heat_power_max = 100;
-	set.boiler_tempout = 100;
-	set.boiler_power_max = 100;
+//	set.heat_tempout = 100;
+//	set.heat_power_max = 100;
+//	set.boiler_tempout = 100;
+//	set.boiler_power_max = 100;
 	set.pump_work_time_after_stop = 18;			// 3 минуты
 	set.ModbusMinTimeBetweenTransaction = HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS;
 	set.ModbusResponseTimeout = HEATER_MODBUS_TIMEOUT;
@@ -49,19 +48,19 @@ void devHeater::check_link(void)
 		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_Flow, _err);
 		return;
 	}
-	prev_temp = d / 10;
+	curr_temp = d / 10;
 	_err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_T_BOILER, &d);
 	if(_err) {
 		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_BOILER, _err);
 		return;
 	}
-	prev_boiler_temp = d;
-	_err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_POWER, &d);
-	if(_err) {
-		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_BOILER, _err);
-		return;
-	}
-	PowerMaxCurrent = d;
+	curr_boiler_temp = d;
+//	_err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_POWER, &d);
+//	if(_err) {
+//		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_BOILER, _err);
+//		return;
+//	}
+//	PowerMaxCurrent = d;
 	SETBIT1(fwork, fHeater_LinkAdapterOk);
 }
 
@@ -240,15 +239,20 @@ int8_t devHeater::read_state(uint8_t group)
 {
 	if(group == 0 || !GETBIT(fwork, fHeater_LinkAdapterOk) || !GETBIT(fwork, fHeater_LinkHeaterOk)) { // группа 0 или если нет связи
 		uint16_t r;
-		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
-		if(err == OK) {
-			if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) {
-				err_num = 0;
-				SETBIT0(fwork, fHeater_CmdNotResponse);
-				SETBIT1(fwork, fHeater_LinkHeaterOk);
-			} else {
-				SETBIT1(fwork, fHeater_CmdNotResponse);
-				if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
+		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
+			if(err == OK) curr_temp = r / 10;
+		} else {
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
+			if(err == OK) {
+				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) {
+					err_num = 0;
+					SETBIT0(fwork, fHeater_CmdNotResponse);
+					SETBIT1(fwork, fHeater_LinkHeaterOk);
+				} else {
+					SETBIT1(fwork, fHeater_CmdNotResponse);
+					if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
+				}
 			}
 		}
 	} else {
@@ -286,66 +290,44 @@ int8_t devHeater::read_state(uint8_t group)
 	return err;
 }
 
-// Установить целевую температуру и макс. мощность % (целевые регистры зависят от задачи нагрев/бойлер)
+// Установить целевую температуру в градусах (целевые регистры зависят от задачи нагрев/бойлер)
 // Если temp = 0, то установка только макс. мощности
-int8_t devHeater::set_target(uint16_t temp, uint8_t power_max)
+int8_t devHeater::set_target(uint16_t temp)
 {
-	uint16_t reg1 = 0;
-	if(testMode != NORMAL && testMode != HARD_TEST) return OK;
+	if(temp == 0 || GETBIT(set.setup_flags, fHeater_DontSetFlowTemp) || (testMode != NORMAL && testMode != HARD_TEST)) return OK;
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		journal.jprintf(" Set Heater: %d, %d%%\n", temp, power_max);
+		uint16_t reg1 = 0;
 		switch (testMode) // РЕАЛЬНЫЕ Действия в зависимости от режима
 		{
 		case NORMAL:
 		case HARD_TEST:
-			if(temp && prev_temp != temp) {
-				if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) && (HP.get_modWork() & pBOILER)) reg1 = HM_SET_T_BOILER;
-				else {
-					reg1 = HM_SET_T_Flow; // регистр в десятых градуса
-					temp *= 10;			// регистр состояния тоже в десятых
-				}
-				int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, reg1, temp);
-				if(err) {
-					err_num_total++;
-					set_Error(err, (char*)__FUNCTION__);
-					break;
-				}
+			if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) && (HP.get_modWork() & pBOILER)) {
+				if(curr_boiler_temp == temp) return OK;
+				reg1 = HM_SET_T_BOILER;
+			} else {
+				if(curr_temp == temp) return OK;
+				reg1 = HM_SET_T_Flow; // регистр в десятых градуса
+				temp *= 10;			// регистр состояния тоже в десятых
 			}
-			if(PowerMaxCurrent != power_max) {
-				int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_POWER, power_max);
-				if(err) {
-					err_num_total++;
-					set_Error(err, (char*)__FUNCTION__);
-					break;
-				}
+			journal.jprintf(" Set Heater%s: %d C\n", reg1 == HM_SET_T_Flow ? "" : " boiler", temp);
+			err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, reg1, temp);
+			if(err) {
+				err_num_total++;
+				set_Error(err, (char*)__FUNCTION__);
+				break;
 			}
 			int16_t status;
-			if(temp && prev_temp != temp) {
-				_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
-				err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + reg1, 1, (uint16_t*)&status);	// Получить регистр состояния записи
-				if(err) {
-					err_num_total++;
-					set_Error(err, (char*)__FUNCTION__);
-					break;
-				}
-				if(status != 0) {
-					journal.jprintf("OT write #%d err: %d\n", reg1, status);
-					set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
-				} else prev_temp = temp;
+			_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + reg1, 1, (uint16_t*)&status);	// Получить регистр состояния записи
+			if(err) {
+				err_num_total++;
+				set_Error(err, (char*)__FUNCTION__);
+				break;
 			}
-			if(PowerMaxCurrent != power_max) {
-				if(prev_temp == temp) _delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание, если сверху не ждали
-				err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_POWER, 1, (uint16_t*)&status);	// Получить регистр состояния записи
-				if(err) {
-					err_num_total++;
-					set_Error(err, (char*)__FUNCTION__);
-					break;
-				}
-				if(status != 0) {
-					journal.jprintf("OT write #%d err: %d\n", HM_SET_POWER, status);
-					set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
-				} else PowerMaxCurrent = power_max;
-			}
+			if(status != 0) {
+				journal.jprintf("OT write #%d err: %d\n", reg1, status);
+				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
+			} else curr_temp = temp;
 			break;
 		default:
 			break; //  Ничего не включаем
@@ -410,7 +392,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, GETBIT(HP.work_flags, fHP_HeaterValveOn) ? "Котел" : "ТН"); } else
-	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _itoa(data.T_Flow, ret); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) { _itoa(data.T_Flow, ret); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else strcat(ret, "-"); } else
 	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
 	if(strcmp(var, Wheater_Errors)==0) 					{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
@@ -421,16 +403,17 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_fHeater_Heating_Pipes)==0){ if(GETBIT(set.setup_flags, fHeater_Heating_Pipes)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_Heating_Pipes_Temp)==0){ if(GETBIT(set.setup_flags, fHeater_Heating_Pipes_Temp)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_BoilerInHeatingMode)==0){ if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
+	if(strcmp(var, Wheater_fHeater_DontSetFlowTemp)==0){ if(GETBIT(set.setup_flags, fHeater_DontSetFlowTemp)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_wait_heating_pipes_time)==0){ _itoa(set.wait_heating_pipes_time * 4, ret); } else
 	if(strcmp(var, Wheater_wait_heating_pipes_time_max)==0){ _itoa(set.wait_heating_pipes_time_max * 4, ret); } else
-	if(strcmp(var, Wheater_heat_tempout)==0) 			{ _itoa(set.heat_tempout, ret); } else
-	if(strcmp(var, Wheater_heat_power_min)==0) 			{ _itoa(set.heat_power_min, ret); } else
-	if(strcmp(var, Wheater_heat_power_max)==0) 			{ _itoa(set.heat_power_max, ret); } else
-	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ _dtoa(ret, set.heat_protect_temp_dt, 1); } else
-	if(strcmp(var, Wheater_boiler_tempout)==0)			{ _itoa(set.boiler_tempout, ret); } else
-	if(strcmp(var, Wheater_power_boiler_min)==0) 		{ _itoa(set.boiler_power_min, ret); } else
-	if(strcmp(var, Wheater_power_boiler_max)==0) 		{ _itoa(set.boiler_power_max, ret); } else
-	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ _dtoa(ret, set.boiler_protect_temp_dt, 1); } else
+//	if(strcmp(var, Wheater_heat_tempout)==0) 			{ _itoa(set.heat_tempout, ret); } else
+//	if(strcmp(var, Wheater_heat_power_min)==0) 			{ _itoa(set.heat_power_min, ret); } else
+//	if(strcmp(var, Wheater_heat_power_max)==0) 			{ _itoa(set.heat_power_max, ret); } else
+//	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ _dtoa(ret, set.heat_protect_temp_dt, 1); } else
+//	if(strcmp(var, Wheater_boiler_tempout)==0)			{ _itoa(set.boiler_tempout, ret); } else
+//	if(strcmp(var, Wheater_power_boiler_min)==0) 		{ _itoa(set.boiler_power_min, ret); } else
+//	if(strcmp(var, Wheater_power_boiler_max)==0) 		{ _itoa(set.boiler_power_max, ret); } else
+//	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ _dtoa(ret, set.boiler_protect_temp_dt, 1); } else
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ _itoa(set.pump_work_time_after_stop * 10, ret); } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ _itoa(set.ModbusMinTimeBetweenTransaction, ret); } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ _itoa(set.ModbusResponseTimeout, ret); } else
@@ -451,17 +434,18 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_fHeater_Heating_Pipes)==0){ if(x) SETBIT1(set.setup_flags, fHeater_Heating_Pipes); else SETBIT0(set.setup_flags, fHeater_Heating_Pipes); return OK;} else
 	if(strcmp(var, Wheater_fHeater_Heating_Pipes_Temp)==0){ if(x) SETBIT1(set.setup_flags, fHeater_Heating_Pipes_Temp); else SETBIT0(set.setup_flags, fHeater_Heating_Pipes_Temp); return OK;} else
 	if(strcmp(var, Wheater_fHeater_BoilerInHeatingMode)==0){ if(x) SETBIT1(set.setup_flags, fHeater_BoilerInHeatingMode); else SETBIT0(set.setup_flags, fHeater_BoilerInHeatingMode); return OK;} else
+	if(strcmp(var, Wheater_fHeater_DontSetFlowTemp)==0){ if(x) SETBIT1(set.setup_flags, fHeater_DontSetFlowTemp); else SETBIT0(set.setup_flags, fHeater_DontSetFlowTemp); return OK;} else
 	if(strcmp(var, Wheater_wait_heating_pipes_time)==0){ set.wait_heating_pipes_time = x / 4; return OK; } else
 	if(strcmp(var, Wheater_wait_heating_pipes_time_max)==0){ set.wait_heating_pipes_time_max = x / 4; return OK; } else
 	if(strcmp(var, option_Control_Period)==0)			{ if(x>0){ set.Control_Period = x; return OK; } } else
-	if(strcmp(var, Wheater_heat_tempout)==0)			{ if(x>=0 && x<=100){ set.heat_tempout = x; return OK; } } else
-	if(strcmp(var, Wheater_heat_power_min)==0)			{ if(x>=0 && x<=100){ set.heat_power_min = x; return OK; } } else
-	if(strcmp(var, Wheater_heat_power_max)==0)			{ if(x>=0 && x<=100){ set.heat_power_max = x; return OK; } } else
-	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ set.heat_protect_temp_dt = rd(x, 10); return OK; } else
-	if(strcmp(var, Wheater_boiler_tempout)==0)			{ if(x>=0 && x<=100){ set.boiler_tempout = x; return OK; } } else
-	if(strcmp(var, Wheater_power_boiler_min)==0)		{ if(x>=0 && x<=100){ set.boiler_power_min = x; return OK; } } else
-	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return OK; } } else
-	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ set.boiler_protect_temp_dt = rd(x, 10); return OK; } else
+//	if(strcmp(var, Wheater_heat_tempout)==0)			{ if(x>=0 && x<=100){ set.heat_tempout = x; return OK; } } else
+//	if(strcmp(var, Wheater_heat_power_min)==0)			{ if(x>=0 && x<=100){ set.heat_power_min = x; return OK; } } else
+//	if(strcmp(var, Wheater_heat_power_max)==0)			{ if(x>=0 && x<=100){ set.heat_power_max = x; return OK; } } else
+//	if(strcmp(var, Wheater_heat_protect_temp_dt)==0)	{ set.heat_protect_temp_dt = rd(x, 10); return OK; } else
+//	if(strcmp(var, Wheater_boiler_tempout)==0)			{ if(x>=0 && x<=100){ set.boiler_tempout = x; return OK; } } else
+//	if(strcmp(var, Wheater_power_boiler_min)==0)		{ if(x>=0 && x<=100){ set.boiler_power_min = x; return OK; } } else
+//	if(strcmp(var, Wheater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return OK; } } else
+//	if(strcmp(var, Wheater_boiler_protect_temp_dt)==0)	{ set.boiler_protect_temp_dt = rd(x, 10); return OK; } else
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ set.pump_work_time_after_stop = x / 10; return OK; } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = x; return OK; } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ set.ModbusResponseTimeout = x; return OK; }

@@ -24,7 +24,7 @@
 #include "Config.h"                         // Цепляем сразу конфигурацию
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.214"				// Версия прошивки
+#define VERSION			"1.215"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -418,7 +418,7 @@ const char* HEADER_FILE_NOT_FOUND = {"HTTP/1.1 404 Not Found\r\n\r\n<html>\r\n<h
 const char* HEADER_FILE_WEB       = {"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: keep-alive\r\nCache-Control: max-age=3600, must-revalidate\r\n\r\n"}; // КЕШ ИСПОЛЬЗУЕМ
 const char* HEADER_FILE_CSS       = {"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\nConnection: keep-alive\r\nCache-Control: max-age=3600, must-revalidate\r\n\r\n"}; // КЕШ ИСПОЛЬЗУЕМ
 const char* HEADER_ANSWER         = {"HTTP/1.1 200 OK\r\nContent-Type: text/ajax\r\nAccess-Control-Allow-Origin: *\r\n\r\n"};  // начало ответа на запрос
-static uint8_t fWebUploadFiles = 0;     // Куда грузим файлы: 0 - нет загрузки, 1 - SPI flash, 2 - SD card
+static uint8_t fWebUploadFiles = 0;     // Куда грузим файлы: 0 - нет загрузки, 1 - SD card, 2/3 - SPI flash (2 - только начали, нужна очистка)
 
 // Microart Malina2
 //const char HTTP_MAP_JSON_MODE[]			= "\"_MODE\"";
@@ -962,18 +962,19 @@ const char *Wheater_fHeater_USE_Relay_RH_3WAY	= {"R3"};
 const char *Wheater_fHeater_USE_Relay_Modbus	= {"RM"};
 const char *Wheater_fHeater_USE_Relay_Modbus_3WAY={"RW"};
 const char *Wheater_fHeater_BoilerInHeatingMode	= {"BH"};
+const char *Wheater_fHeater_DontSetFlowTemp	    = {"NF"};
 const char *Wheater_fHeater_Heating_Pipes		= {"3A"};
 const char *Wheater_fHeater_Heating_Pipes_Temp	= {"3T"};
 const char *Wheater_wait_heating_pipes_time		= {"3P"};
 const char *Wheater_wait_heating_pipes_time_max	= {"3PM"};
-const char *Wheater_heat_tempout				= {"T"};
-const char *Wheater_heat_power_min				= {"PN"};
-const char *Wheater_heat_power_max				= {"PM"};
-const char *Wheater_heat_protect_temp_dt		= {"HD"};
-const char *Wheater_boiler_tempout				= {"TB"};
-const char *Wheater_power_boiler_min			= {"BN"};
-const char *Wheater_power_boiler_max			= {"BM"};
-const char *Wheater_boiler_protect_temp_dt		= {"BD"};
+//const char *Wheater_heat_tempout				= {"T"};
+//const char *Wheater_heat_power_min				= {"PN"};
+//const char *Wheater_heat_power_max				= {"PM"};
+//const char *Wheater_heat_protect_temp_dt		= {"HD"};
+//const char *Wheater_boiler_tempout				= {"TB"};
+//const char *Wheater_power_boiler_min			= {"BN"};
+//const char *Wheater_power_boiler_max			= {"BM"};
+//const char *Wheater_boiler_protect_temp_dt		= {"BD"};
 const char *Wheater_pump_work_time_after_stop	= {"PA"};
 const char *Wheater_LinkHeaterOk 				= {"L"};
 const char *Wheater_fLinkAdapterOk				= {"A"};

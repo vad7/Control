@@ -84,6 +84,21 @@ function loadParam_after(paramid) {
 		<td nowrap><input id="get_cool-temp2" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP2)');"></td>
 	</tr>						
 	<tr>
+		<td>Гистерезис целевой температуры °C [0..30]<sup>2</sup></td>
+		<td nowrap><input id="get_heat-dtemp" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(DTEMP)');"></td>
+		<td nowrap><input id="get_cool-dtemp" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(DTEMP)');"></td>
+	</tr>
+	<tr>
+		<td>Гистерезис целевой температуры при работе от генератора °C [0..30]</td>
+		<td nowrap><input id="get_heat-dtg" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(DTG)');"></td>
+		<td nowrap><input id="get_cool-dtg" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(DTG)');"></td>
+	</tr>
+	<tr>
+		<td>Целевая температура подачи °C<sup>4</sup></td>
+		<td nowrap><input id="get_heat-temp_pid" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_PID)');"></td>
+		<td nowrap><input id="get_cool-temp_pid" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP_PID)');"></td>
+	</tr>								
+	<tr>
 		<td>Использовать дополнительные целевые датчики температуры</td>
 		<td><input type="checkbox" id="get_heat-at" onchange="setParam('get_Heat(AT)');"></td>
 		<td><input type="checkbox" id="get_cool-at" onchange="setParam('get_Cool(AT)');"></td>
@@ -114,18 +129,8 @@ function loadParam_after(paramid) {
 	</tr>
 	<tr>
 		<td>Минимальная/максимальная температура обратки для вкл. °C</td>
-		<td nowrap><input id="get_heat-temp_out" type="number" min="-10" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_OUT)');"></td>
+		<td nowrap><input id="get_heat-temp_out" type="number" min="-10" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_OUT)');"></td>
 		<td nowrap><input id="get_cool-temp_out" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP_OUT)');"></td>
-	</tr>
-	<tr>
-		<td>Гистерезис целевой температуры °C [0..30]<sup>2</sup></td>
-		<td nowrap><input id="get_heat-dtemp" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(DTEMP)');"></td>
-		<td nowrap><input id="get_cool-dtemp" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(DTEMP)');"></td>
-	</tr>
-	<tr>
-		<td>Гистерезис целевой температуры при работе от генератора °C [0..30]</td>
-		<td nowrap><input id="get_heat-dtg" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(DTG)');"></td>
-		<td nowrap><input id="get_cool-dtg" type="number" min="0" max="30" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(DTG)');"></td>
 	</tr>
 	<tr>
 		<td><b>По времени</b></td>
@@ -194,11 +199,6 @@ function loadParam_after(paramid) {
 		<td><b>ПИД для температуры подачи</b></td>
 		<td></td><td></td>
 	</tr>
-	<tr>
-		<td>Целевая температура подачи °C<sup>4</sup></td>
-		<td nowrap><input id="get_heat-temp_pid" type="number" min="5" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_PID)');"></td>
-		<td nowrap><input id="get_cool-temp_pid" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP_PID)');"></td>
-	</tr>								
 	<tr>
 		<td>Постоянная интегрирования времени (сек.) [10..600]</td>
 		<td nowrap><input id="get_heat-hp_time" type="number" min="10" max="600" step="1"><input type="submit" value=">" onclick="setParam('get_Heat(HP_TIME)');"></td>
@@ -281,7 +281,7 @@ function loadParam_after(paramid) {
 	</tr>						
 	<tr>
 		<td>Максимальная/минимальная температура подачи °C</td>
-		<td nowrap><input id="get_heat-temp_in" type="number" min="0" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_IN)');"></td>
+		<td nowrap><input id="get_heat-temp_in" type="number" min="0" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Heat(TEMP_IN)');"></td>
 		<td nowrap><input id="get_cool-temp_in" type="number" min="0" max="40" step="0.1"><input type="submit" value=">" onclick="setParam('get_Cool(TEMP_IN)');"></td>
 	</tr>
 	<tr>

@@ -101,25 +101,27 @@ struct type_heater_read {
 #define fHeater_USE_Relay_Modbus		3		// Использовать Modbus реле для запуска Котла
 #define fHeater_USE_Relay_Modbus_3WAY	4		// Использовать Modbus реле для переключения Котел - ТН
 #define fHeater_Heating_Pipes			5		// Прогрев трассы, насосы включаются после этого
-#define fHeater_Heating_Pipes_Temp		6		// Прогрев трассы до текущей температуры бойлера
+#define fHeater_Heating_Pipes_Temp		6		// Прогрев трассы до текущей температуры бойлера / отопления
 #define fHeater_BoilerInHeatingMode		7		// Греть бойлер в режиме отопления, иначе используются раздельные режимы котла - Отопление/ГВС.
+#define fHeater_DontSetFlowTemp			8		// Не устанавливать температуру подачи
 
 struct type_HeaterSettings {					// Структура для сохранения настроек
 	uint16_t setup_flags;						// флаги настройки
 	uint8_t  Control_Period;					// Период управления, сек
-	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления, C
-	uint8_t  heat_power_min;					// Минимальная мощность (или модуляция) для отопления, %
-	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
-	uint8_t  heat_protect_temp_dt;				// Уменьшение мощности при приближении к макс. температуре подачи на С, в десятых градуса
-	uint8_t  boiler_tempout;					// Целевая температура теплоносителя бойлера, C
-	uint8_t  boiler_power_max;					// Максимальная мощность (или модуляция) для бойлера, %
-	uint8_t  boiler_power_min;					// Минимальная мощность (или модуляция) для бойлера, %
-	uint8_t  boiler_protect_temp_dt;			// Уменьшение мощности бойлера при приближении к макс. температуре подачи на С, в десятых градуса
 	uint8_t  pump_work_time_after_stop;			// Время работы циркуляцонного насоса котла после останова, /10 секунд
 	uint8_t  ModbusMinTimeBetweenTransaction;	// Минимальная пауза между транзакциями, мсек
 	uint8_t  ModbusResponseTimeout;				// Таймаут ожидания ответа по Modbus, мсек
 	uint8_t  wait_heating_pipes_time;			// Время ожидания прогрева трассы, 4 * сек
 	uint8_t  wait_heating_pipes_time_max;		// Максимальное время ожидания прогрева трассы по температуре, 4 * сек
+//	uint8_t  HeatingPipesAddTemp;				// Добавка к текущим температурам для завершения прогрева трассы, десятые градуса
+//	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления перед включением, если не установлена в профиле, C
+//	uint8_t  heat_power_min;					// Минимальная мощность (или модуляция) для отопления, %
+//	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
+//	uint8_t  heat_protect_temp_dt;				// Уменьшение мощности при приближении к макс. температуре подачи на С, в десятых градуса
+//	uint8_t  boiler_tempout;					// Целевая температура теплоносителя бойлера, если не установлена в профиле, C
+//	uint8_t  boiler_power_max;					// Максимальная мощность (или модуляция) для бойлера, %
+//	uint8_t  boiler_power_min;					// Минимальная мощность (или модуляция) для бойлера, %
+//	uint8_t  boiler_protect_temp_dt;			// Уменьшение мощности бойлера при приближении к макс. температуре подачи на С, в десятых градуса
 };
 
 // Рабочие флаги (fwork)
@@ -133,7 +135,7 @@ public:
 	void	init();									// Инициализация
 	void 	check_link(void);						// Проверка связи
 	int8_t	read_state(uint8_t group);				// Текущее состояние
-	int8_t	set_target(uint16_t temp, uint8_t power_max); // Установить целевую температуру и максимальную мощность
+	int8_t	set_target(uint16_t temp); 				// Установить целевую температуру
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
 	bool	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
@@ -152,14 +154,13 @@ public:
 	int8_t   err;									// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
-	uint8_t  PowerMaxCurrent;						// Максимальная мощность (модуляция), %
 	type_HeaterSettings set;						// Структура для сохранения настроек
 	type_heater_read data;							// Данные с котла
 
 private:
 	uint8_t fwork;									// рабочие флаги
-	uint8_t prev_temp;
-	uint8_t prev_boiler_temp;
+	uint8_t curr_temp;								// текущая установка
+	uint8_t curr_boiler_temp;						// текущая установка
  };
 
 #endif

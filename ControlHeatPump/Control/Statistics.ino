@@ -513,7 +513,7 @@ void Statistics::Update()
 //			}
 //#endif
 			newval = HP.fullCOP;
-			if(newval == 0) continue;
+			if(newval <= 0) continue;
 			//if(newval == 0) skip_value = 1;
 			break;
 #ifdef USE_SUN_COLLECTOR
@@ -1182,7 +1182,7 @@ void Statistics::History()
 		}
 		#endif
 		case STATS_OBJ_COP_Full:
-			int_to_dec_str(HP.fullCOP, 1, &buf, 0); // C
+			int_to_dec_str(HP.fullCOP > 0 ? HP.fullCOP : 0, 1, &buf, 0); // C
 			break;
 		}
 		if(buf > mbuf + HISTORY_MAX_RECORD_LEN - HISTORY_MAX_FIELD_LEN) {

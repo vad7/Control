@@ -53,11 +53,14 @@ window.onload = function() {
 		<td>Использовать Котел</td>
 		<td><input type="checkbox" id="get_boiler-h" onchange="setParam('get_Boiler(H)')"></td>
 	</tr><tr>
-		<td>Целевая температура бойлера °C [5..90], Текущая: <span id="get_boiler-tt">-</span></td>
-		<td nowrap><input id="get_boiler-trg" type="number" min="5" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TRG)');"></td>
+		<td>Целевая температура бойлера °C [5..95], Текущая: <span id="get_boiler-tt">-</span></td>
+		<td nowrap><input id="get_boiler-trg" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TRG)');"></td>
 	</tr><tr>
 		<td>Гистерезис целевой температуры °C [0..30]<sup>1</sup></td>
 		<td nowrap><input id="get_boiler-dtrg" type="number" min="0" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(DTRG)');"></td>
+	</tr><tr>
+		<td>Целевая температура подачи °C [5..95]</td>
+		<td nowrap><input id="get_boiler-temp" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMP)');"></td>
 	</tr><tr>
 		<td><b>Встроенный ТЭН</b></td><td></td>
 	</tr><tr>
@@ -70,8 +73,8 @@ window.onload = function() {
 		<td>Ускоренный нагрев бойлера<sup>3</sup></td>
 		<td><input type="checkbox" id="get_boiler-turbo" onChange="setParam('get_Boiler(TURBO)');" ></td>
 	</tr><tr>
-		<td>Температура догрева бойлера (выкл. нагрев ТН и вкл. ТЭН бойлера) °C [0..90]</td>
-		<td nowrap><input id="get_boiler-tempr" type="number" min="0" max="90" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMPR)');"></td>
+		<td>Температура догрева бойлера (выкл. нагрев ТН и вкл. ТЭН бойлера) °C [0..95]</td>
+		<td nowrap><input id="get_boiler-tempr" type="number" min="0" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMPR)');"></td>
 	</tr><tr>
 		<td>Температура цели при нагреве Ваттроутером (гистерезис 0.5°) °C</td>
 		<td nowrap><input id="get_boiler-w" type="number" min="0" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(W)');"></td>
@@ -101,9 +104,6 @@ window.onload = function() {
 		<td>Использовать ПИД для температуры подачи</td>
 		<td><input id="get_boiler-pid" type="checkbox" onchange="setParam('get_Boiler(PID)');"></td>
 	</tr><tr>
-		<td>Целевая температура подачи °C [5..70]</td>
-		<td nowrap><input id="get_boiler-temp" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TEMP)');"></td>
-	</tr><tr>
 		<td>Постоянная интегрирования времени, сек. [5..600]</td>
 		<td nowrap><input id="get_boiler-pt" type="number" min="5" max="600" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(PT)');"></td>
 	</tr><tr>
@@ -119,8 +119,8 @@ window.onload = function() {
 		<td><b>Защиты при работе теплового насоса</b></td>
 		<td></td>
 	</tr><tr>
-		<td>Максимальная температура подачи °C [5..70]</td>
-		<td nowrap><input id="get_boiler-max" type="number" min="5" max="70" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
+		<td>Максимальная температура подачи °C [5..95]</td>
+		<td nowrap><input id="get_boiler-max" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
 	</tr><tr>
 		<td>Минимальный простой перед началом работы, сек.</td>
 		<td nowrap><input id="get_boiler-cp" type="number" min="0" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(CP)');"></td>

@@ -189,7 +189,8 @@ type_WebSecurity WebSec_admin;				// хеш паролей
 type_WebSecurity WebSec_Microart;			// хеш паролей
 #endif
 
-#define SWITCH_PROF_BY_ERROR	0x80		// переключить профиль по ошибке
+#define SWITCH_PROF_BY_ERROR		0x80	// переключить профиль по ошибке
+#define SWITCH_PROF_BY_SCHEDULER	0x40	// переключить профиль через календарь
 
 // Рабочие флаги ТН (work_flags)
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
@@ -391,25 +392,25 @@ public:
 	boolean  get_onBoiler(){return onBoiler;} // Получить состояние трехходового точнее если true то идет нагрев бойлера
 	uint8_t  get_fSD() { return fSD;}         // Получить флаг наличия РАБОТАЮЩЕЙ СД карты
 	void     set_fSD(uint8_t f) { fSD=f; }    // Установить флаг наличия РАБОТАЮЩЕЙ СД карты
-	uint8_t  get_fSPIFlash() { return fSPIFlash;}    // Получить флаг наличия РАБОТАЮЩЕГО флеш диска
+	inline uint8_t get_fSPIFlash() { return fSPIFlash;} // Получить флаг наличия РАБОТАЮЩЕГО флеш диска
 	void     set_fSPIFlash(uint8_t f) {fSPIFlash=f;} // Установить флаг наличия РАБОТАЮЩЕГО флеш диска
-	TYPE_SOURSE_WEB get_SourceWeb();                 // Получить источник загрузки веб морды
-	uint32_t get_errorReadDS18B20();    // Получить число ошибок чтения датчиков температуры
-	void     Reset_TempErrors();		// Сбросить счетчик ошибок всех датчиков
-	void     resetPID();				// Инициализировать переменные ПИД регулятора
+	TYPE_SOURSE_WEB get_SourceWeb();          // Получить источник загрузки веб морды
+	uint32_t get_errorReadDS18B20();          // Получить число ошибок чтения датчиков температуры
+	void     Reset_TempErrors();		      // Сбросить счетчик ошибок всех датчиков
+	void     resetPID();				      // Инициализировать переменные ПИД регулятора
 
-	bool     sendCommand(TYPE_COMMAND c);// Послать команду на управление ТН, false - не получилось
+	bool     sendCommand(TYPE_COMMAND c);     // Послать команду на управление ТН, false - не получилось
 	__attribute__((always_inline)) inline TYPE_COMMAND isCommand()  {return command;}  // Получить текущую команду выполняемую ТН
-	void     runCommand(void);              // Выполнить команду по управлению ТН
+	void     runCommand(void);                // Выполнить команду по управлению ТН
 	char    *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
 	boolean  is_next_command_stop() { return command == pSTOP || next_command == pSTOP || next_command == pREPEAT; }
-	uint8_t  is_pause();					// Возвращает 1, если ТН в паузе
+	uint8_t  is_pause();					  // Возвращает 1, если ТН в паузе
 	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
 	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
 	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
-	void 	 relayAllOFF();              // Все реле выключить, кроме некоторых
-	void	 HandleNoPower(void);		// Обработать пропадание питания
-	bool     DelaySec(uint16_t s);		// Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать
+	void 	 relayAllOFF();                   // Все реле выключить, кроме некоторых
+	void	 HandleNoPower(void);		      // Обработать пропадание питания
+	bool     DelaySec(uint16_t s);		      // Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать
 
 // Строковые функции
 	char *StateToStr();                 // Получить состояние ТН в виде строки
@@ -527,7 +528,7 @@ public:
 	void     pump_in_pause_wait_off();                      // ждем пока насосы остановятся
 	uint8_t  get_Beep() {return GETBIT(Option.flags,fBeep);}    // подача звуковых сигналов
 	uint8_t  get_SaveON() {return GETBIT(Option.flags,fSaveON);}// получить флаг записи состояния
-	uint8_t  get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске
+	inline uint8_t get_WebStoreOnSPIFlash() {return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// получить флаг хранения веб морды на флеш диске
 	boolean  set_WebStoreOnSPIFlash(boolean f) {if(f)SETBIT1(Option.flags,fWebStoreOnSPIFlash);else SETBIT0(Option.flags,fWebStoreOnSPIFlash);return GETBIT(Option.flags,fWebStoreOnSPIFlash);}// установить флаг хранения веб морды на флеш диске
 	uint16_t get_maxBackupPower() {return Option.maxBackupPower;};      // Максимальная мощность при питании от генератора (Вт)
 	uint8_t  get_BackupPower() {return GETBIT(Option.flags,fBackupPower);}// получить флаг использования генератора (ограничение мощности)
@@ -664,7 +665,7 @@ public:
 
 	void Pumps(bool b);					// Включение/выключение насосов
 	void Pump_HeatFloor(bool On);			// Включить/выключить насос ТП
-	void Switch_R3WAY(bool On);				// Включить/выключить насос трехходовой кран бойлер - отопление
+	void Switch_R3WAY(int8_t On);			// Включить/выключить насос трехходовой кран бойлер - отопление
 	void Sun_ON(void);						// Включить СК
 	void Sun_OFF(void);						// Выключить СК
 	uint16_t work_flags;					// Рабочие флаги ТН

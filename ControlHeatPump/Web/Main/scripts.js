@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2026 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.214";
+var VER_WEB = "1.215";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
@@ -55,6 +55,7 @@ function setParam(paramid, resultid) {
 			else if((element = document.getElementById(elid + "-div1000"))) elval = Number(element.value) * 1000;
 		} else if(element.getAttribute('type') == 'checkbox') {
 			if(element.checked) elval = 1; else elval = 0;
+			if(paramid.lastIndexOf('(RCOMP)') !== -1 || paramid.lastIndexOf('(RGEN)') !== -1 || paramid.lastIndexOf('(RHEATER)') !== -1) if(!confirm("ПЕРЕКЛЮЧИТЬ РЕЛЕ?")) return;
 		//} else if(typeof elval == 'string') elval = elval.replace(/[,=&]+/g, "");
 		} else elval = element.value;
 	}
@@ -507,7 +508,10 @@ function loadParam(paramid, noretry, resultdiv) {
 											document.getElementById(valueid).innerHTML = content;
 											updateParam(upsens);
 											loadParam(loadsens);
-										} else if(values[0] == 'get_tblRelay') {
+										} else if(values[0] == 'get_tblRelay') { 
+											// style.css:
+											// for relay.html -> body.relay #get_tblrelay input{display:none}
+											// for test.html -> body.test #get_tblrelay span{display:none}
 											var content = "", upsens = "", loadsens = "";
 											var count = values[1].split(';');
 											for(var j = 0; j < count.length - 1; j++) {
