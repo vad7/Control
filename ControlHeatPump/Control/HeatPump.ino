@@ -1726,10 +1726,10 @@ void HeatPump::relayAllOFF()
 	}
 }                               
 
-// Переключение на бойлер или обратно (true-бойлер false-отопление/охлаждение) возврат onBoiler
+// Переключение на бойлер или обратно (true-бойлер, false-отопление/охлаждение), возврат onBoiler
 // в зависимости от режима, не забываем менять onBoiler по нему определяется включение ГВС
 // Функция вызывается на работающем компрессоре/котле
-boolean HeatPump::switchBoiler(boolean b)
+bool HeatPump::switchBoiler(bool b)
 {
 //#ifdef R3WAY
 //	if((b == onBoiler)&&(b==dRelay[R3WAY].get_Relay())) return onBoiler; // Нечего делать выходим
@@ -1750,7 +1750,7 @@ boolean HeatPump::switchBoiler(boolean b)
 #endif
 		Switch_R3WAY(true);								// Установить в нужное положение 3-х ходовой
 	} else {
-#ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
+#ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
 		dRelay[PUMP_OUT].set_ON();
 		_delay(DELAY_AFTER_SWITCH_RELAY);
 #endif
@@ -1804,7 +1804,7 @@ boolean HeatPump::switchBoiler(boolean b)
 // Если реле нет то ничего не делает возвращает false
 // Проверяет паузу 60 секунд после включения компрессора, и только после этого начинает управлять EVI
 #ifdef REVI
-boolean HeatPump::checkEVI()
+bool HeatPump::checkEVI()
 {
   if (!dRelay[REVI].get_present())  return false;                                             // Реле отсутвует в конфигурации ничего не делаем
   if (!is_compressor_on())     {dRelay[REVI].set_OFF(); return dRelay[REVI].get_Relay();}     // Компрессор выключен и реле включено - выключить реле
@@ -1831,7 +1831,7 @@ void HeatPump::Pump_HeatFloor(boolean) { }
 #endif
 
 #ifdef R3WAY
-// 1 - Вкл, 0 - Выкл, -1 - Выкл без ожидания времени выключения
+// 1 - Вкл, 0 - Выкл
 void HeatPump::Switch_R3WAY(int8_t On)
 {
 	bool st = dRelay[R3WAY].get_Relay();
@@ -1846,9 +1846,9 @@ void HeatPump::Switch_R3WAY(int8_t On)
 		dRelay[R3WAYOFF].set_Relay(fR_StatusMain);
 #endif
 	}
-	if(On != -1 && st != On) {
+	if(st != On) {
 #ifdef SWITCH_TIME_R3WAY
-		DelaySec(SWITCH_TIME_R3WAY);
+		_delay(SWITCH_TIME_R3WAY * 1000);
 	#ifdef R3WAYOFF
 		if(!On) dRelay[R3WAYOFF].set_Relay(-fR_StatusMain);
 	#endif
@@ -1865,7 +1865,8 @@ void HeatPump::Pump_HeatFloor(boolean) { }
 // Второй параметр параметр задержка после включения/выключения мсек. отдельного насоса (борьба с помехами)
 // Идет проверка на необходимость изменения состояния насосов
 // Генерятся задержки для защиты компрессора, есть задержки между включенимями насосов для уменьшения помех
-// Не забываем что сдесь устанавливается onBoiler, по этому сначала вызывается Pumps потом switchBoiler
+// Не забываем, что сдесь устанавливается onBoiler, по этому сначала вызывается Pumps потом switchBoiler
+// Вызывается постоянно в Паузе (b=0)
 void HeatPump::Pumps(bool b)
 {
 #ifdef DEBUG_MODWORK
@@ -2331,6 +2332,8 @@ void HeatPump::StopWait(bool stop)
 	SETBIT0(work_flags, fHP_BoilerTogetherHeat);
 
 	if(stop) {
+		if(R3WAY_Off_timer) Switch_R3WAY(false);
+		R3WAY_Off_timer = 0;
 		relayAllOFF();											// ВСЕ РЕЛЕ -> ВЫКЛ!
 		//journal.jprintf(" statChart stop\n");
 		setState(pOFF_HP);
@@ -2377,7 +2380,7 @@ void HeatPump::resetPID()
 
 #ifdef RBOILER  // управление дополнительным ТЭНом бойлера
 // Проверка на необходимость греть бойлер дополнительным тэном (true - надо греть) ВСЕ РЕЖИМЫ
-boolean HeatPump::BoilerHeatElement(int16_t target)
+bool HeatPump::BoilerHeatElement(int16_t target)
 {
 	if(get_State() != pWORK_HP) return false; // работа ТЭНа бойлера разрешена если только работает ТН, в противном случае выкл
 	if(GETBIT(Option.flags, fBackupPower) && !HeatBoilerUrgently)  { // если переключение на ходу на резервный источник то сбросить догрев бойлера
@@ -3757,7 +3760,7 @@ bool HeatPump::Switch_R4WAY(bool fCool)
 }
 
 // проверка на паузу между включениями, возврат true - в паузе
-boolean HeatPump::check_start_pause()
+bool HeatPump::check_start_pause()
 {
 	if(is_comp_or_heater_on()) return false;
 	uint16_t pause = 0;
@@ -4824,6 +4827,14 @@ int8_t	 HeatPump::Prepare_Temp(uint8_t bus)
 	return ret ? (1<<bus) : 0;
 }
 
+#if defined(R3WAY) && !defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
+#define IS_BOILER_HEATING (HP.dRelay[R3WAY].get_Relay() && HP.dRelay[PUMP_OUT].get_Relay())
+#elif defined(RPUMPBH)
+#define IS_BOILER_HEATING (HP.dRelay[RPUMPBH].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay())
+#else
+#define IS_BOILER_HEATING false
+#endif
+
 // Обновление расчетных величин мощностей и СОР
 // Вызывается из задачи чтения датчиков 
 void HeatPump::calculatePower()
@@ -4918,19 +4929,18 @@ void HeatPump::calculatePower()
 #ifndef COP_ALL_CALC    	// если COP надо считать не всегда
 	if(is_compressor_on()){		// Если компрессор работает
 #endif	
-//	uint16_t fc_pwr = dFC.get_power();  // получить текущую мощность компрессора
-//	if(fc_pwr) COP = powerOUT * 100 / fc_pwr; else COP=0; // Компрессорный COP в сотых долях !!!!!!
-	if(Calc_COP_skip_timer) Calc_COP_skip_timer--;
-	else {
-		if(_power220 != 0) fullCOP = powerOUT * 100 / _power220; else fullCOP = 0; // ПОЛНЫЙ COP в сотых долях !!!!!!
-	}
+//		uint16_t fc_pwr = dFC.get_power();  // получить текущую мощность компрессора
+//		if(fc_pwr) COP = powerOUT * 100 / fc_pwr; else COP=0; // Компрессорный COP в сотых долях !!!!!!
+		if(Calc_COP_skip_timer) Calc_COP_skip_timer--;
+		else {
+			if(_power220 != 0) fullCOP = powerOUT * 100 / _power220; else fullCOP = 0; // ПОЛНЫЙ COP в сотых долях !!!!!!
+		}
 #ifndef COP_ALL_CALC        // Ограничение переходных процессов для варианта расчета КОП только при работающем компрессоре, что бы графики нормально масштабировались
 //		if(COP>10*100) COP=8*100;       // COP не более 8
-		if(fullCOP>8*100) fullCOP=7*100; // полный COP не более 7
+//		if(fullCOP>8*100) fullCOP=7*100; // полный COP не более 7
 	} else {				// компрессор не работает
-		fullCOP=0;
+		fullCOP = 0;
 //		COP=0;
-
 	}
 #endif
 }

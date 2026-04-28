@@ -676,7 +676,16 @@ void parserGET(uint8_t thread, int8_t )
 				_itoa(HP_SCHEME, strReturn);
 #endif
 				ADD_WEBDELIM(strReturn); continue;
-			} else if(str[8] == '\0') {	  // Функция get_MODE - в каком состоянии находится сейчас ТН
+			} else if(str[8] == 'W') {	// get_MODEW - режим работы: Отопление/Охлаждение + ГВС
+				i = HP.get_modeHouse();
+				if(i == 1) strcat(strReturn, "Отопление");
+				else if(i == 2) strcat(strReturn, "Охлаждение");
+				if(GETBIT(HP.Prof.SaveON.flags, fBoilerON)) {
+					if(i) strcat(strReturn, ",");
+					strcat(strReturn, "ГВС");
+				} else if(!i) strcat(strReturn, "Нет");
+				ADD_WEBDELIM(strReturn); continue;
+			} else if(str[8] == '\0') {	// Функция get_MODE - в каком состоянии находится сейчас ТН
 				strcat(strReturn, HP.StateToStr());
 				ADD_WEBDELIM(strReturn); continue;
 			}

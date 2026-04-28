@@ -128,6 +128,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_LinkAdapterOk			0		// Есть связь по Modbus с адаптером
 #define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом, после подряд нескольких fHeater_CmdNotResponse
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
+#define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 
 class devHeater
 {
@@ -154,6 +155,7 @@ public:
 	int8_t   err;									// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
+	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
 	type_HeaterSettings set;						// Структура для сохранения настроек
 	type_heater_read data;							// Данные с котла
 

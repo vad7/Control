@@ -234,12 +234,6 @@ function createChart() {
 		legend: {
 			enabled: true
 		},
-		navigator: {
-			baseSeries: 0, //select which series to show in history navigator, First series is 0
-			series: {
-//				includeInCSVExport: false
-			}
-		},
 		series: []
 	};
 	for(var fieldIndex = 0; fieldIndex < fieldList.length; fieldIndex++) // add each field
@@ -249,9 +243,10 @@ function createChart() {
 			data: fieldList[fieldIndex].data,
 			index: fieldList[fieldIndex].series,
 			yAxis: ax,
-			tooltip: {valueDecimals: ax == 'W' ? 3 : ax == 'C' ? 2 : 1},
+			tooltip: {valueDecimals: ax === 'W' ? 3 : ax === 'C' ? 2 : ax === 'H' ? 0 : 1},
 			//visible:false,
-			name: fieldList[fieldIndex].name
+			name: fieldList[fieldIndex].name,
+			showInNavigator: (fieldList[fieldIndex].series === 0 || fieldList[fieldIndex].series === 12)
 		});
 	}
 	chartOptions.xAxis.title.text = xAxisName;
@@ -330,7 +325,7 @@ function loadChartsGroup(period) {
 				var nf = Number(arr[fi]);
 				if(!isNaN(nf)) {
 					var ax = fieldList[fi - 1].axis;
-					if(ax == 'W') nf = nf / 1000; else if(ax == 'C') nf = nf / 100; else nf = nf / 10;
+					nf = nf / (ax === 'W' ? 1000 : ax === 'C' ? 100 : ax === 'H' ? 1 : 10);
 					fieldList[fi - 1].data.push([dt, nf]);
 				}
 			}

@@ -1054,10 +1054,22 @@ void vReadSensor(void *)
 #endif     // не DEMO
 		}
 #ifndef IWR
-		for(i = 0; i < ANUMBER; i++) HP.sADC[i].Read();                  // Прочитать данные с датчиков давления
+		for(i = 0; i < ANUMBER; i++)
 #else
-		for(i = 0; i < ANUMBER - 1; i++) HP.sADC[i].Read();              // Прочитать данные с датчиков давления, кроме последнего
+		for(i = 0; i < ANUMBER - 1; i++)
 #endif
+		{
+			int8_t _err = HP.sADC[i].Read();
+			if(_err != OK && HP.get_State() != pOFF_HP) {      				// Прочитать данные с датчиков давления
+				if((HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
+#ifdef PGEO
+					&& i <= PGEO)
+#else
+					&& i <= PCON)
+#endif
+				set_Error(_err, HP.sADC[i].get_name());
+			}
+		}
 #ifdef SGENERATOR
 		for(i = 0; i < SGENERATOR; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #else
@@ -1207,30 +1219,28 @@ void vReadSensor(void *)
 
 #ifdef FLOW_CONTROL               // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
-	if(HP.is_comp_or_heater_on()) // Только если компрессор/котел включен
+		if(HP.is_comp_or_heater_on()) // Только если компрессор/котел включен
 #else
-	if(HP.is_comp_on())           // Только если компрессор включен
+		if(HP.is_comp_on())           // Только если компрессор включен
 #endif
-		for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
+			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
-			if(HP.is_heater_on() && i != FLOWCON) continue;
+				if(HP.is_heater_on() && i != FLOWCON) continue;
 	#ifdef SUPERBOILER            // Если определен супер бойлер
-				if(HP.is_compressor_on() {
-					if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
-				}
+					if(HP.is_compressor_on() {
+						if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
+					}
 	#endif
 #endif
-			if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
-				journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
-				set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
+					if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
+						journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
+						set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
+					}
 			}
-		}
 #endif
-#ifdef SEVA  //Если определен лепестковый датчик протока - это переливная схема ТН - надо контролировать проток при работе
- 	if(HP.dRelay[RPUMPI].get_Relay())                                                                                             // Только если включен насос геоконтура  (PUMP_IN)
-		if (HP.sInput[SEVA].get_Input()==SEVA_OFF) {set_Error(ERR_SEVA_FLOW,(char*)"SEVA"); return;}                              // Выход по ошибке отсутствия протока
+#ifdef SEVA  //Если определен лепестковый датчик протока - это переливная схема ТН - надо контролировать проток при работе, Только если включен насос геоконтура
+		if(HP.dRelay[RPUMPI].get_Relay() && HP.sInput[SEVA].get_Input() == SEVA_OFF) set_Error(ERR_SEVA_FLOW,(char*)"SEVA");
 #endif
-
 		//
 		vReadSensor_delay1ms(TIME_READ_SENSOR - int32_t(GetTickCount() - ttime));     // Ожидать время нужное для цикла чтения
 
@@ -1501,56 +1511,64 @@ void vReadSensor_delay1ms(int32_t ms)
 			HP.runCommand();
 		} while(xTaskGetTickCount() - _upd_delay_timer < _upd_delay);
 		_upd_delay_timer = xTaskGetTickCount();
-		switch (HP.get_State())  // Состояние ТН
-		{
-		case pOFF_HP:                               // ТН выключен
-		case pSTOPING_HP:                           // Останавливается
+		if(HP.get_State() == pOFF_HP) { // ТН выключен
 			HP.SetTask_vUpdate(false);
 			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-			break;
-		case pSTARTING_HP:
-			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-			break; // Стартует - этого не должно быть в этом месте
-		case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
-			if((HP.get_modWork() & pHEAT)) {		// Отопление
-				if(HP.get_ruleHeat() == pHYSTERESIS)
-					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
-				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
-			} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
-				if(HP.get_ruleCool() == pHYSTERESIS)
-					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
-				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
-			} else if((HP.get_modWork() & pBOILER)) { // бойлер
-				if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
-					_upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ;  // Время интегрирования ПИД
-				else _upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ; // Гистерезис
-			} else { // Пауза
-				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+		} else {
+			if(HP.R3WAY_Off_timer == 1) {
+				HP.R3WAY_Off_timer = 0;
+				HP.Switch_R3WAY(false);
 			}
-			break;
-		case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
-			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
-				if(HP.get_modeHouse() == pHEAT) {
-					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
-						HP.sendCommand(pRESUME);
-						HP.runCommand();
-					}
-				} else if(HP.get_modeHouse() == pCOOL) {
-					if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
-						HP.sendCommand(pRESUME);
-						HP.runCommand();
+			switch (HP.get_State())  // Состояние ТН
+			{
+			case pSTOPING_HP:                           // Останавливается
+				HP.SetTask_vUpdate(false);
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+				break;
+			case pSTARTING_HP:
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+				break; // Стартует - этого не должно быть в этом месте
+			case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
+				if((HP.get_modWork() & pHEAT)) {		// Отопление
+					if(HP.get_ruleHeat() == pHYSTERESIS)
+						_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+					else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
+				} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
+					if(HP.get_ruleCool() == pHYSTERESIS)
+						_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+					else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
+				} else if((HP.get_modWork() & pBOILER)) { // бойлер
+					if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
+						_upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ;  // Время интегрирования ПИД
+					else _upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ; // Гистерезис
+				} else { // Пауза
+					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+				}
+				break;
+			case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
+				if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
+					if(HP.get_modeHouse() == pHEAT) {
+						if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
+							HP.sendCommand(pRESUME);
+							HP.runCommand();
+						}
+					} else if(HP.get_modeHouse() == pCOOL) {
+						if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
+							HP.sendCommand(pRESUME);
+							HP.runCommand();
+						}
 					}
 				}
-			}
-			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-			break;
-		case pERROR_HP: 						      // Ошибка ТН
-			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-			break;
-		case pERROR_CODE:                             // Эта ошибка возникать не должна!
-		default:
-			journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
-		} //  switch (HP.get_State())
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+				break;
+			case pERROR_HP: 						      // Ошибка ТН
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+				break;
+			case pERROR_CODE:                             // Эта ошибка возникать не должна!
+			default:
+				journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
+			} //  switch (HP.get_State())
+		}
 	}// for
 	vTaskDelete( NULL );
 }
@@ -1864,7 +1882,7 @@ void vServiceHP(void *)
 					} else HP.pump_in_pause_timer--;
 				}
 			}
-			if(HP.R3WAY_Off_timer && --HP.R3WAY_Off_timer == 0) HP.Switch_R3WAY(false);
+			if(HP.R3WAY_Off_timer > 1) HP.R3WAY_Off_timer--;
 
 			//  Синхронизация часов с I2C часами если стоит соответсвующий флаг
 			static uint32_t _old_time = GetTickCount();

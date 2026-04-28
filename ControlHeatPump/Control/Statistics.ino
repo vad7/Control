@@ -562,6 +562,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 			switch(HistorySetup[i].object) {
 			case STATS_OBJ_Temp:
 			case STATS_OBJ_PressTemp:
+			case STATS_OBJ_Heater_TempOut:
 				strcat(ret, "T"); 		// ось температур
 				break;
 			case STATS_OBJ_Press:
@@ -1152,11 +1153,6 @@ void Statistics::History()
 		case STATS_OBJ_Compressor:
 			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // H
 			break;
-#ifdef USE_HEATER
-		case STATS_OBJ_Heater:
-			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // %
-			break;
-#endif
 		case STATS_OBJ_Power:
 			int_to_dec_str(HP.power220, 1, &buf, 0);  // W
 			break;
@@ -1181,6 +1177,17 @@ void Statistics::History()
 			break;
 		}
 		#endif
+#ifdef USE_HEATER
+		case STATS_OBJ_Heater:
+			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // %
+			break;
+		case STATS_OBJ_Heater_TempOut: {
+			int16_t t = HP.dHeater.data.T_Flow;
+			if(t == 0) continue;
+			int_to_dec_str(t, 1, &buf, 0); // T
+			break;
+		}
+#endif
 		case STATS_OBJ_COP_Full:
 			int_to_dec_str(HP.fullCOP > 0 ? HP.fullCOP : 0, 1, &buf, 0); // C
 			break;

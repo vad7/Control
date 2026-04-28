@@ -230,19 +230,10 @@ void sensorADC::initSensorADC(uint8_t sensor, uint8_t pinA, uint16_t filter_size
 		 Value = lastPress;
 		 Temp = ERROR_TEMPERATURE;
 	 }
-	 // Проверка на ошибки именно здесь обрабатывются ошибки и передаются на верх
-	 if(Value < cfg.minValue) {
-		 err = ERR_ANALOG_MIN;
-		 if(HP.get_State() != pOFF_HP) set_Error(err, name);
-		 return err;
-	 }
-	 if(Value > cfg.maxValue) {
-		 err = ERR_ANALOG_MAX;
-		 if(HP.get_State() != pOFF_HP) set_Error(err, name);
-		 return err;
-	 }
-	 // Дошли до сюда значит ошибок нет
-	 err = OK;                                         // Новый цикл новые ошибки
+	 // Проверка на ошибки
+	 if(Value < cfg.minValue) err = ERR_ANALOG_MIN;
+	 else if(Value > cfg.maxValue) err = ERR_ANALOG_MAX;
+	 else err = OK;
 	 return err;
  }
 

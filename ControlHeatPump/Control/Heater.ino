@@ -242,6 +242,9 @@ int8_t devHeater::read_state(uint8_t group)
 		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
 			if(err == OK) curr_temp = r / 10;
+		} else if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_ERRORS, 1, &err_flags);
+			SETBIT0(fwork, fHeater_ReadErrorFlags);
 		} else {
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
 			if(err == OK) {
@@ -253,6 +256,7 @@ int8_t devHeater::read_state(uint8_t group)
 					SETBIT1(fwork, fHeater_CmdNotResponse);
 					if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
 				}
+				if(data.Error) SETBIT1(fwork, fHeater_ReadErrorFlags);
 			}
 		}
 	} else {
@@ -348,7 +352,6 @@ bool devHeater::CheckIsHeaterOn(void)
 void devHeater::get_info(char* buf)
 {
 	uint16_t d;
-	int8_t _err;
 	buf += strlen(buf);
 	if(!GETBIT(fwork, fHeater_LinkAdapterOk)) {   // Нет связи
 		strcat(buf, "|Данные не доступны - нет связи|;");
@@ -358,16 +361,14 @@ void devHeater::get_info(char* buf)
 		buf += m_snprintf(buf, 256, "1A|Давление в контуре, бар|%.1d;", data.P_OUT);
 		buf += m_snprintf(buf, 256, "1E|Код ошибки (дополнительный)|%d (%d);", data.Error, data.Error2);
 		if(data.Error) {
-			_err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_HEATER_ERRORS, &d);
-			buf += m_snprintf(buf, 256, "23|Флаги ошибок|%s%d;", _err ? "Ошибка: " : "", _err ? _err : d);
-			if(_err == OK) {
-				if(GETBIT(d, HM_ERROR_SERVICE)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_SERVICE_S);
-				if(GETBIT(d, HM_ERROR_BLOCKED)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_BLOCKED_S);
-				if(GETBIT(d, HM_ERROR_LOW_PRESSURE)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_LOW_PRESSURE_S);
-				if(GETBIT(d, HM_ERROR_IGN_ERROR)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_IGN_ERROR_S);
-				if(GETBIT(d, HM_ERROR_LOW_AIR)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_LOW_AIR_S);
-				if(GETBIT(d, HM_ERROR_OVERHEAT)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_OVERHEAT_S);
-			}
+			d = err_flags;
+			buf += m_snprintf(buf, 256, "23|Флаги ошибок|%d;", d);
+			if(GETBIT(d, HM_ERROR_SERVICE)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_SERVICE_S);
+			if(GETBIT(d, HM_ERROR_BLOCKED)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_BLOCKED_S);
+			if(GETBIT(d, HM_ERROR_LOW_PRESSURE)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_LOW_PRESSURE_S);
+			if(GETBIT(d, HM_ERROR_IGN_ERROR)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_IGN_ERROR_S);
+			if(GETBIT(d, HM_ERROR_LOW_AIR)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_LOW_AIR_S);
+			if(GETBIT(d, HM_ERROR_OVERHEAT)) buf += m_snprintf(buf, 256, "|%s|;", HM_ERROR_OVERHEAT_S);
 		}
 	}
 }

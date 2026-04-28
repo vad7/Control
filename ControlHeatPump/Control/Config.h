@@ -5334,7 +5334,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PCON			1	// Датчик давления конденсатора.
 	#define PGEO			2	// Датчик давления жидкости геоконтура
 	#define POUT			3	// Датчик давления теплоносителя отопления
-	//#define IWR				4	// Датчки тока на входе ваттроутера, должен быть последним!
+	//#define IWR				4	// Датчик тока на входе ваттроутера, должен быть последним!
 	// Имена датчиков
 	const char *nameAnalog[] = {"PEVA",
 								"PCON",
@@ -5455,7 +5455,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define PUMP_OUT      RPUMPO			// Насос выходного контура (отопление)
 	#define PUMP_IN       RPUMPI 			// Насос входного  контура (гео или воздушник)
 
-	#define SWITCH_TIME_R3WAY	15			// Время переключения R3WAY, сек
+	#define SWITCH_TIME_R3WAY	17			// Время переключения R3WAY, сек
 	//#define RELAY_WAIT_SWITCH	11			// Заморозить выполнение задач на это время после переключения реле, ms
 
 	#define NOLINK_SUM_POWER_PUMP 200  		// Мощность потребления насосов, для добавления к мощности компрессора, если нет связи со электро-счетчиком, Вт
@@ -5545,7 +5545,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define TEVAOUT     8    // Температура на выходе ПТО геоконтура (по фреону)     - 285960280600000A
 	#define TCONOUT     9    // Температура на выходе ПТО СО (по фреону)   - 28FF509C55140355
 	#define TSUN		10   // Температура солнечного коллектора (улица)        - 28FF22F9551403AA
-	#define THEATER		11   // Температура на обратке Котла					 - 28DE862E1713012C
+	#define THEATER		11   // Температура на обратке Котла (на трассе у ТН)- 28DE862E1713012C
 	// Датчики для информации:
 	#define TKITCHEN	12  // 101350B4020800CA
 	#define TFL1BEDR	13  // 28C974DF050000CB
@@ -5609,8 +5609,8 @@ const char *noteTemp[] = {"Температура улицы",
 		"Температура нагнетания компрессора",
 		"Температура на входе из геоконтура",
 		"Температура на выходе в геоконтур",
-		"Температура на входе из отопления",
-		"Температура на выходе в отопление",
+		"Температура обратки из отопления",
+		"Температура подачи в отопление",
 		"Температура фреона на выходе ПТО гео",
 		"Температура фреона на выходе ПТО дома",
 		"Температура улицы 2, СП",
@@ -5959,8 +5959,8 @@ const char *noteTemp[] = {"Температура улицы",
 		{ STATS_OBJ_Temp, TEVAOUTG, noteTemp[TEVAOUTG] },
 		{ STATS_OBJ_Temp, TCONING, noteTemp[TCONING] },
 		{ STATS_OBJ_Temp, TCONOUTG, noteTemp[TCONOUTG] },
-		{ STATS_OBJ_Temp, TEVAOUT, noteTemp[TEVAOUT] },
-		{ STATS_OBJ_Temp, TCONOUT, noteTemp[TCONOUT] },
+		{ STATS_OBJ_Heater_TempOut, 0, "Температура подачи Котла" },
+		{ STATS_OBJ_Temp, THEATER, noteTemp[THEATER] },
 		{ STATS_OBJ_Temp, TSUN, noteTemp[TSUN] },
 #ifdef USE_HEATER
 		{ STATS_OBJ_Heater, 0, "Котел, %" },

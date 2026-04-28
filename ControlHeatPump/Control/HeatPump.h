@@ -340,14 +340,6 @@ struct type_statusHP
  uint32_t pumpCO_OFF;                     // Время выключения насоса системы отопления
 };
 
-#if defined(R3WAY) && !defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
-#define IS_BOILER_HEATING (HP.dRelay[R3WAY].get_Relay() && HP.dRelay[PUMP_OUT].get_Relay())
-#elif defined(RPUMPBH)
-#define IS_BOILER_HEATING (HP.dRelay[RPUMPBH].get_Relay() && !HP.dRelay[PUMP_OUT].get_Relay())
-#else
-#define IS_BOILER_HEATING false
-#endif
-
 // Признак запуска задачи насос:
 #define StartPump_Stop		0	// останов задачи
 #define StartPump_Start		1	// запуск
@@ -711,9 +703,9 @@ private:
 	void    defrost();                    // Все что касается разморозки воздушника
 
 	void resetSettingHP();                // Функция сброса настроек охлаждения и отопления
-	boolean BoilerHeatElement(int16_t target);// Проверка на необходимость греть бойлер дополнительным теном (true - надо греть)
-	boolean switchBoiler(boolean b);      // Переключение на нагрев бойлера ТН true-бойлер false-отопление/охлаждение
-	boolean checkEVI();                   // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
+	bool BoilerHeatElement(int16_t target);// Проверка на необходимость греть бойлер дополнительным теном (true - надо греть)
+	bool switchBoiler(bool b);      // Переключение на нагрев бойлера ТН true-бойлер false-отопление/охлаждение
+	bool checkEVI();                      // Проверка и если надо включение EVI если надо то выключение возвращает состояние реле
 	MODE_COMP UpdateHeat();               // Итерация нагрев  вход true - делаем, false - ТОЛЬКО проверяем выход что сделано или надо сделать
 	MODE_COMP UpdateCool();               // Итерация охлаждение вход true - делаем, false - ТОЛЬКО проверяем выход что сделано или надо сделать
 	MODE_COMP UpdateBoiler();             // Итерация управления бойлером возвращает что делать компрессору
@@ -722,7 +714,7 @@ private:
 	void heaterON();                      // попытка включить котел с учетом всех защит
 	void heaterOFF();                     // попытка выключить котел с учетом всех защит
 	void heater_heating_pipes(void);      // Котел греет трубу, если нужно
-	boolean check_start_pause();          // проверка на паузу между включениями
+	bool check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса
 
