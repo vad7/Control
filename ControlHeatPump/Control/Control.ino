@@ -1425,8 +1425,8 @@ void vReadSensor_delay1ms(int32_t ms)
 				if(d) {
 					// время профиля вышло, переключаемся на связанный
 					d--;
-					journal.jprintf("Switch profile by time to %d\n", d + 1);
-					HP.SwitchToProfile(d);
+					journal.jprintf("Switch profile by time: %d\n", d + 1);
+					HP.SwitchToProfile(d + SWITCH_PROF_BY_SCHEDULER);
 				} else {  // error: jump to label [-fpermissive] GCC
 					// Переключение расписания, когда текущий месяц и десятидневка совпадают; если пропустили из-за выключенного НК или работы,
 					// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года

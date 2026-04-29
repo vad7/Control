@@ -2342,19 +2342,21 @@ void HeatPump::StopWait(bool stop)
 		relayAllOFF();											// ВСЕ РЕЛЕ -> ВЫКЛ!
 		//journal.jprintf(" statChart stop\n");
 		setState(pOFF_HP);
+		SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+		HP.profile_prev = 0;
 		journal.jprintf_time("%s OFF . . .\n", (char*) nameHeatPump);
 	} else {
 		setState(pWAIT_HP);
 		journal.jprintf_time("%s WAIT . . .\n", (char*) nameHeatPump);
+		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
+			HP.SwitchToProfile(HP.profile_prev - 1);
+			HP.profile_prev = 0;
+		}
 	}
 	if(get_errcode() == OK) num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
 #ifdef AUTO_START_GENERATOR
 	if(GETBIT(Option.flags2, f2AutoStartGenerator)) dRelay[RGEN].set_OFF();
 #endif
-	if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-		HP.SwitchToProfile(HP.profile_prev - 1);
-		HP.profile_prev = 0;
-	}
 	return;
 }
 
@@ -3780,9 +3782,9 @@ bool HeatPump::check_start_pause()
 		heater = GETBIT(Prof.SaveON.flags, fBoiler_UseHeater);
 		pause = Prof.Boiler.WorkPause;
 	} else if(Status.modWork & pCOOL) pause = Prof.Cool.WorkPause;
-#ifdef DEBUG_MODWORK
-	journal.printf_time("Pause %d, mW:%d\n", pause, Status.modWork);
-#endif
+//#ifdef DEBUG_MODWORK
+//	journal.printf_time("Pause %d, mW:%d\n", pause, Status.modWork);
+//#endif
 	if(heater) {
 		if(stopHeater && rtcSAM3X8.unixtime() - stopHeater < pause) {
 			if(!heater_in_pause) journal.jprintf_time("Waiting Heater, pause %d s...\n", pause - (rtcSAM3X8.unixtime() - stopHeater));
@@ -4516,27 +4518,41 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		_by_scheduler = true;
 	} else _by_scheduler = false;
 	if(Prof.id == _profile) return;
-	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен то захватываем семафор
+	uint8_t _cnt = 0, p = 0;
+	do {
+		if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен, то захватываем семафор
+			journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
+			set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
+			return;
+		}
+		if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16), (uint8_t*)&_tmp2, sizeof(_tmp2))) {
+			SemaphoreGive(xI2CSemaphore);
+			set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
+			return;
+		}
+		SemaphoreGive(xI2CSemaphore);
+		if(_by_scheduler) {
+			p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
+			if(p) {
+				_profile = p - 1;
+				if(Prof.id == _profile) {
+					if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - the same\n");
+					SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+					return;
+				}
+				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Next profile by time: %d\n", p + 1);
+			}
+		}
+		if(++_cnt > I2C_PROFIL_NUM) {
+			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - looped\n");
+			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+			return;
+		}
+	} while(p);
+	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен, то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
 		return;
-	}
-	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16), (uint8_t*)&_tmp2, sizeof(_tmp2))) {
-		SemaphoreGive(xI2CSemaphore);
-		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
-		return;
-	}
-	if(_by_scheduler) {
-		uint8_t p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
-		if(p) {
-			_profile = p - 1;
-			if(Prof.id == _profile) {
-				journal.jprintf("Skip change profile by time - the same\n");
-				SemaphoreGive(xI2CSemaphore);
-				return;
-			}
-			journal.jprintf("Switch profile by time to %d\n", p + 1);
-		}
 	}
 	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);
@@ -4554,7 +4570,8 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
 		} else {
 			if(_by_error_check_mode) { // режим не такой же - выходим
-				journal.jprintf("Can't change profile to %d - boiler off\n", _profile + 1);
+				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Boiler off\n", _profile + 1);
+				SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
 				return;
 			}
 			frestart = true;
@@ -4562,7 +4579,8 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 	} else {
 		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
 		if(_by_error_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
-			journal.jprintf("Can't change profile to %d - mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
+			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
+			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
 			return;
 		}
 		if(currmode & pHEAT) {
@@ -4584,8 +4602,12 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 	if(Prof.load(_profile) > 0 && _profile == Prof.id) {
 		num_repeat_prof = 0;
 		if(_by_error_check_mode) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
-		journal.jprintf_time("Set profile to %d\n", _profile + 1);
-	} else journal.jprintf_time("Failed sеt profile to %d\n", _profile + 1);
+		journal.jprintf_time("Set profile: %d\n", _profile + 1);
+		SETBIT0(work_flags, fHP_ProfileSwitch_SkipLog);
+	} else if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) {
+		journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
+		SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+	}
 	if(frestart) sendCommand(pRESUME);
 }
 
