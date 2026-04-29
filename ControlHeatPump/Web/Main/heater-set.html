@@ -43,7 +43,7 @@ function load_adapter_settings2()
 	<tr><td>Не устанавливать температуру подачи из профиля</td><td><input type="checkbox" id="get_ht-nf" onchange="setParam('get_HT(NF)')"></td></tr>
 	<tr><td>Прогрев трассы, насосы или трехходовой бойлера включаются после этого</td><td><input type="checkbox" id="get_ht-3a" onchange="setParam('get_HT(3A)')"></td></tr>
     <tr><td>Время ожидания прогрева трассы, сек</td><td><input type="number" id="get_ht-3p"> <input type="submit" value=">" onclick="setParam('get_HT(3P)')"></td></tr>
-	<tr><td>Прогрев трассы (THEATER) до текущей температуры бойлера/СО</td><td><input type="checkbox" id="get_ht-3t" onchange="setParam('get_HT(3T)')"></td></tr>
+	<tr><td>Прогрев трассы (THEATER) до целевой температуры подачи</td><td><input type="checkbox" id="get_ht-3t" onchange="setParam('get_HT(3T)')"></td></tr>
     <tr><td>Максимальное время ожидания прогрева трассы по температуре, сек</td><td><input type="number" id="get_ht-3pm"> <input type="submit" value=">" onclick="setParam('get_HT(3PM)')"></td></tr>
 	<tr><td><b>Настройка адаптера ectoControl Opentherm/eBus/Navien (значения пишутся сразу в адаптер)</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
     <tr><td>Адаптер подключен (0), иначе подключен термостат или перемычка (1) [#30]</td><td><input type="number" id="get_ht-w30"> <input type="submit" value=">" onclick="setParam('get_HT(W30)')"></td></tr>

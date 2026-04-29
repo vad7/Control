@@ -249,8 +249,8 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Коэффициент погодозависимости: ");HP.Prof.get_paramHeatHP((char*)hp_K_WEATHER,Socket[thread].outBuf);STR_END;
         
      strcat(Socket[thread].outBuf," - Защиты - \r\n");
-     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_paramHeatHP((char*)hp_TEMP_IN,Socket[thread].outBuf);STR_END;
-     strcat(Socket[thread].outBuf,"Tемпература обратки минимальная (C°): ");HP.Prof.get_paramHeatHP((char*)hp_TEMP_OUT,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_paramHeatHP((char*)hp_TempOutLim,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Tемпература обратки минимальная (C°): ");HP.Prof.get_paramHeatHP((char*)hp_TempInLim,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Максимальная разность температур конденсатора (C°): ");HP.Prof.get_paramHeatHP((char*)hp_D_TEMP,Socket[thread].outBuf);STR_END;
      sendBufferRTOS(thread,(byte*)Socket[thread].outBuf,strlen(Socket[thread].outBuf)); 
  
@@ -277,8 +277,8 @@ void get_txtSettings(uint8_t thread, char *filename)
      strcat(Socket[thread].outBuf,"Коэффициент погодозависимости: ");HP.Prof.get_paramCoolHP((char*)hp_K_WEATHER,Socket[thread].outBuf);STR_END;
          
      strcat(Socket[thread].outBuf," - Защиты -\r\n");
-     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_paramCoolHP((char*)hp_TEMP_IN,Socket[thread].outBuf);STR_END;
-     strcat(Socket[thread].outBuf,"Tемпература обратки минимальная (C°): ");HP.Prof.get_paramCoolHP((char*)hp_TEMP_OUT,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_paramCoolHP((char*)hp_TempOutLim,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Tемпература обратки минимальная (C°): ");HP.Prof.get_paramCoolHP((char*)hp_TempInLim,Socket[thread].outBuf);STR_END;
      strcat(Socket[thread].outBuf,"Максимальная разность температур конденсатора (C°): ");HP.Prof.get_paramCoolHP((char*)hp_D_TEMP,Socket[thread].outBuf);STR_END;
      sendBufferRTOS(thread,(byte*)Socket[thread].outBuf,strlen(Socket[thread].outBuf));   
      
@@ -311,7 +311,7 @@ void get_txtSettings(uint8_t thread, char *filename)
      }
          
      strcat(Socket[thread].outBuf," - Защиты при работе теплового насоса -\r\n");
-     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_boiler((char*)boil_TEMP_MAX,Socket[thread].outBuf);STR_END;
+     strcat(Socket[thread].outBuf,"Tемпература подачи максимальная (C°): ");HP.Prof.get_boiler((char*)boil_TempOutLim,Socket[thread].outBuf);STR_END;
      
      strcat(Socket[thread].outBuf," - Опции -\r\n");
      strcat(Socket[thread].outBuf,"Греть совместно с отоплением, если ТН работает на отопление: ");HP.Prof.get_boiler((char*)boil_TOGETHER_HEAT,Socket[thread].outBuf);STR_END;

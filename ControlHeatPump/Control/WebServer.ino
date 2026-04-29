@@ -247,7 +247,7 @@ void readFileSD(char *filename, uint8_t thread)
 		{
 			if(*(str + 1 + sizeof(filename_subst_scheme)-1) == ']') {
 #ifdef HP_SCHEME_HEATER
-				itoa(GETBIT(HP.work_flags, fHP_HeaterValveOn) ? HP_SCHEME_HEATER : HP_SCHEME, str, 10); // вставить номер схемы
+				itoa(HP.is_heater_active() ? HP_SCHEME_HEATER : HP_SCHEME, str, 10); // вставить номер схемы
 #else
 				itoa(HP_SCHEME, str, 10); // вставить номер схемы
 #endif
@@ -671,7 +671,7 @@ void parserGET(uint8_t thread, int8_t )
 		{
 			if(str[8] == 'S') { 		// get_MODES - Номер схемы для planN.png
 #ifdef HP_SCHEME_HEATER
-				_itoa(GETBIT(HP.work_flags, fHP_HeaterValveOn) ? HP_SCHEME_HEATER : HP_SCHEME, strReturn);
+				_itoa(HP.is_heater_active() ? HP_SCHEME_HEATER : HP_SCHEME, strReturn);
 #else
 				_itoa(HP_SCHEME, strReturn);
 #endif
@@ -705,7 +705,7 @@ void parserGET(uint8_t thread, int8_t )
 	#else
 		#if defined(R3WAY)
 			#if defined(BOILER_R3WAY_BEFORE_HEATER_3WAY)
-			i = HP.dRelay[R3WAY].get_Relay() && ((HP.get_modWork() & pBOILER) || HP.is_heater_on());
+			i = HP.dRelay[R3WAY].get_Relay() && ((HP.get_modWork() & pBOILER) && HP.is_heater_on());
 			#elif defined(HEATER_BOILER_DONT_USE_PUMP_OUT)
 			i = HP.dRelay[R3WAY].get_Relay();
 			#else
@@ -849,7 +849,7 @@ xSaveStats:
 		}
 		if (strcmp(str,"get_fullCOP")==0)  //  получение полного COP
 		{
-			if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) strcat(strReturn,"Котел");
+			if(HP.is_heater_active()) strcat(strReturn,"Котел");
 			else {
 				if(HP.fullCOP!=-1000) _dtoa(strReturn, HP.fullCOP, 2); else strcat(strReturn,"-");
 			}

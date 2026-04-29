@@ -31,7 +31,7 @@ $(document).ready(function() {
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(MAX),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(H),get_Boiler(CP),get_Boiler(HR)");
+	loadParam("get_Boiler(RESH),get_Boiler(RESHT),get_Boiler(CIRCP),get_Boiler(CIRCW),get_Boiler(TOUT),get_Boiler(ON),get_Boiler(SCH_ON),get_Boiler(SCH_AH),get_Boiler(ADDH),get_Boiler(SLMN),get_Boiler(CIRC),get_Boiler(DTRG),get_Boiler(TRG),get_Boiler(TEMP),get_Boiler(TEMPR),get_Boiler(TURBO),get_Boiler(W),get_Boiler(H),get_Boiler(CP),get_Boiler(HR)");
 	loadParam("get_Boiler(TGHEAT),get_Boiler(PD),get_Boiler(PI),get_Boiler(PP),get_Boiler(PT),get_Boiler(ADT),get_Boiler(ADH),get_Boiler(ADEH),get_Boiler(SCHEDULER),get_Boiler(PID),get_Boiler(SUN),get_Boiler(dAH),get_Boiler(AHF),get_Boiler(URG),get_Boiler(DD),get_Boiler(WG),get_Boiler(WT),get_Boiler(TT),get_Boiler(CIRS),get_Boiler(DO),get_Boiler(HO)");
 };
 </script>
@@ -120,7 +120,7 @@ window.onload = function() {
 		<td></td>
 	</tr><tr>
 		<td>Максимальная температура подачи °C [5..95]</td>
-		<td nowrap><input id="get_boiler-max" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(MAX)');"></td>
+		<td nowrap><input id="get_boiler-tout" type="number" min="5" max="95" step="0.1"><input type="submit" value=">" onclick="setParam('get_Boiler(TOUT)');"></td>
 	</tr><tr>
 		<td>Минимальный простой перед началом работы, сек.</td>
 		<td nowrap><input id="get_boiler-cp" type="number" min="0" step="1"><input type="submit" value=">" onclick="setParam('get_Boiler(CP)');"></td>

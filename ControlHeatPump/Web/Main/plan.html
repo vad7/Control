@@ -29,7 +29,7 @@ function loadParam_after(paramid) {
 		}
 		SchemeOld = Scheme;
 		if(Scheme == HeaterSchemeId) {
-			loadParam("get_HT(TF),get_HT(M)");
+			loadParam("get_HT(TF),get_HT(M),get_Relay(R3WAY)");
 		} else {
             loadParam("get_pFC(INFO1),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TCONOUT),get_OverCool");
 		}
@@ -61,6 +61,7 @@ function set_bTIN(f,T) {
 <div id="_Heater" style="display:none">
 	<span  id="get_ht-tf" class="black">-.-</span>
 	<span  id="get_ht-m" class="black">-</span>
+	<div id="get_relay-r3way" style="display:none"></div>
 </div>
 	<span id="get_boiler-ct" class="red">-.-</span>
 	<span id="get_temp-tevaoutg" class="blue">-.-</span>
@@ -80,7 +81,6 @@ function set_bTIN(f,T) {
 	<span id="get_wr-3"></span>
 	<div id="get_ht-on" style="display:none"></div>
 	<div id="get_relay-r4way" style="display:none"></div>
-	<div id="get_relay-r3way" style="display:none"></div>
 </div>
 <table>
 	<tr><td width="20%" style="font-weight: bold;" nowrap>Режим работы<span id="get_prof-asm-hide"> (авто)</span>:</td><td width="16%"><span id="get_modew">-</span></td><td width="16%" style="font-weight: bold;">На улице:</td><td width="16%"><span id="get_temp-tout">-</span>&deg;</td><td width="16%" style="font-weight: bold;">В доме:</td><td width="16%"><span id="get_temp-tin">-</span>&deg;</td></tr>

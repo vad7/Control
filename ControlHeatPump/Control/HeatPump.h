@@ -32,6 +32,8 @@
 #include "Scheduler.h"
 #include "Heater.h"
 
+#define HEATER_NEED_ON (((Status.modWork & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)))
+#define TARGET_COMPRESSOR (HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
 
 extern char *MAC2String(byte* mac);
 
@@ -348,8 +350,6 @@ struct type_statusHP
 #define StartPump_AfterWork	4	// отработка после останова компрессора/котла (вкл)
 const char *StartPump_STR[] = { "Stop", "Start", "Work Off", "Work On", "Wait Off" };
 
-#define HeaterNeedOn (((Status.modWork & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)))
-
 // ------------------------- ОСНОВНОЙ КЛАСС --------------------------------------
 class HeatPump
 {
@@ -397,9 +397,10 @@ public:
 	char    *get_command_name(TYPE_COMMAND c) { return (char*)hp_commands_names[c < pCOMAND_END ? c : pCOMAND_END]; }
 	boolean  is_next_command_stop() { return command == pSTOP || next_command == pSTOP || next_command == pREPEAT; }
 	uint8_t  is_pause();					  // Возвращает 1, если ТН в паузе
-	inline boolean is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
-	inline boolean is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
-	inline boolean is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
+	inline bool is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
+	inline bool is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
+	inline bool is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
+	bool     is_heater_active();               // Котел активен (кран переключен на Котел)
 	void 	 relayAllOFF();                   // Все реле выключить, кроме некоторых
 	void	 HandleNoPower(void);		      // Обработать пропадание питания
 	bool     DelaySec(uint16_t s);		      // Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать

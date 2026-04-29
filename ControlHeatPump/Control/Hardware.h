@@ -230,7 +230,7 @@ private:
 class devRelay
 {
 public:
-  void initRelay(int sensor);                            // Инициализация реле
+  void initRelay(int sensor, bool out);                  // Инициализация реле и перевод в состоянии out
   __attribute__((always_inline)) inline int8_t  set_ON() {return set_Relay(fR_StatusMain);}    // Включить реле
   __attribute__((always_inline)) inline int8_t  set_OFF(){return set_Relay(-fR_StatusMain);}   // Выключить реле
   int8_t  set_Relay(int8_t r);                           // Установить реле в состояние (0/-1 - выкл основной алгоритм, fR_Status* - включить, -fR_Status* - выключить)

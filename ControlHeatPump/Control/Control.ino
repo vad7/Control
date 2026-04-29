@@ -442,7 +442,7 @@ x_I2C_init_std_message:
 
 	// 4. Инициализировать основной класс
 	journal.jprintf("2. Init %s main class . . .\n",(char*)nameHeatPump);
-	HP.initHeatPump();                           // Основной класс
+	HP.initHeatPump();                           // Основной класс, БЕЗ РЕЛЕ
 
 #ifndef LCD2004
 	// 5. Проверка сброса сети
@@ -474,6 +474,19 @@ x_I2C_init_std_message:
 			for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num >= TNUMBER) TempAlarm_remove(i);
 		}
 	}
+	// РЕЛЕ
+	for(uint8_t i = 0; i < RNUMBER; i++) {
+		bool _out = false;
+#ifdef RH_3WAY_BISTABLE
+		if(i == RH_3WAY && HP.Prof.SaveON.mode == pHEAT && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) _out = true;
+#endif
+		HP.dRelay[i].initRelay(i, _out);
+	}
+#ifdef R3WAYOFF
+	HP.dRelay[R3WAYOFF].set_ON();
+	HP.R3WAY_Off_timer = SWITCH_TIME_R3WAY;
+#endif
+
 	// Проверка связи с устройствами
 #ifdef USE_ELECTROMETER_SDM
 	HP.dSDM.check_link();
@@ -1061,7 +1074,7 @@ void vReadSensor(void *)
 		{
 			int8_t _err = HP.sADC[i].Read();
 			if(_err != OK && HP.get_State() != pOFF_HP) {      				// Прочитать данные с датчиков давления
-				if((HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
+				if(TARGET_COMPRESSOR
 #ifdef PGEO
 					&& i <= PGEO)
 #else
@@ -1511,64 +1524,64 @@ void vReadSensor_delay1ms(int32_t ms)
 			HP.runCommand();
 		} while(xTaskGetTickCount() - _upd_delay_timer < _upd_delay);
 		_upd_delay_timer = xTaskGetTickCount();
-		if(HP.get_State() == pOFF_HP) { // ТН выключен
+		if(HP.R3WAY_Off_timer == 1) {
+			HP.R3WAY_Off_timer = 0;
+#ifdef R3WAYOFF
+			if(HP.dRelay[R3WAYOFF].get_Relay()) HP.dRelay[R3WAYOFF].set_OFF();
+			else
+#endif
+				HP.Switch_R3WAY(false);
+		}
+		switch (HP.get_State())  // Состояние ТН
+		{
+		case pOFF_HP:
+		case pSTOPING_HP:                           // Останавливается
 			HP.SetTask_vUpdate(false);
 			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-		} else {
-			if(HP.R3WAY_Off_timer == 1) {
-				HP.R3WAY_Off_timer = 0;
-				HP.Switch_R3WAY(false);
+			break;
+		case pSTARTING_HP:
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+			break; // Стартует - этого не должно быть в этом месте
+		case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
+			if((HP.get_modWork() & pHEAT)) {		// Отопление
+				if(HP.get_ruleHeat() == pHYSTERESIS)
+					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
+			} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
+				if(HP.get_ruleCool() == pHYSTERESIS)
+					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
+				else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
+			} else if((HP.get_modWork() & pBOILER)) { // бойлер
+				if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
+					_upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ;  // Время интегрирования ПИД
+				else _upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ; // Гистерезис
+			} else { // Пауза
+				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
 			}
-			switch (HP.get_State())  // Состояние ТН
-			{
-			case pSTOPING_HP:                           // Останавливается
-				HP.SetTask_vUpdate(false);
-				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-				break;
-			case pSTARTING_HP:
-				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-				break; // Стартует - этого не должно быть в этом месте
-			case pWORK_HP:                              // Работает   - анализ режима работы get_modWork()
-				if((HP.get_modWork() & pHEAT)) {		// Отопление
-					if(HP.get_ruleHeat() == pHYSTERESIS)
-						_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
-					else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
-				} else if((HP.get_modWork() & pCOOL)) { // Охлаждение
-					if(HP.get_ruleCool() == pHYSTERESIS)
-						_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;  // Гистерезис
-					else _upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ; // Время интегрирования ПИД
-				} else if((HP.get_modWork() & pBOILER)) { // бойлер
-					if(GETBIT(HP.Prof.Boiler.flags, fBoilerPID))
-						_upd_delay = (HP.is_heater_on() ? HP.dHeater.set.Control_Period : HP.dFC.get_Uptime()) * configTICK_RATE_HZ;  // Время интегрирования ПИД
-					else _upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ; // Гистерезис
-				} else { // Пауза
-					_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-				}
-				break;
-			case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
-				if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
-					if(HP.get_modeHouse() == pHEAT) {
-						if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
-							HP.sendCommand(pRESUME);
-							HP.runCommand();
-						}
-					} else if(HP.get_modeHouse() == pCOOL) {
-						if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
-							HP.sendCommand(pRESUME);
-							HP.runCommand();
-						}
+			break;
+		case pWAIT_HP:                                // Ожидание ТН (расписание - пустое место)
+			if(GETBIT(HP.Option.flags2, f2AutoStartGenerator) && GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) { // Ожидание электричества для компрессора
+				if(HP.get_modeHouse() == pHEAT) {
+					if(GETBIT(HP.Prof.Heat.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() < HP.get_targetTempHeat() - HP.Prof.Heat.dTempGen) {
+						HP.sendCommand(pRESUME);
+						HP.runCommand();
+					}
+				} else if(HP.get_modeHouse() == pCOOL) {
+					if(GETBIT(HP.Prof.Cool.flags,fTarget) ? HP.RET : HP.sTemp[TIN].get_Temp() > HP.get_targetTempCool() + HP.Prof.Cool.dTempGen) {
+						HP.sendCommand(pRESUME);
+						HP.runCommand();
 					}
 				}
-				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-				break;
-			case pERROR_HP: 						      // Ошибка ТН
-				_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
-				break;
-			case pERROR_CODE:                             // Эта ошибка возникать не должна!
-			default:
-				journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
-			} //  switch (HP.get_State())
-		}
+			}
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+			break;
+		case pERROR_HP: 						      // Ошибка ТН
+			_upd_delay = HP.Option.Control_Period * configTICK_RATE_HZ;
+			break;
+		case pERROR_CODE:                             // Эта ошибка возникать не должна!
+		default:
+			journal.jprintf((const char*)" $ERROR: Bad state HP in function %s\n",(char*)__FUNCTION__);
+		} //  switch (HP.get_State())
 	}// for
 	vTaskDelete( NULL );
 }
