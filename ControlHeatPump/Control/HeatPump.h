@@ -193,6 +193,8 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 
 #define SWITCH_PROF_BY_ERROR		0x80	// переключить профиль по ошибке
 #define SWITCH_PROF_BY_SCHEDULER	0x40	// переключить профиль через календарь
+#define SWITCH_PROF_ON_BACKUP		0xC0	// на резервном источнике, вернуться обратно после восстановления питания
+#define SWITCH_PROF_BY_MASK			0xC0
 
 // Рабочие флаги ТН (work_flags)
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
@@ -207,7 +209,7 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
-#define fHP_ProfilesSwitchByTime 12			// Профили меняются по расписанию
+#define fHP_ProfilesSwitchingByTime 12		// Профили меняются по расписанию
 #define fHP_Heater_Heating_pipes 13			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
 #define fHP_ProfileSwitch_SkipLog 14		// Не логировать повторные ошибки переключения профилей
 
@@ -493,8 +495,8 @@ public:
 	boolean set_optionHP(char *var, float x);                // Установить опции ТН из числа (float)
 	char*   get_optionHP(char *var, char *ret);              // Получить опции ТН
 	uint16_t get_delayRepeadStart(){return Option.delayRepeadStart;} // Получить время между повторными попытками старта
-	void SwitchToProfile(uint8_t _profile);					// Переключиться на другой профиль (+опции SWITCH_PROF_*)
-	bool Check_Switch_Profile_On_Backup(void);				// Проверка и переключение на другой профиль на резервном источнике питания
+	uint8_t PrepareSwitchToProfile(uint8_t _profile);		 // подготовка к переключению профиля (+опции SWITCH_PROF_*)
+	bool    Check_Switch_Profile_On_Backup(void);			 // Проверка и переключение на другой профиль на резервном источнике питания
 
 	RULE_HP get_ruleCool(){return Prof.Cool.Rule;}           // Получить алгоритм охлаждения
 	RULE_HP get_ruleHeat(){return Prof.Heat.Rule;}           // Получить алгоритм отопления
@@ -691,6 +693,7 @@ public:
 	uint16_t R3WAY_Off_timer;             // Таймер до выключения крана R3WAY, сек
 #endif
 	int8_t  profile_prev;				// предыдущий профиль 0 или [1..I2C_PROFIL_NUM], будет возврат при необходимости (например, после перехода с резерва на основной источник питания)
+	uint8_t profile_cmd;				// Переключиться на этот профиль (+1) по команде pCHANGE_PROFILE, используются модификаторы: SWITCH_PROF_BY_*
 
 private:
 	void    StartResume(bool start);      // Функция Запуска/Продолжения работы ТН - возвращает ок или код ошибки

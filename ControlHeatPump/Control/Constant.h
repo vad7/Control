@@ -202,6 +202,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_vUpdateTick			20				// мсек. Квант задачи vUpdate
 #define TIME_EEV          			(1*1000)        // мсек. Период задачи vUpdateEEV в переходных состояниях ТН
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
+#define TIME_CMD_WAIT_SEMAPHORE		(60*1000)		// мсек.
 #ifndef TIME_I2C_UPDATE
 #define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
 #endif
@@ -868,7 +869,7 @@ const char *prof_fSwitchProfileNext_OnError= {"F2"};
 const char *prof_fSwitchProfileNext_ByTime= {"F3"};
 const char *prof_fSwitchProfileNext_OnBackupPower= {"F4"};
 const char *prof_fAutoSwitchProf_mode={"ASM"};
-const char *prof_fHP_ProfilesSwitchByTime={"TM"};
+const char *prof_fHP_ProfilesSwitchingByTime={"TM"};
 const char prof_DailySwitch[] 	= "DS";
 const char prof_DailySwitchDevice = 'D';		// DSD
 const char prof_DailySwitchOn  	= 'S';			// DSS

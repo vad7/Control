@@ -102,7 +102,8 @@ void HeatPump::process_error(void)
 #endif
 			if(num_repeat < get_nStart()) {                // есть еще попытки
 				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext && num_repeat_prof >= Option.nStartNextProf) {
-					SwitchToProfile((Prof.dataProfile.ProfileNext - 1) | SWITCH_PROF_BY_ERROR);
+					profile_cmd = Prof.dataProfile.ProfileNext | SWITCH_PROF_BY_ERROR;
+					sendCommand(pCHANGE_PROFILE);
 				}
 				sendCommand(pREPEAT);                  // Повторный пуск ТН
 			} else {
@@ -126,7 +127,8 @@ void HeatPump::initHeatPump()
 	pump_in_pause_timer = 0;
 	R3WAY_Off_timer = 0;
 	profile_prev = 0;
-	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchByTime);
+	profile_cmd = 0;
+	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchingByTime);
 #ifdef TEST_BOARD
 	testMode = SAFE_TEST;
 #else
@@ -2348,9 +2350,10 @@ void HeatPump::StopWait(bool stop)
 	} else {
 		setState(pWAIT_HP);
 		journal.jprintf_time("%s WAIT . . .\n", (char*) nameHeatPump);
-		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-			HP.SwitchToProfile(HP.profile_prev - 1);
-			HP.profile_prev = 0;
+		if(!GETBIT(Option.flags, fBackupPower) && profile_prev) {
+			profile_cmd = profile_prev;
+			profile_prev = 0;
+			sendCommand(pCHANGE_PROFILE);
 		}
 	}
 	if(get_errcode() == OK) num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
@@ -3577,8 +3580,9 @@ bool HeatPump::configHP()
 		#endif
 		Pumps(OFF);
 		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-			HP.SwitchToProfile(HP.profile_prev - 1);
-			HP.profile_prev = 0;
+			profile_cmd = profile_prev;
+			profile_prev = 0;
+			sendCommand(pCHANGE_PROFILE);
 		}
 		//switchBoiler(false);                                            // выключить бойлер
 		//_delay(DELAY_AFTER_SWITCH_RELAY);                               // Задержка
@@ -4362,11 +4366,11 @@ void HeatPump::runCommand(void)
 	if(!GETBIT(work_flags, fHP_NewCommand)) return;
 	SETBIT0(work_flags, fHP_NewCommand);
 	TYPE_COMMAND cmd = command;
-	journal.jprintf_time("Run: %s\n", get_command_name(cmd));
 	if(next_command != pEMPTY) { // следующая команда
 		command = next_command;
 		next_command = pEMPTY;
 	} else command = pEMPTY;   // Сбросить команду
+	journal.jprintf_time("Run: %s\n", get_command_name(cmd));
 	switch(cmd)
 	{
 	case pEMPTY:
@@ -4446,26 +4450,63 @@ void HeatPump::runCommand(void)
 		break;
 	case pWAIT:   // Перевод в состояние ожидания  - особенность возможна блокировка задач - используем семафор
 xWait:
-		if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
+		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
 		{
 			SetTask_vUpdate(false);
 			StopWait(_WAIT_);                                  // Ожидание
 			SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
 			SetTask_vUpdate(true);
-		}
-		else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
+		} else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
 	case pRESUME:   // Восстановление работы после ожиданияя -особенность возможна блокировка задач - используем семафор
-		if(SemaphoreTake(xCommandSemaphore,(60*1000/portTICK_PERIOD_MS))==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
+		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
 		{
 			StartResume(_RESUME_);                             // восстановление ТН
 			SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
 			SetTask_vUpdate(true);
 		}
-		else  journal.jprintf((char*)cErrorMutex,__FUNCTION__,MutexCommandBuzy);
+		else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
 	case pCHANGE_PROFILE:
-		if(Prof.id != Option.numProf) SwitchToProfile(Option.numProf);
+		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS) {
+			if(profile_cmd) {
+				uint8_t _prev_profile = Prof.id;
+				uint8_t _set_profile = profile_cmd;
+				profile_cmd = 0;
+				uint8_t _profile = PrepareSwitchToProfile(_set_profile);
+				uint8_t frestart = _profile & 0x80;
+				_profile &= ~0x80;
+				if(_profile) {
+					_profile -= 1;
+					if(frestart && get_State() == pWORK_HP) {	// Если направление работы ТН разное
+						// pWAIT:
+						SetTask_vUpdate(false);
+						StopWait(_WAIT_);						// Ожидание
+						SetTask_vUpdate(true);
+						// End pWAIT
+					}
+					if(Prof.load(_profile) > 0 && _profile == Prof.id) {
+						if(_set_profile & SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
+						SETBIT0(work_flags, fHP_ProfileSwitch_SkipLog);
+						num_repeat_prof = 0;
+						journal.jprintf_time("Set profile: %d\n", _profile + 1);
+					} else if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) {
+						SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+						journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
+					}
+					if(frestart) {
+						// pRESUME:
+						StartResume(_RESUME_);                             // восстановление ТН
+						SetTask_vUpdate(true);
+						// End pRESUME
+					}
+				}
+				if(_set_profile & SWITCH_PROF_ON_BACKUP) {
+					if(_prev_profile == Prof.id) sendCommand(pWAIT); else profile_prev = _prev_profile + 1;
+				}
+			}
+			SemaphoreGive(xCommandSemaphore);
+		} else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
 	default:                                                         // Не известная команда
 		journal.jprintf("Unknown command: %d !!!", cmd);
@@ -4479,19 +4520,18 @@ xWait:
 bool HeatPump::Check_Switch_Profile_On_Backup(void)
 {
 	if(GETBIT(Option.flags, fBackupPower) && GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnBackupPower) && HP.Prof.dataProfile.ProfileNext) { // переключение профиля, если задано
-		int8_t prev = Prof.id;
-		SwitchToProfile(Prof.dataProfile.ProfileNext - 1);
-		if(prev != Prof.id) {
-			profile_prev = prev + 1;
-			return true;
-		}
+		profile_cmd = Prof.dataProfile.ProfileNext - 1 + SWITCH_PROF_ON_BACKUP;
+		sendCommand(pCHANGE_PROFILE);
+		return true;
 	}
 	return false;
 }
 
-// Переключиться на другой профиль (0..I2C_PROFIL_NUM),
+// Переключиться на другой профиль (0..I2C_PROFIL_NUM), возвращает: 0 - нет или (номер профиля+1) +  0x80(нужен рестарт)
 // Переключение по ошибке - если +SWITCH_PROF_BY_ERROR, проверка наличия такого же режима работы отопления или ГВС, как текущий
-void HeatPump::SwitchToProfile(uint8_t _profile)
+// +SWITCH_PROF_BY_SCHEDULER - переключение по календарю/времени
+// Вызывается только из runCommand()
+uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 {
 	typeof(uint16_t) crc16;
 	union {
@@ -4509,26 +4549,23 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 	};
 	bool _by_error_check_mode;
 	bool _by_scheduler;
-	if(_profile & SWITCH_PROF_BY_ERROR) {
-		_profile &= ~SWITCH_PROF_BY_ERROR;
-		_by_error_check_mode = true;
-	} else _by_error_check_mode = false;
-	if(_profile & SWITCH_PROF_BY_SCHEDULER) {
-		_profile &= ~SWITCH_PROF_BY_SCHEDULER;
-		_by_scheduler = true;
-	} else _by_scheduler = false;
-	if(Prof.id == _profile) return;
+
+	if(_profile == 0) return 0;
+	if(_profile & SWITCH_PROF_BY_ERROR) _by_error_check_mode = true; else _by_error_check_mode = false;
+	if(_profile & SWITCH_PROF_BY_SCHEDULER)	_by_scheduler = true; else _by_scheduler = false;
+	_profile = (_profile & ~SWITCH_PROF_BY_MASK) - 1;
+	if(Prof.id == _profile) return 0;
 	uint8_t _cnt = 0, p = 0;
 	do {
 		if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен, то захватываем семафор
 			journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 			set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
-			return;
+			return 0;
 		}
 		if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16), (uint8_t*)&_tmp2, sizeof(_tmp2))) {
 			SemaphoreGive(xI2CSemaphore);
 			set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
-			return;
+			return 0;
 		}
 		SemaphoreGive(xI2CSemaphore);
 		if(_by_scheduler) {
@@ -4538,7 +4575,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 				if(Prof.id == _profile) {
 					if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - the same\n");
 					SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
-					return;
+					return 0;
 				}
 				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Next profile by time: %d\n", p + 1);
 			}
@@ -4546,25 +4583,25 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		if(++_cnt > I2C_PROFIL_NUM) {
 			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - looped\n");
 			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
-			return;
+			return 0;
 		}
 	} while(p);
 	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен, то захватываем семафор
 		journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
 		set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
-		return;
+		return 0;
 	}
 	if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + sizeof(crc16) + sizeof(Prof.dataProfile) + (&Prof.SaveON.flags - (uint8_t *)&Prof.SaveON), (uint8_t*)&_tmp, 2)) {
 		SemaphoreGive(xI2CSemaphore);
 		set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
-		return;
+		return 0;
 	}
 	SemaphoreGive(xI2CSemaphore);
 	MODE_HP currmode = get_modWork();
 #ifdef DEBUG_MODWORK
 	journal.jprintf("Current mW: %d\n", currmode);
 #endif
-	bool frestart = false;
+	bool frestart = false; // true - разное направление работы ТН
 	if(currmode & pBOILER) {
 		if(GETBIT(_tmp.flags, fBoilerON)) {
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
@@ -4572,7 +4609,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			if(_by_error_check_mode) { // режим не такой же - выходим
 				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Boiler off\n", _profile + 1);
 				SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
-				return;
+				return 0;
 			}
 			frestart = true;
 		}
@@ -4581,7 +4618,7 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 		if(_by_error_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
 			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
 			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
-			return;
+			return 0;
 		}
 		if(currmode & pHEAT) {
 			if(_tmp.mode & pHEAT) {
@@ -4591,24 +4628,8 @@ void HeatPump::SwitchToProfile(uint8_t _profile)
 			if(!(_tmp.mode & pCOOL)) frestart = true;
 		}
 	}
-	if(frestart && get_State() == pWORK_HP) { // Если направление работы ТН разное
-		if(!sendCommand(pWAIT)) return;
-		uint16_t i = DELAY_BEFORE_STOP_IN_PUMP + (get_modeHouse() == pCOOL ? Prof.Cool.delayOffPump : Prof.Heat.delayOffPump) + 1;
-		do { // ждем отработки команды
-			if(DelaySec(1)) break;
-			if(!--i) break;
-		} while(isCommand());
-	}
-	if(Prof.load(_profile) > 0 && _profile == Prof.id) {
-		num_repeat_prof = 0;
-		if(_by_error_check_mode) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
-		journal.jprintf_time("Set profile: %d\n", _profile + 1);
-		SETBIT0(work_flags, fHP_ProfileSwitch_SkipLog);
-	} else if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) {
-		journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
-		SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
-	}
-	if(frestart) sendCommand(pRESUME);
+	if(frestart && get_State() == pWORK_HP) _profile |= 0x80;
+	return _profile + 1;
 }
 
 // Обработать пропадание питания

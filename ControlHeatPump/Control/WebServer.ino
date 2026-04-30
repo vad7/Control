@@ -1872,11 +1872,14 @@ xSaveStats:
 			{
 				if ((pm=my_atof(x))==ATOF_ERROR)  strcat(strReturn,"E29");      // Ошибка преобразования - завершить запрос с ошибкой
 				else {
-					if(pm >= 0 && pm < I2C_PROFIL_NUM) {
-						HP.Option.numProf = pm;
+					i = (int16_t)pm;
+					if(i >= 0 && i < I2C_PROFIL_NUM) {
+						HP.Option.numProf = i;
 						if(HP.Prof.id != HP.Option.numProf) {
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
-							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchByTime);
+							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTime);
+							HP.profile_prev = 0;
+							HP.profile_cmd = i + 1;
 							HP.sendCommand(pCHANGE_PROFILE);
 						}
 					} else strcat(strReturn,"E29");

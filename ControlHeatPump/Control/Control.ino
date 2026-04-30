@@ -1306,8 +1306,9 @@ void vReadSensor_delay1ms(int32_t ms)
 					HP.Option.flags &= ~(1<<fBackupPower);
 					if(GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) HP.work_flags &= ~(1<<fHP_BackupNoPwrWAIT);
 					if(HP.profile_prev && HP.get_modWork() == pOFF) {
-						HP.SwitchToProfile(HP.profile_prev - 1);
+						HP.profile_cmd = HP.profile_prev;
 						HP.profile_prev = 0;
+						HP.sendCommand(pCHANGE_PROFILE);
 					}
 					if(HP.get_State() == pWAIT_HP) HP.sendCommand(pRESUME);
 				}
@@ -1418,15 +1419,15 @@ void vReadSensor_delay1ms(int32_t ms)
 		}
 		if(HP.Task_vUpdate_run) {
 			if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_MaxPowerOnBackup() && HP.power220 > HP.dFC.get_MaxPowerOnBackup()) {
-				if(!HP.Check_Switch_Profile_On_Backup()) HP.sendCommand(pWAIT);
+				HP.Check_Switch_Profile_On_Backup();
 			} else if(HP.profile_prev == 0) { // идет работа на резерве, пропускаем переключения профилей до конца итерации
 				// 3. Расписание проверка всегда
 				uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
 				if(d) {
 					// время профиля вышло, переключаемся на связанный
-					d--;
-					journal.jprintf("Switch profile by time: %d\n", d + 1);
-					HP.SwitchToProfile(d + SWITCH_PROF_BY_SCHEDULER);
+					journal.jprintf("Switch profile by time: %d\n", d);
+					HP.profile_cmd = d + SWITCH_PROF_BY_SCHEDULER;
+					HP.sendCommand(pCHANGE_PROFILE);
 				} else {  // error: jump to label [-fpermissive] GCC
 					// Переключение расписания, когда текущий месяц и десятидневка совпадают; если пропустили из-за выключенного НК или работы,
 					// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
@@ -1462,7 +1463,8 @@ void vReadSensor_delay1ms(int32_t ms)
 							if(_profile == SCHDLR_Profile_off) {
 								HP.sendCommand(pWAIT);
 							} else if(HP.Prof.get_idProfile() != _profile) {
-								HP.SwitchToProfile(_profile + SWITCH_PROF_BY_SCHEDULER);
+								HP.profile_cmd = _profile + 1 + SWITCH_PROF_BY_SCHEDULER;
+								HP.sendCommand(pCHANGE_PROFILE);
 							} else if(HP.get_State() == pWAIT_HP && !HP.NO_Power && !GETBIT(HP.work_flags, fHP_BackupNoPwrWAIT)) {
 								HP.sendCommand(pRESUME);
 							}
