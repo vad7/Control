@@ -968,6 +968,7 @@ const char *Wheater_fHeater_Heating_Pipes		= {"3A"};
 const char *Wheater_fHeater_Heating_Pipes_Temp	= {"3T"};
 const char *Wheater_wait_heating_pipes_time		= {"3P"};
 const char *Wheater_wait_heating_pipes_time_max	= {"3PM"};
+const char *Wheater_HeatingPipesSubTemp			= {"HPS"};
 //const char *Wheater_heat_tempout				= {"T"};
 //const char *Wheater_heat_power_min				= {"PN"};
 //const char *Wheater_heat_power_max				= {"PM"};

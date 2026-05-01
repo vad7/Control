@@ -407,6 +407,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_fHeater_DontSetFlowTemp)==0){ if(GETBIT(set.setup_flags, fHeater_DontSetFlowTemp)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_wait_heating_pipes_time)==0){ _itoa(set.wait_heating_pipes_time * 4, ret); } else
 	if(strcmp(var, Wheater_wait_heating_pipes_time_max)==0){ _itoa(set.wait_heating_pipes_time_max * 4, ret); } else
+	if(strcmp(var, Wheater_HeatingPipesSubTemp)==0){ _itoa(set.HeatingPipesSubTemp, ret); } else
 //	if(strcmp(var, Wheater_heat_tempout)==0) 			{ _itoa(set.heat_tempout, ret); } else
 //	if(strcmp(var, Wheater_heat_power_min)==0) 			{ _itoa(set.heat_power_min, ret); } else
 //	if(strcmp(var, Wheater_heat_power_max)==0) 			{ _itoa(set.heat_power_max, ret); } else
@@ -438,6 +439,7 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_fHeater_DontSetFlowTemp)==0){ if(x) SETBIT1(set.setup_flags, fHeater_DontSetFlowTemp); else SETBIT0(set.setup_flags, fHeater_DontSetFlowTemp); return OK;} else
 	if(strcmp(var, Wheater_wait_heating_pipes_time)==0){ set.wait_heating_pipes_time = x / 4; return OK; } else
 	if(strcmp(var, Wheater_wait_heating_pipes_time_max)==0){ set.wait_heating_pipes_time_max = x / 4; return OK; } else
+	if(strcmp(var, Wheater_HeatingPipesSubTemp)==0){ set.HeatingPipesSubTemp = x; return OK; } else
 	if(strcmp(var, option_Control_Period)==0)			{ if(x>0){ set.Control_Period = x; return OK; } } else
 //	if(strcmp(var, Wheater_heat_tempout)==0)			{ if(x>=0 && x<=100){ set.heat_tempout = x; return OK; } } else
 //	if(strcmp(var, Wheater_heat_power_min)==0)			{ if(x>=0 && x<=100){ set.heat_power_min = x; return OK; } } else

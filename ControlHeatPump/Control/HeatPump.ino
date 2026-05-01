@@ -3609,7 +3609,7 @@ bool HeatPump::configHP()
 					dHeater.HeaterValve_On();
 	#endif
 	#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Heat.tempPID - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Heat.tempPID - dHeater.set.setup_flags*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);
 					} else
@@ -3720,7 +3720,7 @@ bool HeatPump::configHP()
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) {
 					dHeater.HeaterValve_On();
 			#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Boiler.tempPID - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Boiler.tempPID - dHeater.set.setup_flags*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
 					} else 						// и не включать сразу насосы
@@ -4322,7 +4322,7 @@ void HeatPump::heater_heating_pipes(void)
 #ifdef THEATER
 	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
 		uint16_t t = dHeater.set.wait_heating_pipes_time_max * 4;
-		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? Prof.Boiler.tempPID : Prof.Heat.tempPID)) {
+		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? Prof.Boiler.tempPID : Prof.Heat.tempPID) - dHeater.set.HeatingPipesSubTemp * 100) {
 			if(DelaySec(1) || !is_heater_on() || !GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
 				SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 				return;
