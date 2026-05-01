@@ -28,7 +28,7 @@
 // Регистры Modbus RTU адаптера ectoControl v2 (19200 bps)
 // Для чтения
 #define HM_ADAPTER_FLAGS				0x0010
-#define HM_ADAPTER_FLAGS_bLINK			3		// бит состояние связи с котлом, 0 - нет ответа на последнюю команду, 1 - есть ответ
+#define HM_ADAPTER_FLAGS_bLINK			(3+8)	// бит состояние связи с котлом, 0 - нет ответа на последнюю команду, 1 - есть ответ
 #define HM_ADAPTER_VER					0x0011
 #define HM_ADAPTER_TIME					0x0012	// 4 bytes
 #define HM_ADAPTER_RESET				0x0080	// 2  - перезагрузка адаптера, 3 - сброс ошибок котла

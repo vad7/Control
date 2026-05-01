@@ -2098,13 +2098,22 @@ int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t dat
 		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
 		return err = ERR_485_BUZY;
 	}
+	uint8_t result;
 #ifdef USE_HEATER
 	set_timeouts(id);
 	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+	if(id >= MODBUS_HEATER_GE) {
+		RS485.begin(id, HEATER_MODBUS_PORT);	// установка сериала и адреса устройства
+		RS485.send(data);
+		result = RS485.writeMultipleRegisters(cmd, 1);
+	} else {
+		RS485.begin(id, MODBUS_PORT_NUM);	// установка сериала и адреса устройства
+		result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
+	}
 #else
 	RS485.set_slave(id);
+	result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
 #endif
-	uint8_t result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
 	SemaphoreGive (xModbusSemaphore);
 	return err = translateErr(result);
 }
