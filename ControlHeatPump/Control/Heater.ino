@@ -244,24 +244,25 @@ int8_t devHeater::read_state(uint8_t group)
 {
 	if(group == 0 || !GETBIT(fwork, fHeater_LinkAdapterOk) || !GETBIT(fwork, fHeater_LinkHeaterOk)) { // группа 0 или если нет связи
 		uint16_t r;
-		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
-			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
-			if(err == OK) curr_temp = r / 10;
-		} else if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
+//		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
+//			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
+//			if(err == OK) curr_temp = r / 10;
+//		} else
+		if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_fERRORS, 1, &err_flags);
 			if(err == OK) Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_ERROR2, 1, &Heater_Error2);
 			SETBIT0(fwork, fHeater_ReadErrorFlags);
 		} else {
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
 			if(err == OK) {
-				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK)) SETBIT1(fwork, fHeater_fNotAnswerOnCmd); else SETBIT0(fwork, fHeater_fNotAnswerOnCmd);
+				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK)) SETBIT0(fwork, fHeater_fNotAnswerOnCmd); else SETBIT1(fwork, fHeater_fNotAnswerOnCmd);
 				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) {
 					err_num = 0;
 					SETBIT0(fwork, fHeater_CmdNotResponse);
 					SETBIT1(fwork, fHeater_LinkHeaterOk);
 				} else {
 					SETBIT1(fwork, fHeater_CmdNotResponse);
-					if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
+					//if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
 				}
 				if(data.Error) SETBIT1(fwork, fHeater_ReadErrorFlags);
 				else {
@@ -283,7 +284,8 @@ int8_t devHeater::read_state(uint8_t group)
 //				journal.jprintf("%s Modbus error %d\n", HEATER_NAME, err);
 //				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
 //			}
-			SETBIT0(fwork, fHeater_LinkAdapterOk);
+
+//			SETBIT0(fwork, fHeater_LinkAdapterOk);
 		}
 	} else {
 		SETBIT1(fwork, fHeater_LinkAdapterOk);
