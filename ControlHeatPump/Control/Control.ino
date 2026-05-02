@@ -980,7 +980,7 @@ void vWeb0(void *)
 				active = false;
 			}
 #ifdef MQTT                                     // признак использования MQTT
-			// 7. Отправка нанародный мониторинг
+			// 7. Отправка на народный мониторинг
 			if ((HP.clMQTT.get_NarodMonUse())&&(_other_tasks-narmont>TIME_NARMON*1000UL)&&(active))// если нужно & время отправки пришло
 			{
 				WEB_STORE_DEBUG_INFO(55);

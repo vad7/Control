@@ -147,7 +147,7 @@ public:
 	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
 
 	void 	Heater_Start();							// Включить котел
-	void 	Heater_Stop();							// Выключить котел
+	void 	Heater_Stop(bool rise_error);			// Выключить котел
 	void 	HeaterValve_On();						// Переключиться на котел
 	void 	HeaterValve_Off();						// Переключиться на ТН
 	void	WaitPumpOff();							// Ожидать постциркуляцию насоса

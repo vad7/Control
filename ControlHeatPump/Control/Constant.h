@@ -94,7 +94,7 @@ const uint16_t  defaultPort=80;
 #define W5200_NUM_LINK    2                 // Число попыток сброса чипа w5500 и проверки появления связи (кабель воткнут) используется для инициализаци чипа
 #define W5200_TIME_LINK   4000              // Максимальное время ожидания устанoвления связи (поднятие Link) кабель воткнут  используется для инициализаци чипа (мсек)
 #define W5200_TIME_WAIT   2000              // Время ожидания захвата мютекса (переключение потоков) мсек
-#define W5200_TIME_WAIT_MAX (10*60*1000UL)	// Время ожидания захвата макс
+#define W5200_TIME_WAIT_MAX (3*60*1000UL)	// Время ожидания захвата макс
 #define W5200_SPI_SPEED   SPI_RATE          // ЭТО ДЕЛИТЕЛЬ (SPI_RATE определен в w5100.h)!!! Частота SPI w5200 = 84/W5200_SPI_SPEED т.е. 2-42МГц 3-28МГц 4-21МГц 6-14МГц Диапазон 2-6
 #define W5200_SOCK_SYS    (MAX_SOCK_NUM-1)  // Номер системного сокета который не использутся в вебсервере, это последний сокет, НЕ МЕНЯТЬ
 #define W5200_RTR         (2*0x07D0)        // время таймаута в 100 мкс интервалах  (по умолчанию 200ms(100us X 2000(0x07D0))) актуально для комманд CONNECT, DISCON, CLOSE, SEND, SEND_MAC, SEND_KEEP
@@ -1536,10 +1536,11 @@ enum TYPE_COMMAND
   pPROG_FC,                      // 13 Первоначальное программирование частотного преобразователя
   pREPEAT_FAST,					 // 14 Повторный пуск ТН через короткое время
   pCHANGE_PROFILE,               // 15 Сменить профиль на HP.Option.numProf, с проверками и остановом, при необходимости
+  pERROR,                        // 16 Отработка Ошибки
   pCOMAND_END                    // Обязательно должен быть последним, добавляем ПЕРЕД!!!
 };
 
-const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "REP_FAST", "CHANGE_PROF", "UNKNOWN"};
+const char *hp_commands_names[] = {"EMPTY", "START", "AUTOSTART", "STOP", "RESET", "RESTART", "REPEAT", "NETWORK", "JFORMAT", "SFORMAT", "SAVE", "WAIT", "RESUME", "PROG_FC", "REP_FAST", "CHANGE_PROF", "ERROR", "UNKNOWN"};
 
 //  Перечисляемый тип -ТИПЫ уведомлений
 enum MESSAGE          

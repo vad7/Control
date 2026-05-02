@@ -65,28 +65,16 @@ xSearch_sTemp:
 			strcat(HP.note_error, "Высокая ");
 			goto xSearch_sTemp;
 		} else {
-			strcat(HP.note_error, nam);                  // Имя кто сгенерировал ошибку
+			strcat(HP.note_error, nam);                  		// Имя кто сгенерировал ошибку
 			strcat(HP.note_error, ": ");
-			strcat(HP.note_error, noteError[abs(_err)]); // Описание ошибки
+			strcat(HP.note_error, noteError[abs(_err)]); 		// Описание ошибки
 		}
 		journal.jprintf_time("$ERROR source: %s, code: %d\n", nam, _err);
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) HP.save_DumpJournal(true); // вывод отладочной информации для начала, если запущена freeRTOS
+		HP.message.setMessage(pMESSAGE_ERROR, HP.note_error, 0);// сформировать уведомление об ошибке
 		// Сюда ставить надо останов ТН !
-		if(HP.is_compressor_on()) HP.compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
-		if(HP.is_heater_on()) HP.heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
-		HP.message.setMessage(pMESSAGE_ERROR, HP.note_error, 0);    // сформировать уведомление об ошибке
-		HP.process_error();
-	} else {
-		if(HP.is_compressor_on()) HP.compressorOFF();		// Останов компрессора, насосов - PUMP_OFF(), ЭРВ
-		if(HP.is_heater_on()) HP.heaterOFF();				// Выкл. котла, насосов - PUMP_OFF()
 	}
-	if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
-		journal.printf("xI2CSemaphore locked!\n");
-		repower();
-	} else {
-		if(!Check_I2C_bus()) Recover_I2C_bus(true);
-	}
-	SemaphoreGive(xI2CSemaphore);
+	HP.sendCommand(pERROR);
 }
 
 void HeatPump::process_error(void)
@@ -4046,8 +4034,8 @@ void HeatPump::compressorOFF()
 		compressor_in_pause = false;
 	}
 #ifdef EEV_DEF
-	lastEEV = dEEV.get_EEV();                                           // Запомнить последнюю позицию ЭРВ
 	dEEV.Pause();                                                       // Поставить на паузу задачу Обновления ЭРВ
+	lastEEV = dEEV.get_EEV();                                           // Запомнить последнюю позицию ЭРВ
 	journal.jprintf(" Stop control EEV\n");
 #endif
 
@@ -4297,7 +4285,7 @@ void HeatPump::heaterOFF()
 #ifdef USE_HEATER
 	command_completed = rtcSAM3X8.unixtime();
 	if(is_heater_on()) {
-		dHeater.Heater_Stop();                                             // Компрессор выключить
+		dHeater.Heater_Stop(true);                                             // Компрессор выключить
 		heater_in_pause = false;
 	}
 
@@ -4314,7 +4302,7 @@ void HeatPump::heaterOFF()
 void HeatPump::heater_heating_pipes(void)
 {
 	if(!GETBIT(work_flags, fHP_Heater_Heating_pipes) || get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
-	journal.jprintf("Waiting to heat up pipes\n");
+	journal.jprintf(" Waiting to heat pipes\n");
 	if(dHeater.set.wait_heating_pipes_time != 0) {
 		if(DelaySec(dHeater.set.wait_heating_pipes_time * 4)) {
 			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
@@ -4349,6 +4337,12 @@ void HeatPump::heater_heating_pipes(void)
 bool HeatPump::sendCommand(TYPE_COMMAND c)
 {
 	if(c == command) return true;      // Игнорируем повторы
+	if(c == pERROR) {
+		next_command = command;
+		command = c;
+		SETBIT1(work_flags, fHP_NewCommand);
+		return true;
+	}
 	if((command == pSTOP || next_command == pSTOP) && c != pSTART) return true; // останавливаемся, кром старт ничего нельзя
 	if(command != pEMPTY) {// Если команда выполняется (не pEMPTY), то следующую в очередь, если есть место
 		if(next_command != c) {
@@ -4388,6 +4382,46 @@ void HeatPump::runCommand(void)
 	case pSTOP:                           // 3 Стоп теплового насоса
 		PauseStart = 0;
 		StopWait(_STOP_);                  // Выключить ТН
+		break;
+	case pERROR:
+		if(is_compressor_on()) {
+			COMPRESSOR_OFF;                                             // Компрессор выключить
+			compressor_in_pause = false;
+#ifdef EEV_DEF
+			dEEV.Pause();                                                       // Поставить на паузу задачу Обновления ЭРВ
+			lastEEV = dEEV.get_EEV();                                           // Запомнить последнюю позицию ЭРВ
+#endif
+#ifdef REVI
+			checkEVI();                                                     // выключить ЭВИ
+#endif
+#if defined(EEV_DEF) && defined(EEV_CLOSE_IMMEDIATELY)
+			if(dEEV.get_EevClose())	{
+				//_delay(dEEV.get_delayOff() * 1000);                       // пауза перед закрытием ЭРВ
+				dEEV.set_EEV(EEV_CLOSE_STEP);                               // Если нужно, то закрыть ЭРВ
+				journal.jprintf(" EEV closed\n");
+			}
+#endif
+		}
+#ifdef USE_HEATER
+		if(HP.is_heater_on()) {
+			dHeater.Heater_Stop(false);
+			heater_in_pause = false;
+		}
+#endif
+		Pumps(OFF);                                                          // выключить насосы + задержка
+		if(onBoiler) {
+			onBoiler = false;
+			offBoiler = rtcSAM3X8.unixtime();
+		}
+
+		if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {
+			journal.printf("xI2CSemaphore locked!\n");
+			repower();
+		} else {
+			if(!Check_I2C_bus()) Recover_I2C_bus(true);
+		}
+		SemaphoreGive(xI2CSemaphore);
+		HP.process_error();
 		break;
 	case pRESET:                          // 4 Сброс контроллера
 		PauseStart = 0;

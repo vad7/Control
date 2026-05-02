@@ -5174,10 +5174,11 @@ const char *noteTemp[] = {"Температура улицы",
 		#define HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS	20	// По умолчанию, мсек
 		#define HEATER_MODBUS_TIMEOUT				30	// По умолчанию, мсек
 		#define HEATER_ADAPTER_WAIT_WRITE	10	// мсек
-		#define HEATER_ADAPTER_NOT_RESPONSE_MAX 3 // Через сколько чтений подряд состояния "нет ответа от котла на последнюю команду" установить флаг - нет связи
+		#define HEATER_ADAPTER_NOT_RESPONSE_MAX 5 // Через сколько чтений подряд состояния "нет ответа от котла на последнюю команду" установить флаг - нет связи
 		#define HEATER_BOILER_DONT_USE_PUMP_OUT	// Не использовать насос отопления при нагреве бойлера от котла
 		#define HEATER_PREHEAT_HYSTERESIS	500 // Прогревать трассу до превышения обратки котла над температурами бойлера или подачи, сотые градуса
 		#define BOILER_R3WAY_BEFORE_HEATER_3WAY	// Трехходовой бойлера стоит ДО трехходового крана Котел-ТН (может греть бойлер Котлом совместно с работой компрессора)
+		#define HEATER_WAIT_CMD_COMPLETION	10	// Ожидать выполнения команды, сек
 	#endif
 
 	// Конфигурирование Modbus для инвертора и счетчика SDM

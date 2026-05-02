@@ -64,7 +64,8 @@ void devHeater::check_link(void)
 	SETBIT1(fwork, fHeater_LinkAdapterOk);
 }
 
-void devHeater::Heater_Stop()
+// rise_error = false, не генерить ошибку, если что
+void devHeater::Heater_Stop(bool rise_error)
 {
 #ifdef USE_HEATER
 #ifdef RHEATER
@@ -76,8 +77,10 @@ void devHeater::Heater_Stop()
 			int8_t err = Modbus.writeSingleCoilR(HEATER_MODBUS_RELAY_ADDR, HEATER_MODBUS_RELAY_ID, 0);
 			if(err) {
 				err_num_total++;
-				set_Error(err, (char*)__FUNCTION__);
-				return;
+				if(rise_error) {
+					set_Error(err, (char*)__FUNCTION__);
+					return;
+				}
 			}
 		}
 	}
@@ -87,21 +90,23 @@ void devHeater::Heater_Stop()
 		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 0);
 		if(err) {
 			err_num_total++;
-			set_Error(err, (char*)"HeaterSW");
+			if(rise_error) set_Error(err, (char*)"HeaterSW"); else journal.jprintf("ERROR Stop Heater: %d\n", err);
 			return;
 		}
-		_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
-		int16_t status;
-		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);
-		if(err) {
-			err_num_total++;
-			set_Error(err, (char*)"HeaterSR");
-			return;
-		}
-		if(status != 0) {
-			journal.jprintf("OT write #%d err: %d\n", HM_SET_FLAGS, status);
-			set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
-			return;
+		if(rise_error) {
+			_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
+			int16_t status;
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + HM_SET_FLAGS, 1, (uint16_t*)&status);
+			if(err) {
+				err_num_total++;
+				set_Error(err, (char*)"HeaterSR");
+				return;
+			}
+			if(status != 0) {
+				journal.jprintf("OT write #%d err: %d\n", HM_SET_FLAGS, status);
+				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
+				return;
+			}
 		}
 	}
 #endif
@@ -193,7 +198,7 @@ void devHeater::HeaterValve_Off()
 {
 #ifdef USE_HEATER
 	if(HP.is_heater_on()) {
-		Heater_Stop();
+		Heater_Stop(true);
 		journal.jprintf("Heater is ON -> Turn OFF\n");
 	}
 	WaitPumpOff();
@@ -281,19 +286,19 @@ int8_t devHeater::read_state(uint8_t group)
 		}
 	} else {
 		SETBIT1(fwork, fHeater_LinkAdapterOk);
-	}
-	if(group && (testMode == NORMAL || testMode == HARD_TEST)) {
-		uint16_t _status = (HP.get_modWork() & pBOILER) ? GETBIT(data.Status, HM_STATUS_bBOILER) : GETBIT(data.Status, HM_STATUS_bHEATING);
-		if(HP.is_heater_on()) {
-			if(!GETBIT(fwork, fHeater_LinkHeaterOk)) {
-				set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
-			} else if(!_status) {
-				set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
+		if(group && (testMode == NORMAL || testMode == HARD_TEST)) {
+			uint16_t _status = (HP.get_modWork() & pBOILER) ? GETBIT(data.Status, HM_STATUS_bBOILER) : GETBIT(data.Status, HM_STATUS_bHEATING);
+			if(HP.is_heater_on()) {
+				if(!GETBIT(fwork, fHeater_LinkHeaterOk)) {
+					set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
+				} else if(!_status && rtcSAM3X8.unixtime() - HP.startHeater > HEATER_WAIT_CMD_COMPLETION) {
+					set_Error(err = ERR_HEATER_STOP, (char*)__FUNCTION__);
+				}
+	//		} else if(_status) {
+	//			journal.jprintf("%s is working!\n", HEATER_NAME);
+	//			DumpJournal();
+	//			//Heater_Stop(true);
 			}
-//		} else if(_status) {
-//			journal.jprintf("%s is working!\n", HEATER_NAME);
-//			DumpJournal();
-//			//Heater_Stop();
 		}
 	}
 	return err;
@@ -381,7 +386,7 @@ void devHeater::get_info(char* buf)
 void devHeater::DumpJournal(void)
 {
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		journal.jprintf(" Heater:%X,%d%% tF:%.1d tB:%.1d ", data.Status, data.Power, data.T_Flow, data.T_Boiler);
+		journal.jprintf(" Heater:%X M:%d%% tF:%.1d tB:%.1d ", data.Status, data.Power, data.T_Flow, data.T_Boiler);
 		journal.jprintf("P:%.1d E:%d,%d\n", data.P_OUT, data.Error, Heater_Error2);
 	}
 }
