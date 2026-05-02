@@ -629,7 +629,7 @@ x_I2C_init_std_message:
 	//HP.mRTOS=HP.mRTOS+4*configTIMER_TASK_STACK_DEPTH;  // программные таймера (их теперь нет)
 
 	// ПРИОРИТЕТ 4 Высший приоритет датчики читаются всегда и шаговик ЭРВ всегда шагает если нужно
-	if(xTaskCreate(vReadSensor,"ReadSensor",140,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vReadSensor,"ReadSensor",145,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF
@@ -659,7 +659,7 @@ x_I2C_init_std_message:
 	// ПРИОРИТЕТ 1 средний - обслуживание вебморды в несколько потоков и дисплея Nextion
 	// ВНИМАНИЕ первый поток должен иметь больший стек для обработки фоновых сетевых задач
 	// 1 - поток
-	if(xTaskCreate(vWeb0,"Web0", STACK_vWebX+14,NULL,1,&HP.xHandleUpdateWeb0)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vWeb0,"Web0", STACK_vWebX+20,NULL,1,&HP.xHandleUpdateWeb0)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*(STACK_vWebX+16);
 	if(xTaskCreate(vWeb1,"Web1", STACK_vWebX,NULL,1,&HP.xHandleUpdateWeb1)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*STACK_vWebX;
