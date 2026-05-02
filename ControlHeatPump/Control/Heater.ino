@@ -26,8 +26,6 @@ void devHeater::init()
 	err_num = 0;
 	err_num_total = 0;
 	fwork = 0;
-	curr_temp = 0;
-	curr_boiler_temp = 0;
 
 	set.setup_flags = (0<<fHeater_Opentherm) | (1<<fHeater_USE_Relay_RHEATER) | (1<<fHeater_USE_Relay_RH_3WAY) | (0<<fHeater_USE_Relay_Modbus) | (0<<fHeater_USE_Relay_Modbus_3WAY);
 //	set.heat_tempout = 100;
@@ -41,6 +39,8 @@ void devHeater::init()
 
 void devHeater::check_link(void)
 {
+	curr_temp = 0;
+	curr_boiler_temp = 0;
 	if(!GETBIT(set.setup_flags, fHeater_Opentherm)) return;
 	uint16_t d;
 	int8_t _err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_T_Flow, &d);
@@ -256,7 +256,7 @@ int8_t devHeater::read_state(uint8_t group)
 					SETBIT1(fwork, fHeater_CmdNotResponse);
 					if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
 				}
-				if(data.Error) SETBIT1(fwork, fHeater_ReadErrorFlags);
+				if(data.Error) SETBIT1(fwork, fHeater_ReadErrorFlags); else err_flags = 0;
 			}
 		}
 	} else {
@@ -357,7 +357,7 @@ void devHeater::get_info(char* buf)
 		strcat(buf, "|Данные не доступны - нет связи|;");
 	} else {
 		buf += m_snprintf(buf, 256, "1D|Состояние: %X|%s %s %s;", data.Status, !data.Status ? "Выкл" : (data.Status & 1) ? "Вкл" : "", (data.Status & 2) ? "Отопление" : "", (data.Status & 4) ? "ГВС" : "");
-		buf += m_snprintf(buf, 256, "1C|Модуляция, %%|%d;", (int8_t)data.Power);
+//		buf += m_snprintf(buf, 256, "1C|Модуляция, %%|%d;", (int8_t)data.Power);
 		buf += m_snprintf(buf, 256, "1A|Давление в контуре, бар|%.1d;", data.P_OUT);
 		buf += m_snprintf(buf, 256, "1E|Код ошибки (дополнительный)|%d (%d);", data.Error, data.Error2);
 		if(data.Error) {
@@ -393,8 +393,8 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
-	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) { _itoa(data.T_Flow, ret); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else strcat(ret, "-"); } else
-	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _dtoa(ret, data.Power, 1); else strcat(ret, "-"); } else
+	if(strcmp(var, Wheater_T_Flow)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) { _dtoa(ret, data.T_Flow, 10); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } } else
+	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk) || testMode == HARD_TEST) _itoa(data.Power, ret); } else
 	if(strcmp(var, Wheater_Errors)==0) 					{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
@@ -419,6 +419,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ _itoa(set.pump_work_time_after_stop * 10, ret); } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ _itoa(set.ModbusMinTimeBetweenTransaction, ret); } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ _itoa(set.ModbusResponseTimeout, ret); } else
+	if(strcmp(var, W_Modbus_Attempts)==0){ _itoa(set.Modbus_Attempts, ret); } else
 	return false;
 
 	return true;
@@ -452,6 +453,7 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, Wheater_pump_work_time_after_stop)==0){ set.pump_work_time_after_stop = x / 10; return OK; } else
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = x; return OK; } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0){ set.ModbusResponseTimeout = x; return OK; }
+	if(strcmp(var, W_Modbus_Attempts)==0){ set.Modbus_Attempts = x; return OK; }
     return 27;
 }
 

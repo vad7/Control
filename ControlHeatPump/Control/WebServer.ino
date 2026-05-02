@@ -2145,7 +2145,7 @@ xHeater_get_param:
 									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
 									l_i32 = i == OK ? d : i;
 								}
-								_delay(HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS);
+								_delay(HP.dHeater.set.ModbusMinTimeBetweenTransaction);
 							} else l_i32 = 36; // E36
 						}
 						if(l_i32 == OK) goto xHeater_get_param;
@@ -3330,11 +3330,11 @@ xContinueSearchHeader:
 				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
-			if(fWebUploadFiles) {
-				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
-				//fWebUploadFiles = 0; - отключено, чтобы продолжить загрузку без очистки, на новых версиях хрома стало выдаваться "Upload: Empty data!"
-				return pLOAD_ERR;
-			}
+//			if(fWebUploadFiles) {
+//				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
+//				//fWebUploadFiles = 0; - отключено, чтобы продолжить загрузку без очистки, на новых версиях хрома стало выдаваться "Upload: Empty data!"
+//				return pLOAD_ERR;
+//			}
 			fWebUploadFiles = 2;
 			numFilesWeb = 0;
 			journal.jprintf_time("Start upload to SPI flash\n");
@@ -3345,11 +3345,11 @@ xContinueSearchHeader:
 				fWebUploadFiles = 0;
 				return pLOAD_ERR;
 			}
-			if(fWebUploadFiles) {
-				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
-				fWebUploadFiles = 0;
-				return pLOAD_ERR;
-			}
+//			if(fWebUploadFiles) {
+//				journal.jprintf("%s: Upload already started\n", (char*) __FUNCTION__);
+//				fWebUploadFiles = 0;
+//				return pLOAD_ERR;
+//			}
 			fWebUploadFiles = 1;
 			numFilesWeb = 0;
 			journal.jprintf_time("Start upload to SD.\n");

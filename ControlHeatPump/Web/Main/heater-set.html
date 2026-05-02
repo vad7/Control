@@ -7,7 +7,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(CP),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MBT),get_HT(3A),get_HT(3P),get_HT(3PM),get_HT(3T),get_HT(NF),get_HT(HPS),get_modbus_p(heater),get_modbus_p(heater_s)");
+	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(CP),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MBT),get_HT(3A),get_HT(3P),get_HT(3PM),get_HT(3T),get_HT(NF),get_HT(HPS),get_HT(MA),get_modbus_p(heater),get_modbus_p(heater_s)");
 };
 // Address in HEX
 function load_adapter_settings()
@@ -36,8 +36,9 @@ function load_adapter_settings2()
     <tr><td>Период управления, сек</td><td><input type="number" id="get_ht-cp"> <input type="submit" value=">" onclick="setParam('get_HT(CP)')"></td></tr>
     <tr><td>Время работы циркуляцонного насоса котла после останова, сек.</td><td><input type="number" id="get_ht-pa"> <input type="submit" value=">" onclick="setParam('get_HT(PA)')"></td></tr>
     <tr><td>Время переключения Котел - ТН, сек.</td><td><input type="number" id="get_ohp-sh"> <input type="submit" value=">" onclick="setParam('get_oHP(SH)')"></td></tr>
-    <tr><td>Таймаут ожидания ответа по Modbus, мсек.</td><td><input type="number" id="get_ht-mrt"> <input type="submit" value=">" onclick="setParam('get_HT(MRT)')"></td></tr>
-    <tr><td>Минимальная пауза между транзакциями, мсек.</td><td><input type="number" id="get_ht-mbt"> <input type="submit" value=">" onclick="setParam('get_HT(MBT)')"></td></tr>
+    <tr><td>Modbus: Таймаут ожидания ответа, мсек.</td><td><input type="number" id="get_ht-mrt"> <input type="submit" value=">" onclick="setParam('get_HT(MRT)')"></td></tr>
+    <tr><td>Modbus: Минимальная пауза между транзакциями, мсек.</td><td><input type="number" id="get_ht-mbt"> <input type="submit" value=">" onclick="setParam('get_HT(MBT)')"></td></tr>
+    <tr><td>Modbus: Попыток чтения/записи при ошибке</td><td><input type="number" id="get_ht-ma"> <input type="submit" value=">" onclick="setParam('get_HT(MA)')"></td></tr>
 	<tr><td><b>Настройка параметров работы</b></td><td></td></tr>
 	<tr><td>Греть бойлер в режиме отопления (используются ячейки отопления)</td><td><input type="checkbox" id="get_ht-bh" onchange="setParam('get_HT(BH)')"></td></tr>
 	<tr><td>Не устанавливать температуру подачи из профиля</td><td><input type="checkbox" id="get_ht-nf" onchange="setParam('get_HT(NF)')"></td></tr>
@@ -56,7 +57,7 @@ function load_adapter_settings2()
     <tr><td>Уставка ГВС [#37], °C</td><td><input type="number" id="get_ht-w37"> <input type="submit" value=">" onclick="setParam('get_HT(W37)')"></td></tr>
     <tr><td>Уставка максимальной модуляции горелки [#38], °C</td><td><input type="number" id="get_ht-w38"> <input type="submit" value=">" onclick="setParam('get_HT(W38)')"></td></tr>
 	<tr><td><b>Дополнительная информация</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings2()'></td></tr>
-    <tr><td>Состояние биты, +256 - eBus, +512 - Navien, +1024 - есть связь, 0..255 - код перезагрузки [#10]</td><td id="get_ht-w10"></td></tr>
+    <tr><td>Состояние биты, +256 - eBus, +512 - Navien, +2048 - есть связь, 0..255 - код перезагрузки [#10]</td><td id="get_ht-w10"></td></tr>
     <tr><td>Версия адаптера - ст. байт аппаратная, мл. байт програмная [#11]</td><td id="get_ht-w11"></td></tr>
     <tr><td>Время работы адаптера [#12], сек </td><td id="get_ht-r12"></td></tr>
     <tr><td>Код производителя котла [#21]</td><td id="get_ht-w21"></td></tr>

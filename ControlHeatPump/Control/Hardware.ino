@@ -1580,10 +1580,10 @@ int8_t devSDM::initSDM()
 // Выводит сообщения в журнал и устанавливает флаг связи
 boolean devSDM::check_link()
 {
-	int8_t i, errModbus=0;
+	int8_t errModbus = 0;
 //	if((GETBIT(flags,fSDM))&&(GETBIT(flags,fSDMLink))) return err;  // Если есть счетчик и есть связь выходим
-	for(i = 0; i < SDM_NUM_READ; i++)   // делаем SDM_NUM_READ попыток чтения
-	{
+	uint8_t i = 0;
+	while (1) {
 #ifdef USE_NOT_SDM_METER
 		uint16_t tmp;
 		if((errModbus=Modbus.readHoldingRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp)) == OK) {
@@ -1613,6 +1613,7 @@ boolean devSDM::check_link()
 			journal.jprintf("Error %d, %s, no connect!\n", errModbus, name);
 		}
 #endif
+		if(++i >= SDM_NUM_READ) break;
 		_delay(SDM_DELAY_REPEAD);
 		WDT_Restart(WDT);                                                            // Сбросить вачдог
 	}
@@ -1681,8 +1682,8 @@ int8_t devSDM::get_readState(uint8_t group)
 	}
 	// Чтение состояния счетчика
 	int8_t _err = OK;
-	for(int8_t i=0; i < SDM_NUM_READ; i++)   // делаем SDM_NUM_READ попыток чтения
-	{
+	uint8_t i = 0;
+	while(1) {
 		// Читаем значения счетчика
 		if(group == 0) {
 #ifdef USE_NOT_SDM_METER
@@ -1732,6 +1733,7 @@ xErr:
 		if(GETBIT(HP.Option.flags, fModbusLogErrors)) {
 	        journal.jprintf_time(cErrorRS485, name, __FUNCTION__, group, _err); 	// Сообщение об ошибке
 		}
+		if(++i >= SDM_NUM_READ) break;
 		_delay(SDM_DELAY_REPEAD);  // Чтение не удачно, делаем паузу
 	}
 	if(_err==OK)
@@ -1972,8 +1974,8 @@ void devModbus::set_timeouts(uint8_t id)
 {
 #ifdef MODBUS_HEATER_GE
 	if(id >= MODBUS_HEATER_GE) {
-		RS485.ModbusMinTimeBetweenTransaction = HEATER_MODBUS_MIN_TIME_BETWEEN_TRNS;
-		RS485.ModbusResponseTimeout = HEATER_MODBUS_TIMEOUT;
+		RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
+		RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusResponseTimeout;
 	} else
 #endif
 	{

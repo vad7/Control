@@ -167,8 +167,8 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
 #define FC_TIME_READ       4000UL        // Время опроса инвертора, котла (если оба устройства, через /2 и по-очередно), в мсек
-#define FC_NUM_READ        5             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке
-#define FC_DELAY_REPEAT    100           // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
+#define FC_NUM_READ        5             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке ПО УМОЛЧАНИЮ
+#define FC_DELAY_REPEAT    10            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      10            // мсек Время между последовательными запросами было 20
 #define FC_WRITE_READ      10            // мсек Время между последовательной записью
 #ifndef FC_ANALOG_RESOLUTION
@@ -188,7 +188,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef SDM_NUM_READ
 #define SDM_NUM_READ        4              // Число попыток чтения счетчика (подряд) по модбас до его отключения (ошибка не генерится)
 #endif
-#define SDM_DELAY_REPEAD    100            // мсек Время между ПОВТОРНЫМИ попытками чтения  было 40 (меньше не имеет смысла - счетчик может не успеть)
+#define SDM_DELAY_REPEAD    50            // мсек Время между ПОВТОРНЫМИ попытками чтения  было 40 (меньше не имеет смысла - счетчик может не успеть)
 //#define SDM_BLOCK                        // Блокировать чтение счетчика при потере связи, в противном случае будут периодически делаться попытки восстановить связь
     
 // ------------------- TIME & DELAY ----------------------------------
@@ -853,6 +853,7 @@ const char *option_WR_PWM_FullPowerLimit= {"WFPL"};
 const char *option_WR_WF_Time			= {"WFH"};
 const char *option_WR_MinNetLoadSunDivider={"WSD"};
 const char *option_WR_DeltaUbatmin		={"WB"};
+const char *W_Modbus_Attempts	 = {"MA"};
 
 // Описание имен параметров профиля для функций get_paramProfile set_paramProfile
 const char *prof_NAME_PROFILE   = {"NAME"};       // Имя профиля до 10 русских букв

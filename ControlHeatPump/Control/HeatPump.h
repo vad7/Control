@@ -285,7 +285,7 @@ struct type_optionHP {
 	char WF_ReqText[128];				// Тело GET запроса
 #endif
 	uint16_t Generator_Start_Time;		// Время запуска генератора, сек
-	uint8_t ModbusMinTimeBetweenTransaction;
+	uint8_t ModbusMinTimeBetweenTransaction;//
 	uint8_t ModbusResponseTimeout;
 	uint8_t nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
 	uint8_t Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек

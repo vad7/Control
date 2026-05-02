@@ -1264,7 +1264,10 @@ void vReadSensor(void *)
 // Вызывается во время задержек в задаче чтения датчиков
 void vReadSensor_delay1ms(int32_t ms)
 {
-	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) return;
+	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) {
+		vTaskDelay(1);
+		return;
+	}
 	if(ms <= 2) {
 		vTaskDelay(ms);
 		return;
