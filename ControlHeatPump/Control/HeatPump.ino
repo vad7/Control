@@ -4833,7 +4833,10 @@ int8_t HeatPump::save_DumpJournal(boolean f)
 	}
 	((journal).*(fn))(cStrEnd);
 #ifdef USE_HEATER
-	if(work_flags & ((1<<fHP_HeaterOn) | (1<<fHP_HeaterWasOn))) dHeater.DumpJournal();
+	if((work_flags & ((1<<fHP_HeaterOn) | (1<<fHP_HeaterWasOn))) && GETBIT(set.setup_flags, fHeater_Opentherm)) {
+		((journal).*(fn))(" Heater:%X M:%d%% tF:%.1d ", data.Status, data.Power, data.T_Flow); //  tB:%.1d , data.T_Boiler
+		((journal).*(fn))("P:%.1d E:%d,%d\n", data.P_OUT, data.Error, Heater_Error2);
+	}
 #endif
 	return OK;
 }
