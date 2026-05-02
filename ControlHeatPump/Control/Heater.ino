@@ -273,10 +273,10 @@ int8_t devHeater::read_state(uint8_t group)
 			err = OK;
 		} else {
 			err_num_total++;
-			if(HP.IsWorkingNow()) {
-				journal.jprintf("%s Modbus error %d\n", HEATER_NAME, err);
-				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
-			}
+//			if(HP.IsWorkingNow()) {
+//				journal.jprintf("%s Modbus error %d\n", HEATER_NAME, err);
+//				set_Error(ERR_HEATER_ADAPTER_LINK, (char*)__FUNCTION__);
+//			}
 			SETBIT0(fwork, fHeater_LinkAdapterOk);
 		}
 	} else {

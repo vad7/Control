@@ -2142,6 +2142,7 @@ xHeater_get_param:
 								uint16_t d = pm;
 								if(l_i32 != LONG_MAX) {
 									i = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, l_i32, d);
+									_delay(1);
 									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
 									l_i32 = i == OK ? d : i;
 								}
@@ -2152,7 +2153,7 @@ xHeater_get_param:
 						else { strcat(strReturn,"E"); _itoa(l_i32, strReturn); } // ошибка
 					} else strcat(strReturn,"E11");   // ошибка преобразования во флоат
 				}
-				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+				if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 					journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 				}
 				ADD_WEBDELIM(strReturn); continue;
@@ -2307,7 +2308,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 						else if(*y == 'f') i = Modbus.writeHoldingRegistersFloat(id, par, strtol(z, NULL, 0)); // 2 registers (float).
 						else if(*y == 'c') i = Modbus.writeSingleCoil(id, par, atoi(z));	// coil
 						else i = 1;
-						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 							i = 2;
 						}
@@ -2331,7 +2332,7 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 						} else if(*y == 'c') {
 							if((i = Modbus.readCoil(id, par, (boolean *)&par)) == OK) _itoa(par, strReturn);
 						} else i = 1;
-						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
+						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
 							i = 2;
 						}
