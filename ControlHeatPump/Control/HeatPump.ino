@@ -4305,6 +4305,7 @@ void HeatPump::heater_heating_pipes(void)
 	journal.jprintf(" Waiting to heat pipes\n");
 	if(dHeater.set.wait_heating_pipes_time != 0) {
 		if(DelaySec(dHeater.set.wait_heating_pipes_time * 4)) {
+			HP.startHeater = rtcSAM3X8.unixtime();
 			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 			return;
 		}
@@ -4314,22 +4315,27 @@ void HeatPump::heater_heating_pipes(void)
 		uint16_t t = dHeater.set.wait_heating_pipes_time_max * 4;
 		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? Prof.Boiler.tempPID : Prof.Heat.tempPID) - dHeater.set.HeatingPipesSubTemp * 100) {
 			if(DelaySec(1) || !is_heater_on()) {
+				HP.startHeater = rtcSAM3X8.unixtime();
 				SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 				return;
 			}
 			if(t-- == 0 || !(dHeater.set.setup_flags & ((1<<fHeater_Heating_Pipes_Temp)|(1<<fHP_Heater_Heating_pipes)))) break;
 		}
 	}
-	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 #else
-	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
-	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
+	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) {
+		HP.startHeater = rtcSAM3X8.unixtime();
+		SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+		return;
+	}
 #endif
 	if(Status.modWork & pBOILER) {
 		switchBoiler(true); // включить бойлер
 	} else {
 		Pumps(ON); // включить насосы
 	}
+	HP.startHeater = rtcSAM3X8.unixtime();
+	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 }
 
 // ОБРАБОТЧИК КОМАНД УПРАВЛЕНИЯ ТН
