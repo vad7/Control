@@ -262,7 +262,7 @@ int8_t devHeater::read_state(uint8_t group)
 					SETBIT1(fwork, fHeater_LinkHeaterOk);
 				} else {
 					SETBIT1(fwork, fHeater_CmdNotResponse);
-					if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
+					//if(err_num >= HEATER_ADAPTER_NOT_RESPONSE_MAX) SETBIT0(fwork, fHeater_LinkHeaterOk); else err_num++;
 				}
 				if(data.Error) SETBIT1(fwork, fHeater_ReadErrorFlags);
 				else {
