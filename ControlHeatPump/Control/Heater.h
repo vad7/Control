@@ -48,7 +48,7 @@
 #define HM_HEATER_T_OUT					0x0020	// Температура уличного датчика котла (-65 - 100), градусы
 #define HM_HEATER_MAKER					0x0021	// Код производителя котла
 #define HM_HEATER_MODEL					0x0022	// Код модели котла
-#define HM_HEATER_ERRORS				0x0023	// Флаги ошибок (OpenTherm):
+#define HM_HEATER_fERRORS				0x0023	// Флаги ошибок (OpenTherm):
 	#define HM_ERROR_SERVICE			0		// Необходимо обслуживание
 	#define HM_ERROR_BLOCKED			1		// Котел заблокирован
 	#define HM_ERROR_LOW_PRESSURE		2		// Низкое давление в отопительном контуре
@@ -130,6 +130,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_LinkHeaterOk			1		// Есть связь по Opentherm с котлом, после подряд нескольких fHeater_CmdNotResponse
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
+#define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
 
 class devHeater
 {

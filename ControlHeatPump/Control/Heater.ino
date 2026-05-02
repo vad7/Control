@@ -248,12 +248,13 @@ int8_t devHeater::read_state(uint8_t group)
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
 			if(err == OK) curr_temp = r / 10;
 		} else if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
-			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_ERRORS, 1, &err_flags);
+			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_fERRORS, 1, &err_flags);
 			if(err == OK) Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_HEATER_ERROR2, 1, &Heater_Error2);
 			SETBIT0(fwork, fHeater_ReadErrorFlags);
 		} else {
 			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, 1, &r);
 			if(err == OK) {
+				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK)) SETBIT1(fwork, fHeater_fNotAnswerOnCmd); else SETBIT0(fwork, fHeater_fNotAnswerOnCmd);
 				if(GETBIT(r, HM_ADAPTER_FLAGS_bLINK) || testMode != NORMAL) {
 					err_num = 0;
 					SETBIT0(fwork, fHeater_CmdNotResponse);
@@ -398,6 +399,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_LinkHeaterOk)==0)			{ if(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkAdapterOk) && GETBIT(fwork, fHeater_LinkHeaterOk)) {
 																strcat(ret, "Ok");
 																if(GETBIT(fwork, fHeater_CmdNotResponse)) strcat(ret, "?");
+																if(GETBIT(fwork, fHeater_fNotAnswerOnCmd)) strcat(ret, "!");
 															} else strcat(ret, "Нет"); } else
 	if(strcmp(var, Wheater_fLinkAdapterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkAdapterOk), ret); } else
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else

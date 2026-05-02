@@ -2276,14 +2276,15 @@ int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num
 		RS485.set_slave(id);
 	#endif
 		uint8_t result = RS485.readHoldingRegisters(cmd, num);                                           // послать запрос,
-		SemaphoreGive(xModbusSemaphore);
 		if(result == RS485.ku8MBSuccess) {
 			for(int16_t i = 0; i < num; i++)
 				buf[i] = RS485.getResponseBuffer(i);
 			err = OK;
+			SemaphoreGive(xModbusSemaphore);
 			break;
 		} else {
 			err = translateErr(result);
+			SemaphoreGive(xModbusSemaphore);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
 		}
 		if(cnt <= 1) break;
@@ -2316,12 +2317,13 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 	#endif
 		for(uint16_t i = 0; i < num; i++) RS485.send(buf[i]);
 		uint8_t result = RS485.writeMultipleRegisters(cmd, num);
-		SemaphoreGive(xModbusSemaphore);
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
+			SemaphoreGive(xModbusSemaphore);
 			break;
 		} else {
 			err = translateErr(result);
+			SemaphoreGive(xModbusSemaphore);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
 		if(cnt <= 1) break;
@@ -2354,12 +2356,13 @@ int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t da
 	#endif
 		RS485.send(data);
 		uint8_t result = RS485.writeMultipleRegisters(cmd, 1);
-		SemaphoreGive(xModbusSemaphore);
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
+			SemaphoreGive(xModbusSemaphore);
 			break;
 		} else {
 			err = translateErr(result);
+			SemaphoreGive(xModbusSemaphore);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
 		}
 		if(cnt-- <= 1) break;
@@ -2445,12 +2448,13 @@ int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 		RS485.set_slave(id);
 	#endif
 		uint8_t result = RS485.writeSingleCoil(cmd, u8State);
-		SemaphoreGive(xModbusSemaphore);
 		if(result == RS485.ku8MBSuccess) {
 			err = OK;
+			SemaphoreGive(xModbusSemaphore);
 			break;
 		} else {
 			err = translateErr(result);
+			SemaphoreGive(xModbusSemaphore);
 			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
 		}
 		if(cnt-- <= 1) break;
