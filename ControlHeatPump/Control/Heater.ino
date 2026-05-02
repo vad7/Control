@@ -293,9 +293,9 @@ int8_t devHeater::read_state(uint8_t group)
 			uint16_t _status = (HP.get_modWork() & pBOILER) ? GETBIT(data.Status, HM_STATUS_bBOILER) : GETBIT(data.Status, HM_STATUS_bHEATING);
 			if(HP.is_heater_on()) {
 				if(!GETBIT(fwork, fHeater_LinkHeaterOk)) {
-					set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
+					//set_Error(ERR_HEATER_LINK, (char*)__FUNCTION__);
 				} else if(!_status && rtcSAM3X8.unixtime() - HP.startHeater > HEATER_WAIT_CMD_COMPLETION) {
-					set_Error(err = ERR_HEATER_STOP, (char*)__FUNCTION__);
+					//set_Error(err = ERR_HEATER_STOP, (char*)__FUNCTION__);
 				}
 	//		} else if(_status) {
 	//			journal.jprintf("%s is working!\n", HEATER_NAME);
