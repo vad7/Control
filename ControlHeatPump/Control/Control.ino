@@ -748,9 +748,9 @@ extern "C" void vApplicationIdleHook(void)  // FreeRTOS expects C linkage
 		/*WEB_STORE_DEBUG_INFO(1);*/\
 		web_server(n);\
 		SemaphoreGive(xWebThreadSemaphore);\
-		vTaskDelay(TIME_WEB_SERVER / portTICK_PERIOD_MS);\
+		vTaskDelay(TIME_WEB_SERVER);\
 		/*WEB_STORE_DEBUG_INFO(2);*/\
-	} else vTaskDelay(portTICK_PERIOD_MS);\
+	} else vTaskDelay(1);\
 }
 // Задача обслуживания web сервера
 // Сюда надо пихать все что связано с сетью иначе конфликты не избежны
@@ -811,7 +811,7 @@ void vWeb0(void *)
 #endif
 
 			HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
-			taskYIELD();
+			vTaskDelay(TIME_WEB_SERVER);
 
 		} else if(xTaskGetTickCount() - _other_tasks > WEB0_OTHER_JOB_PERIOD) { // Другие задачи
 
@@ -999,8 +999,8 @@ void vWeb0(void *)
 				active=false;
 			}
 #endif   // MQTT
-			taskYIELD();
-		}
+			if(active) vTaskDelay(1); else vTaskDelay(TIME_WEB_SERVER);
+		} else vTaskDelay(1);
 	} //for
 	vTaskDelete( NULL);
 }

@@ -135,6 +135,7 @@ void HeatPump::initHeatPump()
 	testMode = NORMAL;
 #endif
 	eraseError();
+	resetSettingHP();                                          // все переменные
 
 	for(i = 0; i < TNUMBER; i++) sTemp[i].initTemp(i);            // Инициализация датчиков температуры
 
@@ -202,8 +203,6 @@ void HeatPump::initHeatPump()
 	// Графики в памяти
 	for(i = 0; i < sizeof(Charts) / sizeof(Charts[0]); i++) Charts[i].init();
 	clearChart();
-
-	resetSettingHP();                                          // все переменные
 }
 // Стереть последнюю ошибку
 void HeatPump::eraseError()
@@ -4317,20 +4316,25 @@ void HeatPump::heater_heating_pipes(void)
 	if(!GETBIT(work_flags, fHP_Heater_Heating_pipes) || get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
 	journal.jprintf("Waiting to heat up pipes\n");
 	if(dHeater.set.wait_heating_pipes_time != 0) {
-		if(DelaySec(dHeater.set.wait_heating_pipes_time)) return;
+		if(DelaySec(dHeater.set.wait_heating_pipes_time * 4)) {
+			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+			return;
+		}
 	}
 #ifdef THEATER
 	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
 		uint16_t t = dHeater.set.wait_heating_pipes_time_max * 4;
 		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? Prof.Boiler.tempPID : Prof.Heat.tempPID) - dHeater.set.HeatingPipesSubTemp * 100) {
-			if(DelaySec(1) || !is_heater_on() || !GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
+			if(DelaySec(1) || !is_heater_on()) {
 				SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 				return;
 			}
-			if(--t == 0) break;
+			if(t-- == 0 || !(dHeater.set.setup_flags & ((1<<fHeater_Heating_Pipes_Temp)|(1<<fHP_Heater_Heating_pipes)))) break;
 		}
 	}
+	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 #else
+	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) return;
 #endif
 	if(Status.modWork & pBOILER) {
@@ -4338,7 +4342,6 @@ void HeatPump::heater_heating_pipes(void)
 	} else {
 		Pumps(ON); // включить насосы
 	}
-	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 }
 
 // ОБРАБОТЧИК КОМАНД УПРАВЛЕНИЯ ТН

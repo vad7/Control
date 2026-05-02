@@ -71,13 +71,13 @@ struct type_heater_read {
 	uint16_t Power;								// 0x1C, Модуляция (0 - 100%, 0xFF - неопределено)
 	uint16_t Status;							// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
 	uint16_t Error;								// 0x1E, ошибка котла
-	uint16_t Error2;							// 0x1F, ошибка котла дополнительная
 } __attribute__((packed));
+#define HM_HEATER_ERROR2				0x001F	// 0x1F, ошибка котла дополнительная
 
 
-#define HM_STATUS_BURNER				0		// горелка вкл/выкл
-#define HM_STATUS_HEATING				1		// отопление вкл/выкл
-#define HM_STATUS_BOILER				2		// ГВС вкл/выкл
+#define HM_STATUS_bBURNER				0		// горелка вкл/выкл
+#define HM_STATUS_bHEATING				1		// отопление вкл/выкл
+#define HM_STATUS_bBOILER				2		// ГВС вкл/выкл
 
 // Регистры для записи
 #define HM_CONN_TYPE					0x0030	// Тип внешних подключений (0 - адаптер подключен к котлу, 1 - котел подключен к внешнему устройству (панель или перемычка)
@@ -157,6 +157,7 @@ public:
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
+	uint16_t Heater_Error2;							// ошибка котла дополнительная
 	type_HeaterSettings set;						// Структура для сохранения настроек
 	type_heater_read data;							// Данные с котла
 

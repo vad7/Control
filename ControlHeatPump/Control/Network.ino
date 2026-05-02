@@ -686,8 +686,8 @@ int Send_HTTP_Request(const char *server, char *auth, const char *request, uint8
 				ret = -2000000011;
 			} else {
 				ret = -2000000001;
-				int timeout = HTTP_REQ_TIMEOUT / 10;
-				while(timeout-- > 0) { // ожидание ответа
+				uint32_t timeout = xTaskGetTickCount();
+				while(xTaskGetTickCount() - timeout < HTTP_REQ_TIMEOUT) { // ожидание ответа
 					SemaphoreGive(xWebThreadSemaphore);
 					_delay(20);
 					if(SemaphoreTake(xWebThreadSemaphore,(W5200_TIME_WAIT/portTICK_PERIOD_MS)) == pdFALSE) {

@@ -12,7 +12,7 @@ window.onload = function() {
 // Address in HEX
 function load_adapter_settings()
 {
-	loadParam("get_HT(W30)"); loadParam("get_HT(W32)"); loadParam("get_HT(W33)"); loadParam("get_HT(W34)"); loadParam("get_HT(W35)"); loadParam("get_HT(W36)"); loadParam("get_HT(W37)"); loadParam("get_HT(W38)");
+	loadParam("get_HT(W30)"); loadParam("get_HT(W31)"); loadParam("get_HT(W32)"); loadParam("get_HT(W33)"); loadParam("get_HT(W34)"); loadParam("get_HT(W35)"); loadParam("get_HT(W36)"); loadParam("get_HT(W37)"); loadParam("get_HT(W38)");
 }
 function load_adapter_settings2()
 {
@@ -47,8 +47,9 @@ function load_adapter_settings2()
 	<tr><td>Прогрев трассы (THEATER) до целевой температуры подачи минус разница</td><td><input type="checkbox" id="get_ht-3t" onchange="setParam('get_HT(3T)')"></td></tr>
     <tr><td>Разница от целевой температуры подачи, °C</td><td><input type="number" id="get_ht-hps"> <input type="submit" value=">" onclick="setParam('get_HT(HPS)')"></td></tr>
     <tr><td>Максимальное время ожидания прогрева трассы по температуре, сек</td><td><input type="number" id="get_ht-3pm"> <input type="submit" value=">" onclick="setParam('get_HT(3PM)')"></td></tr>
-	<tr><td><b>Настройка адаптера ectoControl Opentherm/eBus/Navien (значения пишутся сразу в адаптер)</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
+	<tr><td><b>Настройка адаптера ectoControl, значения пишутся сразу в адаптер</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
     <tr><td>Адаптер подключен (0), иначе подключен термостат или перемычка (1) [#30]</td><td><input type="number" id="get_ht-w30"> <input type="submit" value=">" onclick="setParam('get_HT(W30)')"></td></tr>
+    <tr><td>Уставка теплоносителя [#31], десятые °C</td><td><input type="number" id="get_ht-w31-div10"> <input type="submit" value=">" onclick="setParam('get_HT(W31)')"></td></tr>
     <tr><td>Уставка теплоносителя в аварийном режиме [#32], десятые °C</td><td><input type="number" id="get_ht-w32-div10"> <input type="submit" value=">" onclick="setParam('get_HT(W32)')"></td></tr>
     <tr><td>Нижний предел уставки теплоносителя [#33], °C</td><td><input type="number" id="get_ht-w33"> <input type="submit" value=">" onclick="setParam('get_HT(W33)')"></td></tr>
     <tr><td>Верхний предел уставки теплоносителя [#34], °C</td><td><input type="number" id="get_ht-w34"> <input type="submit" value=">" onclick="setParam('get_HT(W34)')"></td></tr>

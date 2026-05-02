@@ -983,11 +983,11 @@ int16_t devVaconFC::read_tempFC()
 // Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
 int16_t devVaconFC::read_0x03_16(uint16_t cmd)
 {
-    uint8_t i;
     int16_t result = 0;
     if(!get_present()) return 0; // выходим если нет инвертора
-    for (i = 0; i < _data.Modbus_Attempts; i++) // делаем n попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
-    {
+    uint8_t i = _data.Modbus_Attempts;
+    // делаем n попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
+    while(1) {
         err = Modbus.readHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, (uint16_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
         if(err == OK) {
         	check_blockFC();
@@ -1011,6 +1011,7 @@ int16_t devVaconFC::read_0x03_16(uint16_t cmd)
         numErr++; // число ошибок чтение по модбасу
         if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
+        if(i-- <= 1) break;
         _delay(FC_DELAY_REPEAT);
     }
     return result;
@@ -1020,11 +1021,10 @@ int16_t devVaconFC::read_0x03_16(uint16_t cmd)
 // Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
 uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
 {
-    uint8_t i;
     uint32_t result = 0;
     if(!get_present() || state == ERR_LINK_FC) return 0; // выходим если нет инвертора или он заблокирован по ошибке
-    for (i = 0; i < _data.Modbus_Attempts; i++) // делаем n попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
-    {
+    uint8_t i = _data.Modbus_Attempts;
+    while(1) {
         err = Modbus.readHoldingRegisters32(FC_MODBUS_ADR, cmd - 1, (uint32_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
         if(err == OK) {
         	check_blockFC();
@@ -1048,6 +1048,7 @@ uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
         numErr++; // число ошибок чтение по модбасу
         if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
+        if(i-- <= 1) break;
         _delay(FC_DELAY_REPEAT);
     }
     return result;
@@ -1057,10 +1058,9 @@ uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
 // Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
 int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
 {
-    uint8_t i;
     if(!get_present() || state == ERR_LINK_FC) return err; // выходим если нет инвертора или он заблокирован по ошибке
-    for (i = 0; i < _data.Modbus_Attempts; i++) // делаем n попыток записи
-    {
+    uint8_t i = _data.Modbus_Attempts;
+    while(1) {
         err = Modbus.writeHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, data); // послать запрос, Нумерация регистров с НУЛЯ!!!!
         if(err == OK) {
         	check_blockFC();
@@ -1083,7 +1083,8 @@ int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
         numErr++; // число ошибок чтение по модбасу
         if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
         if(check_blockFC()) break; // проверить необходимость блокировки
-        _delay(FC_DELAY_REPEAT);
+        if(i-- <= 1) break;
+       _delay(FC_DELAY_REPEAT);
     }
     return err;
 }
