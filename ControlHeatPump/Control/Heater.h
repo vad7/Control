@@ -104,6 +104,7 @@ struct type_heater_read {
 #define fHeater_Heating_Pipes_Temp		6		// Прогрев трассы до текущей температуры бойлера / отопления
 #define fHeater_BoilerInHeatingMode		7		// Греть бойлер в режиме отопления, иначе используются раздельные режимы котла - Отопление/ГВС.
 #define fHeater_DontSetFlowTemp			8		// Не устанавливать температуру подачи
+#define fHeater_Log						9		// логировать в журнал
 
 struct type_HeaterSettings {					// Структура для сохранения настроек
 	uint16_t setup_flags;						// флаги настройки
@@ -132,7 +133,6 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
-#define fHeater_Log						5		// логировать в журнал
 
 class devHeater
 {

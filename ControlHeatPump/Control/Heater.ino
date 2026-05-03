@@ -260,7 +260,7 @@ int8_t devHeater::read_state(uint8_t group)
 					SETBIT0(fwork, fHeater_CmdNotResponse);
 					SETBIT1(fwork, fHeater_LinkHeaterOk);
 				} else {
-					if(GETBIT(set.setup_flags, fHeater_Log) /* && GETBIT(fwork, fHeater_LinkHeaterOk)*/) journal.jprintf("#Heater: NO LINK (%d)\n", r);
+					if(GETBIT(set.setup_flags, fHeater_Log) && GETBIT(fwork, fHeater_LinkHeaterOk)) journal.jprintf("#Heater: NO LINK (%d)\n", r);
 					if(GETBIT(fwork, fHeater_CmdNotResponse)) {
 						SETBIT0(fwork, fHeater_LinkHeaterOk);
 						if(HP.is_heater_on()) {
@@ -274,10 +274,9 @@ int8_t devHeater::read_state(uint8_t group)
 					err_flags = 0;
 				}
 			}
-//			journal.printf("1->%u", GetTickCount());
 		}
 	} else {
-		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_START_DATA, sizeof(data), (uint16_t*)&data);
+		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_START_DATA, sizeof(data)/sizeof(uint16_t), (uint16_t*)&data);
 		if(err == OK) {
 			uint16_t _status = (HP.get_modWork() & pBOILER) && !GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) ? GETBIT(data.Status, HM_STATUS_bBOILER) : GETBIT(data.Status, HM_STATUS_bHEATING);
 			if(HP.is_heater_on()) {
@@ -322,14 +321,15 @@ int8_t devHeater::set_target(uint16_t temp)
 		{
 		case NORMAL:
 		case HARD_TEST:
-			journal.jprintf(" Set Heater%s: %d C\n", reg1 == HM_SET_T_Flow ? "" : " boiler", temp);
-			if(GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) && (HP.get_modWork() & pBOILER)) {
+			if(!GETBIT(set.setup_flags, fHeater_BoilerInHeatingMode) && (HP.get_modWork() & pBOILER)) {
 				if(curr_boiler_temp == temp) return OK;
 				reg1 = HM_SET_T_BOILER;
+				journal.jprintf(" Set Heater%s: %d C\n", " boiler", temp);
 			} else {
 				if(curr_temp == temp) return OK;
 				reg1 = HM_SET_T_Flow; // регистр в десятых градуса
-				temp *= 10;			// регистр состояния тоже в десятых
+				journal.jprintf(" Set Heater%s: %d C\n", "", temp);
+				temp *= 10;
 			}
 			err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, reg1, temp);
 			if(err) {
@@ -412,7 +412,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
 	if(strcmp(var, Wheater_T_Flow)==0) 					{ _dtoa(ret, data.T_Flow / 10, 0); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else
-	if(strcmp(var, Wheater_Power)==0) 					{ if(GETBIT(fwork, fHeater_LinkHeaterOk)) strcat(ret, "-"); else if(data.Power==0) strcat(ret, "Выкл"); else { _itoa(data.Power, ret); strcat(ret, "%"); } } else
+	if(strcmp(var, Wheater_Power)==0) 					{ if(!GETBIT(fwork, fHeater_LinkHeaterOk)) strcat(ret, "-"); else if(data.Power==0) strcat(ret, "Выкл"); else { _itoa(data.Power, ret); strcat(ret, "%"); } } else
 	if(strcmp(var, Wheater_err_num_total)==0)			{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else

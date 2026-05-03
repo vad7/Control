@@ -62,8 +62,9 @@ void SemaphoreCreate(type_SEMAPHORE &_sem)
 }
 
 volatile uint32_t* SYST_CVR = (volatile uint32_t*)0xE000E018;
+
 // Захватить семафор с проверкой, что шедуллер работает, возврат true, если успешно
-__attribute__((noinline, optimize("O0")))
+__attribute__((noinline/*,optimize("O0")*/))
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
