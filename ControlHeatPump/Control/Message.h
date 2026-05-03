@@ -130,7 +130,7 @@ class Message
     boolean sendSMS();                                                       // Отправить SMS через sms.ru
     boolean sendSMSC();                                                      // Отправить SMS через smsc.ru
     boolean sendSMSCLUB();                                                   // Отправить SMS через smsclub.mobi (Ukraine)
-    boolean SendCommandSMTP(char *c,boolean w);                              // Послать команду SMTP серверу  и разобрать ответ  
+    int8_t SendCommandSMTP(char *c,boolean w);                              // Послать команду SMTP серверу  и разобрать ответ
     void clearBuf(){tempBuf[0]=0x00;retMail[0]=0x00;retSMS[0]=0x00;/*retTest[0]=0x00;*/};// очистка рабочих буферов перед отправкой уведомления
     // Рабочие буфера для отправки увеломлений
     // Для экономии места используется выходной буфер MAIN_WEB_TASK потока веб сервера Socket[MAIN_WEB_TASK].outBuf[3*W5200_MAX_LEN] (в этом потоке ДОЛЖЕН проводится запуск уведомлений и буфер гарантированно не используется другими задачами)

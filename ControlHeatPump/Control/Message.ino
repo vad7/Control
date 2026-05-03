@@ -351,16 +351,15 @@ uint16_t Message::get_crc16(uint16_t crc)
 
 // Послать команду SMTP серверу  и разобрать ответ
 // wait - ждать ответ или нет
-boolean  Message::SendCommandSMTP(char *c, boolean wait)
+int8_t Message::SendCommandSMTP(char *c, boolean wait)
 {
-  uint8_t count = 0;
   byte respCode, thisByte;
   int num;
 
   if (!clientMessage.connected())  // если клиент не соединен то это ошибка выходим
   {
 	if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Server no connected, abort send mail\n");
-    return false;
+    return -2;
   }
 
   if ((strlen(c) < LEN_TEMPBUF) && (tempBuf != c)) strcpy(tempBuf, c); // если надо то копируем
@@ -377,28 +376,22 @@ boolean  Message::SendCommandSMTP(char *c, boolean wait)
   // Необходимость ожидания и получения ответа
   if (!wait) {
     strcpy(tempBuf, "");   // ответа не ожидаем
-    return true;
+    return OK;
   }
 
-
-  while (!clientMessage.available()) // ожидание ответа 5 сек
-  {
-    SemaphoreGive(xWebThreadSemaphore);                                                   // отдать семафор для обработки других задач
-    _delay(200);
-    if (SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-      return false; // Захват семафора потока или ОЖИДАНИЕ W5200_TIME_WAIT, если семафор не получен то выходим
-    }
-    count++;
-    if (count > 25)
-    {
-      strncpy(retMail, "Server not answer . . .", LEN_RETMAIL);
-      if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("%s\n", retMail);
-      //    clientMessage.stop();
-      //    SemaphoreGive(xWebThreadSemaphore);
-      return false;
-    }
-
-  }
+	uint32_t tm = GetTickCount();
+	while(!clientMessage.available()) // ожидание ответа 5 сек
+	{
+		if(GetTickCount() - tm > MESSAGE_SEND_SERVER_WAIT) {
+			strncpy(retMail, "Mail server not answer . . .", LEN_RETMAIL);
+			if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("%s\n", retMail);
+			//clientMessage.stop();
+			return -3;
+		}
+		SemaphoreGive (xWebThreadSemaphore);                                // отдать семафор для обработки других задач
+		_delay(25);
+		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) return -1; // если семафор не получен то выходим
+	}
   // разбор ответа
   respCode = clientMessage.peek();   // первый байт - это старшая цифра ответа, по ней можно определить ошибки
   if(!GETBIT(WorkFlags, fWF_MessageSendError) && respCode >= '4') journal.jprintf("Error send message: ");
@@ -417,12 +410,11 @@ boolean  Message::SendCommandSMTP(char *c, boolean wait)
     //    SerialDbg.print("answer "); SerialDbg.println(answer);
     clientMessage.println("QUIT"); // Послать команду на закрытие сессии
     JOURNAL("QUIT\n");
-    while (!clientMessage.available()) // ожидание ответа 1 сек
-    {
-      _delay(100);
-      count++;
-      if (count > 10) break;
-    }
+    tm = MESSAGE_SEND_SERVER_WAIT / 25;
+	while(!clientMessage.available()) {// ожидание ответа 1 сек
+		_delay(25);
+		if(tm-- == 0) break;
+	}
     while (clientMessage.available())
     {
       thisByte = clientMessage.read();
@@ -430,9 +422,9 @@ boolean  Message::SendCommandSMTP(char *c, boolean wait)
     }
     JOURNAL("disconnected\n");
     clientMessage.stop();
-    return false;
+    return -4;
   }
-  return true;
+  return OK;
 }
 
 // Установить уведомление (сформировать для отправки но НЕ ОТПРАВЛЯТЬ)
@@ -609,6 +601,14 @@ boolean Message::sendMessage()  // запуск из 0 потока
   return true;             // Послано
 }
 
+#define SEND_SMTP_ERR_BLOCK {\
+			clientMessage.stop();\
+			SETBIT1(WorkFlags, fWF_MessageSendError);\
+			if(_err != -1) SemaphoreGive (xWebThreadSemaphore);\
+			dnsUpdateSMTP = true;\
+			return false;\
+		}
+
 // Отправить почту --------------------------------------------------------------------
 boolean Message::sendMail()
 {
@@ -624,65 +624,37 @@ boolean Message::sendMail()
 	} else {
 		if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Connect failed: %s port: %d\n", messageSetting.smtp_server, messageSetting.smtp_port);
 		strncpy(retMail, "No connect", LEN_RETMAIL);
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		dnsUpdateSMTP = true;
-		return false;
 	}
-
+	int8_t _err;
 	// 2. Общение с сервером, получаем приветствие при соединении
-	if(!SendCommandSMTP((char*) "", true)) {
+	if((_err = SendCommandSMTP((char*) "", true)) != OK) {
 		if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Error send mail to %s\n", messageSetting.smtp_server);
 		if(strlen(retMail) == 0) strncpy(retMail, (char*) "No answer", LEN_RETMAIL);
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		dnsUpdateSMTP = true;
-		return false;
+		SEND_SMTP_ERR_BLOCK;
 	}
 	// 3. Авторизация
 	if(GETBIT(messageSetting.flags, fMailAUTH))                        // Требуется авторизация
 	{
-		if(!SendCommandSMTP((char*) "EHLO host", true)) {
-			clientMessage.stop();  // ответ содержит ошибки
-			SETBIT1(WorkFlags, fWF_MessageSendError);
-			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpdateSMTP = true;
-			return false;
+		if((_err = SendCommandSMTP((char*) "EHLO host", true)) != OK) {
+			SEND_SMTP_ERR_BLOCK;
 		}
-		if(!SendCommandSMTP((char*) "AUTH LOGIN", true)) {
-			clientMessage.stop();  // ответ содержит ошибки
-			SETBIT1(WorkFlags, fWF_MessageSendError);
-			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpdateSMTP = true;
-			return false;
+		if((_err = SendCommandSMTP((char*) "AUTH LOGIN", true)) != OK) {
+			SEND_SMTP_ERR_BLOCK;
 		}
 		strcpy(tempBuf, "");
 		base64_encode(tempBuf, messageSetting.smtp_login, strlen(messageSetting.smtp_login)); // Послать логин
-		if(!SendCommandSMTP(tempBuf, true)) {
-			clientMessage.stop();  // ответ содержит ошибки
-			SETBIT1(WorkFlags, fWF_MessageSendError);
-			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpdateSMTP = true;
-			return false;
+		if((_err = SendCommandSMTP(tempBuf, true)) != OK) {
+			SEND_SMTP_ERR_BLOCK;
 		}
 		strcpy(tempBuf, "");
 		base64_encode(tempBuf, messageSetting.smtp_password, strlen(messageSetting.smtp_password)); // Послать пароль
-		if(!SendCommandSMTP(tempBuf, true)) {
-			clientMessage.stop();  // ответ содержит ошибки
-			SETBIT1(WorkFlags, fWF_MessageSendError);
-			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpdateSMTP = true;
-			return false;
+		if((_err = SendCommandSMTP(tempBuf, true)) != OK) {
+			SEND_SMTP_ERR_BLOCK;
 		}
 	} else                                                               // Авторизация не требуется
 	{
-		if(!SendCommandSMTP((char*) "HELO host", true)) {
-			clientMessage.stop();  // ответ содержит ошибки
-			SETBIT1(WorkFlags, fWF_MessageSendError);
-			SemaphoreGive (xWebThreadSemaphore);
-			dnsUpdateSMTP = true;
-			return false;
+		if((_err = SendCommandSMTP((char*) "HELO host", true)) != OK) {
+			SEND_SMTP_ERR_BLOCK;
 		}
 	}
 
@@ -690,52 +662,35 @@ boolean Message::sendMail()
 	strcpy(tempBuf, "MAIL From: <");
 	strcat(tempBuf, messageSetting.smtp_MailTo);
 	strcat(tempBuf, ">");
-	if(!SendCommandSMTP(tempBuf, true)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, true)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	strcpy(tempBuf, "RCPT To: <");
 	strcat(tempBuf, messageSetting.smtp_RCPTTo);
 	strcat(tempBuf, ">");
-	if(!SendCommandSMTP(tempBuf, true)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, true)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 
 	// 5. Заголовок сообщения
-	if(!SendCommandSMTP((char*) "DATA", true)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP((char*) "DATA", true)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	strcpy(tempBuf, "To: <");
 	strcat(tempBuf, messageSetting.smtp_RCPTTo);
 	strcat(tempBuf, ">");
-	if(!SendCommandSMTP(tempBuf, false)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, false)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	strcpy(tempBuf, "From: <");
 	strcat(tempBuf, messageSetting.smtp_MailTo);
 	strcat(tempBuf, ">");
-	if(!SendCommandSMTP(tempBuf, false)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, false)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	strcpy(tempBuf, "Content-type: text/plain; charset=\"utf-8\"");             // Кодировка
-	if(!SendCommandSMTP(tempBuf, false)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, false)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	// Тема письма
 	m_snprintf(tempBuf, 256, "Subject: Controller %s - ", nameHeatPump);
@@ -753,15 +708,10 @@ boolean Message::sendMail()
 	case pMESSAGE_EXT_WARNING:strcat(tempBuf, "WARNING BMS\r\n");	break;                                                  // Уведомление "Внешние уведомления"
 	default:
 		strcat(tempBuf, "ERROR TYPE \r\n");
-		clientMessage.stop();
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+		SEND_SMTP_ERR_BLOCK;
 	}
-	if(!SendCommandSMTP(tempBuf, false)) {
-		clientMessage.stop();  // послать тему письма
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP(tempBuf, false)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 
 	// 6. Текст сообщения
@@ -820,21 +770,22 @@ boolean Message::sendMail()
 #endif
 	} else
 #endif
-	if(GETBIT(messageSetting.flags, fMailInfo)) get_mailState(clientMessage, tempBuf);
+	if(GETBIT(messageSetting.flags, fMailInfo)) {
+		SemaphoreGive(xWebThreadSemaphore);                                // отдать семафор для обработки других задач
+		get_mailState(clientMessage, tempBuf);
+		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+			_err = -1;
+			SEND_SMTP_ERR_BLOCK;
+		}
+	}
 
 	// 8. Завершение сессии  и отправка
-	if(!SendCommandSMTP((char*) ".", true)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP((char*) ".", true)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	strncpy(retMail, (char*) tempBuf, LEN_RETMAIL);                                                                  // Копирование сообщения сервера при удачной отправки
-	if(!SendCommandSMTP((char*) "QUIT", true)) {
-		clientMessage.stop();  // ответ содержит ошибки
-		SETBIT1(WorkFlags, fWF_MessageSendError);
-		SemaphoreGive (xWebThreadSemaphore);
-		return false;
+	if((_err = SendCommandSMTP((char*) "QUIT", true)) != OK) {
+		SEND_SMTP_ERR_BLOCK;
 	}
 	clientMessage.stop();
 	JOURNAL("OK disconnected\n");

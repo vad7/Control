@@ -22,7 +22,7 @@
 
 void devHeater::init()
 {
-	err = OK;
+	err_last = OK;
 	err_num = 0;
 	err_num_total = 0;
 	fwork = 0;
@@ -242,6 +242,7 @@ void devHeater::WaitPumpOff()
 // Вызывается из задачи чтения датчиков, group: 0 - состояние линка с котлом, 1 - данные
 int8_t devHeater::read_state(uint8_t group)
 {
+	int8_t err = OK;
 	if(group == 0 || !GETBIT(fwork, fHeater_LinkAdapterOk) || !GETBIT(fwork, fHeater_LinkHeaterOk)) { // группа 0 или если нет связи
 		uint16_t r;
 //		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
@@ -270,6 +271,10 @@ int8_t devHeater::read_state(uint8_t group)
 					err_flags = 0;
 				}
 			}
+
+			journal.printf("1->%u", GetTickCount());
+
+
 		}
 	} else {
 		err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_START_DATA, sizeof(data), (uint16_t*)&data);
@@ -311,6 +316,7 @@ int8_t devHeater::read_state(uint8_t group)
 int8_t devHeater::set_target(uint16_t temp)
 {
 	if(temp == 0 || GETBIT(set.setup_flags, fHeater_DontSetFlowTemp) || (testMode != NORMAL && testMode != HARD_TEST)) return OK;
+	int8_t err = OK;
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
 		uint16_t reg1 = 0;
 		switch (testMode) // РЕАЛЬНЫЕ Действия в зависимости от режима
@@ -349,7 +355,7 @@ int8_t devHeater::set_target(uint16_t temp)
 			break; //  Ничего не включаем
 		}
 	}
-	return err;
+	return err_last = err;
 }
 
 // Проверка работает ли котел
@@ -408,7 +414,8 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
 	if(strcmp(var, Wheater_T_Flow)==0) 					{ _dtoa(ret, data.T_Flow, 1); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else
 	if(strcmp(var, Wheater_Power)==0) 					{ _itoa(data.Power, ret); } else
-	if(strcmp(var, Wheater_Errors)==0) 					{ _itoa(err_num_total, ret); } else
+	if(strcmp(var, Wheater_err_num_total)==0)			{ _itoa(err_num_total, ret); } else
+	if(strcmp(var, Wheater_err_last)==0)				{ _itoa(err_last, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, Wheater_fHeater_USE_Relay_RH_3WAY)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RH_3WAY)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else

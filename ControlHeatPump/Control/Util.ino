@@ -75,6 +75,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 			} else {
 				_sem.xSemaphore = true;
 				vPortExitCritical();
+				_sem.return_addr = (uint32_t)__builtin_return_address(0);
 				return true;
 			}
 		}
@@ -88,6 +89,7 @@ xLoop:		if(!wait_time--) {
 		}
 	}
 	_sem.xSemaphore = true;
+	_sem.return_addr = (uint32_t)__builtin_return_address(0);
 	return true;
 }
 

@@ -28,6 +28,7 @@
 struct type_SEMAPHORE {
 	volatile bool xSemaphore;
 	uint16_t BusyCnt;
+	uint32_t return_addr;	// кто захватил
 };
 void SemaphoreCreate(type_SEMAPHORE &_sem);
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time);// Захватить семафор с проверкой, что шедуллер работает

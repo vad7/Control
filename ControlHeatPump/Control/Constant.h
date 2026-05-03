@@ -206,6 +206,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #ifndef TIME_I2C_UPDATE
 #define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
 #endif
+#define MESSAGE_SEND_SERVER_WAIT	2000UL			// мсек. Ожидать ответа от сервера
 #define TIME_MESSAGE_TEMP 			30			    // секунд, Проверка граничных температур для уведомлений
 #define TIME_LED_OK       			1500            // Период мигания светодиода при ОК (мсек)
 #define TIME_LED_ERR      			200             // Период мигания светодиода при ошибке (мсек).
@@ -985,7 +986,8 @@ const char *Wheater_is_on 						= {"ON"};
 const char *Wheater_3way 						= {"3W"};
 const char *Wheater_T_Flow 						= {"TF"};
 const char *Wheater_Power 						= {"M"};
-const char *Wheater_Errors 						= {"E"};
+const char *Wheater_err_num_total				= {"E"};
+const char *Wheater_err_last					= {"EL"};
 const char *Wheater_INFO						= {"INFO"};
 const char Wheater_WriteReg 					= 'W';	// get_HT(Wn) / set_HT(Wn), где n номер регистра в HEX
 const char Wheater_Read2Reg 					= 'R';	// get_HT(Rn), где n номер регистра в HEX, чтение 2-х регистров (4 байта)

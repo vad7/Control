@@ -1238,7 +1238,7 @@ void vReadSensor(void *)
 #endif
 			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
-				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ)) continue;
+				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2)) continue;
 	#ifdef SUPERBOILER            // Если определен супер бойлер
 					if(HP.is_compressor_on() {
 						if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
@@ -1944,7 +1944,7 @@ void vServiceHP(void *)
 			// разблокировка веба
 			if(GetTickCount() - web_last_run > W5200_TIME_WAIT_MAX) {
 				if(SemaphoreTake(xWebThreadSemaphore, 100) == pdFALSE) {
-					journal.jprintf_time("UNLOCK mutex xWebThread\n");
+					journal.jprintf_time("UNLOCK mutex xWebThread from %X\n", xWebThreadSemaphore.return_addr);
 					HP.num_resMutexWEB++;
 				}
 				SemaphoreGive(xWebThreadSemaphore);

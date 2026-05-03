@@ -506,14 +506,22 @@ void parserGET(uint8_t thread, int8_t )
 #else
 			strcat(strReturn,"%|SF>");
 #endif
-			//_itoa(freeRam()+HP.startRAM,strReturn);                          strcat(strReturn,"b|");
-#ifdef FC_VACON
-			HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
-			strcat(strReturn,"|SS>");
-#else
-			if(HP.dFC.get_present()) HP.dFC.get_paramFC((char*) fc_FC, strReturn); else strcat(strReturn, " - ");
-			strcat(strReturn,"Гц|SS>");
+			//_itoa(freeRam()+HP.startRAM,strReturn); strcat(strReturn,"b|");
+#ifdef USE_HEATER
+			if(HP.is_heater_on()) {
+				_itoa(HP.dHeater.data.Power, strReturn);
+				strcat(strReturn,"%|SS>");
+			} else
 #endif
+			{
+#ifdef FC_VACON
+				HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
+				strcat(strReturn,"|SS>");
+#else
+				if(HP.dFC.get_present()) HP.dFC.get_paramFC((char*) fc_FC, strReturn); else strcat(strReturn, " - ");
+				strcat(strReturn,"Гц|SS>");
+#endif
+			}
 			if (HP.get_errcode() == OK) {
 				HP.get_StateModworkStr(strReturn);
 			} else {strcat(strReturn,"Error "); _itoa(HP.get_errcode(),strReturn);} // есть ошибки
@@ -1088,10 +1096,13 @@ xSaveStats:
 				}
 			} else if (strcmp(str,"I2C")==0) {   // RESET_I2C
 				strcat(strReturn, "Reset I2C: ");
-				if(SemaphoreTake(xI2CSemaphore, 0) == pdFALSE) strcat(strReturn, "SemaphoreLocked "); else SemaphoreGive(xI2CSemaphore);
+				if(SemaphoreTake(xI2CSemaphore, 2) == pdFALSE) {
+					SemaphoreGive(xI2CSemaphore);
+					m_snprintf(strReturn + strlen(strReturn), 256, "UNLOCK mutex xI2CSemaphore from %X\n", xI2CSemaphore.return_addr);
+				} else strcat(strReturn, "Semaphore I2C was OK ");
 				if(!Check_I2C_bus()) strcat(strReturn, "BusLocked ");
 				Recover_I2C_bus(false);
-				strcat(strReturn, "Ok");
+				journal.jprintf_time(strReturn);
 			} else if (strcmp(str,"POWER")==0) {   // RESET_POWER
 #ifndef PIN_REPOWER
 				strcat(strReturn, "NOT AVAILABLE!");

@@ -154,7 +154,7 @@ public:
 	void	WaitPumpOff();							// Ожидать постциркуляцию насоса
 	bool	CheckIsHeaterOn(void);					// Проверка работает ли котел
 
-	int8_t   err;									// ошибка
+	int8_t   err_last;								// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
