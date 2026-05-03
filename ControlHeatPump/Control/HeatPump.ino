@@ -4841,7 +4841,7 @@ int8_t HeatPump::save_DumpJournal(boolean f)
 	((journal).*(fn))(cStrEnd);
 #ifdef USE_HEATER
 	if(GETBIT(dHeater.set.setup_flags, fHeater_Opentherm)) {
-		((journal).*(fn))(" Heater:%X M:%d%% tF:%.1d ", dHeater.data.Status, dHeater.data.Power, dHeater.data.T_Flow); //  tB:%.1d , data.T_Boiler
+		((journal).*(fn))(" Heater:%X M:%d%% tF:%d ", dHeater.data.Status, dHeater.data.Power, dHeater.data.T_Flow / 10); //  tB:%.1d , data.T_Boiler
 		((journal).*(fn))("P:%.1d E:%d,%d\n", dHeater.data.P_OUT, dHeater.data.Error, dHeater.Heater_Error2);
 	}
 #endif

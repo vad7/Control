@@ -1209,18 +1209,19 @@ void vReadSensor(void *)
 					HP.NO_Power = 0;
 				}
 			}
-		} else
+		}
 #endif
-			if(GetTickCount() - readFC > FC_TIME_READ / 2
-					&& GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
-				readFC = GetTickCount();
-				flags ^= 1;	// dFC / dHeater
-				if(flags & 1) {
+		if(GetTickCount() - readFC > FC_TIME_READ / 2
+				&& GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
+			readFC = GetTickCount();
+			if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
+		}
 #ifdef USE_HEATER
-					if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(1);	// группа 2 - данные
+		if(flags & 1) {
+			if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) && !HP.is_compressor_on()) HP.dHeater.read_state(1); // группа 2 - данные
+		}
 #endif
-				} else if(HP.dFC.get_present()) HP.dFC.get_readState();
-			}
+		flags ^= 1;	// dFC / dHeater
 
 #ifdef DRV_EEV_L9333  // Опрос состяния драйвера ЭРВ
 		if (digitalReadDirect(PIN_STEP_DIAG)) // Перечитываем два раза
@@ -1238,17 +1239,23 @@ void vReadSensor(void *)
 #endif
 			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
-				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2)) continue;
+	#ifdef USE_HEATER
+				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2
+#ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
+										|| HP.get_onBoiler()
+#endif
+										)) continue;
+	#endif
 	#ifdef SUPERBOILER            // Если определен супер бойлер
-					if(HP.is_compressor_on() {
-						if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
-					}
+				if(HP.is_compressor_on() {
+					if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
+				}
 	#endif
 #endif
-					if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
-						journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
-						set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
-					}
+				if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
+					journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
+					set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
+				}
 			}
 #endif
 #ifdef SEVA  //Если определен лепестковый датчик протока - это переливная схема ТН - надо контролировать проток при работе, Только если включен насос геоконтура

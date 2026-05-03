@@ -115,6 +115,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 	uint8_t  wait_heating_pipes_time_max;		// Максимальное время ожидания прогрева трассы по температуре, 4 * сек
 	int8_t   HeatingPipesSubTemp;				// Разница от целевой подачи для завершения прогрева трассы, градусы
 	uint8_t  Modbus_Attempts;					// Modbus - попыток чтения/записи при ошибке
+	uint8_t  ModbusWriteResponseTimeout;		// Таймаут ожидания ответа при записи по Modbus, мсек
 //	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления перед включением, если не установлена в профиле, C
 //	uint8_t  heat_power_min;					// Минимальная мощность (или модуляция) для отопления, %
 //	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
@@ -131,6 +132,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
+#define fHeater_Log						5		// логировать в журнал
 
 class devHeater
 {
@@ -154,7 +156,6 @@ public:
 	void	WaitPumpOff();							// Ожидать постциркуляцию насоса
 	bool	CheckIsHeaterOn(void);					// Проверка работает ли котел
 
-	int8_t   err_last;								// ошибка
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
@@ -164,8 +165,8 @@ public:
 
 private:
 	uint8_t fwork;									// рабочие флаги
-	uint8_t curr_temp;								// текущая установка
-	uint8_t curr_boiler_temp;						// текущая установка
+	uint8_t curr_temp;								// текущая установка, градусы
+	uint8_t curr_boiler_temp;						// текущая установка, градусы
  };
 
 #endif

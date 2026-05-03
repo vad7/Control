@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2026 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.215";
+var VER_WEB = "1.216";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
@@ -58,6 +58,7 @@ function setParam(paramid, resultid) {
 			if(paramid.lastIndexOf('(RCOMP)') !== -1 || paramid.lastIndexOf('(RGEN)') !== -1 || paramid.lastIndexOf('(RHEATER)') !== -1) if(!confirm("ПЕРЕКЛЮЧИТЬ РЕЛЕ?")) return;
 		//} else if(typeof elval == 'string') elval = elval.replace(/[,=&]+/g, "");
 		} else elval = element.value;
+		if(element.value === "" && /^\D-?\d{1,3}/.test(element.placeholder)) return;
 	}
 	if(/_modeHP|_listProf|_testMode|_listIP/.test(paramid)) {
 		if(paramid.indexOf("Prof")!=-1) {

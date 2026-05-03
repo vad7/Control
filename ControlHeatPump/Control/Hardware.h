@@ -572,6 +572,7 @@ class devModbus
     #endif
     int8_t writeHoldingRegisters32(uint8_t id,uint16_t cmd, uint32_t data); // Записать 2 регистра подряд возвращает код ошибки
     void   set_timeouts(uint8_t id);                                                       // Задать таймауты в зависимости от устройства на шине
+    void   set_timeouts_for_write(uint8_t id);                                             // Задать таймауты для записи в зависимости от устройства на шине
     int8_t get_err() {return err;}                                                         // Получить код ошибки
     ModbusMaster RS485;                     // Класс модбас 485
 private:

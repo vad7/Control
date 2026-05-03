@@ -1984,6 +1984,21 @@ void devModbus::set_timeouts(uint8_t id)
 	}
 }
 
+// Задать таймауты в зависимости от устройства на шине
+void devModbus::set_timeouts_for_write(uint8_t id)
+{
+#ifdef MODBUS_HEATER_GE
+	if(id >= MODBUS_HEATER_GE) {
+		RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
+		RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusWriteResponseTimeout;
+	} else
+#endif
+	{
+		RS485.ModbusMinTimeBetweenTransaction = HP.Option.ModbusMinTimeBetweenTransaction;
+		RS485.ModbusResponseTimeout = HP.Option.ModbusResponseTimeout;
+	}
+}
+
 // ФУНКЦИИ ЧТЕНИЯ ----------------------------------------------------------------------------------------------
 // Получить значение 2-x (Modbus function 0x04 Read Input Registers) регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
 int8_t devModbus::readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret)
@@ -2102,7 +2117,7 @@ int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t dat
 	}
 	uint8_t result;
 #ifdef USE_HEATER
-	set_timeouts(id);
+	set_timeouts_for_write(id);
 	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 	if(id >= MODBUS_HEATER_GE) {
 		RS485.begin(id, HEATER_MODBUS_PORT);	// установка сериала и адреса устройства
@@ -2158,7 +2173,7 @@ int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t dat
 		return err = ERR_485_BUZY;
 	}
 #ifdef USE_HEATER
-	set_timeouts(id);
+	set_timeouts_for_write(id);
 	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 #else
 	RS485.set_slave(id);
@@ -2212,7 +2227,7 @@ int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat
 		return err = ERR_485_BUZY;
 	}
 #ifdef USE_HEATER
-	set_timeouts(id);
+	set_timeouts_for_write(id);
 	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 #else
 	RS485.set_slave(id);
@@ -2309,7 +2324,7 @@ int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t nu
 			return err = ERR_485_BUZY;
 		}
 	#ifdef USE_HEATER
-		set_timeouts(id);
+		set_timeouts_for_write(id);
 		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 	#else
 		RS485.set_slave(id);
@@ -2348,7 +2363,7 @@ int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t da
 			return err = ERR_485_BUZY;
 		}
 	#ifdef USE_HEATER
-		set_timeouts(id);
+		set_timeouts_for_write(id);
 		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 	#else
 		RS485.set_slave(id);
@@ -2412,7 +2427,7 @@ int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
 		return err = ERR_485_BUZY;
 	}
 #ifdef USE_HEATER
-	set_timeouts(id);
+	set_timeouts_for_write(id);
 	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 #else
 	RS485.set_slave(id);
@@ -2441,7 +2456,7 @@ int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
 			return err = ERR_485_BUZY;
 		}
 	#ifdef USE_HEATER
-		set_timeouts(id);
+		set_timeouts_for_write(id);
 		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
 	#else
 		RS485.set_slave(id);

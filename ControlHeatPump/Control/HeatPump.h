@@ -754,7 +754,7 @@ private:
 // Переменные ПИД регулятора ГВС
 	unsigned long updatePidBoiler;        // время обновления ПИДа ГВС
 	boolean flagRBOILER;                  // true - идет или скоро может быть пойдет цикл догрева бойлера
-	boolean onBoiler;                     // Если true то идет нагрев бойлера ТН (не ТЭНом)
+	boolean onBoiler;                     // Если true то идет нагрев бойлера ТН/Котлом (не ТЭНом)
 	boolean onLegionella;                 // Если true то идет Обеззараживание
 
 	friend void set_Error(int8_t err, char *nam); // Установка критической ошибки для класса ТН

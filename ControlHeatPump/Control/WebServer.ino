@@ -2152,12 +2152,12 @@ xHeater_get_param:
 								l_i32 = strtol(x + 1, NULL, 16);
 								uint16_t d = pm;
 								if(l_i32 != LONG_MAX) {
-									i = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, l_i32, d);
-									_delay(1);
-									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
-									l_i32 = i == OK ? d : i;
+									l_i32 = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, l_i32, d);
+//									_delay(1);
+//									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
+//									l_i32 = i == OK ? d : i;
 								}
-								_delay(HP.dHeater.set.ModbusMinTimeBetweenTransaction);
+//								_delay(HP.dHeater.set.ModbusMinTimeBetweenTransaction);
 							} else l_i32 = 36; // E36
 						}
 						if(l_i32 == OK) goto xHeater_get_param;
