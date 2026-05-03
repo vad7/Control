@@ -629,7 +629,7 @@ x_I2C_init_std_message:
 	//HP.mRTOS=HP.mRTOS+4*configTIMER_TASK_STACK_DEPTH;  // программные таймера (их теперь нет)
 
 	// ПРИОРИТЕТ 4 Высший приоритет датчики читаются всегда и шаговик ЭРВ всегда шагает если нужно
-	if(xTaskCreate(vReadSensor,"ReadSensor",145,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
+	if(xTaskCreate(vReadSensor,"ReadSensor",140,NULL,4,&HP.xHandleReadSensor)==errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)    set_Error(ERR_MEM_FREERTOS,(char*)nameFREERTOS);
 	HP.mRTOS += 64+4*140;// 200, до обрезки стеков было 300
 
 #ifdef EEV_DEF

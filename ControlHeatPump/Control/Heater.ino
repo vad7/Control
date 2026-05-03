@@ -260,7 +260,7 @@ int8_t devHeater::read_state(uint8_t group)
 					SETBIT0(fwork, fHeater_CmdNotResponse);
 					SETBIT1(fwork, fHeater_LinkHeaterOk);
 				} else {
-					if(GETBIT(set.setup_flags, fHeater_Log) && GETBIT(fwork, fHeater_LinkHeaterOk)) journal.jprintf("#Heater: NO LINK (%d)\n", r);
+					if(GETBIT(set.setup_flags, fHeater_Log) /* && GETBIT(fwork, fHeater_LinkHeaterOk)*/) journal.jprintf("#Heater: NO LINK (%d)\n", r);
 					if(GETBIT(fwork, fHeater_CmdNotResponse)) {
 						SETBIT0(fwork, fHeater_LinkHeaterOk);
 						if(HP.is_heater_on()) {
