@@ -360,8 +360,8 @@ int8_t devHeater::set_target(uint16_t temp)
 // Проверка работает ли котел
 bool devHeater::CheckIsHeaterOn(void)
 {
-	if(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk)) {
-		return (data.Status & HM_STATUS_bBURNER) ?  true : false;
+	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
+		return GETBIT(data.Status, HM_STATUS_bBURNER);
 	} else return HP.is_heater_on();
 }
 
