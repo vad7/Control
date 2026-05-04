@@ -1618,6 +1618,7 @@ int16_t HeatPump::get_targetTempCool()
 	return T;
 }
 
+
 int16_t HeatPump::get_targetTempHeat()
 {
 	int T;
@@ -1640,6 +1641,12 @@ int16_t HeatPump::get_targetTempHeat()
 	}
 	T += Schdlr.get_temp_change();
 	return T;
+}
+
+// Текущая температура цели
+int16_t HeatPump::get_currentTempHeat(void)
+{
+	return GETBIT(Prof.Heat.flags, fTarget) ? RET : sTemp[TIN].get_Temp();
 }
 
 // ИЗМЕНИТЬ целевую температуру бойлера с провекой допустимости значений
@@ -1811,8 +1818,12 @@ bool HeatPump::checkEVI()
 void HeatPump::Pump_HeatFloor(bool On)
 {
 	if(On) {
-		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor)) || (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor))))
-			dRelay[RPUMPFL].set_ON();
+		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor))
+										|| (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor)))) {
+			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater) && GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && dHeater.set.HeatFloorAddTemp) {
+				SETBIT1(work_flags, fHP_Heater_HeatFloorDelayed);
+			} else dRelay[RPUMPFL].set_ON();
+		}
 	} else dRelay[RPUMPFL].set_Relay(error ? -fR_StatusAllOff : -fR_StatusMain);
 }
 #else
@@ -1826,11 +1837,11 @@ void HeatPump::Switch_R3WAY(int8_t On)
 	bool st = dRelay[R3WAY].get_Relay();
 	if(On) {
 #ifdef R3WAYOFF
-		dRelay[R3WAYOFF].set_Relay(-fR_StatusMain);
+		dRelay[R3WAYOFF].set_Relay(fR_StatusAllOff);
 #endif
 		dRelay[R3WAY].set_Relay(fR_StatusMain);
 	} else {
-		dRelay[R3WAY].set_Relay(-fR_StatusMain);
+		dRelay[R3WAY].set_Relay(fR_StatusAllOff);
 #ifdef R3WAYOFF
 		dRelay[R3WAYOFF].set_Relay(fR_StatusMain);
 #endif
@@ -1845,7 +1856,7 @@ void HeatPump::Switch_R3WAY(int8_t On)
 #ifdef SWITCH_TIME_R3WAY
 		_delay(SWITCH_TIME_R3WAY * 1000);
 	#ifdef R3WAYOFF
-		if(!On) dRelay[R3WAYOFF].set_Relay(-fR_StatusMain);
+		if(!On) dRelay[R3WAYOFF].set_Relay(fR_StatusAllOff);
 	#endif
 #else
 		_delay(DELAY_AFTER_SWITCH_RELAY);
@@ -2246,7 +2257,7 @@ xGoWait:
 	if(start_compressor_now) {
 		if(HEATER_NEED_ON) {
 			heaterON();                          // Включаем котел
-			heater_heating_pipes();
+			heater_heating_pipes_start();
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
@@ -2325,6 +2336,8 @@ void HeatPump::StopWait(bool stop)
 #endif
 
 	SETBIT0(work_flags, fHP_BoilerTogetherHeat);
+	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+	SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 
 	if(stop) {
 		if(R3WAY_Off_timer) Switch_R3WAY(false);
@@ -2863,7 +2876,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		}
 	}
 	if(t1 == STARTTEMP) {
-		t1 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();  // вычислить температуры для сравнения Prof.Heat.Target 0-дом, 1-обратка
+		t1 = get_currentTempHeat();  // вычислить температуры для сравнения
 		target = get_targetTempHeat();
 	} else {
 		int16_t t2 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
@@ -3321,18 +3334,18 @@ void HeatPump::vUpdate()
 		return;
 	}
 #ifdef EEV_DEF
-	if(!sADC[PEVA].get_present() && dEEV.get_ruleEEV() == TEVAOUT_PEVA) {  //  Отсутвует датчик давления, и выбран алгоритм ЭРВ который его использует", пользователь может изменить в процессе работы
+	if(!sADC[PEVA].get_present() && dEEV.get_ruleEEV() == TEVAOUT_PEVA) { // Отсутвует датчик давления, и выбран алгоритм ЭРВ который его использует", пользователь может изменить в процессе работы
 		set_Error(ERR_PEVA_EEV, dEEV.get_name());
 		return;
 	}
 #endif
 
 #ifdef REVI
-	if (dRelay[REVI].get_present()) checkEVI();                           // Проверить необходимость включения ЭВИ
+	if (dRelay[REVI].get_present()) checkEVI();	// Проверить необходимость включения ЭВИ
 #endif
 
 #ifdef DEFROST
-	defrost();                                                          // Разморозка только для воздушных ТН
+	defrost();									// Разморозка только для воздушных ТН
 #endif
 
 	// Автопереключение Отопление/Охлаждение
@@ -3350,10 +3363,10 @@ void HeatPump::vUpdate()
 		}
 	}
 
-	Status.modWork = get_Work();                                       // определяем что делаем
+	Status.modWork = get_Work();				// определяем что делаем
 	if(error) return;
 #ifdef DEBUG_MODWORK
-	save_DumpJournal(false);                                           // Вывод строки состояния
+	save_DumpJournal(false);					// Вывод строки состояния
 #else
 	if(GETBIT(Option.flags2, f2modWorkLog) && Status.ret != Status.prev) {
 		const char* _cr = codeRet[Status.ret];
@@ -3372,11 +3385,11 @@ void HeatPump::vUpdate()
 	if(Status.modWork == pOFF) {
 		if(is_heater_on()) {
 			heaterOFF();
-		} else if(is_compressor_on()) {  // ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
+		} else if(is_compressor_on()) {			// ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
 			compressorOFF();
 		}
 		configHP();
-		if(get_modeHouse() == pOFF) {    				// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
+		if(get_modeHouse() == pOFF) {    		// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
 			if(startPump != StartPump_AfterWork) {
 				HP.pump_in_pause_set(false);
 				pump_in_pause_timer = 0;
@@ -3384,21 +3397,25 @@ void HeatPump::vUpdate()
 			}
 		} else if(startPump == StartPump_Stop) {
 			pump_in_pause_timer = get_pausePump();
-			startPump = StartPump_Start;				// Поставить признак запуска задачи насос
+			startPump = StartPump_Start;		// Поставить признак запуска задачи насос
 		}
-	} else if(!(Status.modWork & pCONTINUE)) { // Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
+	} else if(!(Status.modWork & pCONTINUE)) {	// Начало режимов, Включаем задачу насос, конфигурируем 3 и 4-х клапаны включаем насосы и потом включить компрессор
 		if(!check_start_pause()) {
-			if(startPump >= StartPump_Start) {           // Остановить задачу насос
-				startPump = StartPump_Stop;              // Поставить признак останова задачи насос
+			if(startPump >= StartPump_Start) {	// Остановить задачу насос
+				startPump = StartPump_Stop;		// Поставить признак останова задачи насос
 			}
-			if(configHP()) {               // Конфигурируем насосы
+			if(configHP()) {					// Конфигурируем насосы
 				if(HEATER_NEED_ON) {
-					heaterON();                          // Включаем котел
-					heater_heating_pipes();
+					heaterON();                 // Включаем котел
+					heater_heating_pipes_start();
 				} else {
-					compressorON();                      // Включаем компрессор
+					compressorON();				// Включаем компрессор
 				}
 			}
+		}
+	} else if(Status.modWork & pCONTINUE) {		// Продолжение
+		if(Status.modWork & (pHEAT | pBOILER)) {
+			heater_heating_pipes_update();
 		}
 	}
 }
@@ -3596,7 +3613,7 @@ bool HeatPump::configHP()
 					dHeater.HeaterValve_On();
 	#endif
 	#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Heat.tempPID - dHeater.set.HeatingPipesSubTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < get_currentTempHeat() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);
 					} else
@@ -3707,7 +3724,7 @@ bool HeatPump::configHP()
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) {
 					dHeater.HeaterValve_On();
 			#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < Prof.Boiler.tempPID - dHeater.set.HeatingPipesSubTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[RBOILER].get_Temp() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
 					} else 						// и не включать сразу насосы
@@ -4298,12 +4315,13 @@ void HeatPump::heaterOFF()
 #endif
 }
 
-// Котел греет трубу
-void HeatPump::heater_heating_pipes(void)
+// Котел начинает греть трубу, если нужно
+void HeatPump::heater_heating_pipes_start(void)
 {
 	if(!GETBIT(work_flags, fHP_Heater_Heating_pipes)) return;
 	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) {
 		SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+		SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 		return;
 	}
 	journal.jprintf(" Waiting to heat pipes\n");
@@ -4313,30 +4331,38 @@ void HeatPump::heater_heating_pipes(void)
 			return;
 		}
 	}
-#ifdef THEATER
-	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
-		uint16_t t = dHeater.set.wait_heating_pipes_time_max * 4;
-		while(sTemp[THEATER].get_Temp() < (Status.modWork & pBOILER ? Prof.Boiler.tempPID : Prof.Heat.tempPID) - dHeater.set.HeatingPipesSubTemp * 100) {
-			if(DelaySec(1) || !is_heater_on()) {
-				SETBIT0(work_flags, fHP_Heater_Heating_pipes);
-				return;
-			}
-			if(t-- == 0 || !(dHeater.set.setup_flags & ((1<<fHeater_Heating_Pipes_Temp)|(1<<fHP_Heater_Heating_pipes)))) break;
+}
+
+// Котел продолжает греть трубу, если нужно, а так же включаем Теплый пол, если задано
+void HeatPump::heater_heating_pipes_update(void)
+{
+	int16_t temp = (Status.modWork & pBOILER) ? sTemp[RBOILER].get_Temp() : get_currentTempHeat();
+#ifdef RPUMPFL
+	if(GETBIT(work_flags, fHP_Heater_HeatFloorDelayed)) {
+		if(sTemp[THEATER].get_Temp() >= temp + dHeater.set.HeatFloorAddTemp * 100) {
+			dRelay[RPUMPFL].set_ON();
+			SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 		}
 	}
-#else
-	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || !is_heater_on() || error) {
-		SETBIT0(work_flags, fHP_Heater_Heating_pipes);
-		return;
+#endif
+	if(!GETBIT(work_flags, fHP_Heater_Heating_pipes)) return;
+#ifdef THEATER
+	if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)) {
+		if(rtcSAM3X8.unixtime() - HP.startHeater > dHeater.set.wait_heating_pipes_time_max * 4
+		|| sTemp[THEATER].get_Temp() >= temp + dHeater.set.HeatingPipesAddTemp * 100) {
+			if(Status.modWork & pBOILER) {
+				switchBoiler(true); // включить бойлер
+#ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
+				_delay(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+#endif
+			} else {
+				Pumps(ON); // включить насосы
+				_delay(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+			}
+			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+		}
 	}
 #endif
-	if(Status.modWork & pBOILER) {
-		switchBoiler(true); // включить бойлер
-	} else {
-		Pumps(ON); // включить насосы
-	}
-	HP.startHeater = rtcSAM3X8.unixtime();
-	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 }
 
 // ОБРАБОТЧИК КОМАНД УПРАВЛЕНИЯ ТН
@@ -4709,7 +4735,7 @@ void HeatPump::pump_in_pause_set(bool ONOFF)
 // ждем пока насосы остановятся
 void HeatPump::pump_in_pause_wait_off()
 {
-	while((startPump == StartPump_AfterWork && pump_in_pause_timer) || R3WAY_Off_timer) _delay(1000);
+	while((startPump == StartPump_AfterWork && pump_in_pause_timer)) if(DelaySec(1)) break;
 }
 
 // Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать

@@ -2136,7 +2136,20 @@ xHeater_get_param:
 								uint16_t d;
 								l_i32 = strtol(x + 1, NULL, 16);
 								i = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, l_i32, &d);
-								if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
+								if(i) {
+									strcat(strReturn, "E");
+									_itoa(i, strReturn);
+								} else if(l_i32 >= 0x40 && l_i32 <= 0x6F) { // Регистры состояния регистров записи
+									if(d == 0) strcat(strReturn, "OK");
+									else if(d == (uint16_t) 1) strcat(strReturn, "Не инициализирован");
+									else if(d == (uint16_t) -1) strcat(strReturn, "Не поддерживается");
+									else if(d == (uint16_t) -2) strcat(strReturn, "Ошибка записи");
+									else { strcat(strReturn, "Состояние: "); _itoa(d, strReturn); }
+								} else {
+									if(l_i32 == HM_SET_T_Flow) HP.dHeater.curr_temp = d / 10;
+									else if(l_i32 == HM_SET_T_BOILER) HP.dHeater.curr_boiler_temp = d;
+									_itoa(d, strReturn);
+								}
 							} else if(x[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
 								uint32_t d;
 								l_i32 = strtol(x + 1, NULL, 16);

@@ -1240,7 +1240,7 @@ void vReadSensor(void *)
 			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
 	#ifdef USE_HEATER
-				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2
+				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ
 #ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
 										|| HP.get_onBoiler()
 #endif

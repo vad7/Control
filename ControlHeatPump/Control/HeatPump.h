@@ -210,8 +210,9 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
 #define fHP_ProfilesSwitchingByTime 12		// Профили меняются по расписанию
-#define fHP_Heater_Heating_pipes 13			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
-#define fHP_ProfileSwitch_SkipLog 14		// Не логировать повторные ошибки переключения профилей
+#define fHP_ProfileSwitch_SkipLog 13		// Не логировать повторные ошибки переключения профилей
+#define fHP_Heater_Heating_pipes 14			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
+#define fHP_Heater_HeatFloorDelayed 15		// Отложенный пуск теплого пола работает
 
 // Флаги настроек, Option.flags:
 #define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой
@@ -508,6 +509,7 @@ public:
 
 	int16_t get_targetTempCool();                           // Получить целевую температуру Охлаждения
 	int16_t get_targetTempHeat();                           // Получить целевую температуру Отопления
+	int16_t get_currentTempHeat(void);						// Получить текущую целевую температуру
 	void    getTargetTempStr(char *rstr);					// Целевая температура в строку
 	void    getTargetTempStr2(char *rstr);					// Целевая температура в строку, 2 знака после запятой
 	int16_t setTargetTemp(int16_t dt);                      // ИЗМЕНИТЬ целевую температуру
@@ -717,7 +719,8 @@ private:
 	void compressorOFF();                 // попытка выключить компрессор с учетом всех защит
 	void heaterON();                      // попытка включить котел с учетом всех защит
 	void heaterOFF();                     // попытка выключить котел с учетом всех защит
-	void heater_heating_pipes(void);      // Котел греет трубу, если нужно
+	void heater_heating_pipes_start(void);// Котел начинает греть трубу, если нужно
+	void heater_heating_pipes_update(void);// Котел продолжает греть трубу, если нужно
 	bool check_start_pause();          // проверка на паузу между включениями
 	int8_t check_crc16_eeprom(int32_t addr, uint16_t size);// Проверить контрольную сумму в EEPROM для данных на выходе ошибка, длина определяется из заголовка
 	boolean setState(TYPE_STATE_HP st);   // установить состояние теплового насоса

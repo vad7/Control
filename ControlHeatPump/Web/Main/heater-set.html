@@ -7,12 +7,12 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(CP),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MWT),get_HT(MBT),get_HT(3A),get_HT(3P),get_HT(3PM),get_HT(3T),get_HT(NF),get_HT(HPS),get_HT(MA),get_HT(JL),get_modbus_p(heater),get_modbus_p(heater_s)");
+	loadParam("get_HT(OT),get_HT(RY),get_HT(R3),get_HT(RM),get_HT(RW),get_HT(CP),get_HT(PA),get_oHP(SH),get_HT(BH),get_HT(MRT),get_HT(MWT),get_HT(MBT),get_HT(3A),get_HT(3P),get_HT(3PM),get_HT(3T),get_HT(NF),get_HT(HPT),get_HT(HFT),get_HT(MA),get_HT(JL),get_modbus_p(heater),get_modbus_p(heater_s)");
 };
 // Address in HEX
 function load_adapter_settings()
 {
-	loadParam("get_HT(W30)"); loadParam("get_HT(W31)"); loadParam("get_HT(W32)"); loadParam("get_HT(W33)"); loadParam("get_HT(W34)"); loadParam("get_HT(W35)"); loadParam("get_HT(W36)"); loadParam("get_HT(W37)"); loadParam("get_HT(W38)");
+	loadParam("get_HT(W30)"); loadParam("get_HT(W31)"); loadParam("get_HT(W32)"); loadParam("get_HT(W33)"); loadParam("get_HT(W34)"); loadParam("get_HT(W35)"); loadParam("get_HT(W36)"); loadParam("get_HT(W37)"); loadParam("get_HT(W38)"); loadParam("get_HT(W68)");
 }
 function load_adapter_settings2()
 {
@@ -46,8 +46,9 @@ function load_adapter_settings2()
 	<tr><td>Не устанавливать температуру подачи из профиля</td><td><input type="checkbox" id="get_ht-nf" onchange="setParam('get_HT(NF)')"></td></tr>
 	<tr><td>Прогрев трассы, насосы или трехходовой бойлера включаются после этого</td><td><input type="checkbox" id="get_ht-3a" onchange="setParam('get_HT(3A)')"></td></tr>
     <tr><td>Время ожидания прогрева трассы, сек</td><td><input type="number" id="get_ht-3p"> <input type="submit" value=">" onclick="setParam('get_HT(3P)')"></td></tr>
-	<tr><td>Прогрев трассы (THEATER) до целевой температуры подачи минус разница</td><td><input type="checkbox" id="get_ht-3t" onchange="setParam('get_HT(3T)')"></td></tr>
-    <tr><td>Разница от целевой температуры подачи, °C</td><td><input type="number" id="get_ht-hps"> <input type="submit" value=">" onclick="setParam('get_HT(HPS)')"></td></tr>
+	<tr><td>Прогрев трассы по температуре датчика THEATER</td><td><input type="checkbox" id="get_ht-3t" onchange="setParam('get_HT(3T)')"></td></tr>
+    <tr><td>Завершить прогрев трассы по достижению текущих температур цели плюс °C:</td><td><input type="number" id="get_ht-hpt"> <input type="submit" value=">" onclick="setParam('get_HT(HPT)')"></td></tr>
+    <tr><td>Включать Теплый Пол по достижению текущей температуры цели плюс °C:</td><td><input type="number" id="get_ht-hft"> <input type="submit" value=">" onclick="setParam('get_HT(HFT)')"></td></tr>
     <tr><td>Максимальное время ожидания прогрева трассы по температуре, сек</td><td><input type="number" id="get_ht-3pm"> <input type="submit" value=">" onclick="setParam('get_HT(3PM)')"></td></tr>
 	<tr><td><b>Настройка адаптера ectoControl, значения пишутся сразу в адаптер</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings()'></td></tr>
     <tr><td>Адаптер подключен (0), иначе подключен термостат или перемычка (1) [#30]</td><td><input type="number" id="get_ht-w30"> <input type="submit" value=">" onclick="setParam('get_HT(W30)')"></td></tr>
@@ -58,7 +59,7 @@ function load_adapter_settings2()
     <tr><td>Нижний предел уставки ГВС [#35], °C</td><td><input type="number" id="get_ht-w35"> <input type="submit" value=">" onclick="setParam('get_HT(W35)')"></td></tr>
     <tr><td>Верхний предел уставки ГВС [#36], °C</td><td><input type="number" id="get_ht-w36"> <input type="submit" value=">" onclick="setParam('get_HT(W36)')"></td></tr>
     <tr><td>Уставка ГВС [#37], °C</td><td><input type="number" id="get_ht-w37"> <input type="submit" value=">" onclick="setParam('get_HT(W37)')"></td></tr>
-    <tr><td>Уставка максимальной модуляции горелки [#38], °C</td><td><input type="number" id="get_ht-w38"> <input type="submit" value=">" onclick="setParam('get_HT(W38)')"></td></tr>
+    <tr><td>Уставка максимальной модуляции горелки [#38], °C</td><td><input type="number" id="get_ht-w38"> <input type="submit" value=">" onclick="setParam('get_HT(W38)')"> <span id="get_ht-w68"><span></td></tr>
 	<tr><td><b>Дополнительная информация</b></td><td><input type="submit" value="Прочитать" onclick='load_adapter_settings2()'></td></tr>
     <tr><td>Состояние биты, +256 - eBus, +512 - Navien, +2048 - есть связь, 0..255 - код перезагрузки [#10]</td><td id="get_ht-w10"></td></tr>
     <tr><td>Версия адаптера - ст. байт аппаратная, мл. байт програмная [#11]</td><td id="get_ht-w11"></td></tr>

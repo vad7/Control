@@ -67,7 +67,7 @@ struct type_heater_read {
 	int16_t	 T_Flow;							// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
 	uint16_t T_Boiler;							// 0x19, Текущая температура ГВС (0.0 - 100.0), десятые градуса
 	uint16_t P_OUT;								// 0x1A, Текущее Давление в контуре (0.0 - 5.0), десятые бара
-	uint16_t F_Boiler;							// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые литра
+	uint16_t F_Boiler;							// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые л/мин
 	uint16_t Power;								// 0x1C, Модуляция (0 - 100%, 0xFF - неопределено)
 	uint16_t Status;							// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
 	uint16_t Error;								// 0x1E, ошибка котла
@@ -114,9 +114,10 @@ struct type_HeaterSettings {					// Структура для сохранени
 	uint8_t  ModbusResponseTimeout;				// Таймаут ожидания ответа по Modbus, мсек
 	uint8_t  wait_heating_pipes_time;			// Время ожидания прогрева трассы, 4 * сек
 	uint8_t  wait_heating_pipes_time_max;		// Максимальное время ожидания прогрева трассы по температуре, 4 * сек
-	int8_t   HeatingPipesSubTemp;				// Разница от целевой подачи для завершения прогрева трассы, градусы
+	int8_t   HeatingPipesAddTemp;				// Добавка к текущим целевым температурам для завершения прогрева трассы, градусы
 	uint8_t  Modbus_Attempts;					// Modbus - попыток чтения/записи при ошибке
 	uint8_t  ModbusWriteResponseTimeout;		// Таймаут ожидания ответа при записи по Modbus, мсек
+	int8_t   HeatFloorAddTemp;					// Добавка к текущим целевым температурам для включения теплого пола (0 - нет), градусы
 //	uint8_t  heat_tempout;						// Целевая температура теплоносителя отопления перед включением, если не установлена в профиле, C
 //	uint8_t  heat_power_min;					// Минимальная мощность (или модуляция) для отопления, %
 //	uint8_t  heat_power_max;					// Максимальная мощность (или модуляция) для отопления, %
@@ -138,7 +139,7 @@ class devHeater
 {
 public:
 	void	init();									// Инициализация
-	void 	check_link(void);						// Проверка связи
+	void 	check_link(void);						// Проверка связи с корретировкой температур подачи и бойлера
 	int8_t	read_state(uint8_t group);				// Текущее состояние
 	int8_t	set_target(uint16_t temp); 				// Установить целевую температуру
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
@@ -156,17 +157,17 @@ public:
 	void	WaitPumpOff();							// Ожидать постциркуляцию насоса
 	bool	CheckIsHeaterOn(void);					// Проверка работает ли котел
 
+	type_HeaterSettings set;						// Структура для сохранения настроек
+	type_heater_read data;							// Данные с котла
 	uint8_t  err_num;								// число ошибок чтение по модбасу подряд
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
 	uint16_t Heater_Error2;							// ошибка котла дополнительная
-	type_HeaterSettings set;						// Структура для сохранения настроек
-	type_heater_read data;							// Данные с котла
+	uint8_t  curr_temp;								// текущая установка, градусы
+	uint8_t  curr_boiler_temp;						// текущая установка бойлера, градусы
 
 private:
-	uint8_t fwork;									// рабочие флаги
-	uint8_t curr_temp;								// текущая установка, градусы
-	uint8_t curr_boiler_temp;						// текущая установка, градусы
+	uint8_t  fwork;									// рабочие флаги
  };
 
 #endif
