@@ -209,37 +209,37 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_HeaterWasOn			9			// Последний цикл работы - Котел
 #define fHP_ProfileSetByError	10			// Текущий профиль установлен по переключению из-за ошибки
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
-#define fHP_ProfilesSwitchingByTime 12		// Профили меняются по расписанию
-#define fHP_ProfileSwitch_SkipLog 13		// Не логировать повторные ошибки переключения профилей
-#define fHP_Heater_Heating_pipes 14			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
-#define fHP_Heater_HeatFloorDelayed 15		// Отложенный пуск теплого пола работает
+#define fHP_Heater_Heating_pipes 12			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
+#define fHP_Heater_HeatFloorDelayed 13		// Отложенный пуск теплого пола работает
+#define fHP_ProfilesSwitchingByTime 14		// Профили меняются по расписанию
+#define fHP_ProfileSwitch_Error 15			// Ошибка переключения профиля (Не логировать повторные ошибки)
 
 // Флаги настроек, Option.flags:
-#define fDelayPumpsStopOnError	0				// При ошибке останавливать насосы с задержкой
-#define fBeep					1               // флаг Использование звука
-#define fNextion				2               // флаг Использование nextion дисплея
-#define fHistory				3               // флаг записи истории на карту памяти
-#define fSaveON					4               // флаг записи в EEPROM включения ТН
-#define f_reserved_2			5               //
-#define f1Wire1TSngl			6				// На 1-ой шине 1-Wire только один датчик
-#define f1Wire2TSngl			7				// На 2-ой шине 1-Wire(DS2482) только один датчик
-#define f1Wire3TSngl			8				// На 3-ей шине 1-Wire(DS2482) только один датчик
-#define f1Wire4TSngl			9				// На 4-ей шине 1-Wire(DS2482) только один датчик
-#define fSunRegenerateGeo		10				// Использовать солнечный коллектор для регенерации геоконтура в простое
-#define fNextionOnWhileWork		11				// Включать дисплей, когда компрессор работает
-#define fWebStoreOnSPIFlash		12				// флаг, что веб морда лежит на SPI Flash, иначе на SD карте
-#define fLogWirelessSensors		13				// Логировать обмен между беспроводными датчиками
-#define fBackupPower			14				// Использование резервного питания (ограничение мощности) - в настоящий момент, не настройка!
-#define fModbusLogErrors		15              // флаг писать в лог нерегулярные ошибки Modbus
+#define fDelayPumpsStopOnError	0			// При ошибке останавливать насосы с задержкой
+#define fBeep					1			// флаг Использование звука
+#define fNextion				2			// флаг Использование nextion дисплея
+#define fHistory				3			// флаг записи истории на карту памяти
+#define fSaveON					4			// флаг записи в EEPROM включения ТН
+#define f_reserved_2			5			//
+#define f1Wire1TSngl			6			// На 1-ой шине 1-Wire только один датчик
+#define f1Wire2TSngl			7			// На 2-ой шине 1-Wire(DS2482) только один датчик
+#define f1Wire3TSngl			8			// На 3-ей шине 1-Wire(DS2482) только один датчик
+#define f1Wire4TSngl			9			// На 4-ей шине 1-Wire(DS2482) только один датчик
+#define fSunRegenerateGeo		10			// Использовать солнечный коллектор для регенерации геоконтура в простое
+#define fNextionOnWhileWork		11			// Включать дисплей, когда компрессор работает
+#define fWebStoreOnSPIFlash		12			// флаг, что веб морда лежит на SPI Flash, иначе на SD карте
+#define fLogWirelessSensors		13			// Логировать обмен между беспроводными датчиками
+#define fBackupPower			14			// Использование резервного питания (ограничение мощности) - в настоящий момент, не настройка!
+#define fModbusLogErrors		15			// флаг писать в лог нерегулярные ошибки Modbus
 //  type_optionHP.flags2:
-#define f2BackupPowerAuto		0               // Автоматически определять работу от генератора (через датчик SGENERATOR)
-#define f2NextionGenFlashing	1				// Моргать картинкой на дисплее, если работаем от генератора
-#define f2AutoStartGenerator	2				// Автозапуск генератора по специальному гистерезису генератора
-#define f2NextionLog			3				// Логировать обмен Nextion
-#define f2modWorkLog			4				// Логировать обмен modWork
-#define f2RelayLog				5				// Логировать доп. инфу по реле
-#define f2LogEnergy				6				// Логировать потребленную энергию со счетчика при переходах тарифного плана и дня
-#define f2ReadMPPT				7				// Периодически читать данные солнечного контроллера, даже если не работает Ваттроутер
+#define f2BackupPowerAuto		0			// Автоматически определять работу от генератора (через датчик SGENERATOR)
+#define f2NextionGenFlashing	1			// Моргать картинкой на дисплее, если работаем от генератора
+#define f2AutoStartGenerator	2			// Автозапуск генератора по специальному гистерезису генератора
+#define f2NextionLog			3			// Логировать обмен Nextion
+#define f2modWorkLog			4			// Логировать обмен modWork
+#define f2RelayLog				5			// Логировать доп. инфу по реле
+#define f2LogEnergy				6			// Логировать потребленную энергию со счетчика при переходах тарифного плана и дня
+#define f2ReadMPPT				7			// Периодически читать данные солнечного контроллера, даже если не работает Ваттроутер
 
 // Структура для хранения опций теплового насоса.
 struct type_optionHP {
@@ -383,6 +383,7 @@ public:
 
 	__attribute__((always_inline)) inline int8_t get_errcode(){return error;} // Получить код последней ошибки
 	char    *get_lastErr(){return note_error;}// Получить описание последней ошибки, которая вызвала останов ТН, при удачном запуске обнуляется
+	char	*get_warning_text(void);          // Возвращает описание ошибки или предупреждения
 	void     scan_OneWire(char *result_str);  // Сканирование шины OneWire на предмет датчиков
 	boolean  get_onBoiler(){return onBoiler;} // Получить состояние трехходового точнее если true то идет нагрев бойлера
 	uint8_t  get_fSD() { return fSD;}         // Получить флаг наличия РАБОТАЮЩЕЙ СД карты
@@ -581,13 +582,14 @@ public:
 	void set_uptime(uint32_t ttime);                        // Установить текущее время как начало старта контроллера
 
 // Переменные
-	uint8_t CPU_LOAD;                                      // загрузка CPU
+	uint32_t work_flags;									// Рабочие флаги ТН
+	uint8_t  CPU_LOAD;                                      // загрузка CPU
 	uint32_t mRTOS;                                        // Память занимаемая задачами
 	uint32_t startRAM;                                     // Свободная память при старте FREE Rtos - пытаемся определить свободную память при работе
 
 	int16_t  lastEEV;                                      // + значение шагов ЭРВ перед выключением  -1 - первое включение
-	uint8_t num_repeat;                                   // + текущее число повторов пуска ТН
-	uint8_t num_repeat_prof;
+	uint8_t  num_repeat;                                   // + текущее число повторов пуска ТН
+	uint8_t  num_repeat_prof;
 	uint16_t num_resW5200;                                 // + текущее число сброса сетевого чипа
 	uint16_t num_resMutexWEB;                              // + текущее число сброса митекса WEB
 	uint16_t num_resMutexI2C;                              // + текущее число сброса митекса I2C
@@ -597,10 +599,10 @@ public:
 	uint16_t AdcVcc;                                       // напряжение питания
 //	uint16_t AdcTempSAM3x;                                 // температура чипа
 
-	uint8_t PauseStart;                                    // 1/2 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
+	uint8_t  PauseStart;                                    // 1/2 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
 
-	uint8_t startPump;                                     // Признак запуска задачи насос - StartPump_*
-	boolean safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)
+	uint8_t  startPump;                                     // Признак запуска задачи насос - StartPump_*
+	boolean  safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)
 
 
 // Графики в памяти
@@ -665,7 +667,6 @@ public:
 	void Switch_R3WAY(int8_t On);			// Включить/выключить насос трехходовой кран бойлер - отопление
 	void Sun_ON(void);						// Включить СК
 	void Sun_OFF(void);						// Выключить СК
-	uint16_t work_flags;					// Рабочие флаги ТН
 
 	int16_t get_temp_condensing(void);	    // Расчитать температуру конденсации
 	int16_t get_temp_evaporating(void);		// Получить температуру кипения

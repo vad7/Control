@@ -840,10 +840,9 @@ xSaveStats:
 
 		if(strncmp(str, "get_err", 7)==0) {
 			str += 7;
-			if(strcmp(str,"code")==0) _itoa(HP.get_errcode(),strReturn);// Функция get_errcode
-			else if(strcmp(str,"or")==0) {  							// Функция get_error
-				strcat(strReturn, HP.get_errcode() != OK ? HP.get_lastErr() :
-									GETBIT(HP.work_flags, fHP_ProfileSetByError) ? "Профиль переключен из-за ошибки!" : "");
+			if(strcmp(str, "code")==0) _itoa(HP.get_errcode(),strReturn);// Функция get_errcode
+			else if(strcmp(str, "or")==0) {  							// Функция get_error
+				strcat(strReturn, HP.get_warning_text());
 			}
 			ADD_WEBDELIM(strReturn); continue;
 		}
@@ -1890,8 +1889,7 @@ xSaveStats:
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTime);
 							HP.profile_prev = 0;
-							HP.profile_cmd = i + 1;
-							HP.sendCommand(pCHANGE_PROFILE);
+							HP.profile_cmd = i + 1; HP.sendCommand(pCHANGE_PROFILE);
 						}
 					} else strcat(strReturn,"E29");
 				}

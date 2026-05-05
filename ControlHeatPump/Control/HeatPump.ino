@@ -26,6 +26,14 @@
 #define _START_  true   // Команда запуска ТН
 #define _RESUME_ false  // Команда возобновления работы ТН
 
+// Возвращает описание ошибки или предупреждения
+char *HeatPump::get_warning_text(void){
+	if(HP.get_errcode()) return HP.get_lastErr();
+	else if(GETBIT(HP.work_flags, fHP_ProfileSetByError)) return (char*)"Профиль переключен из-за ошибки!";
+	else if(GETBIT(HP.work_flags, fHP_ProfileSwitch_Error)) return (char*)"Ошибка переключения профиля!";
+	else return (char*)"";
+}
+
 // Макросы по работе с компрессором в зависимости от наличия инвертора
 #define COMPRESSOR_ON   { if(dFC.get_present()) dFC.start_FC(); else dRelay[RCOMP].set_ON(); set_startCompressor(); }  // Включить компрессор в зависимости от наличия инвертора
 #define COMPRESSOR_OFF  { if(dFC.get_present()) dFC.stop_FC(); else dRelay[RCOMP].set_OFF(); set_stopCompressor(); } // Выключить компрессор в зависимости от наличия инвертора
@@ -90,8 +98,7 @@ void HeatPump::process_error(void)
 #endif
 			if(num_repeat < get_nStart()) {                // есть еще попытки
 				if(GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnError) && Prof.dataProfile.ProfileNext && num_repeat_prof >= Option.nStartNextProf) {
-					profile_cmd = Prof.dataProfile.ProfileNext | SWITCH_PROF_BY_ERROR;
-					sendCommand(pCHANGE_PROFILE);
+					profile_cmd = Prof.dataProfile.ProfileNext | SWITCH_PROF_BY_ERROR; sendCommand(pCHANGE_PROFILE);
 				}
 				sendCommand(pREPEAT);                  // Повторный пуск ТН
 			} else {
@@ -718,15 +725,19 @@ void HeatPump::updateCount()
 // параметр изменение времени - корректировка
 void HeatPump::updateDateTime(int32_t dTime)
 {
-	if(dTime != 0 && dTime != int32_t(0x80000000))                                   // было изменено время, надо скорректировать переменные времени
+	if(dTime && dTime != int32_t(0x80000000))                    // было изменено время, надо скорректировать переменные времени
 	{
-		if(timeON > 0) timeON = timeON + dTime;                               // время включения контроллера для вычисления UPTIME
-		if(startCompressor > 0) startCompressor = startCompressor + dTime;             // время пуска компрессора
-		if(stopCompressor > 0) stopCompressor = stopCompressor + dTime;               // время останова компрессора
-		if(countNTP > 0) countNTP = countNTP + dTime;                           // число секунд с последнего обновления по NTP
-		if(offBoiler > 0) offBoiler = offBoiler + dTime;                         // время выключения нагрева ГВС ТН (необходимо для переключения на другие режимы на ходу)
-		if(startDefrost > 0) startDefrost = startDefrost + dTime;                   // время срабатывания датчика разморозки
-		if(startLegionella > 0) startLegionella = startLegionella + dTime;             // время начала обеззараживания
+		if(timeON) timeON += dTime;                               // время включения контроллера для вычисления UPTIME
+		if(command_completed) command_completed += dTime;         // время включения контроллера для вычисления UPTIME
+		if(startCompressor) startCompressor += dTime;             // время пуска компрессора
+		if(stopCompressor) stopCompressor += dTime;               // время останова компрессора
+		if(startHeater) startHeater += dTime;
+		if(stopHeater) stopHeater += dTime;
+		if(countNTP) countNTP += dTime;                           // число секунд с последнего обновления по NTP
+		if(offBoiler) offBoiler += dTime;                         // время выключения нагрева ГВС ТН (необходимо для переключения на другие режимы на ходу)
+		if(startDefrost) startDefrost += dTime;                   // время срабатывания датчика разморозки
+		if(startLegionella) startLegionella += dTime;             // время начала обеззараживания
+		if(DateTime.saveTime) DateTime.saveTime += dTime;
 #ifdef WATTROUTER
 		if(WR_LastSwitchTime) WR_LastSwitchTime += dTime;
 		for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -2351,9 +2362,8 @@ void HeatPump::StopWait(bool stop)
 		setState(pWAIT_HP);
 		journal.jprintf_time("%s WAIT . . .\n", (char*) nameHeatPump);
 		if(!GETBIT(Option.flags, fBackupPower) && profile_prev) {
-			profile_cmd = profile_prev;
+			profile_cmd = profile_prev;	sendCommand(pCHANGE_PROFILE);
 			profile_prev = 0;
-			sendCommand(pCHANGE_PROFILE);
 		}
 	}
 	if(get_errcode() == OK) num_repeat = num_repeat_prof = 0;	// Сброс счетчика ошибок подряд
@@ -3584,9 +3594,8 @@ bool HeatPump::configHP()
 		#endif
 		Pumps(OFF);
 		if(!GETBIT(HP.Option.flags, fBackupPower) && HP.profile_prev) {
-			profile_cmd = profile_prev;
+			profile_cmd = profile_prev; sendCommand(pCHANGE_PROFILE);
 			profile_prev = 0;
-			sendCommand(pCHANGE_PROFILE);
 		}
 		//switchBoiler(false);                                            // выключить бойлер
 		//_delay(DELAY_AFTER_SWITCH_RELAY);                               // Задержка
@@ -4400,7 +4409,10 @@ void HeatPump::runCommand(void)
 		command = next_command;
 		next_command = pEMPTY;
 	} else command = pEMPTY;   // Сбросить команду
-	journal.jprintf_time("Run: %s\n", get_command_name(cmd));
+	if(cmd == pCHANGE_PROFILE) {
+		if(!GETBIT(work_flags, fHP_ProfileSwitch_Error) || GETBIT(work_flags, f2modWorkLog))
+			journal.jprintf_time("Run: %s (%X)\n", get_command_name(cmd), profile_cmd);
+	} else journal.jprintf_time("Run: %s\n", get_command_name(cmd));
 	switch(cmd)
 	{
 	case pEMPTY:
@@ -4529,13 +4541,11 @@ xWait:
 		} else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
 	case pRESUME:   // Восстановление работы после ожиданияя -особенность возможна блокировка задач - используем семафор
-		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS)    // Cемафор  захвачен ОЖИДАНИНЕ ДА 60 сек
-		{
-			StartResume(_RESUME_);                             // восстановление ТН
+		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS) {
+			StartResume(_RESUME_);                            // восстановление работы ТН
 			SemaphoreGive(xCommandSemaphore);                 // Семафор отдать
 			SetTask_vUpdate(true);
-		}
-		else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
+		} else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
 	case pCHANGE_PROFILE:
 		if(SemaphoreTake(xCommandSemaphore, TIME_CMD_WAIT_SEMAPHORE)==pdPASS) {
@@ -4556,29 +4566,29 @@ xWait:
 						// End pWAIT
 					}
 					if(Prof.load(_profile) > 0 && _profile == Prof.id) {
-						if(_set_profile & SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
-						SETBIT0(work_flags, fHP_ProfileSwitch_SkipLog);
+						if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
+						SETBIT0(work_flags, fHP_ProfileSwitch_Error);
 						num_repeat_prof = 0;
 						journal.jprintf_time("Set profile: %d\n", _profile + 1);
-					} else if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) {
-						SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+					} else if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) {
+						SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 						journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
 					}
-					if(frestart) {
+					if(frestart || get_State() == pWAIT_HP) {
 						// pRESUME:
-						StartResume(_RESUME_);                             // восстановление ТН
+						StartResume(_RESUME_);                  // восстановление работы ТН
 						SetTask_vUpdate(true);
 						// End pRESUME
 					}
 				}
-				if(_set_profile & SWITCH_PROF_ON_BACKUP) {
+				if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_ON_BACKUP) {
 					if(_prev_profile == Prof.id) sendCommand(pWAIT); else profile_prev = _prev_profile + 1;
 				}
 			}
 			SemaphoreGive(xCommandSemaphore);
 		} else journal.jprintf((char*)cErrorMutex,__FUNCTION__,get_command_name(cmd));
 		break;
-	default:                                                         // Не известная команда
+	default:                                                    // Не известная команда
 		journal.jprintf("Unknown command: %d !!!", cmd);
 		break;
 	}
@@ -4590,14 +4600,13 @@ xWait:
 bool HeatPump::Check_Switch_Profile_On_Backup(void)
 {
 	if(GETBIT(Option.flags, fBackupPower) && GETBIT(Prof.dataProfile.flags, fSwitchProfileNext_OnBackupPower) && HP.Prof.dataProfile.ProfileNext) { // переключение профиля, если задано
-		profile_cmd = Prof.dataProfile.ProfileNext - 1 + SWITCH_PROF_ON_BACKUP;
-		sendCommand(pCHANGE_PROFILE);
+		profile_cmd = Prof.dataProfile.ProfileNext + SWITCH_PROF_ON_BACKUP; sendCommand(pCHANGE_PROFILE);
 		return true;
 	}
 	return false;
 }
 
-// Переключиться на другой профиль (0..I2C_PROFIL_NUM), возвращает: 0 - нет или (номер профиля+1) +  0x80(нужен рестарт)
+// Переключиться на другой профиль (0..I2C_PROFIL_NUM), возвращает: 0 - нет или номер профиля+1 + 0x80(нужен рестарт)
 // Переключение по ошибке - если +SWITCH_PROF_BY_ERROR, проверка наличия такого же режима работы отопления или ГВС, как текущий
 // +SWITCH_PROF_BY_SCHEDULER - переключение по календарю/времени
 // Вызывается только из runCommand()
@@ -4621,8 +4630,8 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 	bool _by_scheduler;
 
 	if(_profile == 0) return 0;
-	if(_profile & SWITCH_PROF_BY_ERROR) _by_error_check_mode = true; else _by_error_check_mode = false;
-	if(_profile & SWITCH_PROF_BY_SCHEDULER)	_by_scheduler = true; else _by_scheduler = false;
+	if((_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) _by_error_check_mode = true; else _by_error_check_mode = false;
+	if((_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_SCHEDULER) _by_scheduler = true; else _by_scheduler = false;
 	_profile = (_profile & ~SWITCH_PROF_BY_MASK) - 1;
 	if(Prof.id == _profile) return 0;
 	uint8_t _cnt = 0, p = 0;
@@ -4643,16 +4652,16 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 			if(p) {
 				_profile = p - 1;
 				if(Prof.id == _profile) {
-					if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - the same\n");
-					SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+					if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Skip change profile by time - the same\n");
+					SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 					return 0;
 				}
-				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Next profile by time: %d\n", p + 1);
-			}
+				if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Next profile by time: %d\n", p + 1);
+			} else if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Switch profile by time: %d\n", _profile + 1);
 		}
 		if(++_cnt > I2C_PROFIL_NUM) {
-			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Skip change profile by time - looped\n");
-			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+			if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Skip change profile by time - looped\n");
+			SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 			return 0;
 		}
 	} while(p);
@@ -4677,8 +4686,8 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
 		} else {
 			if(_by_error_check_mode) { // режим не такой же - выходим
-				if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Boiler off\n", _profile + 1);
-				SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+				if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Can't change profile to %d - Boiler off\n", _profile + 1);
+				SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 				return 0;
 			}
 			frestart = true;
@@ -4686,8 +4695,8 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 	} else {
 		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
 		if(_by_error_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
-			if(!GETBIT(work_flags, fHP_ProfileSwitch_SkipLog)) journal.jprintf("Can't change profile to %d - Mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
-			SETBIT1(work_flags, fHP_ProfileSwitch_SkipLog);
+			if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Can't change profile to %d - Mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
+			SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 			return 0;
 		}
 		if(currmode & pHEAT) {

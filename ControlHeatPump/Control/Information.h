@@ -254,7 +254,7 @@ struct type_setting_cool {
 struct type_dataProfile               // Хранение общих данных
 {
 	uint8_t 	flags;                  // Флаги профайла (2 элемент структуры!)
-	uint8_t 	ProfileNext;			// Профиль на который будет переключение при ошибке или по времени [1..I2C_PROFIL_NUM], 0 - нет
+	uint8_t 	ProfileNext;			// Профиль+1 на который будет переключение при ошибке или по времени: 0 - нет, [1..I2C_PROFIL_NUM]
 	uint8_t 	TimeStart;             	// Время начала работы профиля, с hh:m0
 	uint8_t 	TimeEnd;             	// Время окончания работы профиляm, до hh:m0
 	uint32_t 	saveTime;               // Время сохранения профиля

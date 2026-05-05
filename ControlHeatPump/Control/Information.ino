@@ -1064,7 +1064,7 @@ int32_t Profile::load(int8_t num)
 	} else {
 		if(magic != PROFILE_MAGIC)  { return ERR_HEADER_EEPROM; }   // профиль битый, читать нечего выходим
 #ifdef LOAD_VERIFICATION
-		if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf(" Error load profile %d, CRC16 is wrong!\n", num + 1); return err;}  // проверка контрольной суммы перед чтением
+		if ((err=check_crc16_eeprom(num))!=OK) { journal.jprintf(" Error load profile %d, CRC is wrong!\n", num + 1); return err;}  // проверка контрольной суммы перед чтением
 #endif
 		uint16_t crc16;
 		if (readEEPROM_I2C(adr, (byte*)&crc16, sizeof(crc16))) { set_Error(ERR_LOAD_PROFILE,(char*)nameHeatPump); return ERR_LOAD_PROFILE;}  adr=adr+sizeof(crc16); // прочитать crc16
@@ -1103,14 +1103,20 @@ int32_t Profile::load(int8_t num)
 		  return err;
 		}
 
-	// ВСЕ ОК
+		// ВСЕ ОК
 #ifdef LOAD_VERIFICATION
-	  // проверка контрольной суммы
-	  if(crc16!=get_crc16_mem()) { set_Error(ERR_CRC16_PROFILE,(char*)nameHeatPump); return err=ERR_CRC16_PROFILE;}                                                           // прочитать crc16
-	  if (get_sizeProfile() != adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num))  {err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;} // Проверка длины
-		journal.jprintf(" Load profile %d OK, read: %d bytes, crc: %04x\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num),crc16);
+		// проверка контрольной суммы
+		if(crc16!=get_crc16_mem()) { set_Error(ERR_CRC16_PROFILE,(char*)nameHeatPump); return err=ERR_CRC16_PROFILE;}                                                           // прочитать crc16
+		if(get_sizeProfile() != adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num)) { // Проверка длины
+			err=ERR_BAD_LEN_EEPROM;set_Error(ERR_BAD_LEN_EEPROM,(char*)nameHeatPump); return err;
+		}
+	#ifdef DEBUG_MODWORK
+		journal.jprintf(" Load profile %d OK, read: %d bytes, CRC: %04X\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num),crc16);
+	#endif
 #else
-		journal.jprintf(" Load profile %d OK, read: %d bytes VERIFICATION OFF!\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num));
+	#ifdef DEBUG_MODWORK
+		journal.jprintf(" Load profile %d OK, read: %d bytes CRC OFF!\n", num + 1,adr-(I2C_PROFILE_EEPROM+get_sizeProfile()*num));
+	#endif
 #endif
 	}
 	update_list(num);
@@ -1126,9 +1132,9 @@ int32_t Profile::load(int8_t num)
 #endif
 
 	if(SaveON.bTIN == 0) { // Первоначальное заполнение
-	  for(uint8_t i = 0; i < TNUMBER; i++) {
-		  if(HP.sTemp[i].get_setup_flags() & ((1<<fTEMP_as_TIN_average) | (1<<fTEMP_as_TIN_min))) SaveON.bTIN |= (1<<i);
-	  }
+		for(uint8_t i = 0; i < TNUMBER; i++) {
+			if(HP.sTemp[i].get_setup_flags() & ((1 << fTEMP_as_TIN_average) | (1 << fTEMP_as_TIN_min))) SaveON.bTIN |= (1 << i);
+		}
 	}
 	return adr;
 }
@@ -1276,6 +1282,7 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 	if(strcmp(var, prof_TimeStart)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeStart / 10, dataProfile.TimeStart % 10); return ret; }else
 	if(strcmp(var, prof_TimeEnd)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeEnd / 10, dataProfile.TimeEnd % 10); return ret; }else
 	if(strcmp(var, prof_ProfileNext)==0) { if(dataProfile.ProfileNext) _itoa(dataProfile.ProfileNext, ret); else strcat(ret, "-"); return ret; }else
+	if(strcmp(var, prof_SwitchError)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfileSwitch_Error), ret); }else
 	if(strncmp(var, prof_DailySwitch, sizeof(prof_DailySwitch)-1) == 0) { // Дубль в WebServer.ino -> Функция get_tblPDS
 		var += sizeof(prof_DailySwitch)-1;
 		uint8_t i = *(var + 1) - '0';
@@ -1434,8 +1441,7 @@ char *Profile::get_list(char *c/*,int8_t num*/)
 int8_t Profile::set_list(int8_t num)
 {
 	if(num != id) { // new
-		HP.profile_cmd = num + 1;
-		HP.sendCommand(pCHANGE_PROFILE);
+		HP.profile_cmd = num + 1; HP.sendCommand(pCHANGE_PROFILE);
 	}
 	return num;
 }

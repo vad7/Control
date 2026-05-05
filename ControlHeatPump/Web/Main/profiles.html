@@ -8,9 +8,14 @@
 <script type="text/javascript">
 window.onload = function() {
 	loadParam("get_Prof(ID),get_Prof(NAME),get_Prof(DATE),get_Prof(NOTE),get_Prof(ENABLE),get_Prof(NUM),get_Prof(PN),get_Prof(TS),get_Prof(TE),get_Prof(F2),get_Prof(F3),get_Prof(F4),get_Prof(TM)");
+	updateParam("get_Prof(SE)");
 };
 function loadParam_after(paramid) {
 	if(paramid.match(/^eraseProfile|^loadProfile|^set_SAVE/)) location.reload();
+	else if(paramid.indexOf("get_Prof(SE)")!==-1) {
+		var _val = document.getElementById("get_prof-se").value;
+		document.getElementById("get_prof_se_str").innerHTML = _val == "1" ? "* Ошибка переключения профиля! *" : "";
+	}
 }
 function setDS(v) {
 	var val = document.getElementById("get_prof-" + v.toLowerCase()).value;
@@ -32,9 +37,10 @@ function erase_Profile(p) {
 			<input id="get_prof-id" type="number" min="1">
 			<input id="get_prof-id2" type="submit" value="Изменить номер *" onclick="setParam('get_Prof(ID)');">
 			<input type="submit" value="Записать профиль"  onclick='loadParam("set_SAVE_PROF")'>
-		Автопереключение профилей по времени <input type="checkbox" id="get_prof-tm" onchange="setParam('get_Prof(TM)');">
+			<span id="get_prof_se_str" style="font-weight:bold;color:red"></span><span id="get_prof-se" style="display:none"></span>
 		</h2>
 		* старый профиль с этим номером при сохранении будет заменен<br><br>
+		<h2>Автопереключение профилей по времени: <input type="checkbox" id="get_prof-tm" onchange="setParam('get_Prof(TM)');"></h2>
 		<table border="1" rules="rows">
 		<tbody>
 		<tr>

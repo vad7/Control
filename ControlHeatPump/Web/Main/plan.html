@@ -16,8 +16,8 @@ window.onload = function() {
 		updateParamPeriod("get_error", 10000);
 };
 function loadParam_after(paramid) {
-	if(paramid.indexOf("get_MODES")!=-1) {
-		if(SchemeOld != Scheme || SchemeOld == "") {
+	if(paramid.indexOf("get_MODES")!==-1) {
+		if(SchemeOld !== Scheme || SchemeOld === "") {
 			document.getElementsByClassName("visualization")[0].style ="background:url(\"plan" + Scheme + ".png\")";
 			if(Scheme == HeaterSchemeId) {
 				document.getElementById("_HP").style = "display:none";
@@ -28,7 +28,7 @@ function loadParam_after(paramid) {
 			}
 		}
 		SchemeOld = Scheme;
-		if(Scheme == HeaterSchemeId) {
+		if(Scheme === HeaterSchemeId) {
 			loadParam("get_HT(TF),get_HT(M),get_Relay(R3WAY)");
 		} else {
             loadParam("get_pFC(INFO1),get_OverHeat,get_Press(PEVA),get_Press(PCON),get_Temp(TCOMPIN),get_Temp(TEVAIN),get_Temp(TCOMP),get_Temp(TCONOUT),get_OverCool");
