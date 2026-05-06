@@ -760,8 +760,7 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_LEVEL0)==0)                { if ((x>=0)&&(x<=4096)) { _data.level0=x; return true;} else return false;      } else
     if(strcmp(var,fc_LEVEL100)==0)              { if ((x>=0)&&(x<=4096)) { _data.level100=x; return true;} else return false;    } else
 #endif
-    if(strcmp(var,fc_BLOCK)==0)                 { SemaphoreGive(xModbusSemaphore); // отдать семафор ВСЕГДА  
-                                                	if(x==0) { if(reset_FC()) note=(char*)noteFC_OK; }
+    if(strcmp(var,fc_BLOCK)==0)                 {   if(x==0) { if(reset_FC()) note=(char*)noteFC_OK; }
                                                 	else     { SETBIT1(flags,fErrFC); note=(char*)noteFC_NO; }
                                                 	return true;
                                                 } else  // только чтение
