@@ -404,7 +404,7 @@ public:
 	inline bool is_comp_or_heater_on() { return GETBIT(work_flags, fHP_HeaterOn) || dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); }// Проверка работает ли котел или компрессор
 	inline bool is_compressor_on() { return dRelay[RCOMP].get_Relay() || dFC.isfOnOff(); } // Компрессор работает?
 	inline bool is_heater_on() { return GETBIT(work_flags, fHP_HeaterOn); } // Котел работает?
-	bool     is_heater_active();               // Котел активен (кран переключен на Котел)
+	bool     is_heater_active();               // Котел активен (кран переключен на Котел или Котел работает)
 	void 	 relayAllOFF();                   // Все реле выключить, кроме некоторых
 	void	 HandleNoPower(void);		      // Обработать пропадание питания
 	bool     DelaySec(uint16_t s);		      // Задержка в сек с проверкой ошибок и останова ТН, возврат true - прервать
@@ -692,7 +692,7 @@ public:
 	uint32_t stopHeater;                  // время выключения котла
 	TYPE_COMMAND command;                 // Текущая команда управления ТН
 	TYPE_COMMAND next_command;            // Следующая команда управления ТН
-#ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
+#ifdef R3WAYOFF
 	uint16_t R3WAY_Off_timer;             // Таймер до выключения крана R3WAY, сек
 #endif
 	int8_t  profile_prev;				// предыдущий профиль 0 или [1..I2C_PROFIL_NUM], будет возврат при необходимости (например, после перехода с резерва на основной источник питания)

@@ -1829,8 +1829,8 @@ bool HeatPump::checkEVI()
 void HeatPump::Pump_HeatFloor(bool On)
 {
 	if(On) {
-		if(!(get_modWork() & pBOILER) && ((get_modeHouse() == pHEAT && GETBIT(Prof.Heat.flags, fHeatFloor))
-										|| (get_modeHouse() == pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor)))) {
+		if(!(get_modWork() & pBOILER) && (((get_modWork() & pHEAT)&& GETBIT(Prof.Heat.flags, fHeatFloor))
+										|| (get_modWork() & pCOOL && GETBIT(Prof.Cool.flags, fHeatFloor)))) {
 			if(GETBIT(Prof.SaveON.flags, fHeat_UseHeater) && GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && dHeater.set.HeatFloorAddTemp) {
 				SETBIT1(work_flags, fHP_Heater_HeatFloorDelayed);
 			} else dRelay[RPUMPFL].set_ON();
@@ -2349,6 +2349,7 @@ void HeatPump::StopWait(bool stop)
 	SETBIT0(work_flags, fHP_BoilerTogetherHeat);
 	SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 	SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
+	Status.modWork = pOFF;
 
 	if(stop) {
 		if(R3WAY_Off_timer) Switch_R3WAY(false);
@@ -3363,12 +3364,12 @@ void HeatPump::vUpdate()
 		if(get_modeHouse() == pHEAT && sTemp[TIN].get_Temp() > get_targetTempCool() + Prof.Cool.dTemp) {
 			set_mode(pCOOL);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("SET MODE=0x%X\n", get_modeHouse());
+			journal.jprintf("AUTO SET %s\n", MODE_HP_STR[get_modeHouse() & (pHEAT | pCOOL)]);
 #endif
 		} else if(get_modeHouse() == pCOOL && sTemp[TIN].get_Temp() < get_targetTempHeat() - Prof.Heat.dTemp) {
 			set_mode(pHEAT);
 #ifdef DEBUG_MODWORK
-			journal.jprintf("SET MODE=0x%X\n", get_modeHouse());
+			journal.jprintf("AUTO SET %s\n", MODE_HP_STR[get_modeHouse() & (pHEAT | pCOOL)]);
 #endif
 		}
 	}
@@ -3602,7 +3603,8 @@ bool HeatPump::configHP()
 	} else {
 		if(Check_Switch_Profile_On_Backup()) return false;
 
-		if((conf & pHEAT)) {										// ОТОПЛЕНИЕ
+		if(conf & pHEAT) {		// ОТОПЛЕНИЕ ----------------------------------------
+
 			if(Switch_R4WAY(false)) return false; 								// 4-х ходовой на нагрев
 			if(((_is_on & _COMPR_) && !GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((_is_on & _HEATER_) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater))) {
 				// Компрессор/Котел работает и дальше тем же греть, переключаемся на ходу
@@ -3635,21 +3637,23 @@ bool HeatPump::configHP()
 	#ifdef USE_HEATER
 					dHeater.HeaterValve_Off();
 	#endif
-					Pumps(ON);                                                  // включить насосы
+					Pumps(ON);												// включить насосы
 					dFC.set_target(dFC.get_startFreq(),true,dFC.get_minFreqCool(),dFC.get_maxFreqCool());   // установить стартовую частоту
 				}
 			}
-			#ifdef SUPERBOILER                                            // Бойлер греется от предкондесатора
-				dRelay[RSUPERBOILER].set_OFF();                             // Евгений добавил выключить супербойлер
+			#ifdef SUPERBOILER												// Бойлер греется от предкондесатора
+				dRelay[RSUPERBOILER].set_OFF();								// Евгений добавил выключить супербойлер
 			#endif
-		} else if((conf & pCOOL)) {  // Охлаждение
+
+		} else if(conf & pCOOL) {	// ОХЛАЖДЕНИЕ ----------------------------------------
+
+
 	#ifdef USE_HEATER
 			if(is_heater_on()) heaterOFF();
 	#endif
-			if(Switch_R4WAY(true)) return false; 						   // 4-х ходовой на охлаждение
+			if(Switch_R4WAY(true)) return false;							// 4-х ходовой на охлаждение
 			pump_in_pause_wait_off();										// ждем пока насосы остановятся
 	#ifdef USE_HEATER
-
 			dHeater.HeaterValve_Off();
 	#endif
 			Pumps(ON);                                                     // включить насосы
@@ -3658,10 +3662,10 @@ bool HeatPump::configHP()
 			//	if((GETBIT(Prof.Boiler.flags,fTurboBoiler)) && (dRelay[RBOILER].get_present())) dRelay[RBOILER].set_OFF(); // Выключить ТЭН бойлера (режим форсированного нагрева)
 			//#endif
 			#ifdef RHEAT
-				  if(dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
+				if(dRelay[RHEAT].get_present()) dRelay[RHEAT].set_OFF();     // Выключить ТЭН отопления
 			#endif
 
-		} else if((conf & pBOILER)) {							// БОЙЛЕР
+		} else if(conf & pBOILER) {// БОЙЛЕР --------------------------------------------
 
 			if(!GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) if(Switch_R4WAY(false)) return false; // 4-х ходовой на нагрев
 		#if defined(R3WAY) && defined(BOILER_R3WAY_BEFORE_HEATER_3WAY)
@@ -3715,7 +3719,7 @@ bool HeatPump::configHP()
 	xBoilerStartCompOrHeater:
 	#ifdef SUPERBOILER
 		#ifdef USE_HEATER
-			#error "to do: It is incompatible to use SUPERBOILER and USE_HEATER together!"
+				#error "to do: It is incompatible to use SUPERBOILER and USE_HEATER together!"
 		#endif
 				dRelay[PUMP_IN].set_ON();                                  // Реле включения насоса входного контура  (геоконтур)
 				_delay(DELAY_AFTER_SWITCH_RELAY);                          // Задержка
@@ -3731,10 +3735,16 @@ bool HeatPump::configHP()
 				pump_in_pause_wait_off();								// ждем пока насосы остановятся
 		#ifdef USE_HEATER
 				if(GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) {
+			#ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
+					dHeater.HeaterValve_Off();
+			#else
 					dHeater.HeaterValve_On();
+			#endif
 			#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[RBOILER].get_Temp() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
+						onBoiler = true;
+						offBoiler = 0;
 						Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
 					} else 						// и не включать сразу насосы
 			#endif
@@ -3859,7 +3869,7 @@ xNextStop:
 		journal.jprintf_time("compressorON > modWork:%X[%s]\n",get_modWork(),codeRet[Status.ret]);
 #endif
 #ifdef USE_HEATER
-	dHeater.HeaterValve_Off();		// Переключиться на ТН
+	if(GETBIT(HP.work_flags, fHP_HeaterValveOn)) dHeater.HeaterValve_Off();		// Переключиться на ТН
 #endif
 	//}
 	// 2. Задержка перед включением компрессора
@@ -4221,13 +4231,17 @@ void HeatPump::defrost()
 }
 #endif
 
-// Котел активен (кран переключен на Котел)
+// Котел активен (кран переключен на Котел или Котел работает)
 bool HeatPump::is_heater_active(void) {
 #ifdef RH_3WAY
-	return GETBIT(work_flags, fHP_HeaterValveOn) || dRelay[RH_3WAY].get_Relay();
+	return GETBIT(work_flags, fHP_HeaterValveOn) || dRelay[RH_3WAY].get_Relay()
 #else
-	return GETBIT(work_flags, fHP_HeaterValveOn);
+	return GETBIT(work_flags, fHP_HeaterValveOn)
 #endif
+#ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
+			|| GETBIT(work_flags, fHP_HeaterOn)
+#endif
+			;
 }
 
 // Включение Котла на нагрев
@@ -4244,9 +4258,6 @@ void HeatPump::heaterON()
 
 #ifdef DEBUG_MODWORK
 		journal.jprintf_time("heaterON > modWork:%X[%s]\n",get_modWork(),codeRet[Status.ret]);
-#endif
-#ifdef USE_HEATER
-	dHeater.HeaterValve_On(); // Переключиться на Котел, хотя уже должны
 #endif
 	// 2. Задержка перед включением
 /* для Котла выключена
