@@ -2941,7 +2941,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		}
 #endif
 	}
-	if(!onBoiler && _is_on && rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && abs(FEED-RET) > Prof.Heat.MaxDeltaTempOut) {
+	if((_is_on & _COMPR_) && !onBoiler && rtcSAM3X8.unixtime() - offBoiler > Option.delayBoilerOff && abs(FEED-RET) > Prof.Heat.MaxDeltaTempOut) {
 		// Превышение разности температур входа-выхода отопления при включеном компрессоре (есть задержка при переключении ГВС)
 		set_Error(ERR_DTEMP_CON,(char*)__FUNCTION__);
 		return pCOMP_NONE;

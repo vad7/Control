@@ -189,11 +189,6 @@ void setup() {
 	//pinMode(PIN_SPI_CS_FLASH,OUTPUT);           // сигнал CS управление чипом флеш памяти
 #endif
 	SPI_switchAllOFF();                         // Выключить все устройства на SPI
-	// Отключить питание (VUSB) на Native USB
-	Set_bits(UOTGHS->UOTGHS_CTRL, UOTGHS_CTRL_VBUSHWC);
-	PIO_Configure(PIOB, PIO_OUTPUT_0, PIO_PB10A_UOTGVBOF, PIO_DEFAULT);
-	PIOB->PIO_CODR = PIO_PB10A_UOTGVBOF; // =0
-	//
 
 #ifdef POWER_CONTROL                        // Включение питания платы если необходимо НАДП здесь, иначе I2C память рабоать не будет
 	pinMode(PIN_POWER_ON,OUTPUT);
@@ -213,9 +208,28 @@ void setup() {
 #ifndef DEBUG
 	if(ret)
 #endif
-#ifndef DEBUG_NATIVE_USB
-	SerialDbg.begin(UART_SPEED);                   // Если надо инициализировать отладочный порт
+
+#ifdef DEBUG_NATIVE_USB
+	SerialUSB.begin(UART_SPEED);
+	dbgPtr = &SerialUSB;
+	//if(SerialUSB.lineState()) dbgPtr = &SerialUSB;		// Отладка в Native USB порт, если он подключен
+	//else {
+		Serial.begin(UART_SPEED);			// Если надо инициализировать отладочный порт
+		// Отключить питание (VUSB) на Native USB
+		Set_bits(UOTGHS->UOTGHS_CTRL, UOTGHS_CTRL_VBUSHWC);
+		PIO_Configure(PIOB, PIO_OUTPUT_0, PIO_PB10A_UOTGVBOF, PIO_DEFAULT);
+		PIOB->PIO_CODR = PIO_PB10A_UOTGVBOF; // =0
+		//
+	}
+#else
+	Serial.begin(UART_SPEED);				// Если надо инициализировать отладочный порт
+	// Отключить питание (VUSB) на Native USB
+	Set_bits(UOTGHS->UOTGHS_CTRL, UOTGHS_CTRL_VBUSHWC);
+	PIO_Configure(PIOB, PIO_OUTPUT_0, PIO_PB10A_UOTGVBOF, PIO_DEFAULT);
+	PIOB->PIO_CODR = PIO_PB10A_UOTGVBOF; // =0
+	//
 #endif
+
 	// Борьба с зависшими устройствами на шине  I2C (в первую очередь часы) неудачный сброс
 	if(!Check_I2C_bus()) Recover_I2C_bus(false);
 	Wire.begin();
