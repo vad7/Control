@@ -153,10 +153,12 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define MODBUS_MIN_TIME_BETWEEN_TRNS 50		// Минимальная пауза между транзакциями, мсек
 #endif
 //#define MODBUS_FREERTOS                     // Настроить либу на многозадачность определить надо в либе.
-#if RADIO_SENSORS_PORT == 2
-	#define RADIO_SENSORS_SERIAL	Serial2	// Аппаратный порт
-#elif RADIO_SENSORS_PORT == 3
-	#define RADIO_SENSORS_SERIAL	Serial3	// Аппаратный порт
+#ifdef RADIO_SENSORS
+	#if RADIO_SENSORS_PORT == 2
+		#define RADIO_SENSORS_SERIAL	Serial2	// Аппаратный порт
+	#elif RADIO_SENSORS_PORT == 3
+		#define RADIO_SENSORS_SERIAL	Serial3	// Аппаратный порт
+	#endif
 #endif
 #define RADIO_LOST_TIMEOUT	40*60*1000		// через сколько считать, что связь потеряна с датчиком, мсек
 #define RADIO_BAT_MIN_V		21				// Минимальное напряжение батарейки датчика, десятые V

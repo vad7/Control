@@ -5100,6 +5100,7 @@ const char *noteTemp[] = {"Температура улицы",
 		#undef ONEWIRE_DS2482_2WAY
 		#define TIME_I2C_UPDATE    (5*60)*1000
 		#define PIN_ONE_WIRE_BUS   69   // нога с интерфейсом программный 1-Wire - ВСЕ температурные датчики
+		#undef RADIO_SENSORS
 
 	#else
 		#define DEBUG                   // В последовательный порт шлет сообщения в первую очередь ошибки
@@ -5161,7 +5162,7 @@ const char *noteTemp[] = {"Температура улицы",
 	// --------------------------------------------------------------------------------
 	#define USE_SERIAL4							// Использовать порт Serial4 на D52(RXD2) и A11/D65(TXD2) +(X42.1-3.3V, X43.3-GND)
 	#ifdef USE_HEATER							// Используется Котел с встроенным насосом
-		#define HEATER_MODBUS_ADDR		240		// 0xF0, Адаптер Opentherm - RS485(Modbus)
+		#define HEATER_MODBUS_ADDR		240		// Адаптер Opentherm - RS485(Modbus), по умолчанию 0xF0 или 0x1B
 		#define HP_SCHEME_HEATER		6		// Номер схемы который выводится на веб-морде при активном Котле
 		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
 		#define HEATER_MODBUS_SPEED		19200
@@ -5236,8 +5237,9 @@ const char *noteTemp[] = {"Температура улицы",
 	//#define PIN_DEVICE_PWM1       7  // ++ управление насосом выход 0-10в (пока не поддерживается прошивкой)
 #if defined(TEST_BOARD) && TEST_BOARD == 2
 	#undef USE_SERIAL4
+	#undef RADIO_SENSORS
 	#undef HEATER_MODBUS_PORT
-	#define HEATER_MODBUS_PORT Serial3
+	#define HEATER_MODBUS_PORT Serial2
 	#undef PIN_SPI_CS_FLASH
 	#define PIN_SPI_CS_FLASH   52
 #endif
