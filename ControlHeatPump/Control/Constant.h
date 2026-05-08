@@ -24,7 +24,7 @@
 #include "Config.h"                         // Цепляем сразу конфигурацию
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.216"				// Версия прошивки
+#define VERSION			"1.217"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -1189,8 +1189,9 @@ const char *noteRemarkEEV[] = {	"Перегрев равен: температу
 #define ERR_HEATER_ADAPTER_LINK	-94		// Ошибка связи с адаптером котла
 #define ERR_HEATER_LINK		-95			// Ошибка связи с котлом
 #define ERR_HEATER_STOP		-96			// Котел внезапно остановился
+#define ERR_HEATER_NOT_BURN -97			// Котел не включается на нагрев
 
-#define ERR_ERRMAX			-96 		// Последняя ошибка
+#define ERR_ERRMAX			-97 		// Последняя ошибка
 
 #ifdef NOT_RESTART_ON_CRITICAL_ERRORS
 const int8_t CRITICAL_ERRORS[] = { ERR_COMP_ERR };
@@ -1304,6 +1305,7 @@ const char *noteError[] = {"Ok",                                                
 						   "Ошибка связи с адаптером котла",													//-94
 						   "Ошибка связи с котлом",																//-95
 						   "Котел внезапно выключился",															//-96
+						   "Котел не включается на нагрев",														//-97
 
                            "NULL"
                            };

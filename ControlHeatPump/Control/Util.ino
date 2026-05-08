@@ -67,6 +67,7 @@ volatile uint32_t* SYST_CVR = (volatile uint32_t*)0xE000E018;
 __attribute__((noinline/*,optimize("O0")*/))
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
+	void* caller_addr = __builtin_return_address(0);
 	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
 		if(wait_time == 0) {
 			if(_sem.xSemaphore) return false;
@@ -77,7 +78,7 @@ bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 			} else {
 				_sem.xSemaphore = true;
 				vPortExitCritical();
-				_sem.return_addr = (uint32_t)__builtin_return_address(0);
+				_sem.return_addr = (uint32_t)caller_addr;
 				return true;
 			}
 		}
@@ -91,7 +92,7 @@ xLoop:		if(!wait_time--) {
 		}
 	}
 	_sem.xSemaphore = true;
-	_sem.return_addr = (uint32_t)__builtin_return_address(0);
+	_sem.return_addr = (uint32_t)caller_addr;
 	return true;
 }
 

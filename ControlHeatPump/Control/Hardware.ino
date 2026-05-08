@@ -2292,7 +2292,7 @@ int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num
 	#endif
 		uint8_t result = RS485.readHoldingRegisters(cmd, num);                          // послать запрос,
 		if(result == RS485.ku8MBSuccess) {
-			for(int16_t i = 0; i < num; i++) buf[i] = RS485.getResponseBuffer(i);
+			for(uint16_t i = 0; i < num; i++) buf[i] = RS485.getResponseBuffer(i);
 			err = OK;
 			SemaphoreGive(xModbusSemaphore);
 			break;

@@ -797,9 +797,17 @@ void vWeb0(void *)
 	static bool network_last_link = true;
 	for(;;)
 	{
-		WEB_SERVER_TASK(MAIN_WEB_TASK);
+		if(SemaphoreTake(xWebThreadSemaphore, 0)) {
+			web_server(MAIN_WEB_TASK);
+			SemaphoreGive(xWebThreadSemaphore);
+			vTaskDelay(TIME_WEB_SERVER);
+			if(HP.message.sendMessage()) {  // Отработать отсылку сообщений (внутри скрыта задержка после включения)
+				vTaskDelay(TIME_WEB_SERVER);
+			}
+		} else vTaskDelay(1);
 
 		bool active = true;   // ФЛАГ Одно дополнительное действие за один цикл - распределяем нагрузку, если действие проделано то active = false и новый цикл
+
 #ifdef WR_PowerMeter_Modbus		// Синхронизируемся с чтением счетчика - сразу после
 		if(WR_PowerMeter_New) {
 			WR_PowerMeter_New = false;
@@ -823,9 +831,6 @@ void vWeb0(void *)
 #ifdef WATTROUTER
 			WR_Process();
 #endif
-
-			HP.message.sendMessage();   // Отработать отсылку сообщений (внутри скрыта задержка после включения)
-			vTaskDelay(TIME_WEB_SERVER);
 
 		} else if(xTaskGetTickCount() - _other_tasks > WEB0_OTHER_JOB_PERIOD) { // Другие задачи
 

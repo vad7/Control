@@ -300,7 +300,7 @@ void Nextion::readCommand()
 						HP.getTargetTempStr2(ntemp);
 						setComponentText("t", ntemp);
 					} else if(cmd2 == NXTID_NEXT_MODE) { // Переключение режимов отопления ТОЛЬКО если насос выключен
-						if(!HP.is_compressor_on()) {
+						if(!HP.is_comp_or_heater_on()) {
 							HP.set_nextMode();  // выбрать следующий режим
 							switch((MODE_HP) HP.get_modeHouse()) {
 							case pOFF:
@@ -374,7 +374,7 @@ void Nextion::readCommand()
 			PageID = buffer[1];
 			break;
 		case 0x86:	// Auto Entered Sleep Mode
-			if(GETBIT(HP.Option.flags, fNextionOnWhileWork)) flags &= ~((HP.is_compressor_on() || HP.get_errcode() || HP.get_BackupPower())<<fSleep);
+			if(GETBIT(HP.Option.flags, fNextionOnWhileWork)) flags &= ~((HP.is_comp_or_heater_on() || HP.get_errcode() || HP.get_BackupPower())<<fSleep);
 			fUpdate = 0;
 			break;
 		case 0x87:	// выход из сна
@@ -411,7 +411,7 @@ void Nextion::readCommand()
 void Nextion::Update()
 {
 	if(!GETBIT(HP.Option.flags, fNextion)) return;
-	if((GETBIT(HP.Option.flags, fNextionOnWhileWork) && HP.is_compressor_on()) || HP.get_errcode() || HP.get_BackupPower()) {  // При ошибке дисплей включен
+	if((GETBIT(HP.Option.flags, fNextionOnWhileWork) && HP.is_comp_or_heater_on()) || HP.get_errcode() || HP.get_BackupPower()) {  // При ошибке дисплей включен
 		if(!GETBIT(flags, fSleep)) {
 			sendCommand("sleep=0");
 			_delay(NEXTION_BOOT_TIME);
@@ -448,9 +448,13 @@ void Nextion::Update()
 		setComponentText("t2", ntemp);
 		strcat(dptoa(ntemp, HP.sTemp[TBOILER].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t3", ntemp);
+#ifdef USE_HEATER
+		strcat(dptoa(ntemp, HP.sTemp[HEATER_NEED_ON ? THEATER : TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
+#else
 		strcat(dptoa(ntemp, HP.sTemp[TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
+#endif
 		setComponentText("t4", ntemp);
-		strcat(dptoa(ntemp, HP.FEED /10, 1),NEXTION_xB0);
+		strcat(dptoa(ntemp, HP.FEED / 10, 1),NEXTION_xB0);
 		setComponentText("t5", ntemp);
 		HP.getTargetTempStr2(ntemp);
 		uint16_t newcrc = calc_crc16((uint8_t*)ntemp, 4);

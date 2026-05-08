@@ -134,6 +134,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
+#define fHeater_BURNER_ON				5		// После подачи команды нагрева, котел начал греть, если со сброшенным флагом превысили HEATER_WAIT_BURNER_TIME_MAX, то ошибка
 
 class devHeater
 {
@@ -168,6 +169,7 @@ public:
 
 private:
 	uint8_t  fwork;									// рабочие флаги
+	uint32_t burner_time_last;						// контроль нагрева, UNIXTIME
  };
 
 #endif

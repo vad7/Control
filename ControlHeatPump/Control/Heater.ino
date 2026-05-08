@@ -158,7 +158,7 @@ void devHeater::Heater_Start()
 #endif
 #ifdef HEATER_MODBUS_ADDR
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 1<<HM_SET_FLAGS_HEATING);
+		int8_t err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, (HP.get_modWork() & pBOILER) && GETBIT(set.setup_flags, fHeater_BoilerModeByExtTemp) ? (1<<HM_SET_FLAGS_BOILER) : (1<<HM_SET_FLAGS_HEATING));
 		if(err && testMode == NORMAL) {
 			err_num_total++;
 			set_Error(err, (char*)"HeaterBW");
@@ -180,7 +180,7 @@ void devHeater::Heater_Start()
 	}
 #endif
 	SETBIT1(HP.work_flags, fHP_HeaterOn);
-	HP.startHeater = rtcSAM3X8.unixtime();
+	HP.startHeater = burner_time_last = rtcSAM3X8.unixtime();
     journal.jprintf(" %s[%s] ON\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
 #endif
 }
@@ -304,8 +304,16 @@ int8_t devHeater::read_state(uint8_t group)
 		if(err == OK) {
 			uint16_t _status = (HP.get_modWork() & pBOILER) && GETBIT(set.setup_flags, fHeater_BoilerModeByExtTemp) ? GETBIT(data.Status, HM_STATUS_bBOILER) : GETBIT(data.Status, HM_STATUS_bHEATING);
 			if(HP.is_heater_on()) {
-				if(!_status && rtcSAM3X8.unixtime() - HP.startHeater > HEATER_WAIT_CMD_COMPLETION) {
-					set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
+				uint32_t t = rtcSAM3X8.unixtime();
+				if(!_status) {
+					if(t - HP.startHeater > HEATER_WAIT_CMD_COMPLETION) {
+						set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
+						return ERR_HEATER_STOP;
+					}
+				} else if(GETBIT(data.Status, HM_STATUS_bBURNER)) {
+					burner_time_last = t;
+				} else if(t - burner_time_last > HEATER_WAIT_BURNER_TIME_MAX){ // проверить включился ли нагрев
+					set_Error(ERR_HEATER_NOT_BURN, (char*)__FUNCTION__);
 				}
 			} else if(_status) { // Работает, а не должен
 				err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 0);

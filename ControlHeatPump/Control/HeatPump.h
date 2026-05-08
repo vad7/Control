@@ -32,7 +32,7 @@
 #include "Scheduler.h"
 #include "Heater.h"
 
-#define HEATER_NEED_ON (((Status.modWork & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((Status.modWork & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)))
+#define HEATER_NEED_ON (((HP.Status.modWork & pHEAT) && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) || ((HP.Status.modWork & pBOILER) && GETBIT(HP.Prof.SaveON.flags, fBoiler_UseHeater)))
 #define TARGET_COMPRESSOR (HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
 
 extern char *MAC2String(byte* mac);
@@ -599,7 +599,7 @@ public:
 	uint16_t AdcVcc;                                       // напряжение питания
 //	uint16_t AdcTempSAM3x;                                 // температура чипа
 
-	uint8_t  PauseStart;                                    // 1/2 - ТН в отложенном запуске, 0 - нет, начать отсчет времени с начала при отложенном старте
+	uint8_t  PauseStart;                                    // 1/2 - ТН в отложенном запуске, 0 - нет, 3 - начать отсчет времени с начала при отложенном старте
 
 	uint8_t  startPump;                                     // Признак запуска задачи насос - StartPump_*
 	boolean  safeNetwork;                                   // Режим работы safeNetwork (сеть по умолчанию, паролей нет)

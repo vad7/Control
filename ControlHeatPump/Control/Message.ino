@@ -497,16 +497,16 @@ boolean Message::setTestSMS() // может запускаться из любо
 
 // Послать уведомление согласно выбранных настроек cформированное setMessage
 // проверяется наличие неоправленныхуведомлений
-// true - уведомление отправлено или его не было false - при отправке произошли ошибки
+// true - уведомление отправлено или ошибка, false - нет сообщения
 boolean Message::sendMessage()  // запуск из 0 потока
 {
   uint16_t i;
 
-  if (!waitSend) return true;                            // Отправлять нечего выходим
+  if (!waitSend) return false;                            // Отправлять нечего выходим
   strcpy(retTest, "Ничего не отправлено. Проверьте флаг разрешения отправки сообщений.");
   if (HP.get_uptime() < cDELAY_START_MESSAGE) {
     // ждать не будем, ибо зачем? _delay(200);  // Прошло мало времени после старта возможно инет еще не поднят
-    return true;
+    return false;
   }
   clearBuf(); // очистка рабочих буферов
   // Отправка Уведомления. Все таки отправлять придется -))
@@ -588,15 +588,10 @@ boolean Message::sendMessage()  // запуск из 0 потока
           strcat(retTest, "\nОтвет: "); strcat(retTest, retSMS);
         }
         break;
-
-      default:  return false;
-    } // ничего не делаем но это ошибка
+    }
   }
-
-
   if ((!(GETBIT(messageSetting.flags, fSMS))) && (messageData.ms == pMESSAGE_TESTSMS)) // SMS не разрешена а отправляется тестовое SMS
-    strcpy(retTest, "SMS не отправлено. Проверьте флаг разрешения отправки SMS.");
-
+	  strcpy(retTest, "SMS не отправлено. Проверьте флаг разрешения отправки SMS.");
   waitSend = false;        // Сбросить флаг необходимости отпвки уведомления
   return true;             // Послано
 }
@@ -771,12 +766,7 @@ boolean Message::sendMail()
 	} else
 #endif
 	if(GETBIT(messageSetting.flags, fMailInfo)) {
-		SemaphoreGive(xWebThreadSemaphore);                                // отдать семафор для обработки других задач
 		get_mailState(clientMessage, tempBuf);
-		if(SemaphoreTake(xWebThreadSemaphore, (W5200_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-			_err = -1;
-			SEND_SMTP_ERR_BLOCK;
-		}
 	}
 
 	// 8. Завершение сессии  и отправка
