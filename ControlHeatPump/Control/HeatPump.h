@@ -32,7 +32,7 @@
 #include "Scheduler.h"
 #include "Heater.h"
 
-#define HEATER_NEED_ON (((HP.Status.modWork & pHEAT) && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) || ((HP.Status.modWork & pBOILER) && GETBIT(HP.Prof.SaveON.flags, fBoiler_UseHeater)))
+#define HEATER_NEED_ON (((HP.get_modWork() & pHEAT) && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) || ((HP.get_modWork() & pBOILER) && GETBIT(HP.Prof.SaveON.flags, fBoiler_UseHeater)))
 #define TARGET_COMPRESSOR (HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
 
 extern char *MAC2String(byte* mac);
