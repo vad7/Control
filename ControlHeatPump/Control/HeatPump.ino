@@ -1484,7 +1484,11 @@ void  HeatPump::updateChart()
 #endif
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Overheat2) Charts[j].add_Point(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm) ? dEEV.OverheatTCOMP : dEEV.get_Overheat());
 #endif
+#ifdef USE_HEATER
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power : dFC.get_frequency());
+#else
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
+#endif
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Power_FC) Charts[j].add_Point(dFC.get_power() / 10);
 #ifdef USE_ELECTROMETER_SDM
 			else if(ChartsConstSetup[i].object == STATS_OBJ_COP_Full) Charts[j].add_Point(fullCOP);
@@ -4359,7 +4363,7 @@ void HeatPump::heater_heating_pipes_update(void)
 	int16_t temp = (Status.modWork & pBOILER) ? sTemp[RBOILER].get_Temp() : get_currentTempHeat();
 #ifdef RPUMPFL
 	if(GETBIT(work_flags, fHP_Heater_HeatFloorDelayed)) {
-		if(sTemp[THEATER].get_Temp() >= temp + dHeater.set.HeatFloorAddTemp * 100) {
+		if(dRelay[PUMP_OUT].get_Relay() && sTemp[THEATER].get_Temp() >= temp + dHeater.set.HeatFloorAddTemp * 100) {
 			dRelay[RPUMPFL].set_ON();
 			SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 		}
@@ -4373,11 +4377,11 @@ void HeatPump::heater_heating_pipes_update(void)
 			if(Status.modWork & pBOILER) {
 				switchBoiler(true); // включить бойлер
 #ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
-				_delay(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+				DelaySec(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
 #endif
 			} else {
 				Pumps(ON); // включить насосы
-				_delay(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+				DelaySec(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
 			}
 			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 		}
@@ -4887,7 +4891,7 @@ int8_t HeatPump::save_DumpJournal(boolean f)
 	((journal).*(fn))(cStrEnd);
 #ifdef USE_HEATER
 	if(GETBIT(dHeater.set.setup_flags, fHeater_Opentherm)) {
-		((journal).*(fn))(" Heater:%X M:%d%% tF:%d ", dHeater.data.Status, dHeater.data.Power, dHeater.data.T_Flow / 10); //  tB:%.1d , data.T_Boiler
+		((journal).*(fn))(" Heater:%X M:%d%% tF:%d ", dHeater.data.Status, dHeater.data.Power, dHeater.data.T_FlowOut / 10); //  tB:%.1d , data.T_Boiler
 		((journal).*(fn))("P:%.1d E:%d,%d\n", dHeater.data.P_OUT, dHeater.data.Error, dHeater.Heater_Error2);
 	}
 #endif

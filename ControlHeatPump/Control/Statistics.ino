@@ -1182,7 +1182,7 @@ void Statistics::History()
 			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // %
 			break;
 		case STATS_OBJ_Heater_TempOut: {
-			int16_t t = HP.dHeater.data.T_Flow;
+			int16_t t = HP.dHeater.data.T_FlowOut;
 			if(t == 0) continue;
 			int_to_dec_str(t, 1, &buf, 0); // T
 			break;

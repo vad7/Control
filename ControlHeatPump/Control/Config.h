@@ -5937,7 +5937,11 @@ const char *noteTemp[] = {"Температура улицы",
 		{ STATS_OBJ_EEV, "ЭРВ" },
 		{ STATS_OBJ_Overheat, "Перегрев" },
 		{ STATS_OBJ_Overheat2, "Перегрев на входе компрессора" },
-		{ STATS_OBJ_Compressor, "Частота, Гц" },
+#ifdef USE_HEATER
+		{ STATS_OBJ_Compressor, "Работа Компрессор/Котел" },
+#else
+		{ STATS_OBJ_Compressor, "Компрессор, Гц" },
+#endif
 		//{ STATS_OBJ_Power_FC, "Мощность компрессора" },
 		{ STATS_OBJ_Power, "Потребляемая мощность" },
 		{ STATS_OBJ_COP_Full, "COP" }

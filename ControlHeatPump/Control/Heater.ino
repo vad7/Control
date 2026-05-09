@@ -42,10 +42,10 @@ void devHeater::check_link(void)
 	curr_boiler_temp = 0;
 	if(!GETBIT(set.setup_flags, fHeater_Opentherm)) return;
 	uint16_t d;
-	int8_t _err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_T_Flow, &d);
+	int8_t _err = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, HM_SET_T_FlowOut, &d);
 	if(_err) {
 		err_num_total++;
-		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_Flow, _err);
+		journal.jprintf("Heater read #%X error: %d\n", HM_SET_T_FlowOut, _err);
 		return;
 	}
 	curr_temp = d / 10;
@@ -64,10 +64,10 @@ void devHeater::check_link(void)
 //	PowerMaxCurrent = d;
 //	uint8_t t = (HP.Prof.Heat.tempPID + 50) / 100;
 //	if(GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater) && curr_temp != t) {
-//		_err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_T_Flow, t * 10);
+//		_err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_T_FlowOut, t * 10);
 //		if(_err) {
 //			err_num_total++;
-//			journal.jprintf("Heater write #%X error: %d\n", HM_SET_T_Flow, _err);
+//			journal.jprintf("Heater write #%X error: %d\n", HM_SET_T_FlowOut, _err);
 //			return;
 //		}
 //		curr_temp = HP.Prof.Heat.tempPID;
@@ -269,7 +269,7 @@ int8_t devHeater::read_state(uint8_t group)
 	if(group == 0 || !GETBIT(fwork, fHeater_LinkAdapterOk) || !GETBIT(fwork, fHeater_LinkHeaterOk)) { // группа 0 или если нет связи
 		uint16_t r;
 //		if(curr_temp == 0 && GETBIT(fwork, fHeater_LinkHeaterOk)) {
-//			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_Flow, 1, &r);
+//			err = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, HM_SET_T_FlowOut, 1, &r);
 //			if(err == OK) curr_temp = r / 10;
 //		} else
 		if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
@@ -359,7 +359,7 @@ int8_t devHeater::set_target(uint16_t temp)
 				journal.jprintf(" Set Heater%s: %d C\n", " boiler", temp);
 			} else {
 				if(curr_temp == temp) return OK;
-				reg1 = HM_SET_T_Flow; // регистр в десятых градуса
+				reg1 = HM_SET_T_FlowOut; // регистр в десятых градуса
 				journal.jprintf(" Set Heater%s: %d C\n", "", temp);
 				temp *= 10;
 			}
@@ -430,7 +430,7 @@ void devHeater::get_info(char* buf)
 void devHeater::DumpJournal(void)
 {
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		journal.jprintf(" Heater:%X M:%d%% tF:%d tB:%d ", data.Status, data.Power, data.T_Flow / 10, data.T_Boiler / 10);
+		journal.jprintf(" Heater:%X M:%d%% tF:%d tB:%d ", data.Status, data.Power, get_TFlowOut(), data.T_Boiler / 10);
 		journal.jprintf("P:%.1d E:%d,%d\n", data.P_OUT, data.Error, Heater_Error2);
 	}
 }
@@ -448,7 +448,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, Wheater_is_on)==0) 					{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk) ? GETBIT(data.Status, HM_STATUS_bBURNER) : GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, Wheater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
-	if(strcmp(var, Wheater_T_Flow)==0) 					{ _dtoa(ret, data.T_Flow / 10, 0); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else
+	if(strcmp(var, Wheater_T_FlowOut)==0) 				{ _dtoa(ret, data.T_FlowOut / 10, 0); strcat(ret, " ("); _itoa(curr_temp, ret); strcat(ret, ")"); } else
 	if(strcmp(var, Wheater_Power)==0) 					{ if(!GETBIT(fwork, fHeater_LinkHeaterOk)) strcat(ret, "-"); else if(data.Power==0) strcat(ret, "Выкл"); else { _itoa(data.Power, ret); strcat(ret, "%"); } } else
 	if(strcmp(var, Wheater_err_num_total)==0)			{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, Wheater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else

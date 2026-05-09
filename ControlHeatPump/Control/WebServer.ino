@@ -2144,7 +2144,7 @@ xHeater_get_param:
 									else if(d == (uint16_t) -2) strcat(strReturn, "Ошибка записи");
 									else { strcat(strReturn, "Состояние: "); _itoa(d, strReturn); }
 								} else {
-									if(l_i32 == HM_SET_T_Flow) HP.dHeater.curr_temp = d / 10;
+									if(l_i32 == HM_SET_T_FlowOut) HP.dHeater.curr_temp = d / 10;
 									else if(l_i32 == HM_SET_T_BOILER) HP.dHeater.curr_boiler_temp = d;
 									_itoa(d, strReturn);
 								}

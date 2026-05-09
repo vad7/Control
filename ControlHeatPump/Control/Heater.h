@@ -64,7 +64,7 @@
 
 #define HM_START_DATA					0x0018
 struct type_heater_read {
-	int16_t	 T_Flow;							// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
+	int16_t	 T_FlowOut;							// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
 	uint16_t T_Boiler;							// 0x19, Текущая температура ГВС (0.0 - 100.0), десятые градуса
 	uint16_t P_OUT;								// 0x1A, Текущее Давление в контуре (0.0 - 5.0), десятые бара
 	uint16_t F_Boiler;							// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые л/мин
@@ -81,8 +81,8 @@ struct type_heater_read {
 
 // Регистры для записи
 #define HM_CONN_TYPE					0x0030	// Тип внешних подключений (0 - адаптер подключен к котлу, 1 - котел подключен к внешнему устройству (панель или перемычка)
-#define HM_SET_T_Flow					0x0031	// Уставка теплоносителя (0.0 - 100.0), десятые градуса
-#define HM_SET_T_Flow_NC				0x0032	// Уставка теплоносителя в случае отсутствия связи, десятые градуса
+#define HM_SET_T_FlowOut				0x0031	// Уставка теплоносителя (0.0 - 100.0), десятые градуса
+#define HM_SET_T_FlowOut_NC				0x0032	// Уставка теплоносителя в случае отсутствия связи, десятые градуса
 #define HM_SET_LIMIT_LOW				0x0033	// Нижний предел уставки теплоносителя (0 - 100 C)
 #define HM_SET_LIMIT_HIGH				0x0034	// Верхний предел уставки теплоносителя (0 - 100 C)
 #define HM_SET_LIMIT_BOILER_LOW			0x0035	// Нижний предел уставки ГВС (0 - 100 C)
@@ -134,7 +134,6 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
-#define fHeater_BURNER_ON				5		// После подачи команды нагрева, котел начал греть, если со сброшенным флагом превысили HEATER_WAIT_BURNER_TIME_MAX, то ошибка
 
 class devHeater
 {
@@ -143,13 +142,14 @@ public:
 	void 	check_link(void);						// Проверка связи с корретировкой температур подачи и бойлера
 	int8_t	read_state(uint8_t group);				// Текущее состояние
 	int8_t	set_target(uint16_t temp); 				// Установить целевую температуру
-	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }	// Адрес структуры сохранения
-	uint16_t get_save_size(void) { return sizeof(set); }	// Размер структуры сохранения
+	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }// Адрес структуры сохранения
+	uint16_t get_save_size(void) { return sizeof(set); }// Размер структуры сохранения
 	bool	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
 	int8_t	set_param(char *var, float p);			// Установить параметр из строки - set_HP('x')
 	void	get_info(char* buf);					// Получить информацию
 	void 	DumpJournal(void);
-	inline type_HeaterSettings *get_settings() { return &set; };	// Вернуть структуру настроек
+	inline type_HeaterSettings *get_settings() { return &set; };// Вернуть структуру настроек
+	int16_t get_TFlowOut(void) { return data.T_FlowOut / 10; }// текущая температура подачи котла, градусы
 
 	void 	Heater_Start();							// Включить котел
 	void 	Heater_Stop(bool rise_error);			// Выключить котел

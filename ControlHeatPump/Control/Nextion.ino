@@ -450,11 +450,13 @@ void Nextion::Update()
 		setComponentText("t3", ntemp);
 #ifdef USE_HEATER
 		strcat(dptoa(ntemp, HP.sTemp[HEATER_NEED_ON ? THEATER : TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
+		setComponentText("t4", ntemp);
+		strcat(dptoa(ntemp, (HP.dRelay[PUMP_OUT].get_Relay() ? HP.FEED : HP.dHeater.get_TFlowOut()), 1), NEXTION_xB0);
 #else
 		strcat(dptoa(ntemp, HP.sTemp[TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
-#endif
 		setComponentText("t4", ntemp);
-		strcat(dptoa(ntemp, HP.FEED / 10, 1),NEXTION_xB0);
+		strcat(dptoa(ntemp, HP.FEED / 10, 1), NEXTION_xB0);
+#endif
 		setComponentText("t5", ntemp);
 		HP.getTargetTempStr2(ntemp);
 		uint16_t newcrc = calc_crc16((uint8_t*)ntemp, 4);
