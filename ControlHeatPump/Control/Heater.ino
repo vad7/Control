@@ -341,11 +341,12 @@ int8_t devHeater::read_state(uint8_t group)
 	return err;
 }
 
-// Установить целевую температуру в градусах (целевые регистры зависят от задачи нагрев/бойлер)
+// Установить целевую температуру в сотых градусах (целевые регистры зависят от задачи нагрев/бойлер)
 // Если temp = 0, то установка только макс. мощности
 int8_t devHeater::set_target(uint16_t temp)
 {
 	if(temp == 0 || GETBIT(set.setup_flags, fHeater_DontSetFlowTemp) || (testMode != NORMAL && testMode != HARD_TEST)) return OK;
+	temp = (temp + 50) / 100;
 	int8_t err = OK;
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
 		uint16_t reg1 = 0;

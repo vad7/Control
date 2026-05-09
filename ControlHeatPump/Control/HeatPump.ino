@@ -1485,7 +1485,7 @@ void  HeatPump::updateChart()
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Overheat2) Charts[j].add_Point(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm) ? dEEV.OverheatTCOMP : dEEV.get_Overheat());
 #endif
 #ifdef USE_HEATER
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power : dFC.get_frequency());
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power * 100 : dFC.get_frequency());
 #else
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
 #endif
@@ -1879,7 +1879,7 @@ void HeatPump::Switch_R3WAY(int8_t On)
 	}
 }
 #else
-void HeatPump::Pump_HeatFloor(boolean) { }
+void HeatPump::Switch_R3WAY(int8_t) { }
 #endif
 
 // Включить или выключить насосы контуров и то что требуется для ГВС (трех-ходовой или насос) первый параметр их желаемое состояние
@@ -1899,7 +1899,7 @@ void HeatPump::Pumps(bool b)
 		if(!HEATER_NEED_ON) {
 			dRelay[PUMP_IN].set_Relay(b);            // Реле насоса входного контура (геоконтур)
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
-	#ifdef  TWO_PUMP_IN                              // второй насос для воздушника если есть
+	#ifdef TWO_PUMP_IN                              // второй насос для воздушника если есть
 			if(sTemp[TEVAOUT].get_Temp() < 2500) dRelay[PUMP_IN1].set_ON(); // Реле включения второго насоса входного контура для  воздушника
 			else dRelay[PUMP_IN1].set_OFF();
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
@@ -1910,11 +1910,12 @@ void HeatPump::Pumps(bool b)
 			Switch_R3WAY(true);
 			onBoiler = true;
 			offBoiler = 0;
-		}
-#ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
-		else
+#ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
+			dRelay[PUMP_OUT].set_ON();
+			_delay(DELAY_AFTER_SWITCH_RELAY);
 #endif
-		{
+		} else {
+			Switch_R3WAY(false);
 			dRelay[PUMP_OUT].set_ON();
 			_delay(DELAY_AFTER_SWITCH_RELAY);
 		}
@@ -3627,12 +3628,11 @@ bool HeatPump::configHP()
 	#ifdef USE_HEATER
 					dHeater.HeaterValve_On();
 	#endif
-	#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < get_currentTempHeat() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) || (GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp)
+							&& sTemp[THEATER].get_Temp() < get_currentTempHeat() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS)) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						Switch_R3WAY(false);
 					} else
-	#endif
 						Pumps(ON); // включить насосы
 	#ifdef USE_HEATER
 					dHeater.set_target(Prof.Heat.tempPID);
@@ -3745,11 +3745,11 @@ bool HeatPump::configHP()
 					dHeater.HeaterValve_On();
 			#endif
 			#ifdef R3WAY
-					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
+					if(GETBIT(dHeater.set.setup_flags, fHeater_Heating_Pipes_Temp) && sTemp[THEATER].get_Temp() < sTemp[TBOILER].get_Temp() + dHeater.set.HeatingPipesAddTemp*100 - HEATER_PREHEAT_HYSTERESIS) {
 						SETBIT1(work_flags, fHP_Heater_Heating_pipes);
 						onBoiler = true;
 						offBoiler = 0;
-						Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы
+						if(!GETBIT(Prof.Boiler.flags, fBoilerHoldR3WAY)) Switch_R3WAY(false);	// выключить трехходовой для подогрева трассы, если выкл опция удерживать трехходовой
 					} else 						// и не включать сразу насосы
 			#endif
 						Pumps(ON);				// включить насосы
