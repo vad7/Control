@@ -26,6 +26,10 @@
 #define _START_  true   // Команда запуска ТН
 #define _RESUME_ false  // Команда возобновления работы ТН
 
+// Макросы по работе с компрессором в зависимости от наличия инвертора
+#define COMPRESSOR_ON   { if(dFC.get_present()) dFC.start_FC(); else dRelay[RCOMP].set_ON(); set_startCompressor(); }  // Включить компрессор в зависимости от наличия инвертора
+#define COMPRESSOR_OFF  { if(dFC.get_present()) dFC.stop_FC(); else dRelay[RCOMP].set_OFF(); set_stopCompressor(); } // Выключить компрессор в зависимости от наличия инвертора
+
 // Возвращает описание ошибки или предупреждения
 char *HeatPump::get_warning_text(void){
 	if(HP.get_errcode()) return HP.get_lastErr();
@@ -33,10 +37,6 @@ char *HeatPump::get_warning_text(void){
 	else if(GETBIT(HP.work_flags, fHP_ProfileSwitch_Error)) return (char*)"Ошибка переключения профиля!";
 	else return (char*)"";
 }
-
-// Макросы по работе с компрессором в зависимости от наличия инвертора
-#define COMPRESSOR_ON   { if(dFC.get_present()) dFC.start_FC(); else dRelay[RCOMP].set_ON(); set_startCompressor(); }  // Включить компрессор в зависимости от наличия инвертора
-#define COMPRESSOR_OFF  { if(dFC.get_present()) dFC.stop_FC(); else dRelay[RCOMP].set_OFF(); set_stopCompressor(); } // Выключить компрессор в зависимости от наличия инвертора
 
 //struct size
 //char checker(int); char checkSizeOfInt1[sizeof(HP.Option)]={checker(&checkSizeOfInt1)};
@@ -1896,7 +1896,7 @@ void HeatPump::Pumps(bool b)
 	int16_t delayed = 0;	// сек
 	if(b) { // ВКЛ
 		if(startPump == StartPump_AfterWork) startPump = StartPump_Stop;
-		if(!HEATER_NEED_ON) {
+		if(!HEATER_NEED_ON()) {
 			dRelay[PUMP_IN].set_Relay(b);            // Реле насоса входного контура (геоконтур)
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
 	#ifdef TWO_PUMP_IN                              // второй насос для воздушника если есть
@@ -2109,7 +2109,7 @@ xGoWait:
 		SetTask_vUpdate(true);
 		return;
 	}
-	if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_err() != OK && !HEATER_NEED_ON) {
+	if(GETBIT(HP.Option.flags, fBackupPower) && HP.dFC.get_err() != OK && !HEATER_NEED_ON()) {
 		SETBIT1(HP.work_flags, fHP_BackupNoPwrWAIT);
 		goto xGoWait;
 	}
@@ -2159,7 +2159,7 @@ xGoWait:
 		return;
 	}
     if(get_State() != pSTARTING_HP) return;            // Могли нажать кнопку стоп, выход из процесса запуска
-    if(!HEATER_NEED_ON) { // Проверки для компрессора
+    if(!HEATER_NEED_ON()) { // Проверки для компрессора
 #ifdef EEV_DEF
     	if((!sADC[PEVA].get_present()) && (dEEV.get_ruleEEV() == TEVAOUT_PEVA))  //  Отсутвует датчик давления, и выбран алгоритм ЭРВ который его использует",
     	{
@@ -2271,7 +2271,7 @@ xGoWait:
 		return;
 	}
 	if(start_compressor_now) {
-		if(HEATER_NEED_ON) {
+		if(HEATER_NEED_ON()) {
 			heaterON();                          // Включаем котел
 			heater_heating_pipes_start();
 		} else {
@@ -3421,7 +3421,7 @@ void HeatPump::vUpdate()
 				startPump = StartPump_Stop;		// Поставить признак останова задачи насос
 			}
 			if(configHP()) {					// Конфигурируем насосы
-				if(HEATER_NEED_ON) {
+				if(HEATER_NEED_ON()) {
 					heaterON();                 // Включаем котел
 					heater_heating_pipes_start();
 				} else {
@@ -4378,11 +4378,11 @@ void HeatPump::heater_heating_pipes_update(void)
 			if(Status.modWork & pBOILER) {
 				switchBoiler(true); // включить бойлер
 #ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
-				DelaySec(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+				DelaySec(BASE_TIME_READ * 2);		// задержка, чтобы расходомеры заработали
 #endif
 			} else {
 				Pumps(ON); // включить насосы
-				DelaySec(BASE_TIME_READ);		// задержка, чтобы расходомеры заработали
+				DelaySec(BASE_TIME_READ * 2);		// задержка, чтобы расходомеры заработали
 			}
 			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
 		}
@@ -5240,4 +5240,14 @@ void UpdatePIDbyTime(uint16_t new_time, uint16_t curr_time, PID_STRUCT &pid)
 #else
 void UpdatePIDbyTime(uint16_t, uint16_t, PID_STRUCT &) {}
 #endif
+
+inline bool HeatPump::HEATER_NEED_ON()
+{
+	return (((get_modWork() & pHEAT) && GETBIT(Prof.SaveON.flags, fHeat_UseHeater)) || ((get_modWork() & pBOILER) && GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)));
+}
+
+inline bool HeatPump::TARGET_COMPRESSOR()
+{
+	return (Prof.SaveON.mode == pCOOL || (Prof.SaveON.mode == pHEAT && !GETBIT(Prof.SaveON.flags, fHeat_UseHeater)));
+}
 

@@ -1093,7 +1093,7 @@ void vReadSensor(void *)
 		{
 			int8_t _err = HP.sADC[i].Read();
 			if(_err != OK && HP.get_State() != pOFF_HP) {      				// Прочитать данные с датчиков давления
-				if(TARGET_COMPRESSOR
+				if(HP.TARGET_COMPRESSOR()
 #ifdef PGEO
 					&& i <= PGEO)
 #else

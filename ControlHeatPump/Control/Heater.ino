@@ -316,7 +316,10 @@ int8_t devHeater::read_state(uint8_t group)
 					set_Error(ERR_HEATER_NOT_BURN, (char*)__FUNCTION__);
 				}
 			} else if(_status) { // Работает, а не должен
-				err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 0);
+				if(HP.get_State() != pOFF_HP) {
+					err = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, HM_SET_FLAGS, 0);
+					journal.jprintf("Heater is ON, but has to be off!\n");
+				}
 			}
 		}
 	}

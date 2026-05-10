@@ -449,7 +449,7 @@ void Nextion::Update()
 		strcat(dptoa(ntemp, HP.sTemp[TBOILER].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t3", ntemp);
 #ifdef USE_HEATER
-		strcat(dptoa(ntemp, HP.sTemp[HEATER_NEED_ON ? THEATER : TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
+		strcat(dptoa(ntemp, HP.sTemp[HP.HEATER_NEED_ON() ? THEATER : TEVAING].get_Temp() / 10, 1), NEXTION_xB0);
 		setComponentText("t4", ntemp);
 		strcat(dptoa(ntemp, HP.get_onBoiler() ? HP.dHeater.data.T_FlowOut : HP.FEED / 10, 1), NEXTION_xB0);
 #else

@@ -32,8 +32,6 @@
 #include "Scheduler.h"
 #include "Heater.h"
 
-#define HEATER_NEED_ON (((HP.get_modWork() & pHEAT) && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) || ((HP.get_modWork() & pBOILER) && GETBIT(HP.Prof.SaveON.flags, fBoiler_UseHeater)))
-#define TARGET_COMPRESSOR (HP.Prof.SaveON.mode == pCOOL || (HP.Prof.SaveON.mode == pHEAT && !GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)))
 
 extern char *MAC2String(byte* mac);
 
@@ -575,6 +573,8 @@ public:
 	inline void set_stopCompressor() { stopCompressor = rtcSAM3X8.unixtime(); SETBIT0(work_flags, fHP_HeaterWasOn); SETBIT1(work_flags, fHP_CompressorWasOn); }
 	inline uint32_t get_command_completed(){ return command_completed; } // Время выполнения команды
 	inline type_motoHour *get_motoHour(){ return &motoHour; }// Получить счетчики
+	inline bool HEATER_NEED_ON();
+	inline bool TARGET_COMPRESSOR();
 
 	void resetCount(boolean full);                          // Сборос сезонного счетчика моточасов
 	void updateCount();                                     // Обновление счетчиков моточасов
