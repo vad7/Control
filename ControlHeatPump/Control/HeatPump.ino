@@ -1484,16 +1484,16 @@ void  HeatPump::updateChart()
 #endif
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Overheat2) Charts[j].add_Point(GETBIT(dEEV.get_flags(), fEEV_DirectAlgorithm) ? dEEV.OverheatTCOMP : dEEV.get_Overheat());
 #endif
-#ifdef USE_HEATER
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power * 100 : dFC.get_frequency());
-#else
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
-#endif
 			else if(ChartsConstSetup[i].object == STATS_OBJ_Power_FC) Charts[j].add_Point(dFC.get_power() / 10);
 #ifdef USE_ELECTROMETER_SDM
 			else if(ChartsConstSetup[i].object == STATS_OBJ_COP_Full) Charts[j].add_Point(fullCOP);
 #endif
 		}
+#ifdef USE_HEATER
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power * 100 : dFC.get_frequency());
+#else
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
+#endif
 #ifdef USE_ELECTROMETER_SDM
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Voltage) Charts[j].add_Point(dSDM.get_voltage() * 100);
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Power) Charts[j].add_Point((int32_t)power220 / 10);
@@ -2915,7 +2915,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		}
 #endif
 #ifdef RPUMPFL
-		if(GETBIT(Prof.Heat.flags, fHeatFloor)) {
+		if(GETBIT(Prof.Heat.flags, fHeatFloor) && !GETBIT(work_flags, fHP_Heater_Heating_pipes) && !GETBIT(work_flags, fHP_Heater_HeatFloorDelayed)) {
 			int8_t idx = -1;
 			int16_t temp = STARTTEMP;
 			for(uint8_t i = 0; i < TNUMBER; i++) {
@@ -4352,6 +4352,7 @@ void HeatPump::heater_heating_pipes_start(void)
 	if(dHeater.set.wait_heating_pipes_time != 0) {
 		if(DelaySec(dHeater.set.wait_heating_pipes_time * 4)) {
 			SETBIT0(work_flags, fHP_Heater_Heating_pipes);
+			SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 			return;
 		}
 	}
@@ -4360,10 +4361,10 @@ void HeatPump::heater_heating_pipes_start(void)
 // Котел продолжает греть трубу, если нужно, а так же включаем Теплый пол, если задано
 void HeatPump::heater_heating_pipes_update(void)
 {
-	int16_t temp = (Status.modWork & pBOILER) ? sTemp[RBOILER].get_Temp() : get_currentTempHeat();
+	int16_t temp = (Status.modWork & pBOILER) ? sTemp[TBOILER].get_Temp() : get_currentTempHeat();
 #ifdef RPUMPFL
 	if(GETBIT(work_flags, fHP_Heater_HeatFloorDelayed)) {
-		if(dRelay[PUMP_OUT].get_Relay() && sTemp[THEATER].get_Temp() >= temp + dHeater.set.HeatFloorAddTemp * 100) {
+		if(dRelay[PUMP_OUT].get_Relay() && RET >= temp + dHeater.set.HeatFloorAddTemp * 100) {
 			dRelay[RPUMPFL].set_ON();
 			SETBIT0(work_flags, fHP_Heater_HeatFloorDelayed);
 		}
