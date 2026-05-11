@@ -315,8 +315,8 @@ const char *FC_S_Z_str				= {"Stopped,"};
 #define FC_C_STOP		0
 #define FC_C_DIR		0x02	// 0 - По часовой стрелке, 1 - Против часовой стрелки
 #define FC_C_RST		0x04	// Сброс отказа
-#define FC_C_COOLER_FAN (1<<13)	// Вкл. вентилятора
-#define FC_C_COOLER_FAN_STR "FB.B13"
+#define FC_C_COOLER_FAN (1<<13)	// 0x2000, Вкл. вентилятора
+#define FC_C_COOLER_FAN_STR "2001=0x2000" //FB.B13
 
 const uint8_t FC_NonCriticalFaults[] = { 1, 2, 8, 9, 13, 14,/**/15, 16, 17, 25, 34, 41, 53 }; // Не критичные ошибки, которые можно сбросить
 

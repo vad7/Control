@@ -80,9 +80,8 @@ xSearch_sTemp:
 		journal.jprintf_time("$ERROR source: %s, code: %d\n", nam, _err);
 		if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) HP.save_DumpJournal(true); // вывод отладочной информации для начала, если запущена freeRTOS
 		HP.message.setMessage(pMESSAGE_ERROR, HP.note_error, 0);// сформировать уведомление об ошибке
-		// Сюда ставить надо останов ТН !
+		HP.sendCommand(pERROR);
 	}
-	HP.sendCommand(pERROR);
 }
 
 void HeatPump::process_error(void)

@@ -515,13 +515,11 @@ void parserGET(uint8_t thread, int8_t )
 				i = 1;
 			}
 #endif
-			{
+			if(HP.is_compressor_on()) {
+				if(i) strcat(strReturn, ",");
 #ifdef FC_VACON
-				if(HP.is_compressor_on()) {
-					if(i) strcat(strReturn, ",");
-					HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
-					i = 1;
-				}
+				HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
+				i = 1;
 #else
 				if(HP.dFC.get_present()) HP.dFC.get_paramFC((char*) fc_FC, strReturn); else strcat(strReturn, " - ");
 				strcat(strReturn,"Гц");
