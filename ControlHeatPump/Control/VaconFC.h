@@ -373,6 +373,22 @@ const char *FC_Faults_str[] = {	"Ok", // нет ошибки
 								"Unknown"}; // sizeof(FC_Faults_code)+1
 #endif //FC_VLT
 
+const char *noteFC_OK   = {" связь по Modbus установлена" };                     // Все впорядке
+const char *noteFC_NO   = {" связь по Modbus потеряна, инвертор заблокирован" };
+const char *noteFC_NONE = {" отсутствует в данной конфигурации" };
+
+// Флаги Инвертора, рабочие (flags)
+#define fFC					0		// флаг наличие инвертора
+#define fFC_RetOil			1		// Возврат масла
+#define fPower				2		// флаг режим ограничения мощности (резерв - сейчас ограничение всегда)
+#define fOnOff				3		// флаг включения-выключения частотника
+#define fErrFC				4		// флаг глобальная ошибка инвертора - работа инвертора запрещена
+#define fAutoResetFault		5		// флаг Автосброс не критичного сбоя инвертора
+#define fLogWork			6		// флаг логировать параметры во время работы
+#define fFC_RetOilSt		7		// Возврат масла рабочий
+#define fFC_CoolerFAN_On	8		// Вентилятор охлажденияя инвертора включен
+#define FC_SAVED_FLAGS 	((1<<fAutoResetFault) | (1<<fLogWork) | (1<<fFC_RetOil))
+
 #ifdef FC_VACON
 #define ERR_LINK_FC 0         	    // Состояние инертора - нет связи по Modbus
 #endif

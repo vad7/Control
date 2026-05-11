@@ -1474,7 +1474,8 @@ void  HeatPump::updateChart()
 	}
 	for(uint8_t i = 0; i < sizeof(ChartsConstSetup) / sizeof(ChartsConstSetup[0]); i++) {
 		uint8_t j = sizeof(ChartsModSetup) / sizeof(ChartsModSetup[0]) + i;
-		if(!is_heater_on()) {
+		if(is_compressor_on() || !Charts_when_comp_on) {
+
 			if(ChartsConstSetup[i].object == STATS_OBJ_Overheat) Charts[j].add_Point(dEEV.get_Overheat());
 #ifdef EEV_DEF
 #ifdef EEV_PREFER_PERCENT
@@ -2228,7 +2229,10 @@ xGoWait:
 
 	startPump = StartPump_Stop; // Если задача не остановлена, то остановить
 	//  6. Конфигурируем 3 и 4-х клапаны и включаем насосы ПАУЗА после включения насосов
-	if(!configHP()) return;
+	if(!configHP()) {
+		set_Error(ERR_WRONG_HARD_STATE, (char*) __FUNCTION__);
+		return;
+	}
 
 	// 7. Включение компрессора и запуск обновления EEV -----------------------------------------------------
 	if(get_State() != pSTARTING_HP) return;            // Могли нажать кнопку стоп, выход из процесса запуска
@@ -2277,7 +2281,7 @@ xGoWait:
 		} else {
 			compressorON();                      // Включаем компрессор
 		}
-		if(!is_comp_or_heater_on() || get_errcode() != OK) return;
+		if(/*!is_comp_or_heater_on() || */get_errcode() != OK) return;
 	}
 
 	// 10. Сохранение состояния  -------------------------------------------------------------------------------
@@ -2363,6 +2367,7 @@ void HeatPump::StopWait(bool stop)
 		setState(pOFF_HP);
 		SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 		HP.profile_prev = 0;
+		compressor_in_pause = false;
 		journal.jprintf_time("%s OFF . . .\n", (char*) nameHeatPump);
 	} else {
 		setState(pWAIT_HP);
@@ -3399,11 +3404,8 @@ void HeatPump::vUpdate()
 		for(uint8_t i = 0; i < TNUMBER; i++) sTemp[i].set_flag(fActive, 0);
 	}
 	if(Status.modWork == pOFF) {
-		if(is_heater_on()) {
-			heaterOFF();
-		} else if(is_compressor_on()) {			// ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
-			compressorOFF();
-		}
+		if(is_heater_on()) heaterOFF();
+		if(is_compressor_on()) compressorOFF();	// ЕСЛИ компрессор работает, то выключить компрессор,и затем сконфигурировать 3 и 4-х клапаны и включаем насосы
 		configHP();
 		if(get_modeHouse() == pOFF) {    		// Когда режим выключен (не отопление и не охлаждение), то насосы отопления крутить не нужно
 			if(startPump != StartPump_AfterWork) {
@@ -3776,7 +3778,7 @@ bool HeatPump::configHP()
 	return true;
 }
 
-// Переключение реверсивного 4-х ходового клапана (true - охлаждение, false - нагрев), выход - компрессор остановлен
+// Переключение реверсивного 4-х ходового клапана (true - охлаждение, false - нагрев), выход - компрессор был остановлен
 // останов компрессора и обезпечение нужных пауз, компрессор включается далее в vUpdate()
 bool HeatPump::Switch_R4WAY(bool fCool)
 {
@@ -3803,7 +3805,7 @@ bool HeatPump::Switch_R4WAY(bool fCool)
 // проверка на паузу между включениями, возврат true - в паузе
 bool HeatPump::check_start_pause()
 {
-	if(is_comp_or_heater_on()) return false;
+	if(is_comp_or_heater_on()) return heater_in_pause = compressor_in_pause = false;
 	uint16_t pause = 0;
 	bool heater = false;
 	if(Status.modWork & pHEAT) {
@@ -4243,7 +4245,7 @@ bool HeatPump::is_heater_active(void) {
 	return GETBIT(work_flags, fHP_HeaterValveOn)
 #endif
 #ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
-			|| GETBIT(work_flags, fHP_HeaterOn)
+			|| is_heater_on()
 #endif
 			;
 }
@@ -4325,7 +4327,7 @@ void HeatPump::heaterOFF()
 {
 #ifdef USE_HEATER
 	command_completed = rtcSAM3X8.unixtime();
-	if(is_heater_on()) {
+	if(is_heater_on() || dHeater.CheckIsHeaterOn()) {
 		dHeater.Heater_Stop(true);                                             // Компрессор выключить
 		heater_in_pause = false;
 	}
@@ -4464,7 +4466,7 @@ void HeatPump::runCommand(void)
 #endif
 		}
 #ifdef USE_HEATER
-		if(HP.is_heater_on()) {
+		if(HP.is_heater_on() || HP.dHeater.CheckIsHeaterOn()) {
 			dHeater.Heater_Stop(false);
 			heater_in_pause = false;
 		}

@@ -1237,7 +1237,7 @@ void vReadSensor(void *)
 		}
 #ifdef USE_HEATER
 		if(flags & 1) {
-			if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) && !HP.is_compressor_on()) HP.dHeater.read_state(1); // группа 2 - данные
+			if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) /*&& !HP.is_compressor_on()*/) HP.dHeater.read_state(1); // группа 2 - данные
 		}
 #endif
 		flags ^= 1;	// dFC / dHeater
@@ -1261,6 +1261,9 @@ void vReadSensor(void *)
 	#ifdef USE_HEATER
 				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2
 #ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
+	#ifdef R3WAY
+										|| HP.dRelay[R3WAY].get_Relay()
+	#endif
 										|| HP.get_onBoiler()
 #endif
 										)) continue;
@@ -1620,7 +1623,7 @@ void vUpdateEEV(void *)
 	for(;;) {
 		while(!(HP.is_compressor_on() && (rtcSAM3X8.unixtime() - HP.get_startCompressor() > HP.dEEV.get_delayOnPid() && HP.dEEV.get_delayOnPid() != 255))) { // ЭРВ контролирует если прошла задержка после включения компрессора (пауза перед началом работы ПИД) и задержка != 255
 			vTaskDelay(TIME_EEV_BEFORE_PID / portTICK_PERIOD_MS); // Период управления ЭРВ (цикл управления)
-			if(HP.get_modWork() == pOFF || HP.is_heater_on() || HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_State() == pWAIT_HP || HP.get_State() == pERROR_HP) break;
+			if(HP.get_modWork() == pOFF || !HP.TARGET_COMPRESSOR() || HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_State() == pWAIT_HP || HP.get_State() == pERROR_HP) break;
 			if(HP.dEEV.get_flags() & (1<<fEEV_StartPosByTemp)) { // Скорректировать ЭРВ по температуре подачи
 				if(!(HP.get_modWork() & pBOILER) || !GETBIT(HP.dEEV.get_flags(), fEEV_BoilerStartPos)) {
 					HP.dEEV.set_EEV(HP.dEEV.get_StartPos());
@@ -1630,7 +1633,7 @@ void vUpdateEEV(void *)
 		HP.dEEV.resetPID();
 xContinue:
 		if(!HP.is_compressor_on()) {
-			if(HP.get_modWork() == pOFF || HP.is_heater_on() || HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_State() == pWAIT_HP || HP.get_State() == pERROR_HP) {
+			if(HP.get_modWork() == pOFF || HP.TARGET_COMPRESSOR() || HP.get_State() == pOFF_HP || HP.get_State() == pSTOPING_HP || HP.get_State() == pWAIT_HP || HP.get_State() == pERROR_HP) {
 				// Если компрессор не работает, то остановить задачу Обновления ЭРВ
 				journal.jprintf((const char*) " Stop task UpdateEEV\n");
 				vTaskSuspend(NULL);				// Stop vUpdateEEV

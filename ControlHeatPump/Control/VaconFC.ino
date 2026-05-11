@@ -26,6 +26,7 @@ int8_t devVaconFC::initFC()
 	number_err = 0; // Число ошибок связи при превышении _data.Modbus_Attempts блокировка инвертора
 	FC_target = 0; // Целевая скорость частотика
 	FC_curr_freq = 0; // текущая частота инвертора
+	FC_Temp = 0;
 	power = 0; // Тееущая мощность частотника
 #ifdef FC_MAX_CURRENT
 	current = 0; // Текуший ток частотника
@@ -263,15 +264,7 @@ int8_t devVaconFC::get_readState()
 				set_Error(err, name); // генерация ошибки
 				return err;
 			}
-		} else if(state & FC_S_RUN) { // Привод работает, а не должен - останавливаем через модбас
-			if(rtcSAM3X8.unixtime() - HP.get_stopCompressor() > FC_DEACCEL_TIME / 100) {
-				journal.jprintf_time("Compressor running - stop via Modbus!\n");
-				err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
-				if(err) return err;
-			}
-		}
-		// Состояние прочитали и оно правильное все остальное читаем
-		{
+			// все остальное читаем
 			FC_curr_freq = read_0x03_16(FC_FREQ) * FC_FREQ_MUL; 	// прочитать текущую частоту
 			if(err == OK) {
 #ifdef FC_POWER_IN_PERCENT
@@ -282,66 +275,73 @@ int8_t devVaconFC::get_readState()
 #ifdef FC_MAX_CURRENT
 				if(err == OK) current = read_0x03_16(FC_CURRENT);
 #endif
-				if(err == OK) {
-					FC_Temp = read_0x03_16(FC_TEMP);
-					if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
-						set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
-						return err;
-					}
-					if(_data.FC_TargetTemp) {
-#ifdef FC_VLT
-						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
-						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
-#else
-						if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN); // подать команду
-						else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, 0); // подать команду
-#endif
-					}
-				}
 				if(GETBIT(_data.setup_flags,fLogWork) && GETBIT(flags, fOnOff)) {
 					journal.jprintf_time("FC: %Xh,%.2dHz,%.3d\n", state, FC_curr_freq, get_power());
 				}
 			}
-		}
-		if(GETBIT(flags, fOnOff) && err == OK) {
-			if(Adjust_EEV_delta) {
-#ifdef EEV_DEF
-				int16_t n = HP.dEEV.get_EEV() + Adjust_EEV_delta;
-				if(n < HP.dEEV.get_minEEV()) n = HP.dEEV.get_minEEV(); else if(n > HP.dEEV.get_maxEEV()) n = HP.dEEV.get_maxEEV();
-				if(GETBIT(HP.dEEV.get_flags(), fEEV_DirectAlgorithm)) {
-					HP.dEEV.pidw.max = 1 + (abs(n - HP.dEEV.get_EEV()) > 5 ? 1 : 0); // пропустить итераций
+			if(GETBIT(flags, fOnOff) && err == OK) {
+				if(Adjust_EEV_delta) {
+	#ifdef EEV_DEF
+					int16_t n = HP.dEEV.get_EEV() + Adjust_EEV_delta;
+					if(n < HP.dEEV.get_minEEV()) n = HP.dEEV.get_minEEV(); else if(n > HP.dEEV.get_maxEEV()) n = HP.dEEV.get_maxEEV();
+					if(GETBIT(HP.dEEV.get_flags(), fEEV_DirectAlgorithm)) {
+						HP.dEEV.pidw.max = 1 + (abs(n - HP.dEEV.get_EEV()) > 5 ? 1 : 0); // пропустить итераций
+					}
+					HP.dEEV.set_EEV(n);
+	#endif
+					Adjust_EEV_delta = 0;
 				}
-				HP.dEEV.set_EEV(n);
-#endif
-				Adjust_EEV_delta = 0;
-			}
-#ifdef FC_RETOIL_FREQ
-			if(GETBIT(_data.setup_flags, fFC_RetOil)) {
-				if(!GETBIT(flags, fFC_RetOilSt)) {
-					if(FC_curr_freq < _data.ReturnOilMinFreq && (FC_curr_freq < _data.maxFreqGen || !GETBIT(HP.Option.flags, fBackupPower))) {
-						if(++ReturnOilTimer >= _data.ReturnOilPeriod - (_data.ReturnOilMinFreq - FC_curr_freq) * _data.ReturnOilPerDivHz / 100) {
-							flags |= 1 << fFC_RetOilSt;
-#ifdef FC_VLT
-							err = write_0x06_16((uint16_t) FC_SET_SPEED, map(_data.ReturnOilFreq, 0, 10000, 0, 16384));
-#else
-							err = write_0x06_16((uint16_t) FC_SET_SPEED, _data.ReturnOilFreq);
-#endif
-							Adjust_EEV(_data.ReturnOilFreq - FC_target);
+	#ifdef FC_RETOIL_FREQ
+				if(GETBIT(_data.setup_flags, fFC_RetOil)) {
+					if(!GETBIT(flags, fFC_RetOilSt)) {
+						if(FC_curr_freq < _data.ReturnOilMinFreq && (FC_curr_freq < _data.maxFreqGen || !GETBIT(HP.Option.flags, fBackupPower))) {
+							if(++ReturnOilTimer >= _data.ReturnOilPeriod - (_data.ReturnOilMinFreq - FC_curr_freq) * _data.ReturnOilPerDivHz / 100) {
+								flags |= 1 << fFC_RetOilSt;
+	#ifdef FC_VLT
+								err = write_0x06_16((uint16_t) FC_SET_SPEED, map(_data.ReturnOilFreq, 0, 10000, 0, 16384));
+	#else
+								err = write_0x06_16((uint16_t) FC_SET_SPEED, _data.ReturnOilFreq);
+	#endif
+								Adjust_EEV(_data.ReturnOilFreq - FC_target);
+								ReturnOilTimer = 0;
+							}
+						} else ReturnOilTimer = 0;
+					} else {
+						if(++ReturnOilTimer >= _data.ReturnOilTime) {
+							Adjust_EEV(FC_target - _data.ReturnOilFreq);
+							flags &= ~(1 << fFC_RetOilSt);
+	#ifdef FC_VLT
+							err = write_0x06_16((uint16_t) FC_SET_SPEED, map(FC_target, 0, 10000, 0, 16384));
+	#else
+							err = write_0x06_16((uint16_t) FC_SET_SPEED, FC_target);
+	#endif
 							ReturnOilTimer = 0;
 						}
-					} else ReturnOilTimer = 0;
-				} else {
-					if(++ReturnOilTimer >= _data.ReturnOilTime) {
-						Adjust_EEV(FC_target - _data.ReturnOilFreq);
-						flags &= ~(1 << fFC_RetOilSt);
-#ifdef FC_VLT
-						err = write_0x06_16((uint16_t) FC_SET_SPEED, map(FC_target, 0, 10000, 0, 16384));
-#else
-						err = write_0x06_16((uint16_t) FC_SET_SPEED, FC_target);
-#endif
-						ReturnOilTimer = 0;
 					}
 				}
+	#endif
+			}
+		} else if(state & FC_S_RUN) { // Привод работает, а не должен - останавливаем через модбас
+			if(rtcSAM3X8.unixtime() - HP.get_stopCompressor() > FC_DEACCEL_TIME / 100) {
+				journal.jprintf_time("Compressor running - stop via Modbus!\n");
+				err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
+				if(err) return err;
+			}
+		}
+		FC_Temp = read_0x03_16(FC_TEMP);
+		if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
+			set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
+			return err;
+		}
+		if(_data.FC_TargetTemp && FC_Temp) {
+#ifdef FC_VLT
+			if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+			else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+#else
+			if(!GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp > _data.FC_TargetTemp && write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN) == OK) {  // подать команду
+				SETBIT1(flags, fFC_CoolerFAN_On);
+			} else if(GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS && write_0x06_16(FC_CONTROL, 0) == OK) { // подать команду
+				SETBIT0(flags, fFC_CoolerFAN_On);
 			}
 #endif
 		}
@@ -983,7 +983,7 @@ int16_t devVaconFC::read_tempFC()
 int16_t devVaconFC::read_0x03_16(uint16_t cmd)
 {
     int16_t result = 0;
-    if(!get_present()) return 0; // выходим если нет инвертора
+    if(!get_present()) return result; // выходим если нет инвертора
     uint8_t i = _data.Modbus_Attempts;
     // делаем n попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
     while(1) {

@@ -507,21 +507,29 @@ void parserGET(uint8_t thread, int8_t )
 			strcat(strReturn,"%|SF>");
 #endif
 			//_itoa(freeRam()+HP.startRAM,strReturn); strcat(strReturn,"b|");
+			i = 0;
 #ifdef USE_HEATER
 			if(HP.is_heater_on()) {
 				_itoa(HP.dHeater.data.Power, strReturn);
-				strcat(strReturn,"%|SS>");
-			} else
+				strcat(strReturn, "%");
+				i = 1;
+			}
 #endif
 			{
 #ifdef FC_VACON
-				HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
-				strcat(strReturn,"|SS>");
+				if(HP.is_compressor_on()) {
+					if(i) strcat(strReturn, ",");
+					HP.dFC.get_paramFC((char*)fc_cFC,strReturn);
+					i = 1;
+				}
 #else
 				if(HP.dFC.get_present()) HP.dFC.get_paramFC((char*) fc_FC, strReturn); else strcat(strReturn, " - ");
-				strcat(strReturn,"Гц|SS>");
+				strcat(strReturn,"Гц");
+				i = 1;
 #endif
 			}
+			if(!i) strcat(strReturn, "Выкл");
+			strcat(strReturn, "|SS>");
 			if (HP.get_errcode() == OK) {
 				HP.get_StateModworkStr(strReturn);
 			} else {strcat(strReturn,"Error "); _itoa(HP.get_errcode(),strReturn);} // есть ошибки
@@ -2126,11 +2134,11 @@ xSaveStats:
 					WEB_STORE_DEBUG_INFO(35);
 xHeater_get_param:
 					if(!HP.dHeater.get_param(x, strReturn)) {
-						if(strcmp(x, Wheater_INFO)==0) {
+						if(strcmp(x, WHeater_INFO)==0) {
 							HP.dHeater.get_info(strReturn);
 						} else {
 							SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
-							if(x[0] == Wheater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
+							if(x[0] == WHeater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
 								uint16_t d;
 								l_i32 = strtol(x + 1, NULL, 16);
 								i = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, l_i32, &d);
@@ -2148,7 +2156,7 @@ xHeater_get_param:
 									else if(l_i32 == HM_SET_T_BOILER) HP.dHeater.curr_boiler_temp = d;
 									_itoa(d, strReturn);
 								}
-							} else if(x[0] == Wheater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
+							} else if(x[0] == WHeater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
 								uint32_t d;
 								l_i32 = strtol(x + 1, NULL, 16);
 								i = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, l_i32, &d);
@@ -2164,7 +2172,7 @@ xHeater_get_param:
 					if(pm!=ATOF_ERROR) {   		// нет ошибки преобразования
 						l_i32 = HP.dHeater.set_param(x, pm);
 						if(l_i32 != OK) {
-							if(x[0] == Wheater_WriteReg){ // set_HT(Wn), где n номер регистра в HEX
+							if(x[0] == WHeater_WriteReg){ // set_HT(Wn), где n номер регистра в HEX
 								l_i32 = strtol(x + 1, NULL, 16);
 								uint16_t d = pm;
 								if(l_i32 != LONG_MAX) {

@@ -49,13 +49,24 @@ function run_cmd() {
 		<tbody id="get_tblrelay"></tbody>
 		</table>
 	</div>
+	<div id="testmodeK">
+		<h2>Котел</h2>
+		<table><thead><tr><th>Модуляция</th><th>Теплоноситель, °C</th></thead><tbody>
+		<tr>
+			<td id="get_ht-m" style="text-align: center"></td>
+			<td id="get_ht-tf" style="text-align: center"></td>
+
+		</tr>
+		</tbody>
+		</table>						
+	</div>	
+
 	<div id="testmode2">
 		<h2>ЭРВ [pins: <span id="get_peev-pins"></span>] <button id="set_zeroEEV" onclick='loadParam("set_zeroEEV");'>Установка в 0</button></h2>
 		<table>
-		<thead><tr><th>Имя</th><th>Описание</th><th>Текущее положение ЭРВ</th><th>Задать, шаги</th><th>Задать, %</th></tr></thead>
+		<thead><tr><th>Описание</th><th>Текущее положение ЭРВ</th><th>Задать, шаги</th><th>Задать, %</th></tr></thead>
 		<tbody>
 		<tr>
-			<td id="get_peev-name">-</td>
 			<td id="get_peev-note">-</td>
 			<td id="get_peev-pospp"></td>
 			<td><input id="get_peev-pos" type="number" step="1" value=""><input id="set-eev" type="submit" value=">" onclick="setParam('get_pEEV(POS)');"></td>
