@@ -473,9 +473,10 @@ public:
   uint16_t  get_save_size(void) { return sizeof(_data); } // Размер структуры сохранения
 
 #ifndef FC_ANALOG_CONTROL    // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
-  int16_t  read_0x03_16(uint16_t cmd);             // Функция Modbus 0х03 прочитать 2 байта
-  uint32_t read_0x03_32(uint16_t cmd);             // Функция Modbus 0х03 прочитать 4 байта
-  int8_t   write_0x06_16(uint16_t cmd, uint16_t data);// Запись данных (2 байта) в регистр cmd возвращает код ошибки
+  template <typename T> int8_t modbus(uint16_t cmd, T *data, ModbusOp op);
+  inline uint16_t read_0x03_16(uint16_t cmd) { uint16_t res = 0; modbus(cmd, &res, READ_HOLDING); return res; }
+  inline uint32_t read_0x03_32(uint16_t cmd) { uint32_t res = 0; modbus(cmd, &res, READ_HOLDING); return res; }
+  inline int8_t   write_0x06_16(uint16_t cmd, uint16_t data) { return modbus(cmd, &data, WRITE_SINGLE); }
 #endif
 #ifdef FC_POWER_IN_PERCENT
   uint16_t nominal_power;							// Номинальная мощность двигателя Вт

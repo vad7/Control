@@ -587,6 +587,8 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 				strcat(ret, "C");		// ось COP
 				break;
 			case STATS_OBJ_Compressor:
+				strcat(ret, "G");
+				break;
 			case STATS_OBJ_Heater:
 				strcat(ret, "H");
 				break;

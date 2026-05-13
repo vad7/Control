@@ -830,9 +830,9 @@ void WR_ReadPowerMeter(void)
 		WR_PowerMeter_New = true;
 	} else {
 	#ifdef WR_PowerMeter_DDS238
-		int8_t i = Modbus.readInputRegisters16(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power);
+		int8_t i = devModbus::Process(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint16_t*)&WR_PowerMeter_Power, READ_INPUT);
 	#else
-		int8_t i = Modbus.readInputRegisters32(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power);
+		int8_t i = devModbus::Process(WR_PowerMeter_Modbus, WR_PowerMeter_ModbusReg, (uint32_t*)&WR_PowerMeter_Power, READ_INPUT);
 	#endif
 		if(i == OK) {
 			WR_PowerMeter_Power /= 10;

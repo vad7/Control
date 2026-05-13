@@ -240,11 +240,14 @@ class ModbusMaster
 	uint8_t ModbusMinTimeBetweenTransaction; // ms
     // Modbus timeout [milliseconds] Depend on serial speed
 	uint8_t ModbusResponseTimeout; // < Modbus timeout, every byte [milliseconds]
+	uint32_t GetTimeToWait(void);
+	void WaitMinTimeBetweenTransaction(void);
     
   private:
     Stream* _serial;                                             ///< reference to serial port object
     uint8_t  _u8MBSlave;                                         ///< Modbus slave (1..255) initialized in begin()
-    static const uint8_t ku8MaxBufferSize                = 64;   ///< size of response/transmit buffers    
+    static const uint8_t ku8MaxBufferSize                = 32;   ///< was 64, size of response/transmit buffers
+    static const uint8_t kuTransmitBufferSize            = 48;   ///< was 128, size of internal buffer
     uint16_t _u16ReadAddress;                                    ///< slave register from which to read
     uint16_t _u16ReadQty;                                        ///< quantity of words to read
     uint16_t _u16ResponseBuffer[ku8MaxBufferSize];               ///< buffer to store Modbus slave response; read via GetResponseBuffer()
@@ -257,7 +260,7 @@ class ModbusMaster
     uint16_t* rxBuffer; // from Wire.h -- need to clean this up Rx
     uint8_t _u8ResponseBufferIndex;
     uint8_t _u8ResponseBufferLength;
-    uint32_t last_transaction_time;
+    volatile uint32_t last_transaction_time;
 
     // idle callback function; gets called during idle time between TX and RX
     void (*_idle)();

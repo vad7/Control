@@ -1122,7 +1122,7 @@ void get_mailState(EthernetClient client,char *tempBuf)
 }
 
 // Передать дамп устройства Modbus: settings_modbus-N_T_S_A_L.bin,
-// N - устройство, A - начальный адрес, L - количество ячеек модбас, T - тип ячеек (3, 4)
+// N - устройство на порту 1 (-N - на порту 2), A - начальный адрес, L - количество ячеек модбас, T - тип ячеек (3, 4)
 // S - размерность (1 = 16b, 2 = 32b, 3 = float)
 // Если адрес == FC_MODBUS_ADR, то адресация ячеек с 1, иначе с 0.
 bool get_binModbus(uint8_t thread, char *filename)
@@ -1140,7 +1140,12 @@ bool get_binModbus(uint8_t thread, char *filename)
     if(sendPacketRTOS(thread, (byte*)Socket[thread].outBuf, len) != len) return false;
     char *p = strchr(filename, '-');
     if(p == NULL) return false;
-    uint8_t id = strtol(p + 1, &p, 0);
+    int16_t id = strtol(p + 1, &p, 0);
+    uint8_t port = 0; // 0 - RS485, 1 - RS485_2
+    if(id < 0) {
+    	id = -id;
+    	port = 1;
+    }
     uint8_t type = strtol(p + 1, &p, 0);
     uint8_t size = strtol(p + 1, &p, 0);
     uint16_t addr = strtol(p + 1, &p, 0);
@@ -1154,29 +1159,33 @@ bool get_binModbus(uint8_t thread, char *filename)
     	int8_t err = -1;
     	cell_32b = 0;
 		SemaphoreGive(xWebThreadSemaphore); // отдать семафор вебморды, что бы обработались другие потоки веб морды
-    	if(type == 3) { // Holding Registers
-    		if(size == 1) {
-        		err = Modbus.readHoldingRegisters16(id, addr, &cell_16b[0]);
-        		if(err) err = Modbus.readHoldingRegisters16(id, addr, &cell_16b[0]);
-    		} else if(size == 2) {
-        		err = Modbus.readHoldingRegisters32(id, addr, &cell_32b);
-        		if(err) err = Modbus.readHoldingRegisters32(id, addr, &cell_32b);
-    		} else if(size == 3) {
-        		err = Modbus.readHoldingRegistersFloat(id, addr, &cell_float);
-        		if(err) err = Modbus.readHoldingRegistersFloat(id, addr, &cell_float);
-    		}
-    	} else if(type == 4) { // Input Registers
-    		if(size == 1) {
-        		err = Modbus.readInputRegisters16(id, addr, &cell_16b[0]);
-        		if(err) err = Modbus.readInputRegisters16(id, addr, &cell_16b[0]);
-    		} else if(size == 2) {
-        		err = Modbus.readInputRegisters32(id, addr, &cell_32b);
-        		if(err) err = Modbus.readInputRegisters32(id, addr, &cell_32b);
-    		} else if(size == 3) {
-        		err = Modbus.readInputRegistersFloat(id, addr, &cell_float);
-        		if(err) err = Modbus.readInputRegistersFloat(id, addr, &cell_float);
-    		}
-    	}
+		uint8_t i = 3;
+		while(1) {
+			if(type == 3) { // Holding Registers
+				if(size == 1) {
+					if(port) err = devModbus::Process2(id, addr, &cell_16b[0], READ_HOLDING);
+					else err = devModbus::Process(id, addr, &cell_16b[0], READ_HOLDING);
+				} else if(size == 2) {
+					if(port) err = devModbus::Process2(id, addr, &cell_32b, READ_HOLDING);
+					else err = devModbus::Process(id, addr, &cell_32b, READ_HOLDING);
+				} else if(size == 3) {
+					if(port) err = devModbus::Process2(id, addr, &cell_float, READ_HOLDING);
+					else err = devModbus::Process(id, addr, &cell_float, READ_HOLDING);
+				}
+			} else if(type == 4) { // Input Registers
+				if(size == 1) {
+					if(port) err = devModbus::Process2(id, addr, &cell_16b[0], READ_INPUT);
+					else err = devModbus::Process(id, addr, &cell_16b[0], READ_INPUT);
+				} else if(size == 2) {
+					if(port) err = devModbus::Process2(id, addr, &cell_32b, READ_INPUT);
+					else err = devModbus::Process(id, addr, &cell_32b, READ_INPUT);
+				} else if(size == 3) {
+					if(port) err = devModbus::Process2(id, addr, &cell_float, READ_INPUT);
+					else err = devModbus::Process(id, addr, &cell_float, READ_INPUT);
+				}
+			}
+			if(err == OK || i-- <= 1) break;
+		}
     	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {
     		journal.jprintf("[%u] %d=", millis(), addr);
     		if(err) journal.jprintf("error ");

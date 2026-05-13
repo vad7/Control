@@ -527,42 +527,50 @@ class devSDM
       char *name;                                      // Имя
 };
 
+#ifdef MODBUS_PORT_NUM
+ModbusMaster RS485;                     				// Класс модбас 485
+#endif
+#ifdef MODBUS_HEATER_DEDICATED
+ModbusMaster RS485_2;                     				// Класс модбас 485_2
+#endif
+#include <type_traits> // Для работы std::is_same
 
-// Класс устройство Modbus RTU -----------------------------------------------------------------------------------------------
-#define fModbus    			0               // флаг наличие modbus
-class devModbus
-  {
-  public:  
-    int8_t initModbus();                                                                // Инициализация Modbus и проверка связи возвращает ошибку
-     __attribute__((always_inline)) inline boolean get_present(){return GETBIT(flags,fModbus);} // Наличие Modbus в текущей конфигурации
-    int8_t readInputRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret);
-    int8_t readInputRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret);				   // LITTLE-ENDIAN!
-    int8_t readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret);                  // Получить значение 2-x (Modbus function 0x04 Read Input Registers) регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret);                // Получить значение регистра (2 байта) в виде целого  числа возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret);                // Получить значение 2-x регистров (4 байта) в виде целого числа возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret);                // Получить значение 2-x регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-    int8_t readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num,uint16_t *buf);   // Получить значение N регистров (2*N байта) (положить в buf) возвращает код ошибки
-    int8_t readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf); // Получить значение N регистров в buf, повторное чтение при ошибках, возвращает код ошибки
-    int8_t writeSingleCoil(uint8_t id,uint16_t cmd, uint8_t u8State);                      // установить битовый вход, возвращает код ошибки Modbus function 0x05 Write Single Coil.
-    int8_t writeSingleCoilR(uint8_t id,uint16_t cmd, uint8_t u8State);                     // (Повторное чтение при ошибке) установить битовый вход, возвращает код ошибки Modbus function 0x05 Write Single Coil.
-    int8_t readCoil(uint8_t id,uint16_t cmd, boolean *ret);                                // прочитать отдельный бит, возвращает ошибку Modbus function 0x01 Read Coils.
-    int8_t writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data);               // Установить значение регистра (2 байта) в виде целого  числа возвращает код ошибки данные data
-    int8_t writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat);                // Записать float как 2 регистра числа возращает код ошибки данные data
-    int8_t writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data);              // Записать 2b с повтором при ошибке (WriteMultipleRegisters = 0x10)
-    int8_t writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);// Записать буфер с повтором при ошибке (WriteMultipleRegisters = 0x10)
-    #ifndef FC_VACON
-    int8_t LinkTestOmronMX2();                                                             // Тестирование связи c МХ2 (актуально только с omronom) возвращает код ошибки
-    #endif
-    int8_t writeHoldingRegisters32(uint8_t id,uint16_t cmd, uint32_t data); // Записать 2 регистра подряд возвращает код ошибки
-    void   set_timeouts(uint8_t id);                                                       // Задать таймауты в зависимости от устройства на шине
-    void   set_timeouts_for_write(uint8_t id);                                             // Задать таймауты для записи в зависимости от устройства на шине
-    int8_t get_err() {return err;}                                                         // Получить код ошибки
-    ModbusMaster RS485;                     // Класс модбас 485
-private:
-    // Переменные
-    int8_t flags;                           // Флаги
-    int8_t err;                             // Ошибки модбас
-    int8_t translateErr(uint8_t result);    // Перевод ошибки протокола Модбас в ошибки ТН
-  }; // End class
+enum ModbusOp : uint8_t {
+    READ_INPUT,       // Функция 0x04 (Input Registers)
+    READ_HOLDING,     // Функция 0x03 (Holding Registers)
+    WRITE_SINGLE,     // Функция 0x06 (Write Single Register)
+    WRITE_MULTIPLE,   // Функция 0x10 (Write Multiple Registers)
+    READ_COILS,       // Функция 0x01 (Read Coils)
+    READ_DISCRETE,    // Функция 0x02 (Read Discrete Inputs)
+    WRITE_COIL,       // Функция 0x05 (Write Single Coil)
+    WRITE_COILS       // Функция 0x0F (Write Multiple Coils)
+};
 
- #endif
+#define REPEAT_N(n, expr) for(uint8_t _i=0; _i<n && (expr) != OK; ++_i);
+
+// вызов: devModbus::Process(id, address, &var, READ_INPUT);
+class devModbus {
+public:
+    // --- ПЕРВЫЙ ПОРТ (RS485) ---
+    // Одиночные запросы (Шаблоны)
+    template <typename T>
+    static int8_t Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
+
+    // Множественное чтение массивов (Строго один запрос, без повторов)
+    static int8_t ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
+
+
+    // --- ВТОРОЙ ПОРТ (RS485_2) ---
+    // Одиночные запросы (Шаблоны)
+    template <typename T>
+    static int8_t Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
+
+    // Множественное чтение массивов (Строго один запрос, без повторов)
+    static int8_t ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
+
+
+    // Вспомогательный метод перевода ошибок
+    static inline int8_t translateErr(uint8_t result);
+};
+
+#endif

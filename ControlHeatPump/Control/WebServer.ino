@@ -2139,7 +2139,7 @@ xHeater_get_param:
 							if(x[0] == WHeater_WriteReg) { // get_HT(Wn), где n номер регистра в HEX
 								uint16_t d;
 								l_i32 = strtol(x + 1, NULL, 16);
-								i = Modbus.readHoldingRegisters16(HEATER_MODBUS_ADDR, l_i32, &d);
+								i = devModbus::Process2(HEATER_MODBUS_ADDR, l_i32, &d, READ_HOLDING);
 								if(i) {
 									strcat(strReturn, "E");
 									_itoa(i, strReturn);
@@ -2150,14 +2150,14 @@ xHeater_get_param:
 									else if(d == (uint16_t) -2) strcat(strReturn, "Ошибка записи");
 									else { strcat(strReturn, "Состояние: "); _itoa(d, strReturn); }
 								} else {
-									if(l_i32 == HM_SET_T_FlowOut) HP.dHeater.curr_temp = d / 10;
-									else if(l_i32 == HM_SET_T_BOILER) HP.dHeater.curr_boiler_temp = d;
+									if(l_i32 == HM_SET_T_FlowOut) HP.dHeater.target_temp = d / 10;
+									else if(l_i32 == HM_SET_T_BOILER) HP.dHeater.target_boiler_temp = d;
 									_itoa(d, strReturn);
 								}
 							} else if(x[0] == WHeater_Read2Reg) { // get_HT(Rn), где n номер регистра в HEX, 32 бит
 								uint32_t d;
 								l_i32 = strtol(x + 1, NULL, 16);
-								i = Modbus.readHoldingRegisters32(HEATER_MODBUS_ADDR, l_i32, &d);
+								i = devModbus::Process2(HEATER_MODBUS_ADDR, l_i32, &d, READ_HOLDING);
 								if(i) { strcat(strReturn, "E"); _itoa(i, strReturn); } else _itoa(d, strReturn);
 							}
 							if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
@@ -2174,9 +2174,9 @@ xHeater_get_param:
 								l_i32 = strtol(x + 1, NULL, 16);
 								uint16_t d = pm;
 								if(l_i32 != LONG_MAX) {
-									l_i32 = Modbus.writeHoldingRegistersN1R(HEATER_MODBUS_ADDR, l_i32, d);
+									REPEAT_N(HP.dHeater.set.Modbus_Attempts, l_i32 = devModbus::Process2(HEATER_MODBUS_ADDR, l_i32, &d, WRITE_MULTIPLE));
 //									_delay(1);
-//									if(i == OK) i = Modbus.readHoldingRegistersNNR(HEATER_MODBUS_ADDR, 0x30 + l_i32, 1, (uint16_t*)&d);	// Получить регистр состояния записи
+//									if(i == OK) i = devModbus::Process2(HEATER_MODBUS_ADDR, 0x30 + l_i32, (uint16_t*)&d, READ_HOLDING);	// Получить регистр состояния записи
 //									l_i32 = i == OK ? d : i;
 								}
 //								_delay(HP.dHeater.set.ModbusMinTimeBetweenTransaction);
@@ -2316,11 +2316,11 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 						strcat(strReturn, "-");
 #endif
 					} else if(strcmp(x, "timeout")==0) { // Таймаут
-						if(str[0] == 's') Modbus.RS485.ModbusResponseTimeout = l_i32;
-						_itoa(Modbus.RS485.ModbusResponseTimeout, strReturn);
+						if(str[0] == 's') RS485.ModbusResponseTimeout = l_i32;
+						_itoa(RS485.ModbusResponseTimeout, strReturn);
 					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
-						if(str[0] == 's') Modbus.RS485.ModbusMinTimeBetweenTransaction = l_i32;
-						_itoa(Modbus.RS485.ModbusMinTimeBetweenTransaction, strReturn);
+						if(str[0] == 's') RS485.ModbusMinTimeBetweenTransaction = l_i32;
+						_itoa(RS485.ModbusMinTimeBetweenTransaction, strReturn);
 					} else goto x_FunctionNotFound;
 					ADD_WEBDELIM(strReturn);
 					continue;
@@ -2333,10 +2333,11 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 					if(str[0] == 's') {
 						// strtol - NO REENTRANT FUNCTION!
 						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
-						if(*y == 'h') i = Modbus.writeHoldingRegisters16(id, par, strtol(z, NULL, 0)); // 1 register (int16).
-						//else if(*y == 'u') i = Modbus.writeHoldingRegisters32(id, par, strtol(z, NULL, 0)); // 2 registers (int32).
-						else if(*y == 'f') i = Modbus.writeHoldingRegistersFloat(id, par, strtol(z, NULL, 0)); // 2 registers (float).
-						else if(*y == 'c') i = Modbus.writeSingleCoil(id, par, atoi(z));	// coil
+						l_i32 = strtol(z, NULL, 0);
+						if(*y == 'h') i = devModbus::Process(id, par, (uint16_t *)&l_i32, WRITE_SINGLE); // 1 register (int16).
+						//else if(*y == 'u') i = devModbus::Process(id, par, &l_i32, WRITE_MULTIPLE); // 2 registers (int32).
+						else if(*y == 'f') i = devModbus::Process(id, par, (float *)&l_i32, WRITE_MULTIPLE); // 2 registers (float).
+						else if(*y == 'c') i = devModbus::Process(id, par, &l_i32, WRITE_COIL);	// coil
 						else i = 1;
 						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
@@ -2350,17 +2351,17 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 					if(i == OK) {
 						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 						if(*y == 'w') {
-							if((i = Modbus.readInputRegisters16(id, par, &par)) == OK) _itoa(par, strReturn);
+							if((i = devModbus::Process(id, par, &par, READ_INPUT)) == OK) _itoa(par, strReturn);
 						} else if(*y == 'l') {
-							if((i = Modbus.readInputRegisters32(id, par, (uint32_t *)&l_i32)) == OK) _itoa(l_i32, strReturn);
+							if((i = devModbus::Process(id, par, (uint32_t *)&l_i32, READ_INPUT)) == OK) _itoa(l_i32, strReturn);
 						} else if(*y == 'i') {
-							if((i = Modbus.readInputRegistersFloat(id, par, &pm)) == OK) _ftoa(strReturn, pm, 2);
+							if((i = devModbus::Process(id, par, &pm, READ_INPUT)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'h') {
-							if((i = Modbus.readHoldingRegisters16(id, par, &par)) == OK) _itoa(par, strReturn);
+							if((i = devModbus::Process(id, par, &par, READ_HOLDING)) == OK) _itoa(par, strReturn);
 						} else if(*y == 'f') {
-							if((i = Modbus.readHoldingRegistersFloat(id, par, &pm)) == OK) _ftoa(strReturn, pm, 2);
+							if((i = devModbus::Process(id, par, &pm, READ_HOLDING)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'c') {
-							if((i = Modbus.readCoil(id, par, (boolean *)&par)) == OK) _itoa(par, strReturn);
+							if((i = devModbus::Process(id, par, &par, READ_COILS)) == OK) _itoa(par, strReturn);
 						} else i = 1;
 						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);

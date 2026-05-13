@@ -197,7 +197,8 @@ void Journal::jprintf(const char *format, ...)
 {
 	if(!SemaphoreTake(Semaphore, JOURNAL_TIME_WAIT)) {
 #ifdef DEBUG
-		if(Is_otg_vbus_high()) SerialDbg.print("JSem locked!\n");
+		if(Is_otg_vbus_high()) SerialDbg.print("\nJSem locked!\n");
+		_write((char*)"\nJSem locked!\n");
 #endif
 	}
 	va_list ap;
@@ -218,6 +219,7 @@ void Journal::jprintf_time(const char *format, ...)
 	if(!SemaphoreTake(Semaphore, JOURNAL_TIME_WAIT)) {
 #ifdef DEBUG
 		if(Is_otg_vbus_high()) SerialDbg.print("JSem locked!\n");
+		_write((char*)"\nJSem locked!\n");
 #endif
 	}
 	NowTimeToStr(pbuf);
@@ -239,6 +241,7 @@ void Journal::jprintf_date(const char *format, ...)
 	if(!SemaphoreTake(Semaphore, JOURNAL_TIME_WAIT)) {
 #ifdef DEBUG
 		if(Is_otg_vbus_high()) SerialDbg.print("JSem locked!\n");
+		_write((char*)"\nJSem locked!\n");
 #endif
 	}
 	NowDateToStr(pbuf);
@@ -262,6 +265,7 @@ void Journal::jprintf_only(const char *format, ...)
 	if(!SemaphoreTake(Semaphore, JOURNAL_TIME_WAIT)) {
 #ifdef DEBUG
 		if(Is_otg_vbus_high()) SerialDbg.print("JSem locked!\n");
+		_write((char*)"\nJSem locked!\n");
 #endif
 	}
 	va_list ap;

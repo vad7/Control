@@ -987,12 +987,13 @@ const char *WHeater_LinkHeaterOk 				= {"L"};
 const char *WHeater_fLinkAdapterOk				= {"A"};
 const char *WHeater_is_on 						= {"ON"};
 const char *WHeater_3way 						= {"3W"};
-const char *WHeater_T_FlowOut 						= {"TF"};
+const char *WHeater_T_FlowOut 					= {"TF"};
 const char *WHeater_Power 						= {"M"};
 const char *WHeater_err_num_total				= {"E"};
 const char *WHeater_err_last					= {"EL"};
 const char *WHeater_INFO						= {"INFO"};
 const char *WHeater_fHP_Heater_Heating_pipes 	= {"HHP"};
+const char *WHeater_target_temp 				= {"TT"};
 const char WHeater_WriteReg 					= 'W';	// get_HT(Wn) / set_HT(Wn), где n номер регистра в HEX
 const char WHeater_Read2Reg 					= 'R';	// get_HT(Rn), где n номер регистра в HEX, чтение 2-х регистров (4 байта)
 

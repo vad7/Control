@@ -93,7 +93,6 @@ RTC_clock rtcSAM3X8(XTAL);                                               // Вн
 DS3232  rtcI2C;                                                          // Часы 3231 на шине I2C
 static Journal  journal;                                                 // системный журнал, отдельно т.к. должен инициализоваться с начала старта
 static HeatPump HP;                                                      // Класс тепловой насос (в констукторе плохо проходит инициализация пинов????)
-static devModbus Modbus;                                                 // Класс модбас - управление инвертором
 SdFat card;                                                              // Карта памяти
 #ifdef NEXTION   
 Nextion myNextion;                                                     // Дисплей
@@ -488,6 +487,7 @@ x_I2C_init_std_message:
 			for(uint8_t i = 0; i < TempAlarm_size; i++) if(TempAlarm[i].num >= TNUMBER) TempAlarm_remove(i);
 		}
 	}
+
 	// РЕЛЕ
 	for(uint8_t i = 0; i < RNUMBER; i++) {
 		bool _out = false;
@@ -499,6 +499,59 @@ x_I2C_init_std_message:
 #ifdef R3WAYOFF
 	HP.dRelay[R3WAYOFF].set_ON();
 	HP.R3WAY_Off_timer = SWITCH_TIME_R3WAY;
+#endif
+
+	// Инициализация RS485 Modbus RTU
+	journal.jprintf("Modbus RTU (RS485) ports: ");
+#if defined(MODBUS_PORT_NUM) || defined(MODBUS_HEATER_DEDICATED)
+#ifdef MODBUS_PORT_NUM
+	MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED, MODBUS_PORT_CONFIG);
+	//MODBUS_PORT_NUM.setInterruptPriority(1);
+	RS485.begin(0, MODBUS_PORT_NUM);											// Привязать к сериал
+	#ifdef MODBUS_TIME_TRANSMISION
+	RS485.preTransmission(Modbus_preTransmission);
+	RS485.postTransmission(Modbus_postTransmission);
+	#endif
+	RS485.idle(Modbus_idle);
+	RS485.ModbusMinTimeBetweenTransaction = HP.Option.ModbusMinTimeBetweenTransaction;
+	RS485.ModbusResponseTimeout = HP.Option.ModbusResponseTimeout;
+	{
+		uint8_t i = 0;
+		if(&MODBUS_PORT_NUM == &Serial1) i = 1;
+		else if(&MODBUS_PORT_NUM == &Serial2) i = 2;
+		else if(&MODBUS_PORT_NUM == &Serial3) i = 3;
+#ifdef USE_SERIAL4
+		else if(&MODBUS_PORT_NUM == &Serial4) i = 4;
+#endif
+		else i = 0;
+		journal.jprintf("%d at %d", i, MODBUS_PORT_SPEED);
+	}
+#endif
+#ifdef MODBUS_HEATER_DEDICATED
+	HEATER_MODBUS_PORT.begin(HEATER_MODBUS_SPEED, HEATER_MODBUS_CONFIG);
+	RS485_2.begin(0, HEATER_MODBUS_PORT);										// Привязать к сериал
+	#ifdef MODBUS_TIME_TRANSMISION
+	RS485_2.preTransmission(Modbus_preTransmission);
+	RS485_2.postTransmission(Modbus_postTransmission);
+	#endif
+	RS485_2.idle(Modbus_idle);
+	RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
+	RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusResponseTimeout;
+	{
+		uint8_t i = 0;
+		if(&HEATER_MODBUS_PORT == &Serial1) i = 1;
+		else if(&HEATER_MODBUS_PORT == &Serial2) i = 2;
+		else if(&HEATER_MODBUS_PORT == &Serial3) i = 3;
+#ifdef USE_SERIAL4
+		else if(&HEATER_MODBUS_PORT == &Serial4) i = 4;
+#endif
+		else i = 0;
+		journal.jprintf("%d at %d", i, HEATER_MODBUS_SPEED);
+	}
+#endif
+	journal.jprintf("\n");
+#else
+	journal.jprintf("not present\n"); 	       									//  нет в конфигурации
 #endif
 
 	// Проверка связи с устройствами
@@ -1194,7 +1247,7 @@ void vReadSensor(void *)
 #if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
 		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
 			int32_t tm = GetTickCount() - ttime;
-			if((int32_t)TIME_READ_SENSOR - tm > Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction + Modbus.RS485.ModbusMinTimeBetweenTransaction / 2) {
+			if((int32_t)TIME_READ_SENSOR - tm > RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction + RS485.ModbusMinTimeBetweenTransaction / 2) {
 				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
 				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
 			 	WR_ReadPowerMeter();
@@ -1231,7 +1284,7 @@ void vReadSensor(void *)
 		}
 #endif
 		if(GetTickCount() - readFC > FC_TIME_READ / 2
-				&& GetTickCount() - ttime < TIME_READ_SENSOR - (Modbus.RS485.ModbusResponseTimeout + Modbus.RS485.ModbusMinTimeBetweenTransaction)) {
+				&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
 			readFC = GetTickCount();
 			if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
 		}
@@ -1826,8 +1879,8 @@ void vServiceHP(void *)
 					if(GETBIT(HP.Option.flags2, f2LogEnergy)) {
 						if(m == 0 && (h == 0 || h == TARIF_NIGHT_START || h == TARIF_NIGHT_END)) {
 							static float tmp;
-							if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK
-									|| Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
+							if(devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT) == OK
+									|| devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT) == OK)
 								journal.jprintf_time("ENERGY: %.3f\n", tmp);
 						}
 					}

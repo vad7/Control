@@ -575,6 +575,27 @@ uint8_t  ModbusMaster::LinkTestOmronMX2Only(uint16_t code)
   return ModbusMasterTransaction(ku8MBLinkTestOmronMX2Only);
 }
 
+uint32_t ModbusMaster::GetTimeToWait(void) {
+    uint32_t now = millis();
+    uint32_t elapsed = now - last_transaction_time;
+    if (elapsed < ModbusMinTimeBetweenTransaction) {
+        return ModbusMinTimeBetweenTransaction - elapsed;
+    }
+    return 0;
+}
+
+void ModbusMaster::WaitMinTimeBetweenTransaction(void)
+{
+	uint32_t waitTime;
+    while ((waitTime = GetTimeToWait()) > 0) {
+        #ifdef MODBUS_FREERTOS
+			if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(waitTime / portTICK_PERIOD_MS); else delay(waitTime);
+        #else
+            delay(waitTime);
+        #endif
+    }
+}
+
 /* _____PRIVATE FUNCTIONS____________________________________________________ */
 #ifdef MODBUSMASTER_DEBUG
 uint32_t MBDEBUGTM = 0;
@@ -593,7 +614,7 @@ Sequence:  Последовательность:
 // @return 0 on success; exception number on failure
 uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 {
-  static uint8_t u8ModbusADU[128];      // буфер
+  static uint8_t u8ModbusADU[kuTransmitBufferSize];      // буфер
   uint8_t u8ModbusADUSize = 0;          // текущее положение в буфере (длина данных)
   uint8_t i, u8Qty;
   uint16_t u16CRC;
@@ -601,22 +622,6 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   uint8_t u8BytesLeft = 8;             // число оставшихся байт для чтения (минимальна длина ответа??)
   uint8_t u8MBStatus = ku8MBSuccess;   // текущий статус
   
-#ifdef MODBUSMASTER_DEBUG
-   Serial.print("MB"); Serial.print(_u8MBSlave);
-#endif
-  if((u32StartTime = millis() - last_transaction_time) < ModbusMinTimeBetweenTransaction) {
-#ifdef MODBUSMASTER_DEBUG
-	  Serial.print('#');
-#endif
-#ifdef MODBUS_FREERTOS
-	  if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) vTaskDelay(ModbusMinTimeBetweenTransaction - u32StartTime); else delay(ModbusMinTimeBetweenTransaction - u32StartTime);
-#else
-	  delay(ModbusMinTimeBetweenTransaction - u32StartTime);
-#endif
-  }
-#ifdef MODBUSMASTER_DEBUG
-   Serial.print(':');
-#endif
   // assemble Modbus Request Application Data Unit (ADU)
   // Сборка блока запроса Modbus Application Data (ADU)
   u8ModbusADU[u8ModbusADUSize++] = _u8MBSlave;     // номер устройства (Slave)
@@ -788,6 +793,9 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
 		   // verify response is for correct Modbus slave
 		   // Сравнение ID с посланым в запросе
 		   if(u8ModbusADU[0] != _u8MBSlave) {
+#ifdef MODBUSMASTER_DEBUG
+			   Serial.print("ERR ID("); Serial.print(u8ModbusADU[0]); Serial.print("!="); Serial.print(_u8MBSlave); Serial.print(' ');
+#endif
 			   u8MBStatus = ku8MBInvalidSlaveID;
 			   break;
 		   }
@@ -923,6 +931,10 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   _u8ResponseBufferIndex = 0;
   last_transaction_time = millis();
 #ifdef MODBUSMASTER_DEBUG
+  if(u8MBStatus) {
+	  Serial.print("ERR:");
+	  Serial.print(u8MBStatus, HEX);
+  }
   Serial.print(" E: "); Serial.println(millis() - MBDEBUGTM);
   MBDEBUGTM = millis();
 #endif

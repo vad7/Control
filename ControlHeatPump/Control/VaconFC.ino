@@ -68,13 +68,14 @@ int8_t devVaconFC::initFC()
 	flags = 0x00;                                	   // флаги  0 - наличие FC
 	_data.setup_flags = 0;
 #ifndef FC_ANALOG_CONTROL
-	if(!Modbus.get_present()) // modbus отсутствует
-	{
-		SETBIT0(flags, fFC); // Инвертор не работает
-		journal.jprintf("%s, modbus not found, block!\n", name);
-		err = ERR_NO_MODBUS;
-		return err;
-	} else if(DEVICEFC == true) SETBIT1(flags, fFC); // наличие частотника в текушей конфигурации
+	#ifdef MODBUS_PORT_NUM
+	if(DEVICEFC == true) SETBIT1(flags, fFC); // наличие частотника в текушей конфигурации
+	#else
+	SETBIT0(flags, fFC); // Инвертор не работает
+	journal.jprintf("%s, modbus not found, block!\n", name);
+	err = ERR_NO_MODBUS;
+	return err;
+	#endif
 #else
 	pin = PIN_DEVICE_FC;                			  // Ножка куда прицеплено FC
 	analogWriteResolution(FC_ANALOG_RESOLUTION);      // разрешение ЦАП, бит;
@@ -153,7 +154,7 @@ int16_t devVaconFC::CheckLinkStatus(void)
     if(testMode == NORMAL || testMode == HARD_TEST){
 		for (uint8_t i = 0; i < _data.Modbus_Attempts; i++) // Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
 		{
-			err = Modbus.readHoldingRegisters16(FC_MODBUS_ADR, FC_STATUS - 1, (uint16_t *)&state); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
+			err = devModbus::Process(FC_MODBUS_ADR, FC_STATUS - 1, (uint16_t *)&state, READ_HOLDING); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
 			if(check_blockFC()) break; // проверить необходимость блокировки
 			_delay(FC_DELAY_REPEAT);
 		}
@@ -226,6 +227,24 @@ int8_t devVaconFC::get_readState()
 			SETBIT1(flags, fErrFC); // Блок инвертора
 			set_Error(err, name); // генерация ошибки
 			return err; // Возврат
+		}
+		FC_Temp = read_0x03_16(FC_TEMP);
+		if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
+			write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN);
+			set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
+			return err;
+		}
+		if(_data.FC_TargetTemp && FC_Temp) {
+#ifdef FC_VLT
+			if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+			else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
+#else
+			if(!GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp > _data.FC_TargetTemp && write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN) == OK) {  // подать команду
+				SETBIT1(flags, fFC_CoolerFAN_On);
+			} else if(GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS && write_0x06_16(FC_CONTROL, 0) == OK) { // подать команду
+				SETBIT0(flags, fFC_CoolerFAN_On);
+			}
+#endif
 		}
 		if(GETBIT(flags, fOnOff)) { // ТН включил компрессор, проверяем состояние инвертора
 			if(state & FC_S_FLT) { // Действующий отказ
@@ -327,23 +346,6 @@ int8_t devVaconFC::get_readState()
 				err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
 				if(err) return err;
 			}
-		}
-		FC_Temp = read_0x03_16(FC_TEMP);
-		if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
-			set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
-			return err;
-		}
-		if(_data.FC_TargetTemp && FC_Temp) {
-#ifdef FC_VLT
-			if(FC_Temp > _data.FC_TargetTemp) write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN | (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
-			else if(FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS) write_0x06_16(FC_CONTROL, (state & FC_S_RUN ? FC_C_RUN : 0)); // подать команду
-#else
-			if(!GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp > _data.FC_TargetTemp && write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN) == OK) {  // подать команду
-				SETBIT1(flags, fFC_CoolerFAN_On);
-			} else if(GETBIT(flags, fFC_CoolerFAN_On) && FC_Temp < _data.FC_TargetTemp - FC_COOLER_FUN_HYSTERESIS && write_0x06_16(FC_CONTROL, 0) == OK) { // подать команду
-				SETBIT0(flags, fFC_CoolerFAN_On);
-			}
-#endif
 		}
 #else // Аналоговое управление
 		err = OK;
@@ -774,7 +776,7 @@ boolean devVaconFC::set_paramFC(char *var, float f)
     if(strcmp(var,fc_MaxPowerOnBackup)==0)	    { _data.MaxPowerOnBackup = x; return true; } else
     if(strcmp(var,fc_FC_MaxTemp)==0)  		    { _data.FC_MaxTemp = x; return true; } else
     if(strcmp(var,fc_FC_TargetTemp)==0)  	    { _data.FC_TargetTemp = x; return true; } else
-    if(strcmp(var,W_Modbus_Attempts)==0)  	    { _data.Modbus_Attempts = x; return true; } else
+    if(strcmp(var,W_Modbus_Attempts)==0)  	    { _data.Modbus_Attempts = x > 0 ? x : 1; return true; } else
    
 	x = rd(f, 100);
     	if(strcmp(var,fc_DT_COMP_TEMP)==0)          { if(x>=0 && x<2500){_data.dtCompTemp=x;return true; } else return false; } else // градусы
@@ -935,7 +937,7 @@ boolean devVaconFC::reset_errorFC()
 		}
 		if(err) journal.jprintf("%s: Error reset fault!\n", name);
 	}
-    read_stateFC();
+	modbus(FC_STATUS, &state, READ_HOLDING);
 #endif
     return err == OK;
 }
@@ -955,16 +957,6 @@ boolean devVaconFC::reset_FC()
     return err == OK;
 }
 
-// Текущее состояние инвертора
-inline int16_t devVaconFC::read_stateFC()
-{
-#ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
-    return state = read_0x03_16(FC_STATUS);
-#else
-    return 0;
-#endif
-}
-
 // Tемпература радиатора, C
 int16_t devVaconFC::read_tempFC()
 {
@@ -976,117 +968,50 @@ int16_t devVaconFC::read_tempFC()
 //#endif
 }
 
-// Функции общения по модбас инвертора Чтение регистров
+// Функции общения по модбас инвертора
 #ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
-// Функция 0х03 прочитать 2 байта, возвращает значение, ошибка обновляется
-// Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
-int16_t devVaconFC::read_0x03_16(uint16_t cmd)
-{
-    int16_t result = 0;
-    if(!get_present()) return result; // выходим если нет инвертора
-    uint8_t i = _data.Modbus_Attempts;
-    // делаем n попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
-    while(1) {
-        err = Modbus.readHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, (uint16_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) {
-        	check_blockFC();
-        	break; // Прочитали удачно
+
+template <typename T> int8_t devVaconFC::modbus(uint16_t cmd, T *data, ModbusOp op) {
+    if(!get_present()) return OK;
+    int8_t localErr = ERR_CONFIG;
+    uint8_t attempts = this->_data.Modbus_Attempts;
+    for (uint8_t i = 0; i < attempts; i++) {
+
+        // Вызов транспортного уровня
+        localErr = devModbus::Process(FC_MODBUS_ADR, cmd - 1, data, op);
+
+        if(localErr == OK) {
+            this->check_blockFC();
+            return OK;
         }
+
+        // Проверки питания
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
-        if(HP.sInput[SPOWER].is_alarm()) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
-        }
+        if(HP.sInput[SPOWER].is_alarm()) return ERR_NO_POWER_WHILE_WORK;
 #endif
-        if(GETBIT(HP.Option.flags, fBackupPower)) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
+        if(GETBIT(HP.Option.flags, fBackupPower)) return ERR_NO_POWER_WHILE_WORK;
+        if(this->state == ERR_LINK_FC) return ERR_LINK_FC;
+
+        this->numErr++;
+
+        if(i == attempts - 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
+            journal.jprintf_time(cErrorRS485, this->name, "fcProcess", cmd, localErr);
         }
-        if(state == ERR_LINK_FC) {
-        	result = ERR_LINK_FC;
-        	break;
-        }
-        numErr++; // число ошибок чтение по модбасу
-        if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
-        if(check_blockFC()) break; // проверить необходимость блокировки
-        if(i-- <= 1) break;
-        _delay(FC_DELAY_REPEAT);
+
+        if(this->check_blockFC()) break;
+        if(i < attempts - 1) vTaskDelay(1);
     }
-    return result;
+    return localErr;
 }
 
-// Функция 0х03 прочитать 2 байта, возвращает значение, ошибка обновляется
-// Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
-uint32_t devVaconFC::read_0x03_32(uint16_t cmd)
-{
-    uint32_t result = 0;
-    if(!get_present() || state == ERR_LINK_FC) return 0; // выходим если нет инвертора или он заблокирован по ошибке
-    uint8_t i = _data.Modbus_Attempts;
-    while(1) {
-        err = Modbus.readHoldingRegisters32(FC_MODBUS_ADR, cmd - 1, (uint32_t *)&result); // Послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) {
-        	check_blockFC();
-        	break; // Прочитали удачно
-        }
-#ifdef SPOWER
-        HP.sInput[SPOWER].Read(true);
-        if(HP.sInput[SPOWER].is_alarm()) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
-        }
-#endif
-        if(GETBIT(HP.Option.flags, fBackupPower)) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
-        }
-        if(state == ERR_LINK_FC) {
-        	result = ERR_LINK_FC;
-        	break;
-        }
-        numErr++; // число ошибок чтение по модбасу
-        if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
-        if(check_blockFC()) break; // проверить необходимость блокировки
-        if(i-- <= 1) break;
-        _delay(FC_DELAY_REPEAT);
-    }
-    return result;
-}
+// ГЕНЕРАЦИЯ КОДА (Explicit Instantiation)
+template int8_t devVaconFC::modbus(uint16_t, uint16_t*, ModbusOp);
+template int8_t devVaconFC::modbus(uint16_t, int16_t*, ModbusOp);
+template int8_t devVaconFC::modbus(uint16_t, uint32_t*, ModbusOp);
+//template int8_t devVaconFC::modbus(uint16_t, float*, ModbusOp);
 
-// Запись данных (2 байта) в регистр cmd возвращает код ошибки
-// Реализовано _data.Modbus_Attempts попыток чтения/записи в инвертор
-int8_t devVaconFC::write_0x06_16(uint16_t cmd, uint16_t data)
-{
-    if(!get_present() || state == ERR_LINK_FC) return err; // выходим если нет инвертора или он заблокирован по ошибке
-    uint8_t i = _data.Modbus_Attempts;
-    while(1) {
-        err = Modbus.writeHoldingRegisters16(FC_MODBUS_ADR, cmd - 1, data); // послать запрос, Нумерация регистров с НУЛЯ!!!!
-        if(err == OK) {
-        	check_blockFC();
-        	break; // Записали удачно
-        }
-#ifdef SPOWER
-        HP.sInput[SPOWER].Read(true);
-        if(HP.sInput[SPOWER].is_alarm()) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
-        }
-#endif
-        if(GETBIT(HP.Option.flags, fBackupPower)) {
-        	err = ERR_NO_POWER_WHILE_WORK;
-        	break;
-        }
-        if(state == ERR_LINK_FC) {
-        	break;
-        }
-        numErr++; // число ошибок чтение по модбасу
-        if(number_err == _data.Modbus_Attempts-1 || GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorRS485, name, __FUNCTION__, cmd, err); 	// Сообщение об ошибке
-        if(check_blockFC()) break; // проверить необходимость блокировки
-        if(i-- <= 1) break;
-       _delay(FC_DELAY_REPEAT);
-    }
-    return err;
-}
+
 #endif // FC_ANALOG_CONTROL    // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 
 #ifdef FC_VLT

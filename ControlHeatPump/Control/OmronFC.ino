@@ -717,7 +717,7 @@ int16_t devOmronMX2::read_tempFC()
       if ((!get_present())||(GETBIT(flags,fErrFC))) return false;             // выходим если нет инвертора или он заблокирован по ошибке
       for(i=0;i<FC_NUM_READ;i++)   // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
          { 
-         err=Modbus.readCoil(FC_MODBUS_ADR,cmd-1, &result);              // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
+         err=devModbus::Process(FC_MODBUS_ADR,cmd-1, &result, READ_COILS);              // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
          if (err==OK) break;                                                // Прочитали удачно
          _delay(FC_DELAY_REPEAT);
          journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
@@ -738,7 +738,7 @@ int16_t devOmronMX2::read_tempFC()
     
         for(i=0;i<FC_NUM_READ;i++)   // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
             { 
-            err=Modbus.readHoldingRegisters16(FC_MODBUS_ADR,cmd-1,&result);  // Послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
+            err=devModbus::Process(FC_MODBUS_ADR,cmd-1,&result,READ_HOLDING);  // Послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
             if (err==OK) break;                                                 // Прочитали удачно
             _delay(FC_DELAY_REPEAT);
              journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
@@ -760,7 +760,7 @@ int16_t devOmronMX2::read_tempFC()
         if ((!get_present())||(GETBIT(flags,fErrFC))) return 0;            // выходим если нет инвертора или он заблокирован по ошибке
         for(i=0;i<FC_NUM_READ;i++)   // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
           { 
-           err=Modbus.readHoldingRegisters32(FC_MODBUS_ADR,cmd-1,&result);  // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
+           err=devModbus::Process(FC_MODBUS_ADR,cmd-1,&result,READ_HOLDING);  // послать запрос, Нумерация регистров MX2 с НУЛЯ!!!!
            if (err==OK) break;                                                 // Прочитали удачно
           _delay(FC_DELAY_REPEAT);
           journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                 // Выводим сообщение о повторном чтении
@@ -782,7 +782,7 @@ int16_t devOmronMX2::read_tempFC()
       for(i=0;i<0x0a;i++) error.inputBuf[i]=0;
       for(i=0;i<FC_NUM_READ;i++)   // делаем FC_NUM_READ попыток чтения Чтение состояния инвертора, при ошибке генерация общей ошибки ТН и останов
          { 
-         err = Modbus.readHoldingRegistersNN(FC_MODBUS_ADR,cmd-1,0x0a,error.inputBuf);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
+         err = devModbus::ReadHoldingRegisters(FC_MODBUS_ADR,cmd-1,0x0a,error.inputBuf);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
          if (err==OK) break;                                                 // Прочитали удачно
          _delay(FC_DELAY_REPEAT);
          journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                 // Выводим сообщение о повторном чтении
@@ -806,8 +806,8 @@ int16_t devOmronMX2::read_tempFC()
       if ((!get_present())||(GETBIT(flags,fErrFC))) return err;     // выходим если нет инвертора или он заблокирован по ошибке
       for(i=0;i<FC_NUM_READ;i++)   // делаем FC_NUM_READ попыток записи
          {   
-            if (f) err=Modbus.writeSingleCoil(FC_MODBUS_ADR,cmd-1,1);   // послать запрос, Нумерация регистров с НУЛЯ!!!!
-            else   err=Modbus.writeSingleCoil(FC_MODBUS_ADR,cmd-1,0);
+    	 uint_8_t d = f;
+    	 	err = devModbus::Process(FC_MODBUS_ADR,cmd-1,f,WRITE_COIL);
             if (err==OK) break;                                            // Записали удачно
             _delay(FC_DELAY_REPEAT);
            journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);             // Выводим сообщение о повторном чтении
@@ -825,7 +825,7 @@ int16_t devOmronMX2::read_tempFC()
       if ((!get_present())||(GETBIT(flags,fErrFC))) return err;              // выходим если нет инвертора или он заблокирован по ошибке
        for(i=0;i<FC_NUM_READ;i++)                                          // делаем FC_NUM_READ попыток записи
          {
-           err=Modbus.writeHoldingRegisters16(FC_MODBUS_ADR,cmd-1,data);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
+           err=devModbus::Process(FC_MODBUS_ADR,cmd-1,&data, WRITE_HOLDING);  // послать запрос, Нумерация регистров с НУЛЯ!!!!
            if (err==OK) break;                                               // Записали удачно
            _delay(FC_DELAY_REPEAT);
            journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении
@@ -843,7 +843,7 @@ int16_t devOmronMX2::read_tempFC()
       if ((!get_present())||(GETBIT(flags,fErrFC))) return err;             // выходим если нет инвертора или он заблокирован по ошибке
       for(i=0;i<FC_NUM_READ;i++)                                          // делаем FC_NUM_READ попыток записи
          {  
-           err=Modbus.writeHoldingRegisters32(FC_MODBUS_ADR, cmd-1, data);// послать запрос, Нумерация регистров с НУЛЯ!!!!
+           err=devModbus::Process(FC_MODBUS_ADR, cmd-1, &data, WRITE_HOLDING);// послать запрос, Нумерация регистров с НУЛЯ!!!!
            if (err==OK) break;                                               // Записали удачно
            _delay(FC_DELAY_REPEAT);
            journal.jprintf(cErrorRS485,name,__FUNCTION__,cmd,err);                // Выводим сообщение о повторном чтении

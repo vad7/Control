@@ -5017,7 +5017,7 @@ const char *noteTemp[] = {"Температура улицы",
 // =============================================== C O N F I G   7 ===================================================================
 // -----------------------------------------------------------------------------------------------------------------------------------
 #ifdef CONFIG_7    // Имя и описание конфигурации и ОСОБЕННОСТИ конфигурации ---------------------------------------------------------
-//	#define TEST_BOARD 		2		// Тестовая плата! (2 - тестовая, где I2C addr=0x50 и LED на D44)
+	#define TEST_BOARD 		2		// Тестовая плата! (2 - тестовая, где I2C addr=0x50 и LED на D44)
 
 	#define CONFIG_NAME   "vad7"
 	#define CONFIG_NOTE   "Частотник,Охлаждение,ЭРВ,РТО,ТП,Котел,ВаттРоутер. (Vacon 10,HLP068T4LC6,B3-052-46-HQ,HE 4.0,ETS 6-25)"
@@ -5165,9 +5165,9 @@ const char *noteTemp[] = {"Температура улицы",
 		#define HEATER_MODBUS_ADDR		240		// Адаптер Opentherm - RS485(Modbus), по умолчанию 0xF0 или 0x1B
 		#define HP_SCHEME_HEATER		6		// Номер схемы который выводится на веб-морде при активном Котле
 		#define HEATER_MODBUS_PORT		Serial4	// Управление через Modbus (Адаптер ectoControl OpenTherm RS485)
+		#define MODBUS_HEATER_DEDICATED			// Выделенная RS485 шина под котел (RS485_2)
 		#define HEATER_MODBUS_SPEED		19200
 		#define HEATER_MODBUS_CONFIG	SERIAL_8N1
-		#define MODBUS_HEATER_GE		HEATER_MODBUS_ADDR	// Переключение портов - если больше или равно, то HEATER_MODBUS_PORT иначе MODBUS_PORT_NUM
 		//#define HEATER_MODBUS_RELAY_ADDR	11	// Адрес Modbus Реле включения нагревателя
 		//#define HEATER_MODBUS_RELAY_ID	0	// Номер Реле включения нагревателя (нумерация с 0)
 		//#define HEATER_MODBUS_3WAY_ADDR	11	// Адрес Modbus Реле трехходового клапана: нагреватель - ТН
@@ -5193,8 +5193,6 @@ const char *noteTemp[] = {"Температура улицы",
 	#define MODBUS_REPEAT_DELAY		10			// Задержка перед повторным чтением, мсек
 	#define MODBUS_TIME_TRANSMISION 0           // Пауза (msec) между запросом и ответом по модбас было 4, если заремарено, то паузы между отправко и получением - нет.
 	#define MODBUS_NO_WAIT_BEFORE_RECEIVE		// Не ожидать перед получением ответа
-	//#define MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT	// Не блокировать другие задачи во время отправки
-	//#define PIN_MODBUS_RSE          22          // Не используется из-за платы UART-RS485! Управление направлением передачи 485 для связи с инвертором по Modbus (1-передача 0-прием)
 	#define SDM_READ_PERIOD     	30000       // Время опроса счетчика, не важных параметров (0 - нет), в ms
 	#define SDM_NUM_READ        	2           // Число попыток чтения счетчика подряд до его отключения (если SDM_BLOCK), ошибка не генерится
 
@@ -5925,7 +5923,6 @@ const char *noteTemp[] = {"Температура улицы",
 		{ STATS_OBJ_Temp, TCONOUTG },
 		{ STATS_OBJ_Temp, TEVAOUT },
 		{ STATS_OBJ_Temp, TCONOUT },
-		{ STATS_OBJ_Temp, TSUN },
 		{ STATS_OBJ_Flow, FLOWEVA },
 		{ STATS_OBJ_Flow, FLOWCON },
 		//{ STATS_OBJ_Press, PGEO },

@@ -141,7 +141,7 @@ public:
 	void	init();									// Инициализация
 	void 	check_link(void);						// Проверка связи с корретировкой температур подачи и бойлера
 	int8_t	read_state(uint8_t group);				// Текущее состояние
-	int8_t	set_target(uint16_t temp); 				// Установить целевую температуру
+	int8_t	set_target(int16_t temp); 				// Установить целевую температуру
 	uint8_t	*get_save_addr(void) { return (uint8_t *)&set; }// Адрес структуры сохранения
 	uint16_t get_save_size(void) { return sizeof(set); }// Размер структуры сохранения
 	bool	get_param(char *var, char *ret);		// Получить параметр в виде строки - get_HP('x')
@@ -164,8 +164,8 @@ public:
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
 	uint16_t Heater_Error2;							// ошибка котла дополнительная
-	uint8_t  curr_temp;								// текущая установка, градусы
-	uint8_t  curr_boiler_temp;						// текущая установка бойлера, градусы
+	uint8_t  target_temp;							// текущая установка, градусы
+	uint8_t  target_boiler_temp;					// текущая установка бойлера, градусы
 
 private:
 	uint8_t  fwork;									// рабочие флаги

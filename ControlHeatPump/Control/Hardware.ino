@@ -197,7 +197,7 @@ void sensorADC::initSensorADC(uint8_t sensor, uint8_t pinA, uint16_t filter_size
 #ifdef ANALOG_MODBUS
 		 if(get_fmodbus()) {
 			 for(uint8_t i = 0; i < ANALOG_MODBUS_NUM_READ; i++) {
-				 err = Modbus.readHoldingRegisters16(ANALOG_MODBUS_ADDR[cfg.number], ANALOG_MODBUS_REG[cfg.number] - 1, &adc_lastVal);
+				 err = devModbus::Process(ANALOG_MODBUS_ADDR[cfg.number], ANALOG_MODBUS_REG[cfg.number] - 1, &adc_lastVal, READ_HOLDING);
 				 if(err == OK) {
 					 lastADC = adc_lastVal;
 					 break;
@@ -1557,17 +1557,16 @@ int8_t devSDM::initSDM()
 	note = (char*) noteSDM_NONE;
 
 #ifdef USE_ELECTROMETER_SDM
-	if(!Modbus.get_present())                  // modbus отсутствует
-	{
-		journal.jprintf("%s: modbus not found, block.\n", name);
-		SETBIT0(flags, fSDM);                           // счетчик не представлен
-		SETBIT0(flags, fSDMLink);
-		err = ERR_NO_MODBUS;
-	} else {
-		SETBIT1(flags, fSDM);                           // счетчик представлен
-		note = (char*) noteSDM;
-		//check_link();                                  // проверить связь со счетчиком
-	}
+	#ifdef MODBUS_PORT_NUM 							// Modbus есть
+	SETBIT1(flags, fSDM);                           // счетчик представлен
+	note = (char*) noteSDM;
+	//check_link();                                  // проверить связь со счетчиком
+	#else
+	journal.jprintf("%s: modbus not found, block.\n", name);
+	SETBIT0(flags, fSDM);                           // счетчик не представлен
+	SETBIT0(flags, fSDMLink);
+	err = ERR_NO_MODBUS;
+	#endif
 #else
 	SETBIT0(flags,fSDM);                           // счетчик не представлен
 	SETBIT0(flags,fSDMLink);
@@ -1586,7 +1585,7 @@ boolean devSDM::check_link()
 	while (1) {
 #ifdef USE_NOT_SDM_METER
 		uint16_t tmp;
-		if((errModbus=Modbus.readHoldingRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp)) == OK) {
+		if((errModbus=devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp, READ_HOLDING)) == OK) {
 			SETBIT1(flags, fSDMLink);
 			journal.jprintf("%s, found, link OK, modbus address:%d\n", name, SDM_MODBUS_ADR);
 			return true;
@@ -1600,7 +1599,7 @@ boolean devSDM::check_link()
 		}
 #else
 		float band;
-		if(((errModbus=Modbus.readHoldingRegistersFloat(SDM_MODBUS_ADR, SDM_BAUD_RATE, &band)) == OK) && (band == SDM_SPEED)) {
+		if(((errModbus=devModbus::Process(SDM_MODBUS_ADR, SDM_BAUD_RATE, &band, READ_HOLDING)) == OK) && (band == SDM_SPEED)) {
 			SETBIT1(flags, fSDMLink);
 			journal.jprintf("%s, found, link OK, modbus address: %d\n", name, SDM_MODBUS_ADR);
 			return true;
@@ -1632,10 +1631,10 @@ boolean  devSDM::progConnect()
 #ifdef USE_NOT_SDM_METER
 	return true;
 #else
-  float band; 
+  float f;
   journal.jprintf("%s: Setting band rate and modbus address.\n",name); 
   // 1. Проверка
-  if ((Modbus.readHoldingRegistersFloat(SDM_MODBUS_ADR,SDM_BAUD_RATE,&band)==OK)&&(band==SDM_SPEED)) {SETBIT1(flags,fSDMLink); journal.jprintf(" Setting %s are correct, programming is not required\n",name);  return true;} 
+  if ((devModbus::Process(SDM_MODBUS_ADR,SDM_BAUD_RATE,&f,READ_HOLDING)==OK)&&(f==SDM_SPEED)) {SETBIT1(flags,fSDMLink); journal.jprintf(" Setting %s are correct, programming is not required\n",name);  return true;}
   
   // 2. Установка скорости по умолчанию
   
@@ -1643,11 +1642,13 @@ boolean  devSDM::progConnect()
   err=OK;
   
   // 3. На DEFAULT_SDM_SPEED скорости установить правильный адрес SDM_MODBUS_ADR
-  if( (err=Modbus.writeHoldingRegistersFloat(DEFAULT_SDM_MODBUS_ADR,SDM_ADR_MODBUS,SDM_MODBUS_ADR))==OK)  journal.jprintf("%s: Set address  %d.\n",name,SDM_MODBUS_ADR);  // установить требуемемый адрес
+  f = SDM_MODBUS_ADR;
+  if( (err=devModbus::Process(DEFAULT_SDM_MODBUS_ADR,SDM_ADR_MODBUS,&f, WRITE_MULTIPLE))==OK)  journal.jprintf("%s: Set address  %d.\n",name,SDM_MODBUS_ADR);  // установить требуемемый адрес
   else  journal.jprintf("%s: Setting address error, code %d.\n",name,err); 
   
   // 4. На правильный адрес SDM_MODBUS_ADR установит желаемую скорость SDM_SPEED
-  if( (err=Modbus.writeHoldingRegistersFloat(SDM_MODBUS_ADR, SDM_BAUD_RATE,SDM_SPEED))==OK)  journal.jprintf("%s: Set band rate (0=2400bps 1=4800bps 2=9600bps 5=1200bps) %d.\n",name,SDM_SPEED);  // установить требуемую скорость
+  f = SDM_SPEED;
+  if( (err=devModbus::Process(SDM_MODBUS_ADR, SDM_BAUD_RATE,&f, WRITE_MULTIPLE))==OK)  journal.jprintf("%s: Set band rate (0=2400bps 1=4800bps 2=9600bps 5=1200bps) %d.\n",name,SDM_SPEED);  // установить требуемую скорость
   else  journal.jprintf("%s: Setting band rate error, code %d.\n",name,err);
   
   // 5. Порт обратно в требуемые настройки
@@ -1688,21 +1689,21 @@ int8_t devSDM::get_readState(uint8_t group)
 		if(group == 0) {
 #ifdef USE_NOT_SDM_METER
 	#ifdef USE_PZEM004T
-			_err = Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp, READ_INPUT);
 			if(_err == OK) AcPower = tmp / 10; else goto xErr;
 	#else
-			_err = Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp16[0]);
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp16[0], READ_INPUT);
 			if(_err == OK) AcPower = tmp16[0]; else goto xErr;
 	#endif
 #else
-			_err = Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp);
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_AC_POWER, &tmp, READ_INPUT);
 			if(_err == OK) AcPower = tmp; else goto xErr;
 #endif
 /*
 #ifdef USE_NOT_SDM_METER
-			_err = Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp); // Суммарная активная энергия
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT); // Суммарная активная энергия
 #else
-			_err = Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp); // Суммарная активная энергия
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT); // Суммарная активная энергия
 #endif
 			if(_err == OK) {
 				if(AcEnergy == -1.0f) AcEnergy = tmp;
@@ -1715,10 +1716,10 @@ int8_t devSDM::get_readState(uint8_t group)
 		if(group == 2) {
 #if defined(SDM_MAX_VOLTAGE) || defined(SDM_MIN_VOLTAGE) || (SDM_READ_PERIOD > 0)
 #ifdef USE_NOT_SDM_METER
-			_err = Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]);   // Напряжение
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0], READ_INPUT);   // Напряжение
 			if(_err==OK) { Voltage = tmp16[0] / 10; group = 1; } else goto xErr;
 #else
-			_err = Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp);   // Напряжение
+			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp, READ_INPUT);   // Напряжение
 			if(_err==OK) { Voltage = tmp; group = 1; } else goto xErr;
 #endif
 #endif
@@ -1780,9 +1781,9 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 		_itoa(Voltage, ret);
 #else
 #ifdef USE_NOT_SDM_METER
-		if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0]) == OK) _dtoa(ret, tmp16[0], 1); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0], READ_INPUT) == OK) _dtoa(ret, tmp16[0], 1); else strcat(ret, "ERR");
 #else
-		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp, READ_INPUT) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 #endif
 		return ret;
@@ -1790,12 +1791,12 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	if(strcmp(var,sdm_CURRENT)==0){ // Ток
 #ifdef USE_NOT_SDM_METER
 	#ifdef USE_PZEM004T
-		if(Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_CURRENT, &tmp) == OK) _dtoa(ret, tmp, 3); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_CURRENT, &tmp, READ_INPUT) == OK) _dtoa(ret, tmp, 3); else strcat(ret, "ERR");
 	#else
-		if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_CURRENT, &tmp16[0]) == OK) _dtoa(ret, tmp * 10, 3); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_CURRENT, &tmp16[0], READ_INPUT) == OK) _dtoa(ret, tmp * 10, 3); else strcat(ret, "ERR");
 	#endif
 #else
-		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_CURRENT, &tmp, READ_INPUT) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
 #endif
 		return ret;
 	}else
@@ -1805,7 +1806,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	}else
 	if(strcmp(var,sdm_ACENERGY)==0){ // Суммарная активная энергия
 #ifdef USE_NOT_SDM_METER
-		if(Modbus.readInputRegisters32(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK)
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT) == OK)
 	#ifdef USE_PZEM004T
 			_dtoa(ret, tmp, 3);
 	#else
@@ -1813,7 +1814,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	#endif
 		else strcat(ret, "ERR");
 #else
-		if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
+		if(devModbus::Process(SDM_MODBUS_ADR, SDM_AC_ENERGY, &tmp, READ_INPUT) == OK) _ftoa(ret, tmp, 3); else strcat(ret, "ERR");
 #endif
 		return ret;
 	}else
@@ -1835,11 +1836,11 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	else {
 		if(GETBIT(flags,fSDMLink)) {
 	//		   if(strcmp(var,sdm_CURRENT)==0){
-	//			   Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_CURRENT, &tmp);
+	//			   devModbus::Process(SDM_MODBUS_ADR, SDM_CURRENT, &tmp, READ_INPUT);
 	//			   _ftoa(ret, tmp, 2);																			   }else       // Ток
 		   if(strcmp(var,sdm_POW_FACTOR)==0){
 #ifdef USE_NOT_SDM_METER
-			   if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp16[0]) == OK)
+			   if(devModbus::Process(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp16[0], READ_INPUT) == OK)
 	#ifdef USE_PZEM004T
 				   _dtoa(ret, tmp16[0], 2);
 	#else
@@ -1847,17 +1848,17 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	#endif
 			   	else strcat(ret, "ERR");
 #else
-			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
+			   if(devModbus::Process(SDM_MODBUS_ADR, SDM_POW_FACTOR, &tmp, READ_INPUT) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 		   } else if(strcmp(var,sdm_PHASE)==0){
 #ifdef USE_NOT_SDM_METER
 			   strcat(ret, "-");
 #else
-			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_PHASE, &tmp) == OK); else _ftoa(ret, tmp, 2);
+			   if(devModbus::Process(SDM_MODBUS_ADR, SDM_PHASE, &tmp, READ_INPUT) == OK); else _ftoa(ret, tmp, 2);
 #endif
 		   } else if(strcmp(var,sdm_FREQ)==0){
 #ifdef USE_NOT_SDM_METER
-			   if(Modbus.readInputRegisters16(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp16[0]) == OK)
+			   if(devModbus::Process(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp16[0], READ_INPUT) == OK)
 	#ifdef USE_PZEM004T
 				   _dtoa(ret, tmp16[0], 1);
 	#else
@@ -1865,7 +1866,7 @@ char* devSDM::get_paramSDM(char *var, char *ret)
 	#endif
 			   	else strcat(ret, "ERR");
 #else
-			   if(Modbus.readInputRegistersFloat(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
+			   if(devModbus::Process(SDM_MODBUS_ADR, SDM_FREQUENCY, &tmp, READ_INPUT) == OK) _ftoa(ret, tmp, 2); else strcat(ret, "ERR");
 #endif
 		   }
 	   }
@@ -1893,36 +1894,26 @@ boolean devSDM::set_paramSDM(char *var, char *c)
 	return false;
 }
 
-// МОДБАС Устройство ----------------------------------------------------------
+// МОДБАС Устройства ----------------------------------------------------------
 // функции обратного вызова
-#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
-static uint8_t Modbus_Entered_Critical = 0;
-#endif
-static inline void idle() // задержка между чтениями отдельных байт по Modbus
+static inline void Modbus_idle() // задержка между чтениями отдельных байт по Modbus
 {
-//		delay(1);		// Не отдает время другим задачам
 	_delay(1);		// Отдает время другим задачам
 }
 #if defined(PIN_MODBUS_RSE) || !defined(MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT)
-static inline void preTransmission() // Функция вызываемая ПЕРЕД началом передачи
+static inline void Modbus_preTransmission() // Функция вызываемая ПЕРЕД началом передачи
 {
+/*
 #ifdef PIN_MODBUS_RSE
       digitalWriteDirect(PIN_MODBUS_RSE, HIGH);
       _delay(1);       // что бы слейв не терял первый бит повышается надежность передачи
 #endif
-#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
-      Modbus_Entered_Critical = TaskSuspendAll(); // Запрет других задач во время передачи по Modbus 	
-#endif
+*/
 }
 
 // Функция вызываемая ПОСЛЕ окончания передачи
-static inline void postTransmission() {
-#ifndef MODBUS_NO_SUSPEND_TASK_ON_TRANSMIT
-	if(Modbus_Entered_Critical) {
-		xTaskResumeAll();
-		Modbus_Entered_Critical = 0;
-	}
-#endif
+static inline void Modbus_postTransmission() {
+/*
 #if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
 	while(!(MODBUS_PORT_NUM.availableForWrite() >= SERIAL_BUFFER_SIZE-1 && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY))) _delay(1);
 #endif
@@ -1932,550 +1923,11 @@ static inline void postTransmission() {
 	#endif
     digitalWriteDirect(PIN_MODBUS_RSE, LOW);
 #endif
+*/
 }
 #endif
 
-// Инициализация Modbus без проверки связи связи
-int8_t devModbus::initModbus()
-{
-	flags = 0x00;
-#if defined(MODBUS_PORT_NUM) || defined(USE_HEATER)
-#ifdef PIN_MODBUS_RSE
-	pinMode(PIN_MODBUS_RSE , OUTPUT);                                            // Подготовка управлением полудуплексом
-	digitalWriteDirect(PIN_MODBUS_RSE , LOW);
-#endif
-#ifdef MODBUS_PORT_NUM
-	MODBUS_PORT_NUM.begin(MODBUS_PORT_SPEED, MODBUS_PORT_CONFIG);                 // SERIAL_8N1 - настройки по умолчанию
-	//MODBUS_PORT_NUM.setInterruptPriority(1);
-#endif
-#ifdef USE_HEATER
-	HEATER_MODBUS_PORT.begin(HEATER_MODBUS_SPEED, HEATER_MODBUS_CONFIG);
-#else
-    RS485.begin(1, MODBUS_PORT_NUM);                                              // Привязать к сериал
-#endif
-    set_timeouts(0);
-	// Назначение функций обратного вызова
-#ifdef MODBUS_TIME_TRANSMISION
-	RS485.preTransmission(preTransmission);
-	RS485.postTransmission(postTransmission);
-#endif
-	RS485.idle(idle);
-	SETBIT1(flags, fModbus);                                                      // модбас присутствует
-	err = OK;                                                                      // Связь есть
-#else
-    // модбас отсутвует
-    err=ERR_NO_MODBUS;
-#endif
-	return err;
-}
 
-// Задать таймауты в зависимости от устройства на шине
-void devModbus::set_timeouts(uint8_t id)
-{
-#ifdef MODBUS_HEATER_GE
-	if(id >= MODBUS_HEATER_GE) {
-		RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
-		RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusResponseTimeout;
-	} else
-#endif
-	{
-		RS485.ModbusMinTimeBetweenTransaction = HP.Option.ModbusMinTimeBetweenTransaction;
-		RS485.ModbusResponseTimeout = HP.Option.ModbusResponseTimeout;
-	}
-}
-
-// Задать таймауты в зависимости от устройства на шине
-void devModbus::set_timeouts_for_write(uint8_t id)
-{
-#ifdef MODBUS_HEATER_GE
-	if(id >= MODBUS_HEATER_GE) {
-		RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
-		RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusWriteResponseTimeout;
-	} else
-#endif
-	{
-		RS485.ModbusMinTimeBetweenTransaction = HP.Option.ModbusMinTimeBetweenTransaction;
-		RS485.ModbusResponseTimeout = HP.Option.ModbusResponseTimeout;
-	}
-}
-
-// ФУНКЦИИ ЧТЕНИЯ ----------------------------------------------------------------------------------------------
-// Получить значение 2-x (Modbus function 0x04 Read Input Registers) регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-int8_t devModbus::readInputRegistersFloat(uint8_t id, uint16_t cmd, float *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readInputRegisters(cmd, 2);                                               // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		err = OK;
-		*ret = fromInt16ToFloat(RS485.getResponseBuffer(0), RS485.getResponseBuffer(1));
-		SemaphoreGive(xModbusSemaphore);
-		return OK;
-	} else {
-		*ret = 0;
-		SemaphoreGive(xModbusSemaphore);
-		return err = translateErr(result);
-	}
-}
-
-int8_t devModbus::readInputRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readInputRegisters(cmd, 1);
-	if(result == RS485.ku8MBSuccess) {
-		*ret = RS485.getResponseBuffer(0);
-		err = OK;
-	} else {
-		err = translateErr(result);
-	}
-	SemaphoreGive(xModbusSemaphore);
-	return err;
-}
-
-// LITTLE-ENDIAN! 0x04
-int8_t devModbus::readInputRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readInputRegisters(cmd, 2);
-	if(result == RS485.ku8MBSuccess) {
-		*ret = (RS485.getResponseBuffer(1) << 16) | RS485.getResponseBuffer(0);
-		err = OK;
-	} else {
-		err = translateErr(result);
-	}
-	SemaphoreGive(xModbusSemaphore);
-	return err;
-}
-
-// Получить значение регистра (2 байта) в виде целого  числа возвращает код ошибки данные кладутся в ret
-int8_t devModbus::readHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readHoldingRegisters(cmd, 1);                                                   // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		*ret = RS485.getResponseBuffer(0);
-		err = OK;
-	} else {
-		*ret = 0;
-		err = translateErr(result);
-	}
-	SemaphoreGive(xModbusSemaphore);
-	return err;
-}
-    
-// Установить значение регистра (2 байта) МХ2 в виде целого  числа возвращает код ошибки данные data
-int8_t devModbus::writeHoldingRegisters16(uint8_t id, uint16_t cmd, uint16_t data)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-	uint8_t result;
-#ifdef USE_HEATER
-	set_timeouts_for_write(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-	if(id >= MODBUS_HEATER_GE) {
-		RS485.begin(id, HEATER_MODBUS_PORT);	// установка сериала и адреса устройства
-		RS485.send(data);
-		result = RS485.writeMultipleRegisters(cmd, 1);
-	} else {
-		RS485.begin(id, MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-		result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
-	}
-#else
-	RS485.set_slave(id);
-	result = RS485.writeSingleRegister(cmd, data);                                            // послать запрос,
-#endif
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
-}
-
-// Получить значение 2-x регистров (4 байта) в виде целого  числа возвращает код ошибки данные кладутся в ret
-int8_t devModbus::readHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readHoldingRegisters(cmd, 2);                                             // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		*ret = (RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);
-		err = OK;
-	} else {
-		*ret = 0;
-		err = translateErr(result);
-	}
-	SemaphoreGive(xModbusSemaphore);
-	return err;
-}
-
-// Записать 2 регистра подряд возвращает код ошибки
-int8_t devModbus::writeHoldingRegisters32(uint8_t id, uint16_t cmd, uint32_t data)
-{
-	uint8_t result;
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts_for_write(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	RS485.setTransmitBuffer(0, data >> 16);
-	RS485.setTransmitBuffer(1, data & 0xFFFF);
-	result = RS485.writeMultipleRegisters(cmd, 2);                                                 // послать запрос,
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
-}
-      
-// Получить значение 2-x регистров (4 байта) в виде float возвращает код ошибки данные кладутся в ret
-int8_t devModbus::readHoldingRegistersFloat(uint8_t id, uint16_t cmd, float *ret)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE)      // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readHoldingRegisters(cmd, 2);                                             // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		err = OK;
-		*ret = fromInt16ToFloat(RS485.getResponseBuffer(0), RS485.getResponseBuffer(1));
-	} else {
-		err = translateErr(result);
-		*ret = 0;
-	}
-	SemaphoreGive (xModbusSemaphore);
-	return err;
-}
-
-// Записать float как 2 регистра числа возвращает код ошибки данные dat
-int8_t devModbus::writeHoldingRegistersFloat(uint8_t id, uint16_t cmd, float dat)
-{
-	union {
-		float f;
-		uint16_t i[2];
-	} float_map = { .f = dat };
-	uint8_t result;
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts_for_write(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	RS485.setTransmitBuffer(0, float_map.i[1]);
-	RS485.setTransmitBuffer(1, float_map.i[0]);
-	result = RS485.writeMultipleRegisters(cmd, 2);
-	//   result = RS485.writeSingleRegister(cmd,dat);                                               // послать запрос,
-	SemaphoreGive (xModbusSemaphore);
-	return err = translateErr(result);
-}
-
-// Получить значение N регистров c cmd (2*N байта) в виде целого  числа (uint16_t *buf) при ошибке возвращает err
-int8_t devModbus::readHoldingRegistersNN(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
-{
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	uint8_t result = RS485.readHoldingRegisters(cmd, num);                                           // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		for(int16_t i = 0; i < num; i++)
-			buf[i] = RS485.getResponseBuffer(i);
-		err = OK;
-		SemaphoreGive (xModbusSemaphore);
-		return err;
-	} else {
-		err = translateErr(result);
-		SemaphoreGive (xModbusSemaphore);
-		return err;
-	}
-}
-
-// Получить значение N регистров c cmd (2*N байта) в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
-int8_t devModbus::readHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
-{
-#ifdef USE_HEATER
-	uint8_t cnt = id >= MODBUS_HEATER_GE ? HP.dHeater.set.Modbus_Attempts : HP.Option.Modbus_Attempts;
-#else
-	uint8_t cnt = HP.Option.Modbus_Attempts;
-#endif
-	while(1) {
-		// Если шедулер запущен то захватываем семафор
-		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-		{
-			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-			return err = ERR_485_BUZY;
-		}
-	#ifdef USE_HEATER
-		set_timeouts(id);
-		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-	#else
-		RS485.set_slave(id);
-	#endif
-		uint8_t result = RS485.readHoldingRegisters(cmd, num);                          // послать запрос,
-		if(result == RS485.ku8MBSuccess) {
-			for(uint16_t i = 0; i < num; i++) buf[i] = RS485.getResponseBuffer(i);
-			err = OK;
-			SemaphoreGive(xModbusSemaphore);
-			break;
-		} else {
-			err = translateErr(result);
-			SemaphoreGive(xModbusSemaphore);
-			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBReadHoldingRegisters, id, cmd, err);
-		}
-		if(cnt <= 1) break;
-		_delay(MODBUS_REPEAT_DELAY);
-		cnt--;
-	}
-	return err;
-}
-
-// Получить значение num регистров в виде uint16_t, повтор при ошибках, если не получилось - возвращает err
-int8_t devModbus::writeHoldingRegistersNNR(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf)
-{
-#ifdef USE_HEATER
-	uint8_t cnt = id >= MODBUS_HEATER_GE ? HP.dHeater.set.Modbus_Attempts : HP.Option.Modbus_Attempts;
-#else
-	uint8_t cnt = HP.Option.Modbus_Attempts;
-#endif
-	while(1) {
-		// Если шедулер запущен то захватываем семафор
-		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-		{
-			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-			return err = ERR_485_BUZY;
-		}
-	#ifdef USE_HEATER
-		set_timeouts_for_write(id);
-		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-	#else
-		RS485.set_slave(id);
-	#endif
-		for(uint16_t i = 0; i < num; i++) RS485.send(buf[i]);
-		uint8_t result = RS485.writeMultipleRegisters(cmd, num);
-		if(result == RS485.ku8MBSuccess) {
-			err = OK;
-			SemaphoreGive(xModbusSemaphore);
-			break;
-		} else {
-			err = translateErr(result);
-			SemaphoreGive(xModbusSemaphore);
-			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
-		}
-		if(cnt <= 1) break;
-		_delay(MODBUS_REPEAT_DELAY);
-		cnt--;
-	}
-	return err;
-}
-
-// Записать значение регистра в виде целого числа (uint16_t *buf), повтор при ошибках, если не получилось - возвращает err
-int8_t devModbus::writeHoldingRegistersN1R(uint8_t id, uint16_t cmd, uint16_t data)
-{
-#ifdef USE_HEATER
-	uint8_t cnt = id >= MODBUS_HEATER_GE ? HP.dHeater.set.Modbus_Attempts : HP.Option.Modbus_Attempts;
-#else
-	uint8_t cnt = HP.Option.Modbus_Attempts;
-#endif
-	while(1) {
-		// Если шедулер запущен то захватываем семафор
-		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-		{
-			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-			return err = ERR_485_BUZY;
-		}
-	#ifdef USE_HEATER
-		set_timeouts_for_write(id);
-		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-	#else
-		RS485.set_slave(id);
-	#endif
-		RS485.send(data);
-		uint8_t result = RS485.writeMultipleRegisters(cmd, 1);
-		if(result == RS485.ku8MBSuccess) {
-			err = OK;
-			SemaphoreGive(xModbusSemaphore);
-			break;
-		} else {
-			err = translateErr(result);
-			SemaphoreGive(xModbusSemaphore);
-			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteMultipleRegisters, id, cmd, err);
-		}
-		if(cnt-- <= 1) break;
-		_delay(MODBUS_REPEAT_DELAY);
-	}
-	return err;
-}
-
-// прочитать отдельный бит возвращает ошибку Modbus function 0x01 Read Coils.
-int8_t  devModbus::readCoil(uint8_t id,uint16_t cmd, boolean *ret)                    
-{
-uint8_t result;
-// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	result = RS485.readCoils(cmd, 1);                                  // послать запрос, Нумерация регистров с НУЛЯ!!!!
-	if(result == RS485.ku8MBSuccess) {
-		err = OK;
-		SemaphoreGive (xModbusSemaphore);
-		if(RS485.getResponseBuffer(0)) *ret = true;	else *ret = false;
-		return err;
-	} else {
-		err = translateErr(result);
-		SemaphoreGive (xModbusSemaphore);
-		return err;
-	}
-}
-
-
-// ФУНКЦИИ ЗАПИСИ ----------------------------------------------------------------------------------------------
-// установить битовый вход функция Modbus function 0x05 Write Single Coil.
-int8_t devModbus::writeSingleCoil(uint8_t id, uint16_t cmd, uint8_t u8State)
-{
-	uint8_t result;
-	// Если шедулер запущен то захватываем семафор
-	if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-	{
-		journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-		return err = ERR_485_BUZY;
-	}
-#ifdef USE_HEATER
-	set_timeouts_for_write(id);
-	RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-#else
-	RS485.set_slave(id);
-#endif
-	result = RS485.writeSingleCoil(cmd, u8State);                                         // послать запрос,
-	if(result == RS485.ku8MBSuccess) {
-		err = OK;
-		SemaphoreGive (xModbusSemaphore);
-		return err;
-	} else {
-		err = translateErr(result);
-		SemaphoreGive (xModbusSemaphore);
-		return err;
-	}
-}
-
-// установить битовый вход функция Modbus function 0x05 Write Single Coil, при ошибке повторить Modbus_Attempts раз
-int8_t devModbus::writeSingleCoilR(uint8_t id, uint16_t cmd, uint8_t u8State)
-{
-	uint8_t cnt = HP.Option.Modbus_Attempts;
-	while(1) {
-		// Если шедулер запущен то захватываем семафор
-		if(SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) // Захват мютекса потока или ОЖИДАНИНЕ MODBUS_TIME_WAIT
-		{
-			journal.jprintf((char*) cErrorMutexRS485, __FUNCTION__, (id << 16) + cmd);
-			return err = ERR_485_BUZY;
-		}
-	#ifdef USE_HEATER
-		set_timeouts_for_write(id);
-		RS485.begin(id, id >= MODBUS_HEATER_GE ? HEATER_MODBUS_PORT : MODBUS_PORT_NUM);	// установка сериала и адреса устройства
-	#else
-		RS485.set_slave(id);
-	#endif
-		uint8_t result = RS485.writeSingleCoil(cmd, u8State);
-		if(result == RS485.ku8MBSuccess) {
-			err = OK;
-			SemaphoreGive(xModbusSemaphore);
-			break;
-		} else {
-			err = translateErr(result);
-			SemaphoreGive(xModbusSemaphore);
-			if(GETBIT(HP.Option.flags, fModbusLogErrors)) journal.jprintf_time(cErrorModbus, ku8MBWriteSingleCoil, id, cmd, err);
-		}
-		if(cnt-- <= 1) break;
-		_delay(MODBUS_REPEAT_DELAY);
-	}
-	return err;
-}
 
 // Тестирование связи возвращает код ошибки
 #ifndef FC_VACON
@@ -2496,37 +1948,192 @@ int8_t devModbus::LinkTestOmronMX2()
   return err;                                                    
 }
 #endif
+
+// ============================================================================
+// ===                      ПЕРВЫЙ ПОРТ (RS485)                             ===
+// ============================================================================
+template <typename T>
+int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
+    RS485.WaitMinTimeBetweenTransaction();
+    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+        journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
+        return ERR_485_BUZY;
+    }
+    RS485.WaitMinTimeBetweenTransaction();
+    RS485.set_slave(id);
+    uint8_t res = 0;
+
+    if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
+        if (op == READ_COILS || op == READ_DISCRETE) {
+            res = (op == READ_COILS) ? RS485.readCoils(cmd, 1) : RS485.readDiscreteInputs(cmd, 1);
+            if (res == RS485.ku8MBSuccess) *data = (T)bitRead(RS485.getResponseBuffer(0), 0);
+        } else if (op == WRITE_COIL) {
+            res = RS485.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
+        } else if (op == WRITE_COILS) {
+            RS485.setTransmitBuffer(0, (*data) ? 1 : 0);
+            res = RS485.writeMultipleCoils(cmd, 1);
+        }
+    } else {
+        const bool is32bit = (sizeof(T) > 2);
+        if (op == READ_INPUT || op == READ_HOLDING) {
+            res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
+                                     : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+            if (res == RS485.ku8MBSuccess) {
+                uint16_t *p = (uint16_t*)data;
+                if (is32bit) { p[1] = RS485.getResponseBuffer(0); p[0] = RS485.getResponseBuffer(1); }
+                else { *p = RS485.getResponseBuffer(0); }
+            }
+        } else {
+            uint16_t *p = (uint16_t*)data;
+            if (is32bit) {
+                RS485.setTransmitBuffer(0, p[1]); RS485.setTransmitBuffer(1, p[0]);
+                res = RS485.writeMultipleRegisters(cmd, 2);
+            } else {
+                if (op == WRITE_MULTIPLE) {
+                    RS485.setTransmitBuffer(0, *p);
+                    res = RS485.writeMultipleRegisters(cmd, 1);
+                } else {
+                    res = RS485.writeSingleRegister(cmd, *p);
+                }
+            }
+        }
+    }
+    SemaphoreGive(xModbusSemaphore);
+    return translateErr(res);
+}
+
+int8_t devModbus::ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf) {
+    RS485.WaitMinTimeBetweenTransaction();
+    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+        journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
+        return ERR_485_BUZY;
+    }
+    RS485.WaitMinTimeBetweenTransaction();
+    RS485.set_slave(id);
+    uint8_t res = RS485.readHoldingRegisters(cmd, num);
+    if (res == RS485.ku8MBSuccess) {
+        for (uint16_t i = 0; i < num; i++) {
+            buf[i] = RS485.getResponseBuffer(i);
+        }
+    }
+    SemaphoreGive(xModbusSemaphore);
+    return translateErr(res);
+}
+
+// ============================================================================
+// ===                      ВТОРОЙ ПОРТ (RS485_2)                           ===
+// ============================================================================
+
+template <typename T>
+int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
+    RS485_2.WaitMinTimeBetweenTransaction();
+    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+        journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
+        return ERR_485_BUZY;
+    }
+    RS485_2.WaitMinTimeBetweenTransaction();
+    RS485_2.set_slave(id);
+    uint8_t res = 0;
+
+    if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
+        if (op == READ_COILS || op == READ_DISCRETE) {
+            res = (op == READ_COILS) ? RS485_2.readCoils(cmd, 1) : RS485_2.readDiscreteInputs(cmd, 1);
+            if (res == RS485_2.ku8MBSuccess) *data = (T)bitRead(RS485_2.getResponseBuffer(0), 0);
+        } else if (op == WRITE_COIL) {
+            res = RS485_2.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
+        } else if (op == WRITE_COILS) {
+            RS485_2.setTransmitBuffer(0, (*data) ? 1 : 0);
+            res = RS485_2.writeMultipleCoils(cmd, 1);
+        }
+    } else {
+        const bool is32bit = (sizeof(T) > 2);
+        if (op == READ_INPUT || op == READ_HOLDING) {
+            res = (op == READ_INPUT) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
+                                     : RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+            if (res == RS485_2.ku8MBSuccess) {
+                uint16_t *p = (uint16_t*)data;
+                if (is32bit) { p[1] = RS485_2.getResponseBuffer(0); p[0] = RS485_2.getResponseBuffer(1); }
+                else { *p = RS485_2.getResponseBuffer(0); }
+            }
+        } else {
+            uint16_t *p = (uint16_t*)data;
+            if (is32bit) {
+                RS485_2.setTransmitBuffer(0, p[1]); RS485_2.setTransmitBuffer(1, p[0]);
+                res = RS485_2.writeMultipleRegisters(cmd, 2);
+            } else {
+                if (op == WRITE_MULTIPLE) {
+                    RS485_2.setTransmitBuffer(0, *p);
+                    res = RS485_2.writeMultipleRegisters(cmd, 1);
+                } else {
+                    res = RS485_2.writeSingleRegister(cmd, *p);
+                }
+            }
+        }
+    }
+    SemaphoreGive(xModbusSemaphore);
+    return translateErr(res);
+}
+
+int8_t devModbus::ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf) {
+    RS485_2.WaitMinTimeBetweenTransaction();
+    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+        journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
+        return ERR_485_BUZY;
+    }
+    RS485_2.WaitMinTimeBetweenTransaction();
+    RS485_2.set_slave(id);
+    uint8_t res = RS485_2.readHoldingRegisters(cmd, num);
+    if (res == RS485_2.ku8MBSuccess) {
+        for (uint16_t i = 0; i < num; i++) {
+            buf[i] = RS485_2.getResponseBuffer(i);
+        }
+    }
+    SemaphoreGive(xModbusSemaphore);
+    return translateErr(res);
+}
+
 // Перевод ошибки протокола Модбас (что дает либа) в ошибки ТН, учитывается спицифика Инверторов
 // коды ошибок у инверторов могут отличаться
-int8_t devModbus::translateErr(uint8_t result)
-{
- switch (result)
-    {
-    // Сдандартные ошибки протокола modbus  едины для всех устройств на модбасе
-    case 0x00:      return OK;                  break;  
-    case 0x01:      return ERR_MODBUS_0x01;     break;
-    case 0x02:      return ERR_MODBUS_0x02;     break;
-    case 0x03:      return ERR_MODBUS_0x03;     break;
-    case 0x04:      return ERR_MODBUS_0x04;     break;
-    case 0xe0:      return ERR_MODBUS_0xe0;     break;
-    case 0xe1:      return ERR_MODBUS_0xe1;     break;
-    case 0xe2:      return ERR_MODBUS_0xe2;     break;
-    case 0xe3:      return ERR_MODBUS_0xe3;     break;    
-    #ifdef FC_VACON
-      case 0x05:      return ERR_MODBUS_VACON_0x05;break;
-      case 0x06:      return ERR_MODBUS_VACON_0x06;break;
-      case 0x07:      return ERR_MODBUS_VACON_0x07;break;
-      case 0x08:      return ERR_MODBUS_VACON_0x08;break;
-    #else
-      case 0x05:      return ERR_MODBUS_MX2_0x05; break;
-      case 0x08+0x01: return ERR_MODBUS_MX2_0x01; break;
-      case 0x08+0x02: return ERR_MODBUS_MX2_0x02; break;
-      case 0x08+0x03: return ERR_MODBUS_MX2_0x03; break;
-      case 0x08+0x21: return ERR_MODBUS_MX2_0x21; break;
-      case 0x08+0x22: return ERR_MODBUS_MX2_0x22; break;
-      case 0x08+0x23: return ERR_MODBUS_MX2_0x23; break;
-    #endif
-    default  :      return ERR_MODBUS_UNKNOW;   break;
+inline int8_t devModbus::translateErr(uint8_t result) {
+    switch (result) {
+        case 0x00:      return OK;
+        case 0x01:      return ERR_MODBUS_0x01;
+        case 0x02:      return ERR_MODBUS_0x02;
+        case 0x03:      return ERR_MODBUS_0x03;
+        case 0x04:      return ERR_MODBUS_0x04;
+        case 0xe0:      return ERR_MODBUS_0xe0;
+        case 0xe1:      return ERR_MODBUS_0xe1;
+        case 0xe2:      return ERR_MODBUS_0xe2;
+        case 0xe3:      return ERR_MODBUS_0xe3;
+        #ifdef FC_VACON
+          case 0x05:      return ERR_MODBUS_VACON_0x05;
+          case 0x06:      return ERR_MODBUS_VACON_0x06;
+          case 0x07:      return ERR_MODBUS_VACON_0x07;
+          case 0x08:      return ERR_MODBUS_VACON_0x08;
+        #else
+          case 0x05:      return ERR_MODBUS_MX2_0x05;
+          case 0x08+0x01: return ERR_MODBUS_MX2_0x01;
+          case 0x08+0x02: return ERR_MODBUS_MX2_0x02;
+          case 0x08+0x03: return ERR_MODBUS_MX2_0x03;
+          case 0x08+0x21: return ERR_MODBUS_MX2_0x21;
+          case 0x08+0x22: return ERR_MODBUS_MX2_0x22;
+          case 0x08+0x23: return ERR_MODBUS_MX2_0x23;
+        #endif
+        default:        return ERR_MODBUS_UNKNOW;
     }
- 
 }
+
+// --- ЯВНАЯ ИНСТАНЦИАЦИЯ ШАБЛОНОВ ДЛЯ ОБОИХ ПОРТОВ ---
+
+template int8_t devModbus::Process(uint8_t, uint16_t, uint16_t*, ModbusOp); // RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, int16_t*, ModbusOp); // RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, uint32_t*, ModbusOp); // RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, float*, ModbusOp); // RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, bool*, ModbusOp); // RS485
+
+template int8_t devModbus::Process2(uint8_t, uint16_t, uint16_t*, ModbusOp); // RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, int16_t*, ModbusOp); // RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, uint32_t*, ModbusOp); // RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, float*, ModbusOp); // RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, bool*, ModbusOp); // RS485_2
+

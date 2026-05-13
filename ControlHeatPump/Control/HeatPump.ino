@@ -156,31 +156,6 @@ void HeatPump::initHeatPump()
 	dEEV.initEEV();                                           // Инициализация ЭРВ
 #endif
 
-	// Инициализация модбаса
-	journal.jprintf("Modbus RTU (RS485) ports: ");
-	if(Modbus.initModbus() == OK) {
-#ifdef MODBUS_PORT_NUM
-		if(&MODBUS_PORT_NUM == &Serial1) i = 1;
-		else if(&MODBUS_PORT_NUM == &Serial2) i = 2;
-		else if(&MODBUS_PORT_NUM == &Serial3) i = 3;
-#ifdef USE_SERIAL4
-		else if(&MODBUS_PORT_NUM == &Serial4) i = 4;
-#endif
-		else i = 0;
-		journal.jprintf("%d at %d", i, MODBUS_PORT_SPEED);
-#endif
-#ifdef HEATER_MODBUS_PORT
-		if(&HEATER_MODBUS_PORT == &Serial1) i = 1;
-		else if(&HEATER_MODBUS_PORT == &Serial2) i = 2;
-		else if(&HEATER_MODBUS_PORT == &Serial3) i = 3;
-#ifdef USE_SERIAL4
-		else if(&HEATER_MODBUS_PORT == &Serial4) i = 4;
-#endif
-		else i = 0;
-		journal.jprintf(", %d at %d", i, HEATER_MODBUS_SPEED);
-#endif
-		journal.jprintf("\n");
-	} else journal.jprintf("not present\n"); 	       //  нет в конфигурации
 #ifdef USE_ELECTROMETER_SDM
 	HP.dSDM.initSDM();                              // Инициализация счетчика
 #endif
@@ -1895,7 +1870,6 @@ void HeatPump::Pumps(bool b)
 #endif
 	int16_t delayed = 0;	// сек
 	if(b) { // ВКЛ
-		if(startPump == StartPump_AfterWork) startPump = StartPump_Stop;
 		if(!HEATER_NEED_ON()) {
 			dRelay[PUMP_IN].set_Relay(b);            // Реле насоса входного контура (геоконтур)
 			_delay(DELAY_AFTER_SWITCH_RELAY);        // Задержка на d мсек
@@ -1911,11 +1885,13 @@ void HeatPump::Pumps(bool b)
 			onBoiler = true;
 			offBoiler = 0;
 #ifndef HEATER_BOILER_DONT_USE_PUMP_OUT
+			if(startPump == StartPump_AfterWork) startPump = StartPump_Stop;
 			dRelay[PUMP_OUT].set_ON();
 			_delay(DELAY_AFTER_SWITCH_RELAY);
 #endif
 		} else {
 			Switch_R3WAY(false);
+			if(startPump == StartPump_AfterWork) startPump = StartPump_Stop;
 			dRelay[PUMP_OUT].set_ON();
 			_delay(DELAY_AFTER_SWITCH_RELAY);
 		}
