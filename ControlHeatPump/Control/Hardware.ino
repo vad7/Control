@@ -1917,10 +1917,10 @@ static inline void Modbus_postTransmission() {
 #if !defined(MODBUS_NO_WAIT_BEFORE_RECEIVE) || defined(PIN_MODBUS_RSE)
 	while(!(MODBUS_PORT_NUM.availableForWrite() >= SERIAL_BUFFER_SIZE-1 && (MODBUS_PORT_NUM._pUart->UART_SR & UART_SR_TXEMPTY))) _delay(1);
 #endif
-#ifdef PIN_MODBUS_RSE
-	#if MODBUS_TIME_TRANSMISION != 0
+#if MODBUS_TIME_TRANSMISION != 0
     _delay(MODBUS_TIME_TRANSMISION);// Минимальная пауза между командой и ответом 3.5 символа
-	#endif
+#endif
+#ifdef PIN_MODBUS_RSE
     digitalWriteDirect(PIN_MODBUS_RSE, LOW);
 #endif
 */
@@ -1962,7 +1962,6 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
     RS485.WaitMinTimeBetweenTransaction();
     RS485.set_slave(id);
     uint8_t res = 0;
-
     if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
         if (op == READ_COILS || op == READ_DISCRETE) {
             res = (op == READ_COILS) ? RS485.readCoils(cmd, 1) : RS485.readDiscreteInputs(cmd, 1);
@@ -2027,14 +2026,13 @@ int8_t devModbus::ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, u
 template <typename T>
 int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
     RS485_2.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+    if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
         journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
         return ERR_485_BUZY;
     }
     RS485_2.WaitMinTimeBetweenTransaction();
     RS485_2.set_slave(id);
     uint8_t res = 0;
-
     if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
         if (op == READ_COILS || op == READ_DISCRETE) {
             res = (op == READ_COILS) ? RS485_2.readCoils(cmd, 1) : RS485_2.readDiscreteInputs(cmd, 1);
@@ -2070,13 +2068,13 @@ int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
             }
         }
     }
-    SemaphoreGive(xModbusSemaphore);
+    SemaphoreGive(xModbusSemaphore2);
     return translateErr(res);
 }
 
 int8_t devModbus::ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf) {
-    RS485_2.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+   RS485_2.WaitMinTimeBetweenTransaction();
+    if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
         journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
         return ERR_485_BUZY;
     }
@@ -2088,7 +2086,7 @@ int8_t devModbus::ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, 
             buf[i] = RS485_2.getResponseBuffer(i);
         }
     }
-    SemaphoreGive(xModbusSemaphore);
+    SemaphoreGive(xModbusSemaphore2);
     return translateErr(res);
 }
 

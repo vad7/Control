@@ -211,6 +211,10 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_Heater_HeatFloorDelayed 13		// Отложенный пуск теплого пола работает
 #define fHP_ProfilesSwitchingByTime 14		// Профили меняются по расписанию
 #define fHP_ProfileSwitch_Error 15			// Ошибка переключения профиля (Не логировать повторные ошибки)
+#define fHP_Web_RS485_2_Active	16			// активна шина RS485_2 (Process2) на вебе
+
+// Флаги journal_log
+#define fHP_Log_Web_NotFound	0			// Через время ping-а или раз в день
 
 // Флаги настроек, Option.flags:
 #define fDelayPumpsStopOnError	0			// При ошибке останавливать насосы с задержкой
@@ -583,6 +587,7 @@ public:
 
 // Переменные
 	uint32_t work_flags;									// Рабочие флаги ТН
+	uint8_t  journal_log;									// для исключения спама лога
 	uint8_t  CPU_LOAD;                                      // загрузка CPU
 	uint32_t mRTOS;                                        // Память занимаемая задачами
 	uint32_t startRAM;                                     // Свободная память при старте FREE Rtos - пытаемся определить свободную память при работе

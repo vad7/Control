@@ -36,7 +36,7 @@ extern void  get_txtSettings(uint8_t thread);
 extern void  get_txtJournal(uint8_t thread);
 extern void  get_datTest(uint8_t thread);
 extern void  get_csvChart(uint8_t thread);
-extern int16_t  get_indexNoSD(uint8_t thread);
+extern int16_t get_indexNoSD(uint8_t thread);
 
 const char* file_types[] = {"text/html", "image/x-icon", "text/css", "application/javascript", "image/jpeg", "image/png", "image/gif", "text/plain", "text/ajax"};
 
@@ -98,9 +98,7 @@ void web_server(uint8_t thread)
 					len = Socket[thread].client.get_ReceivedSizeRX();                  // получить длину входного пакета
 					if(len > W5200_MAX_LEN) {
 						journal.jprintf("WEB:Big packet: %d - truncated!\n", len);
-#ifdef DEBUG
-						journal.jprintf("%s\n\n", Socket[thread].inBuf);
-#endif
+						if(HP.get_NetworkFlags() & ((1<<fWebLogError) | (1<<fWebFullLog))) journal.jprintf("%s\n\n", Socket[thread].inBuf);
 						len = W5200_MAX_LEN; // Ограничить размером в максимальный размер пакета w5200
 					}
 					if(Socket[thread].client.read(Socket[thread].inBuf, len) != len) {
@@ -152,12 +150,14 @@ void web_server(uint8_t thread)
 								|| strcmp(Socket[thread].inPtr, "about.html") == 0)) goto xUNAUTHORIZED;
 							}
 						}
+						if((*(uint16_t*)Socket[thread].inPtr == 0x262F)) goto xHTTP_REQEST; // == "/&"
 						urldecode(Socket[thread].inPtr, Socket[thread].inPtr, len + 1);
 						readFileSD(Socket[thread].inPtr, thread);
 						break;
 					}
 					case HTTP_REQEST:  // Запрос AJAX
 					{
+xHTTP_REQEST:
 						strcpy(Socket[thread].outBuf, HEADER_ANSWER);   // Начало ответа
 						parserGET(thread, sock);    // выполнение запроса
 #ifdef LOG
@@ -388,7 +388,10 @@ void readFileSD(char *filename, uint8_t thread)
 				sendConstRTOS(thread, HEADER_FILE_NOT_FOUND);
 				uint8_t ip[4];
 				W5100.readSnDIPR(Socket[thread].sock, ip);
-				journal.jprintf((char*) "WEB: %d.%d.%d.%d - File not found: %s\n", ip[0], ip[1], ip[2], ip[3], filename);
+				if(GETBIT(HP.get_NetworkFlags(), fWebFullLog) || !GETBIT(HP.journal_log, fHP_Log_Web_NotFound)) {
+					SETBIT1(HP.journal_log, fHP_Log_Web_NotFound);
+					journal.jprintf((char*) "WEB: %d.%d.%d.%d - File not found: %s\n", ip[0], ip[1], ip[2], ip[3], filename);
+				}
 				return;
 			}
 xFileFound:
@@ -426,7 +429,10 @@ xFileFound:
 				sendConstRTOS(thread, HEADER_FILE_NOT_FOUND);
 				uint8_t ip[4];
 				W5100.readSnDIPR(Socket[thread].sock, ip);
-				journal.jprintf((char*) "WEB GET(%d.%d.%d.%d) - Not found: %s\n", ip[0], ip[1], ip[2], ip[3], filename);
+				if(GETBIT(HP.get_NetworkFlags(), fWebFullLog) || !GETBIT(HP.journal_log, fHP_Log_Web_NotFound)) {
+					SETBIT1(HP.journal_log, fHP_Log_Web_NotFound);
+					journal.jprintf((char*) "WEB GET(%d.%d.%d.%d) - Not found: %s\n", ip[0], ip[1], ip[2], ip[3], filename);
+				}
 				return;
 			}
 		}
@@ -1458,6 +1464,9 @@ xSaveStats:
 				strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "Счетчик блокировок и сбросов мютекса WEB|%d (%d);", xWebThreadSemaphore.BusyCnt, HP.num_resMutexWEB);
 				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок и сбросов мютекса I2C|%d (%d);", xI2CSemaphore.BusyCnt, HP.num_resMutexI2C);
 				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса Modbus|%d;", xModbusSemaphore.BusyCnt);
+#ifdef MODBUS_HEATER_DEDICATED
+				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса Modbus2|%d;", xModbusSemaphore2.BusyCnt);
+#endif
 				strReturn += m_snprintf(strReturn, 256, "Счетчик блокировок мютекса журнала|%d;", journal.Semaphore.BusyCnt);
 	#ifdef MQTT
 				strcat(strReturn,"Счетчик числа повторных соединений MQTT клиента|");_itoa(HP.num_resMQTT,strReturn);strcat(strReturn,";");
@@ -2292,7 +2301,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 			// str - полное имя запроса до (), x - содержит строку что между (), z - после =
 			// код обработки установки значений модбас
 			// get_modbus_val(N:D:X), set_modbus_val(N:D:X=YYY)
-			// N - номер устройства на шине 1 (-N - на шине 2), D - тип данных, X - адрес, Y - новое значение
+			// N - номер устройства на шине, D - тип данных, X - адрес, Y - новое значение. Шина RS485 / RS485_2 = GETBIT(HP.work_flags, fHP_Web_RS485_2_Active)
+			// Возвращает или код ошибки "E-n" или значение, а через ";" время выполнения в мс
 			if(strncmp(str+1, "et_modbus_", 10) == 0) {
 				STORE_DEBUG_INFO(38);
 				if(str[11] == 'p') { // set_modbus_p(n=x) - установить параметры протокола Modbus
@@ -2315,62 +2325,101 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 #else
 						strcat(strReturn, "-");
 #endif
-					} else if(strcmp(x, "timeout")==0) { // Таймаут
-						if(str[0] == 's') RS485.ModbusResponseTimeout = l_i32;
-						_itoa(RS485.ModbusResponseTimeout, strReturn);
-					} else if(strcmp(x, "pause")==0) { // Пауза между транзакциями
-						if(str[0] == 's') RS485.ModbusMinTimeBetweenTransaction = l_i32;
-						_itoa(RS485.ModbusMinTimeBetweenTransaction, strReturn);
+					} else if(strcmp(x, "timeout")==0) {	// Таймаут
+						if(str[0] == 's') {
+							if(GETBIT(HP.work_flags, fHP_Web_RS485_2_Active)) RS485_2.ModbusResponseTimeout = l_i32;
+							else RS485.ModbusResponseTimeout = l_i32;
+						}
+						_itoa(GETBIT(HP.work_flags, fHP_Web_RS485_2_Active) ? RS485_2.ModbusResponseTimeout : RS485.ModbusResponseTimeout, strReturn);
+					} else if(strcmp(x, "pause")==0) {		// Пауза между транзакциями
+						if(str[0] == 's') {
+							if(GETBIT(HP.work_flags, fHP_Web_RS485_2_Active)) RS485_2.ModbusMinTimeBetweenTransaction = l_i32;
+							else RS485.ModbusMinTimeBetweenTransaction = l_i32;
+						}
+						_itoa(GETBIT(HP.work_flags, fHP_Web_RS485_2_Active) ? RS485_2.ModbusMinTimeBetweenTransaction : RS485.ModbusMinTimeBetweenTransaction, strReturn);
+					} else if(strcmp(x, "bus")==0) {		// Шина
+						if(str[0] == 's') { if(l_i32) SETBIT1(HP.work_flags, fHP_Web_RS485_2_Active); else SETBIT0(HP.work_flags, fHP_Web_RS485_2_Active); }
+						_itoa(GETBIT(HP.work_flags, fHP_Web_RS485_2_Active), strReturn);
 					} else goto x_FunctionNotFound;
 					ADD_WEBDELIM(strReturn);
 					continue;
 				} else if((y = strchr(x, ':'))) {
 					*y++ = '\0';
-					uint8_t id = atoi(x);
-					uint16_t par = atoi(y + 2);
-					if(id == FC_MODBUS_ADR && par) par--;	// В документации частотника нумерация регистров с 1, а в Modbus с 0
-					i = OK;
+					union _Pack {
+					    struct {
+					    	uint32_t id		: 8;
+					    	int32_t  e		: 8;
+					    	uint32_t bus	: 1;
+					    	uint32_t time	: 1;
+					    	uint32_t rest	: 14;
+					    } __attribute__((packed)) b;
+					    uint32_t raw;
+					};
+					union _Pack mb;
+					mb.raw = 0;
+					mb.b.bus = GETBIT(HP.work_flags, fHP_Web_RS485_2_Active);
+					mb.b.id = atoi(x);
+					i = (uint16_t)atoi(y + 2);
+					if(mb.b.id == FC_MODBUS_ADR && !mb.b.bus && i) i--; // В документации частотника нумерация регистров с 1, а в Modbus с 0
+					uint32_t _time = 0;
 					if(str[0] == 's') {
 						// strtol - NO REENTRANT FUNCTION!
 						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
 						l_i32 = strtol(z, NULL, 0);
-						if(*y == 'h') i = devModbus::Process(id, par, (uint16_t *)&l_i32, WRITE_SINGLE); // 1 register (int16).
-						//else if(*y == 'u') i = devModbus::Process(id, par, &l_i32, WRITE_MULTIPLE); // 2 registers (int32).
-						else if(*y == 'f') i = devModbus::Process(id, par, (float *)&l_i32, WRITE_MULTIPLE); // 2 registers (float).
-						else if(*y == 'c') i = devModbus::Process(id, par, &l_i32, WRITE_COIL);	// coil
-						else i = 1;
+						_time = millis();
+						mb.b.time = true;
+						if(*y == 'h') {
+							if(mb.b.bus) mb.b.e = devModbus::Process2(mb.b.id, i, (uint16_t *)&l_i32, WRITE_SINGLE); // 1 register (int16).
+							else mb.b.e = devModbus::Process(mb.b.id, i, (uint16_t *)&l_i32, WRITE_SINGLE); // 1 register (int16).
+						}
+						//else if(*y == 'u') {
+						//	if(mb.b.bus) mb.b.e = devModbus::Process2(id, i, &l_i32, WRITE_MULTIPLE); // 2 registers (int32).
+						//	else mb.b.e = devModbus::Process(id, i, &l_i32, WRITE_MULTIPLE); // 2 registers (int32).
+						//}
+						else if(*y == 'f') {
+							if(mb.b.bus) mb.b.e = devModbus::Process2(mb.b.id, i, (float *)&l_i32, WRITE_MULTIPLE); // 2 registers (float).
+							else mb.b.e = devModbus::Process(mb.b.id, i, (float *)&l_i32, WRITE_MULTIPLE); // 2 registers (float).
+						}
+						else if(*y == 'c') {
+							if(mb.b.bus) mb.b.e = devModbus::Process2(mb.b.id, i, &l_i32, WRITE_COIL);	// coil
+							else mb.b.e = devModbus::Process(mb.b.id, i, &l_i32, WRITE_COIL);	// coil
+						} else mb.b.e = 1;
+						_time = millis() - _time;
 						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
-							i = 2;
+							mb.b.e = 2;
 						}
-#ifdef MODBUS_TIME_TRANSMISION
-						if(i == OK) _delay(MODBUS_TIME_TRANSMISION * 10); // Задержка перед чтением
+#if MODBUS_TIME_TRANSMISION != 0
+						if(mb.b.e == OK) _delay(MODBUS_TIME_TRANSMISION * 10); // Задержка перед чтением
 #endif
 					} else if(str[0] == 'g') {
-					} else i = 1;
-					if(i == OK) {
+					} else mb.b.e = 1;
+					if(mb.b.e == OK) {
 						SemaphoreGive(xWebThreadSemaphore);  // Мютекс веба отдать
+						if(!mb.b.time) _time = millis();
 						if(*y == 'w') {
-							if((i = devModbus::Process(id, par, &par, READ_INPUT)) == OK) _itoa(par, strReturn);
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &i, READ_INPUT) : devModbus::Process(mb.b.id, i, &i, READ_INPUT)) == OK) _itoa((uint16_t)i, strReturn);
 						} else if(*y == 'l') {
-							if((i = devModbus::Process(id, par, (uint32_t *)&l_i32, READ_INPUT)) == OK) _itoa(l_i32, strReturn);
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT) : devModbus::Process(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT)) == OK) _itoa(l_i32, strReturn);
 						} else if(*y == 'i') {
-							if((i = devModbus::Process(id, par, &pm, READ_INPUT)) == OK) _ftoa(strReturn, pm, 2);
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &pm, READ_INPUT) : devModbus::Process(mb.b.id, i, &pm, READ_INPUT)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'h') {
-							if((i = devModbus::Process(id, par, &par, READ_HOLDING)) == OK) _itoa(par, strReturn);
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &i, READ_HOLDING) : devModbus::Process(mb.b.id, i, &i, READ_HOLDING)) == OK) _itoa((uint16_t)i, strReturn);
 						} else if(*y == 'f') {
-							if((i = devModbus::Process(id, par, &pm, READ_HOLDING)) == OK) _ftoa(strReturn, pm, 2);
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &pm, READ_HOLDING) : devModbus::Process(mb.b.id, i, &pm, READ_HOLDING)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'c') {
-							if((i = devModbus::Process(id, par, &par, READ_COILS)) == OK) _itoa(par, strReturn);
-						} else i = 1;
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &i, READ_COILS) : devModbus::Process(mb.b.id, i, &i, READ_COILS)) == OK) _itoa((uint16_t)i, strReturn);
+						} else mb.b.e = 1;
+						_time = millis() - _time;
 						if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба
 							journal.jprintf("Error lock Web in %s: %d\n", (char*) __FUNCTION__, __LINE__);
-							i = 2;
+							mb.b.e = 2;
 						}
 					}
-					if(i != OK) {
-						strcat(strReturn, "E"); _itoa(i, strReturn);
+					if(mb.b.e != OK) {
+						strcat(strReturn, "E"); _itoa(mb.b.e, strReturn);
 					}
+					strcat(strReturn, ";");	_itoa(_time, strReturn);
 					ADD_WEBDELIM(strReturn);
 					continue;
 				}

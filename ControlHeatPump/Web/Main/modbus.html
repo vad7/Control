@@ -5,7 +5,7 @@
 <script type='text/javascript' src='scripts.js'></script>
 <script type="text/javascript">
 window.onload = function() {
-	loadParam("get_modbus_p(timeout),get_modbus_p(pause),get_modbus_p(heater)");
+	loadParam("get_modbus_p(timeout),get_modbus_p(pause),get_modbus_p(heater),get_modbus_p(bus)");
 };
 function set_param(e) {
 	var els = e.parentElement.parentElement.getElementsByClassName("mdb");
@@ -34,14 +34,16 @@ function refresh_all() {
 	var pars = "";
 	var els = document.getElementById("tbl_modbus").rows;
 	var i = 1, cnt = 0;
+	const getVal = id => Number(document.getElementById(id)?.value) || 0;
+	var _delay = (getVal("get_modbus_p-timeout") + getVal("get_modbus_p-pause")) || 100;
 	for(; i < els.length; i++) {
 		var id = els[i].getElementsByClassName("mdb")[1].id;
-		if(id.substr(-2) != ":0") { 
+//		if(id.substr(-2) != ":0") { 
 			pars += id.replace(/-/, '(') + '),';
 			cnt++;
-		}
+//		}
 		if(cnt > 20) {
-			urltimeout = 200 * cnt;
+			urltimeout = _delay * cnt;
 			cnt = 0;
 			if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
 			loadParam(pars);
@@ -49,7 +51,7 @@ function refresh_all() {
 		}
 	}
 	if(cnt) {
-		urltimeout = 200 * cnt;
+		urltimeout = _delay * cnt;
 		if(urltimeout >= urlupdate) urltimeout = urlupdate - 10;
 		loadParam(pars);
 	}
@@ -114,7 +116,8 @@ function modbus_write_all()
 <div class="content">
 <h1>Modbus RTU</h1>
 <br>
-<span style="font-size: larger;"><b>Адрес на шине RS485:</b></span> <input id="device" type="number" min="0" max="255" step="1" value="1"> (Частотник: 1, Счетчик: 2, Котел: <span id="get_modbus_p-heater">-</span>).
+<span style="font-size: larger;"><b>Адрес на RS485 (шина 2:<input type="checkbox" id="get_modbus_p-bus" onchange="setParam('get_modbus_p(bus)'); setTimeout(loadParam,500,'get_modbus_p(timeout),get_modbus_p(pause)');">):</b></span>
+ <input id="device" type="number" min="0" max="255" step="1" value="1"> (Частотник: 1, Счетчик: 2. Шина 2: Котел: <span id="get_modbus_p-heater">-</span>).
  <b>Таймаут:</b> <input id="get_modbus_p-timeout" type="number"><input type="submit" value=">" onclick="setParam('get_modbus_p(timeout)');"> <b>Пауза:</b> <input id="get_modbus_p-pause" type="number"><input type="submit" value=">" onclick="setParam('get_modbus_p(pause)');">
 <br>
 <h3><b>Дамп в файл с ячейки:</b> <select id="dump_ftype"><option value="3">3...</option><option selected value="4">4...</option></select>
@@ -129,7 +132,17 @@ function modbus_write_all()
 		<th>Устройство</th>
 		<th>Параметр, адрес</th>
 		<th>Значение</th>
-		<th>Статус</th>
+		<th><a data-tooltip="Ошибки:
+-40 - Порт заблокирован
+-41 - Неверная функция
+-42 - Неверный адрес
+-43 - Неверные данные
+-44 - Ошибка устройства
+-45 - Неверный ИД
+-46 - Неверная функция
+-47 - Нет ответа
+-48 - Ошибка CRC
+В скобках время выполнения, мс ">Статус</th>
 	</tr>
 </table>
 <br>

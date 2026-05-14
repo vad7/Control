@@ -53,6 +53,11 @@ void vUpdateStepperEEV(void *);
 
 // Семафоры захвата железа
 type_SEMAPHORE xModbusSemaphore;                 // Семафор Modbus, инвертор запас на счетчик
+#ifdef MODBUS_HEATER_DEDICATED
+type_SEMAPHORE xModbusSemaphore2;                // Семафор Modbus шина 2, инвертор запас на счетчик
+#else
+#define xModbusSemaphore2 xModbusSemaphore
+#endif
 type_SEMAPHORE xWebThreadSemaphore;              // Семафор сетевой веба и сетевой карты W5500
 type_SEMAPHORE xI2CSemaphore;                    // Семафор шины I2C, часы, память, мастер OneWire
 uint16_t lastErrorFreeRtosCode;                     // код последней ошибки операционки нужен для отладки
@@ -535,8 +540,8 @@ x_I2C_init_std_message:
 	RS485_2.postTransmission(Modbus_postTransmission);
 	#endif
 	RS485_2.idle(Modbus_idle);
-	RS485.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
-	RS485.ModbusResponseTimeout = HP.dHeater.set.ModbusResponseTimeout;
+	RS485_2.ModbusMinTimeBetweenTransaction = HP.dHeater.set.ModbusMinTimeBetweenTransaction;
+	RS485_2.ModbusResponseTimeout = HP.dHeater.set.ModbusResponseTimeout;
 	{
 		uint8_t i = 0;
 		if(&HEATER_MODBUS_PORT == &Serial1) i = 1;
@@ -761,6 +766,9 @@ x_I2C_init_std_message:
 	SemaphoreCreate(xWebThreadSemaphore);
 	SemaphoreCreate(xI2CSemaphore);
 	SemaphoreCreate(xModbusSemaphore);
+#ifdef MODBUS_HEATER_DEDICATED
+	SemaphoreCreate(xModbusSemaphore2);
+#endif
 	vTaskStartScheduler();              // СТАРТ !!
 	journal.jprintf("FreeRTOS FAILURE!\n");
 }
@@ -1049,6 +1057,7 @@ void vWeb0(void *)
 				WEB_STORE_DEBUG_INFO(7);
 				pingt = _other_tasks;
 				pingServer();
+				SETBIT0(HP.journal_log, fHP_Log_Web_NotFound);
 				active = false;
 			}
 #ifdef MQTT                                     // признак использования MQTT

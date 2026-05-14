@@ -116,6 +116,7 @@ xExit:
 void HeatPump::initHeatPump()
 {
 	uint8_t i;
+	journal_log = 0;
 	NO_Power = 0;
 	fBackupPowerOffDelay = 0;
 	pump_in_pause_timer = 0;
@@ -1131,8 +1132,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	else if(strcmp(var, option_DefrostStartDTemp)==0) { Option.DefrostStartDTemp = rd(x, 100); return true; }
 	else if(strcmp(var, option_DefrostTempSteam)==0) { Option.DefrostTempSteam = rd(x, 100); return true; }
 #endif
-	else if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ Option.ModbusMinTimeBetweenTransaction = x; return true; }
-	else if(strcmp(var, option_ModbusResponseTimeout)==0){ Option.ModbusResponseTimeout = x; return true; }
+	else if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ Option.ModbusMinTimeBetweenTransaction = RS485.ModbusMinTimeBetweenTransaction = x; return true; }
+	else if(strcmp(var, option_ModbusResponseTimeout)==0){ Option.ModbusResponseTimeout = RS485.ModbusResponseTimeout = x; return true; }
 	else if(strcmp(var, option_fBackupPower)==0)  {if (n==0) {SETBIT0(Option.flags,fBackupPower); return true;} else if (n==1) {SETBIT1(Option.flags,fBackupPower); return true;} else return false;} // флаг Использование резервного питания от генератора (ограничение мощности)
 	else if(strcmp(var,option_Generator_Start_Time)==0){ Option.Generator_Start_Time = n; return true; }
 	else if(strcmp(var, option_f2BackupPowerAuto) == 0) {
@@ -4220,7 +4221,7 @@ bool HeatPump::is_heater_active(void) {
 	return GETBIT(work_flags, fHP_HeaterValveOn)
 #endif
 #ifdef BOILER_R3WAY_BEFORE_HEATER_3WAY
-			|| is_heater_on()
+			|| dHeater.CheckIsHeaterOn()
 #endif
 			;
 }
@@ -4558,20 +4559,39 @@ xWait:
 						SetTask_vUpdate(true);
 						// End pWAIT
 					}
-					if(Prof.load(_profile) > 0 && _profile == Prof.id) {
-						if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
-						SETBIT0(work_flags, fHP_ProfileSwitch_Error);
-						num_repeat_prof = 0;
-						journal.jprintf_time("Set profile: %d\n", _profile + 1);
-					} else if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) {
-						SETBIT1(work_flags, fHP_ProfileSwitch_Error);
-						journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
-					}
-					if(frestart || get_State() == pWAIT_HP) {
-						// pRESUME:
-						StartResume(_RESUME_);                  // восстановление работы ТН
-						SetTask_vUpdate(true);
-						// End pRESUME
+					int16_t prof_Temp1 = STARTTEMP;
+					if(get_State() == pOFF) goto xContinue;
+					if(SemaphoreTake(xI2CSemaphore, I2C_TIME_WAIT / portTICK_PERIOD_MS) == pdFALSE) {  // Если шедулер запущен, то захватываем семафор
+						journal.printf((char*) cErrorMutex, __FUNCTION__, MutexI2CBuzy);
+						set_Error(ERR_I2C_BUZY, (char*)__FUNCTION__);
+					} else if(eepromI2C.read(I2C_PROFILE_EEPROM + Prof.get_sizeProfile() * _profile + 1 + 2 + sizeof(Prof.dataProfile) + sizeof(Prof.SaveON) + sizeof(Prof.Cool) + ((uint8_t*)&Prof.Heat.Temp1 - (uint8_t*)&Prof.Heat.flags), (uint8_t*)&prof_Temp1, sizeof(prof_Temp1))) {
+						SemaphoreGive(xI2CSemaphore);
+						set_Error(ERR_LOAD_PROFILE, (char*)__FUNCTION__);
+					} else {
+						SemaphoreGive(xI2CSemaphore);
+#ifdef DEBUG_MODWORK
+						journal.jprintf("ProfTemp: %.2d, new %.2d\n", prof_Temp1, Prof.Heat.Temp1);
+#endif
+						if(prof_Temp1 != Prof.Heat.Temp1) prof_Temp1 = Prof.Heat.Temp1; else prof_Temp1 = STARTTEMP;
+xContinue:
+						if(Prof.load(_profile) > 0 && _profile == Prof.id) {
+							if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
+							SETBIT0(work_flags, fHP_ProfileSwitch_Error);
+							num_repeat_prof = 0;
+							if(prof_Temp1 != STARTTEMP) {
+								Prof.Heat.Temp1 = prof_Temp1;
+							}
+							journal.jprintf_time("Set profile: %d\n", _profile + 1);
+						} else if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) {
+							SETBIT1(work_flags, fHP_ProfileSwitch_Error);
+							journal.jprintf_time("Failed sеt profile: %d\n", _profile + 1);
+						}
+						if(frestart || get_State() == pWAIT_HP) {
+							// pRESUME:
+							StartResume(_RESUME_);                  // восстановление работы ТН
+							SetTask_vUpdate(true);
+							// End pRESUME
+						}
 					}
 				}
 				if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_ON_BACKUP) {

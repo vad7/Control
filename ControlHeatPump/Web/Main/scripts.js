@@ -659,10 +659,11 @@ function loadParam(paramid, noretry, resultdiv) {
 									}
 								} else if(type == 'tbv') {
 									var element2 = document.getElementById(valueid.replace("val", "err"));
+									var j = values[1].split(';');
 									if(values[1].match(/^E-?\d/)) {
-										if(element2) element2.innerHTML = values[1]; 
+										if(element2) element2.innerHTML = j[0] + (j.length > 1 ? " (" + j[1] + ")" : "");
 									} else {
-										if(element2) element2.innerHTML = "OK";
+										if(element2) element2.innerHTML = "OK" + (j.length > 1 ? " (" + j[1] + ")" : "");
 										if((element = document.getElementById(valueid))) {
 											element.value = values[1];
 											element2 = document.getElementById(valueid.replace("val", "hex"));

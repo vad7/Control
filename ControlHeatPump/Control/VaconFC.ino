@@ -975,16 +975,16 @@ template <typename T> int8_t devVaconFC::modbus(uint16_t cmd, T *data, ModbusOp 
     if(!get_present()) return OK;
     int8_t localErr = ERR_CONFIG;
     uint8_t attempts = this->_data.Modbus_Attempts;
+#ifdef DEBUG_MODBUS
+    uint32_t _t = millis();
+#endif
     for (uint8_t i = 0; i < attempts; i++) {
-
         // Вызов транспортного уровня
         localErr = devModbus::Process(FC_MODBUS_ADR, cmd - 1, data, op);
-
         if(localErr == OK) {
             this->check_blockFC();
             return OK;
         }
-
         // Проверки питания
 #ifdef SPOWER
         HP.sInput[SPOWER].Read(true);
@@ -992,16 +992,15 @@ template <typename T> int8_t devVaconFC::modbus(uint16_t cmd, T *data, ModbusOp 
 #endif
         if(GETBIT(HP.Option.flags, fBackupPower)) return ERR_NO_POWER_WHILE_WORK;
         if(this->state == ERR_LINK_FC) return ERR_LINK_FC;
-
         this->numErr++;
-
         if(i == attempts - 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
             journal.jprintf_time(cErrorRS485, this->name, "fcProcess", cmd, localErr);
         }
-
         if(this->check_blockFC()) break;
-        if(i < attempts - 1) vTaskDelay(1);
     }
+#ifdef DEBUG_MODBUS
+    journal.printf("MBFC: %d-%d, %u\n", millis() - _t);
+#endif
     return localErr;
 }
 

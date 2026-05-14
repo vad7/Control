@@ -511,8 +511,8 @@ int8_t devHeater::set_param(char *var, float f)
 //	if(strcmp(var, WHeater_power_boiler_max)==0)		{ if(x>=0 && x<=100){ set.boiler_power_max = x; return OK; } } else
 //	if(strcmp(var, WHeater_boiler_protect_temp_dt)==0)	{ set.boiler_protect_temp_dt = rd(x, 10); return OK; } else
 	if(strcmp(var, WHeater_pump_work_time_after_stop)==0){ set.pump_work_time_after_stop = x / 10; return OK; } else
-	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = x; return OK; } else
-	if(strcmp(var, option_ModbusResponseTimeout)==0)	{ set.ModbusResponseTimeout = x; return OK; } else
+	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = RS485_2.ModbusMinTimeBetweenTransaction = x; return OK; } else
+	if(strcmp(var, option_ModbusResponseTimeout)==0)	{ set.ModbusResponseTimeout = RS485_2.ModbusResponseTimeout = x; return OK; } else
 	if(strcmp(var, option_ModbusWriteResponseTimeout)==0){ set.ModbusWriteResponseTimeout = x; return OK; } else
 	if(strcmp(var, WHeater_is_on)==0){ if(x && !GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Start(); else if(!x && GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Stop(true); return OK;} else
 	if(strcmp(var, WHeater_fHP_Heater_Heating_pipes)==0){ if(x) SETBIT1(HP.work_flags, fHP_Heater_Heating_pipes); else SETBIT0(HP.work_flags, fHP_Heater_Heating_pipes); return OK; } else

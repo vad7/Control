@@ -387,6 +387,7 @@ void Statistics::Update()
 			journal.jprintf("WR EXCESS: %.3d\n", WR_Power_Excess / 10000);
 			WR_Power_Excess = 0;
 #endif
+			SETBIT0(HP.journal_log, fHP_Log_Web_NotFound);
 			journal.jprintf("=== %s\n", NowDateToStr()); // Новый день.
 		}
 	}

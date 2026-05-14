@@ -532,6 +532,8 @@ ModbusMaster RS485;                     				// Класс модбас 485
 #endif
 #ifdef MODBUS_HEATER_DEDICATED
 ModbusMaster RS485_2;                     				// Класс модбас 485_2
+#else
+#define RS485_2 RS485
 #endif
 #include <type_traits> // Для работы std::is_same
 
