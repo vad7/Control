@@ -1978,23 +1978,20 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
             res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
                                      : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
             if (res == RS485.ku8MBSuccess) {
-                uint16_t *p = (uint16_t*)data;
-                if (is32bit) { p[1] = RS485.getResponseBuffer(0); p[0] = RS485.getResponseBuffer(1); }
-                else { *p = RS485.getResponseBuffer(0); }
+                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);
+                else *(uint16_t*)data = RS485_2.getResponseBuffer(0);
             }
         } else {
-            uint16_t *p = (uint16_t*)data;
-            if (is32bit) {
-                RS485.setTransmitBuffer(0, p[1]); RS485.setTransmitBuffer(1, p[0]);
-                res = RS485.writeMultipleRegisters(cmd, 2);
-            } else {
-                if (op == WRITE_MULTIPLE) {
-                    RS485.setTransmitBuffer(0, *p);
-                    res = RS485.writeMultipleRegisters(cmd, 1);
-                } else {
-                    res = RS485.writeSingleRegister(cmd, *p);
-                }
-            }
+        	if (is32bit) {
+        	    RS485_2.setTransmitBuffer(0, *(uint32_t*)data >> 16);
+        	    RS485_2.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
+        	    res = RS485.writeMultipleRegisters(cmd, 2);
+        	} else if (op == WRITE_MULTIPLE) {
+       	        RS485.setTransmitBuffer(0, *(uint16_t*)data);
+       	        res = RS485.writeMultipleRegisters(cmd, 1);
+        	} else {
+       	        res = RS485.writeSingleRegister(cmd, *(uint16_t*)data);
+        	}
         }
     }
     SemaphoreGive(xModbusSemaphore);
@@ -2048,24 +2045,21 @@ int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
         if (op == READ_INPUT || op == READ_HOLDING) {
             res = (op == READ_INPUT) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
                                      : RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
-            if (res == RS485_2.ku8MBSuccess) {
-                uint16_t *p = (uint16_t*)data;
-                if (is32bit) { p[1] = RS485_2.getResponseBuffer(0); p[0] = RS485_2.getResponseBuffer(1); }
-                else { *p = RS485_2.getResponseBuffer(0); }
+            if (res == RS485.ku8MBSuccess) {
+                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);
+                else *(uint16_t*)data = RS485_2.getResponseBuffer(0);
             }
         } else {
-            uint16_t *p = (uint16_t*)data;
-            if (is32bit) {
-                RS485_2.setTransmitBuffer(0, p[1]); RS485_2.setTransmitBuffer(1, p[0]);
-                res = RS485_2.writeMultipleRegisters(cmd, 2);
-            } else {
-                if (op == WRITE_MULTIPLE) {
-                    RS485_2.setTransmitBuffer(0, *p);
-                    res = RS485_2.writeMultipleRegisters(cmd, 1);
-                } else {
-                    res = RS485_2.writeSingleRegister(cmd, *p);
-                }
-            }
+        	if (is32bit) {
+        	    RS485_2.setTransmitBuffer(0, *(uint32_t*)data >> 16);
+        	    RS485_2.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
+        	    res = RS485_2.writeMultipleRegisters(cmd, 2);
+        	} else if (op == WRITE_MULTIPLE) {
+       	        RS485_2.setTransmitBuffer(0, *(uint16_t*)data);
+       	        res = RS485_2.writeMultipleRegisters(cmd, 1);
+        	} else {
+       	        res = RS485_2.writeSingleRegister(cmd, *(uint16_t*)data);
+        	}
         }
     }
     SemaphoreGive(xModbusSemaphore2);
