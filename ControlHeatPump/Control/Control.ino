@@ -533,6 +533,7 @@ x_I2C_init_std_message:
 	}
 #endif
 #ifdef MODBUS_HEATER_DEDICATED
+	journal.jprintf(", ");
 	HEATER_MODBUS_PORT.begin(HEATER_MODBUS_SPEED, HEATER_MODBUS_CONFIG);
 	RS485_2.begin(0, HEATER_MODBUS_PORT);										// Привязать к сериал
 	#ifdef MODBUS_TIME_TRANSMISION

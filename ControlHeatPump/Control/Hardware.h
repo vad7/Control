@@ -528,24 +528,24 @@ class devSDM
 };
 
 #ifdef MODBUS_PORT_NUM
-ModbusMaster RS485;                     				// Класс модбас 485
+ModbusMaster RS485;		// Класс модбас для Частотника, Счетчика
 #endif
 #ifdef MODBUS_HEATER_DEDICATED
-ModbusMaster RS485_2;                     				// Класс модбас 485_2
+ModbusMaster RS485_2;	// Класс модбас для Котла
 #else
 #define RS485_2 RS485
 #endif
-#include <type_traits> // Для работы std::is_same
+#include <type_traits>	// Для работы std::is_same
 
 enum ModbusOp : uint8_t {
-    READ_INPUT,       // Функция 0x04 (Input Registers)
-    READ_HOLDING,     // Функция 0x03 (Holding Registers)
-    WRITE_SINGLE,     // Функция 0x06 (Write Single Register)
-    WRITE_MULTIPLE,   // Функция 0x10 (Write Multiple Registers)
-    READ_COILS,       // Функция 0x01 (Read Coils)
-    READ_DISCRETE,    // Функция 0x02 (Read Discrete Inputs)
-    WRITE_COIL,       // Функция 0x05 (Write Single Coil)
-    WRITE_COILS       // Функция 0x0F (Write Multiple Coils)
+    READ_INPUT,			// Функция 0x04 (Input Registers)
+    READ_HOLDING,		// Функция 0x03 (Holding Registers)
+    WRITE_SINGLE,		// Функция 0x06 (Write Single Register)
+    WRITE_MULTIPLE,		// Функция 0x10 (Write Multiple Registers)
+    READ_COILS,			// Функция 0x01 (Read Coils)
+    READ_DISCRETE,		// Функция 0x02 (Read Discrete Inputs)
+    WRITE_COIL,			// Функция 0x05 (Write Single Coil)
+    WRITE_COILS			// Функция 0x0F (Write Multiple Coils)
 };
 
 #define REPEAT_N(n, expr) for(uint8_t _i=0; _i<n && (expr) != OK; ++_i);
@@ -553,26 +553,20 @@ enum ModbusOp : uint8_t {
 // вызов: devModbus::Process(id, address, &var, READ_INPUT);
 class devModbus {
 public:
-    // --- ПЕРВЫЙ ПОРТ (RS485) ---
-    // Одиночные запросы (Шаблоны)
-    template <typename T>
-    static int8_t Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
-
-    // Множественное чтение массивов (Строго один запрос, без повторов)
-    static int8_t ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
-
-
-    // --- ВТОРОЙ ПОРТ (RS485_2) ---
-    // Одиночные запросы (Шаблоны)
-    template <typename T>
-    static int8_t Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
-
-    // Множественное чтение массивов (Строго один запрос, без повторов)
-    static int8_t ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
-
-
-    // Вспомогательный метод перевода ошибок
-    static inline int8_t translateErr(uint8_t result);
+	// --- ПЕРВЫЙ ПОРТ (RS485) ---
+	// Одиночные запросы (Шаблоны)
+	template <typename T>
+	static int8_t Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
+	// Множественное чтение массивов
+	static int8_t ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
+	// --- ВТОРОЙ ПОРТ (RS485_2) ---
+	// Одиночные запросы (Шаблоны)
+	template <typename T>
+	static int8_t Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op);
+	// Множественное чтение массивов
+	static int8_t ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf);
+	// Вспомогательный метод перевода ошибок
+	static inline int8_t translateErr(uint8_t result);
 };
 
 #endif
