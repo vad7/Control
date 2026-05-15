@@ -1978,13 +1978,13 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
             res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
                                      : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
             if (res == RS485.ku8MBSuccess) {
-                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);
-                else *(uint16_t*)data = RS485_2.getResponseBuffer(0);
+                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);
+                else *(uint16_t*)data = RS485.getResponseBuffer(0);
             }
         } else {
         	if (is32bit) {
-        	    RS485_2.setTransmitBuffer(0, *(uint32_t*)data >> 16);
-        	    RS485_2.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
+        	    RS485.setTransmitBuffer(0, *(uint32_t*)data >> 16);
+        	    RS485.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
         	    res = RS485.writeMultipleRegisters(cmd, 2);
         	} else if (op == WRITE_MULTIPLE) {
        	        RS485.setTransmitBuffer(0, *(uint16_t*)data);
