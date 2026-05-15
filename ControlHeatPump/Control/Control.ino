@@ -496,9 +496,9 @@ x_I2C_init_std_message:
 	// РЕЛЕ
 	for(uint8_t i = 0; i < RNUMBER; i++) {
 		bool _out = false;
-#ifdef RH_3WAY_BISTABLE
-		if(i == RH_3WAY && HP.Prof.SaveON.mode == pHEAT && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) _out = true;
-#endif
+//#ifdef RH_3WAY_BISTABLE
+//		if(i == RH_3WAY && HP.Prof.SaveON.mode == pHEAT && GETBIT(HP.Prof.SaveON.flags, fHeat_UseHeater)) _out = true;
+//#endif
 		HP.dRelay[i].initRelay(i, _out);
 	}
 #ifdef R3WAYOFF
