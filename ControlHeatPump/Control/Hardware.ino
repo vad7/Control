@@ -1974,13 +1974,13 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
 		}
 	} else {
 		const bool is32bit = (sizeof(T) > 2);
-		if (op == READ_INPUT || op == READ_HOLDING || op == READ_INPUT_CDAB) {
-			res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
-									 : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+		if (op <= READ_HOLDING) { // or READ_INPUT, READ_INPUT_CDAB
+			res = (op <= READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
+									: RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
 			if (res == RS485.ku8MBSuccess) {
 				if (is32bit) {
 					if (op == READ_INPUT_CDAB) {
-						*(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(1) << 16) | RS485.getResponseBuffer(0);// Формат CDAB (PZEM)
+						*(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(1) << 16) | RS485.getResponseBuffer(0);// Формат CDAB
 					} else {
 						*(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);// Стандартный формат ABCD (Big-Endian)
 					}
@@ -2047,13 +2047,13 @@ int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
 		}
 	} else {
 		const bool is32bit = (sizeof(T) > 2);
-		if (op == READ_INPUT || op == READ_HOLDING || op == READ_INPUT_CDAB) {
-			res = (op == READ_INPUT) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
-									 : RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+		if (op <= READ_HOLDING) { // or READ_INPUT, READ_INPUT_CDAB
+			res = (op <= READ_INPUT_CDAB) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
+										: RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
 			if (res == RS485_2.ku8MBSuccess) {
 				if (is32bit) {
 					if (op == READ_INPUT_CDAB) {
-						*(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(1) << 16) | RS485_2.getResponseBuffer(0);// Формат CDAB (PZEM)
+						*(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(1) << 16) | RS485_2.getResponseBuffer(0);// Формат CDAB
 					} else {
 						*(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);// Стандартный формат ABCD (Big-Endian)
 					}
