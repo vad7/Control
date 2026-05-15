@@ -1954,66 +1954,71 @@ int8_t devModbus::LinkTestOmronMX2()
 // ============================================================================
 template <typename T>
 int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
-    RS485.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-        journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
-        return ERR_485_BUZY;
-    }
-    RS485.WaitMinTimeBetweenTransaction();
-    RS485.set_slave(id);
-    uint8_t res = 0;
-    if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
-        if (op == READ_COILS || op == READ_DISCRETE) {
-            res = (op == READ_COILS) ? RS485.readCoils(cmd, 1) : RS485.readDiscreteInputs(cmd, 1);
-            if (res == RS485.ku8MBSuccess) *data = (T)bitRead(RS485.getResponseBuffer(0), 0);
-        } else if (op == WRITE_COIL) {
-            res = RS485.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
-        } else if (op == WRITE_COILS) {
-            RS485.setTransmitBuffer(0, (*data) ? 1 : 0);
-            res = RS485.writeMultipleCoils(cmd, 1);
-        }
-    } else {
-        const bool is32bit = (sizeof(T) > 2);
-        if (op == READ_INPUT || op == READ_HOLDING) {
-            res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
-                                     : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
-            if (res == RS485.ku8MBSuccess) {
-                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);
-                else *(uint16_t*)data = RS485.getResponseBuffer(0);
-            }
-        } else {
-        	if (is32bit) {
-        	    RS485.setTransmitBuffer(0, *(uint32_t*)data >> 16);
-        	    RS485.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
-        	    res = RS485.writeMultipleRegisters(cmd, 2);
-        	} else if (op == WRITE_MULTIPLE) {
-       	        RS485.setTransmitBuffer(0, *(uint16_t*)data);
-       	        res = RS485.writeMultipleRegisters(cmd, 1);
-        	} else {
-       	        res = RS485.writeSingleRegister(cmd, *(uint16_t*)data);
-        	}
-        }
-    }
-    SemaphoreGive(xModbusSemaphore);
-    return translateErr(res);
+	RS485.WaitMinTimeBetweenTransaction();
+	if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
+		return ERR_485_BUZY;
+	}
+	RS485.WaitMinTimeBetweenTransaction();
+	RS485.set_slave(id);
+	uint8_t res = 0;
+	if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
+		if (op == READ_COILS || op == READ_DISCRETE) {
+			res = (op == READ_COILS) ? RS485.readCoils(cmd, 1) : RS485.readDiscreteInputs(cmd, 1);
+			if (res == RS485.ku8MBSuccess) *data = (T)bitRead(RS485.getResponseBuffer(0), 0);
+		} else if (op == WRITE_COIL) {
+			res = RS485.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
+		} else if (op == WRITE_COILS) {
+			RS485.setTransmitBuffer(0, (*data) ? 1 : 0);
+			res = RS485.writeMultipleCoils(cmd, 1);
+		}
+	} else {
+		const bool is32bit = (sizeof(T) > 2);
+		if (op == READ_INPUT || op == READ_HOLDING || op == READ_INPUT_CDAB) {
+			res = (op == READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
+									 : RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+			if (res == RS485.ku8MBSuccess) {
+				if (is32bit) {
+					if (op == READ_INPUT_CDAB) {
+						*(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(1) << 16) | RS485.getResponseBuffer(0);// Формат CDAB (PZEM)
+					} else {
+						*(uint32_t*)data = ((uint32_t)RS485.getResponseBuffer(0) << 16) | RS485.getResponseBuffer(1);// Стандартный формат ABCD (Big-Endian)
+					}
+				} else *(uint16_t*)data = RS485.getResponseBuffer(0);
+			}
+		} else {
+			if (is32bit) {// Стандартный формат ABCD (Big-Endian)
+				RS485.setTransmitBuffer(0, *(uint32_t*)data >> 16);
+				RS485.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
+				res = RS485.writeMultipleRegisters(cmd, 2);
+			} else if (op == WRITE_MULTIPLE) {
+				RS485.setTransmitBuffer(0, *(uint16_t*)data);
+				res = RS485.writeMultipleRegisters(cmd, 1);
+			} else {
+				res = RS485.writeSingleRegister(cmd, *(uint16_t*)data);
+			}
+		}
+	}
+	SemaphoreGive(xModbusSemaphore);
+	return translateErr(res);
 }
 
 int8_t devModbus::ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf) {
-    RS485.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-        journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
-        return ERR_485_BUZY;
-    }
-    RS485.WaitMinTimeBetweenTransaction();
-    RS485.set_slave(id);
-    uint8_t res = RS485.readHoldingRegisters(cmd, num);
-    if (res == RS485.ku8MBSuccess) {
-        for (uint16_t i = 0; i < num; i++) {
-            buf[i] = RS485.getResponseBuffer(i);
-        }
-    }
-    SemaphoreGive(xModbusSemaphore);
-    return translateErr(res);
+	RS485.WaitMinTimeBetweenTransaction();
+	if (SemaphoreTake(xModbusSemaphore, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
+		return ERR_485_BUZY;
+	}
+	RS485.WaitMinTimeBetweenTransaction();
+	RS485.set_slave(id);
+	uint8_t res = RS485.readHoldingRegisters(cmd, num);
+	if (res == RS485.ku8MBSuccess) {
+		for (uint16_t i = 0; i < num; i++) {
+			buf[i] = RS485.getResponseBuffer(i);
+		}
+	}
+	SemaphoreGive(xModbusSemaphore);
+	return translateErr(res);
 }
 
 // ============================================================================
@@ -2022,110 +2027,113 @@ int8_t devModbus::ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, u
 
 template <typename T>
 int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
-    RS485_2.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-        journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
-        return ERR_485_BUZY;
-    }
-    RS485_2.WaitMinTimeBetweenTransaction();
-    RS485_2.set_slave(id);
-    uint8_t res = 0;
-    if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
-        if (op == READ_COILS || op == READ_DISCRETE) {
-            res = (op == READ_COILS) ? RS485_2.readCoils(cmd, 1) : RS485_2.readDiscreteInputs(cmd, 1);
-            if (res == RS485_2.ku8MBSuccess) *data = (T)bitRead(RS485_2.getResponseBuffer(0), 0);
-        } else if (op == WRITE_COIL) {
-            res = RS485_2.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
-        } else if (op == WRITE_COILS) {
-            RS485_2.setTransmitBuffer(0, (*data) ? 1 : 0);
-            res = RS485_2.writeMultipleCoils(cmd, 1);
-        }
-    } else {
-        const bool is32bit = (sizeof(T) > 2);
-        if (op == READ_INPUT || op == READ_HOLDING) {
-            res = (op == READ_INPUT) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
-                                     : RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
-            if (res == RS485.ku8MBSuccess) {
-                if (is32bit) *(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);
-                else *(uint16_t*)data = RS485_2.getResponseBuffer(0);
-            }
-        } else {
-        	if (is32bit) {
-        	    RS485_2.setTransmitBuffer(0, *(uint32_t*)data >> 16);
-        	    RS485_2.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
-        	    res = RS485_2.writeMultipleRegisters(cmd, 2);
-        	} else if (op == WRITE_MULTIPLE) {
-       	        RS485_2.setTransmitBuffer(0, *(uint16_t*)data);
-       	        res = RS485_2.writeMultipleRegisters(cmd, 1);
-        	} else {
-       	        res = RS485_2.writeSingleRegister(cmd, *(uint16_t*)data);
-        	}
-        }
-    }
-    SemaphoreGive(xModbusSemaphore2);
-    return translateErr(res);
+	RS485_2.WaitMinTimeBetweenTransaction();
+	if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
+		return ERR_485_BUZY;
+	}
+	RS485_2.WaitMinTimeBetweenTransaction();
+	RS485_2.set_slave(id);
+	uint8_t res = 0;
+	if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
+		if (op == READ_COILS || op == READ_DISCRETE) {
+			res = (op == READ_COILS) ? RS485_2.readCoils(cmd, 1) : RS485_2.readDiscreteInputs(cmd, 1);
+			if (res == RS485_2.ku8MBSuccess) *data = (T)bitRead(RS485_2.getResponseBuffer(0), 0);
+		} else if (op == WRITE_COIL) {
+			res = RS485_2.writeSingleCoil(cmd, (*data) ? 0xFF00 : 0x0000);
+		} else if (op == WRITE_COILS) {
+			RS485_2.setTransmitBuffer(0, (*data) ? 1 : 0);
+			res = RS485_2.writeMultipleCoils(cmd, 1);
+		}
+	} else {
+		const bool is32bit = (sizeof(T) > 2);
+		if (op == READ_INPUT || op == READ_HOLDING || op == READ_INPUT_CDAB) {
+			res = (op == READ_INPUT) ? RS485_2.readInputRegisters(cmd, is32bit ? 2 : 1)
+									 : RS485_2.readHoldingRegisters(cmd, is32bit ? 2 : 1);
+			if (res == RS485_2.ku8MBSuccess) {
+				if (is32bit) {
+					if (op == READ_INPUT_CDAB) {
+						*(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(1) << 16) | RS485_2.getResponseBuffer(0);// Формат CDAB (PZEM)
+					} else {
+						*(uint32_t*)data = ((uint32_t)RS485_2.getResponseBuffer(0) << 16) | RS485_2.getResponseBuffer(1);// Стандартный формат ABCD (Big-Endian)
+					}
+				} else *(uint16_t*)data = RS485_2.getResponseBuffer(0);
+			}
+		} else {
+			if (is32bit) {// Стандартный формат ABCD (Big-Endian)
+				RS485_2.setTransmitBuffer(0, *(uint32_t*)data >> 16);
+				RS485_2.setTransmitBuffer(1, *(uint32_t*)data & 0xFFFF);
+				res = RS485_2.writeMultipleRegisters(cmd, 2);
+			} else if (op == WRITE_MULTIPLE) {
+				RS485_2.setTransmitBuffer(0, *(uint16_t*)data);
+				res = RS485_2.writeMultipleRegisters(cmd, 1);
+			} else {
+				res = RS485_2.writeSingleRegister(cmd, *(uint16_t*)data);
+			}
+		}
+	}
+	SemaphoreGive(xModbusSemaphore2);
+	return translateErr(res);
 }
 
 int8_t devModbus::ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, uint16_t *buf) {
-   RS485_2.WaitMinTimeBetweenTransaction();
-    if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
-        journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
-        return ERR_485_BUZY;
-    }
-    RS485_2.WaitMinTimeBetweenTransaction();
-    RS485_2.set_slave(id);
-    uint8_t res = RS485_2.readHoldingRegisters(cmd, num);
-    if (res == RS485_2.ku8MBSuccess) {
-        for (uint16_t i = 0; i < num; i++) {
-            buf[i] = RS485_2.getResponseBuffer(i);
-        }
-    }
-    SemaphoreGive(xModbusSemaphore2);
-    return translateErr(res);
+	RS485_2.WaitMinTimeBetweenTransaction();
+	if (SemaphoreTake(xModbusSemaphore2, (MODBUS_TIME_WAIT / portTICK_PERIOD_MS)) == pdFALSE) {
+		journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
+		return ERR_485_BUZY;
+	}
+	RS485_2.WaitMinTimeBetweenTransaction();
+	RS485_2.set_slave(id);
+	uint8_t res = RS485_2.readHoldingRegisters(cmd, num);
+	if (res == RS485_2.ku8MBSuccess) {
+		for (uint16_t i = 0; i < num; i++) {
+			buf[i] = RS485_2.getResponseBuffer(i);
+		}
+	}
+	SemaphoreGive(xModbusSemaphore2);
+	return translateErr(res);
 }
 
 // Перевод ошибки протокола Модбас (что дает либа) в ошибки ТН, учитывается спицифика Инверторов
 // коды ошибок у инверторов могут отличаться
 inline int8_t devModbus::translateErr(uint8_t result) {
-    switch (result) {
-        case 0x00:      return OK;
-        case 0x01:      return ERR_MODBUS_0x01;
-        case 0x02:      return ERR_MODBUS_0x02;
-        case 0x03:      return ERR_MODBUS_0x03;
-        case 0x04:      return ERR_MODBUS_0x04;
-        case 0xe0:      return ERR_MODBUS_0xe0;
-        case 0xe1:      return ERR_MODBUS_0xe1;
-        case 0xe2:      return ERR_MODBUS_0xe2;
-        case 0xe3:      return ERR_MODBUS_0xe3;
-        #ifdef FC_VACON
-          case 0x05:      return ERR_MODBUS_VACON_0x05;
-          case 0x06:      return ERR_MODBUS_VACON_0x06;
-          case 0x07:      return ERR_MODBUS_VACON_0x07;
-          case 0x08:      return ERR_MODBUS_VACON_0x08;
-        #else
-          case 0x05:      return ERR_MODBUS_MX2_0x05;
-          case 0x08+0x01: return ERR_MODBUS_MX2_0x01;
-          case 0x08+0x02: return ERR_MODBUS_MX2_0x02;
-          case 0x08+0x03: return ERR_MODBUS_MX2_0x03;
-          case 0x08+0x21: return ERR_MODBUS_MX2_0x21;
-          case 0x08+0x22: return ERR_MODBUS_MX2_0x22;
-          case 0x08+0x23: return ERR_MODBUS_MX2_0x23;
-        #endif
-        default:        return ERR_MODBUS_UNKNOW;
-    }
+	switch (result) {
+		case 0x00:      return OK;
+		case 0x01:      return ERR_MODBUS_0x01;
+		case 0x02:      return ERR_MODBUS_0x02;
+		case 0x03:      return ERR_MODBUS_0x03;
+		case 0x04:      return ERR_MODBUS_0x04;
+		case 0xe0:      return ERR_MODBUS_0xe0;
+		case 0xe1:      return ERR_MODBUS_0xe1;
+		case 0xe2:      return ERR_MODBUS_0xe2;
+		case 0xe3:      return ERR_MODBUS_0xe3;
+		#ifdef FC_VACON
+		  case 0x05:      return ERR_MODBUS_VACON_0x05;
+		  case 0x06:      return ERR_MODBUS_VACON_0x06;
+		  case 0x07:      return ERR_MODBUS_VACON_0x07;
+		  case 0x08:      return ERR_MODBUS_VACON_0x08;
+		#else
+		  case 0x05:      return ERR_MODBUS_MX2_0x05;
+		  case 0x08+0x01: return ERR_MODBUS_MX2_0x01;
+		  case 0x08+0x02: return ERR_MODBUS_MX2_0x02;
+		  case 0x08+0x03: return ERR_MODBUS_MX2_0x03;
+		  case 0x08+0x21: return ERR_MODBUS_MX2_0x21;
+		  case 0x08+0x22: return ERR_MODBUS_MX2_0x22;
+		  case 0x08+0x23: return ERR_MODBUS_MX2_0x23;
+		#endif
+		default:        return ERR_MODBUS_UNKNOW;
+	}
 }
 
 // --- ЯВНАЯ ИНСТАНЦИАЦИЯ ШАБЛОНОВ ДЛЯ ОБОИХ ПОРТОВ ---
 
-template int8_t devModbus::Process(uint8_t, uint16_t, uint16_t*, ModbusOp); // RS485
-template int8_t devModbus::Process(uint8_t, uint16_t, int16_t*, ModbusOp); // RS485
-template int8_t devModbus::Process(uint8_t, uint16_t, uint32_t*, ModbusOp); // RS485
-template int8_t devModbus::Process(uint8_t, uint16_t, float*, ModbusOp); // RS485
-template int8_t devModbus::Process(uint8_t, uint16_t, bool*, ModbusOp); // RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, uint16_t*, ModbusOp);		// RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, uint32_t*, ModbusOp);		// RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, float*, ModbusOp);		// RS485
+template int8_t devModbus::Process(uint8_t, uint16_t, bool*, ModbusOp);			// RS485
 
-template int8_t devModbus::Process2(uint8_t, uint16_t, uint16_t*, ModbusOp); // RS485_2
-template int8_t devModbus::Process2(uint8_t, uint16_t, int16_t*, ModbusOp); // RS485_2
-template int8_t devModbus::Process2(uint8_t, uint16_t, uint32_t*, ModbusOp); // RS485_2
-template int8_t devModbus::Process2(uint8_t, uint16_t, float*, ModbusOp); // RS485_2
-template int8_t devModbus::Process2(uint8_t, uint16_t, bool*, ModbusOp); // RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, uint16_t*, ModbusOp);	// RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, uint32_t*, ModbusOp);	// RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, float*, ModbusOp);		// RS485_2
+template int8_t devModbus::Process2(uint8_t, uint16_t, bool*, ModbusOp);		// RS485_2
 

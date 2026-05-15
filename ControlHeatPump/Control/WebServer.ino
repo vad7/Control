@@ -2401,6 +2401,8 @@ xset_Heat_get:			HP.Prof.get_paramHeatHP(x,strReturn);    // преобразо�
 							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &i, READ_INPUT) : devModbus::Process(mb.b.id, i, &i, READ_INPUT)) == OK) _itoa((uint16_t)i, strReturn);
 						} else if(*y == 'l') {
 							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT) : devModbus::Process(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT)) == OK) _itoa(l_i32, strReturn);
+						} else if(*y == 'r') {
+							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT_CDAB) : devModbus::Process(mb.b.id, i, (uint32_t *)&l_i32, READ_INPUT_CDAB)) == OK) _itoa(l_i32, strReturn);
 						} else if(*y == 'i') {
 							if((mb.b.e = mb.b.bus ? devModbus::Process2(mb.b.id, i, &pm, READ_INPUT) : devModbus::Process(mb.b.id, i, &pm, READ_INPUT)) == OK) _ftoa(strReturn, pm, 2);
 						} else if(*y == 'h') {

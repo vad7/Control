@@ -539,6 +539,7 @@ ModbusMaster RS485_2;	// Класс модбас для Котла
 
 enum ModbusOp : uint8_t {
     READ_INPUT,			// Функция 0x04 (Input Registers)
+    READ_INPUT_CDAB,    // Функция 0x04 (Input Registers) с перестановкой слов для 32 бит (PZEM-004T v3)
     READ_HOLDING,		// Функция 0x03 (Holding Registers)
     WRITE_SINGLE,		// Функция 0x06 (Write Single Register)
     WRITE_MULTIPLE,		// Функция 0x10 (Write Multiple Registers)
