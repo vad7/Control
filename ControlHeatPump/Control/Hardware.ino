@@ -1975,7 +1975,7 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
 	} else {
 		const bool is32bit = (sizeof(T) > 2);
 		if (op <= READ_HOLDING) { // or READ_INPUT, READ_INPUT_CDAB
-			res = (op <= READ_INPUT) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
+			res = (op <= READ_INPUT_CDAB) ? RS485.readInputRegisters(cmd, is32bit ? 2 : 1)
 									: RS485.readHoldingRegisters(cmd, is32bit ? 2 : 1);
 			if (res == RS485.ku8MBSuccess) {
 				if (is32bit) {
