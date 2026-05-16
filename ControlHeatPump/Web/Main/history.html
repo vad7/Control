@@ -215,13 +215,6 @@ function createChart() {
 			opposite: true,
 			showEmpty: false,
 			id: 'F'
-		}, {
-			title: {
-				text: 'Гц', align: 'high', offset: 15
-			},
-			opposite: true,
-			showEmpty: false,
-			id: 'H'
 		}],
 		exporting: {
 			enabled: true,
@@ -239,11 +232,14 @@ function createChart() {
 	for(var fieldIndex = 0; fieldIndex < fieldList.length; fieldIndex++) // add each field
 	{
 		var ax = fieldList[fieldIndex].axis;
+		var ax_2 = ax.charAt(1); 
+		var ax = ax.charAt(0);
+	    var ax_dec = ax_2 !== '' ? +ax_2 : (ax === 'W' ? 3 : ax === 'C' ? 2 : 1);
 		chartOptions.series.push({
 			data: fieldList[fieldIndex].data,
 			index: fieldList[fieldIndex].series,
 			yAxis: ax,
-			tooltip: {valueDecimals: ax === 'W' ? 3 : ax === 'C' ? 2 : ax === 'H' ? 0 : 1},
+			tooltip: {valueDecimals: ax_dec},
 			//visible:false,
 			name: fieldList[fieldIndex].name,
 			showInNavigator: (fieldList[fieldIndex].series === 0 || fieldList[fieldIndex].series === 12)
