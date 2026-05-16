@@ -554,6 +554,7 @@ void Statistics::Update()
 }
 
 // Возвращает файл с заголовками полей, flag: +Axis char
+// Цифра после оси, если есть, количество знаков после запятой
 void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 {
 	strcat(ret, "Время;");
@@ -588,10 +589,10 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 				strcat(ret, "C");		// ось COP
 				break;
 			case STATS_OBJ_Compressor:
-				strcat(ret, "G");
+				strcat(ret, "R1");		// ось %
 				break;
 			case STATS_OBJ_Heater:
-				strcat(ret, "H");
+				strcat(ret, "R0");		// ось %
 				break;
 			case STATS_OBJ_Flow:
 				strcat(ret, "F");	// ось частота
@@ -603,7 +604,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 					strcat(ret, "T"); 	// ось температур
 					break;
 				case STATS_EEV_Percent:
-					strcat(ret, "R");	// ось %
+					strcat(ret, "R1");	// ось %
 					break;
 				case STATS_EEV_Steps:
 					strcat(ret, "S");	// ось шаги
@@ -1154,7 +1155,7 @@ void Statistics::History()
 			break;
 #endif
 		case STATS_OBJ_Compressor:
-			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // H
+			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // R
 			break;
 		case STATS_OBJ_Power:
 			int_to_dec_str(HP.power220, 1, &buf, 0);  // W
@@ -1182,7 +1183,7 @@ void Statistics::History()
 		#endif
 #ifdef USE_HEATER
 		case STATS_OBJ_Heater:
-			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // %
+			int_to_dec_str(HP.dHeater.CheckIsHeaterOn() ? (HP.dHeater.data.Power ? HP.dHeater.data.Power : 1) : 0, 1, &buf, 0); // R
 			break;
 		case STATS_OBJ_Heater_TempOut: {
 			int16_t t = HP.dHeater.data.T_FlowOut;

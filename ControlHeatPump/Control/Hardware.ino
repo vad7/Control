@@ -1959,7 +1959,7 @@ int8_t devModbus::Process(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
 		journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
 		return ERR_485_BUZY;
 	}
-	RS485.WaitMinTimeBetweenTransaction();
+	//RS485.WaitMinTimeBetweenTransaction();
 	RS485.set_slave(id);
 	uint8_t res = 0;
 	if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
@@ -2009,7 +2009,7 @@ int8_t devModbus::ReadHoldingRegisters(uint8_t id, uint16_t cmd, uint16_t num, u
 		journal.jprintf((char*)"Modbus1 Busy: %02X %04X", id, cmd);
 		return ERR_485_BUZY;
 	}
-	RS485.WaitMinTimeBetweenTransaction();
+	//RS485.WaitMinTimeBetweenTransaction();
 	RS485.set_slave(id);
 	uint8_t res = RS485.readHoldingRegisters(cmd, num);
 	if (res == RS485.ku8MBSuccess) {
@@ -2032,7 +2032,7 @@ int8_t devModbus::Process2(uint8_t id, uint16_t cmd, T *data, ModbusOp op) {
 		journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
 		return ERR_485_BUZY;
 	}
-	RS485_2.WaitMinTimeBetweenTransaction();
+	//RS485_2.WaitMinTimeBetweenTransaction();
 	RS485_2.set_slave(id);
 	uint8_t res = 0;
 	if (std::is_same<T, bool>::value || std::is_same<T, boolean>::value) {
@@ -2082,7 +2082,7 @@ int8_t devModbus::ReadHoldingRegisters2(uint8_t id, uint16_t cmd, uint16_t num, 
 		journal.jprintf((char*)"Modbus2 Busy: %02X %04X", id, cmd);
 		return ERR_485_BUZY;
 	}
-	RS485_2.WaitMinTimeBetweenTransaction();
+	//RS485_2.WaitMinTimeBetweenTransaction();
 	RS485_2.set_slave(id);
 	uint8_t res = RS485_2.readHoldingRegisters(cmd, num);
 	if (res == RS485_2.ku8MBSuccess) {

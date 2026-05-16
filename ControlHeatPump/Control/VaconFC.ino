@@ -975,11 +975,7 @@ template <typename T> int8_t devVaconFC::modbus(uint16_t cmd, T *data, ModbusOp 
     if(!get_present()) return OK;
     int8_t localErr = ERR_CONFIG;
     uint8_t attempts = this->_data.Modbus_Attempts;
-#ifdef DEBUG_MODBUS
-    uint32_t _t = millis();
-#endif
     for (uint8_t i = 0; i < attempts; i++) {
-        // Вызов транспортного уровня
         localErr = devModbus::Process(FC_MODBUS_ADR, cmd - 1, data, op);
         if(localErr == OK) {
             this->check_blockFC();
@@ -994,19 +990,15 @@ template <typename T> int8_t devVaconFC::modbus(uint16_t cmd, T *data, ModbusOp 
         if(this->state == ERR_LINK_FC) return ERR_LINK_FC;
         this->numErr++;
         if(i == attempts - 1 || GETBIT(HP.Option.flags, fModbusLogErrors)) {
-            journal.jprintf_time(cErrorRS485, this->name, "fcProcess", cmd, localErr);
+            journal.jprintf_time(cErrorRS485, this->name, "Modbus", cmd, localErr);
         }
         if(this->check_blockFC()) break;
     }
-#ifdef DEBUG_MODBUS
-    journal.printf("MBFC: %d-%d, %u\n", millis() - _t);
-#endif
     return localErr;
 }
 
 // ГЕНЕРАЦИЯ КОДА (Explicit Instantiation)
 template int8_t devVaconFC::modbus(uint16_t, uint16_t*, ModbusOp);
-template int8_t devVaconFC::modbus(uint16_t, int16_t*, ModbusOp);
 template int8_t devVaconFC::modbus(uint16_t, uint32_t*, ModbusOp);
 //template int8_t devVaconFC::modbus(uint16_t, float*, ModbusOp);
 

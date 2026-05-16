@@ -67,33 +67,29 @@ volatile uint32_t* SYST_CVR = (volatile uint32_t*)0xE000E018;
 __attribute__((noinline/*,optimize("O0")*/))
 bool SemaphoreTake(type_SEMAPHORE &_sem, uint32_t wait_time)
 {
-	void* caller_addr = __builtin_return_address(0);
-	if(xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-		if(wait_time == 0) {
-			if(_sem.xSemaphore) return false;
-			vPortEnterCritical();
-			if(_sem.xSemaphore) {
-				vPortExitCritical();
-				return false;
-			} else {
-				_sem.xSemaphore = true;
-				vPortExitCritical();
-				_sem.return_addr = (uint32_t)caller_addr;
-				return true;
-			}
-		}
-		if(*SYST_CVR < VARIANT_MCK / configTICK_RATE_HZ / 20) goto xLoop; // мало времени до конца тика
-		while(_sem.xSemaphore) {
-xLoop:		if(!wait_time--) {
-				_sem.BusyCnt++;
-				return false;
-			}
-			vTaskDelay(portTICK_PERIOD_MS);
-		}
-	}
-	_sem.xSemaphore = true;
-	_sem.return_addr = (uint32_t)caller_addr;
-	return true;
+    void* caller_addr = __builtin_return_address(0);
+    if(xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {
+        _sem.xSemaphore = true;
+        _sem.return_addr = (uint32_t)caller_addr;
+        return true;
+    }
+    if(wait_time > 0 && (*SYST_CVR < VARIANT_MCK / configTICK_RATE_HZ / 20)) vTaskDelay(portTICK_PERIOD_MS);
+    while(1) {
+        vPortEnterCritical();
+        if(!_sem.xSemaphore) {
+            _sem.xSemaphore = true;
+            vPortExitCritical();
+            _sem.return_addr = (uint32_t)caller_addr;
+            return true;
+        }
+        vPortExitCritical();
+        if(wait_time == 0) {
+            _sem.BusyCnt++;
+            return false;
+        }
+        wait_time--;
+        vTaskDelay(portTICK_PERIOD_MS);
+    }
 }
 
 // Возврат true - ошибка повторной блокировки семафора

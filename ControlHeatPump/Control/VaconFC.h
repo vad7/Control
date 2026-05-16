@@ -479,39 +479,39 @@ public:
   inline int8_t   write_0x06_16(uint16_t cmd, uint16_t data) { return modbus(cmd, &data, WRITE_SINGLE); }
 #endif
 #ifdef FC_POWER_IN_PERCENT
-  uint16_t nominal_power;							// Номинальная мощность двигателя Вт
+  uint16_t nominal_power;		// Номинальная мощность двигателя Вт
 #endif
 
  private:
   void     Adjust_EEV(int16_t freq_delta);
 
-  int8_t   err;										// ошибка частотника (работа) при ошибке останов ТН
-  uint16_t numErr;									// число ошибок чтение по модбасу
-  uint8_t  number_err;								// Число ошибок связи при превышении FC_NUM_READ блокировка инвертора
+  int8_t   err;					// ошибка частотника (работа) при ошибке останов ТН
+  uint16_t numErr;				// число ошибок чтение по модбасу
+  uint8_t  number_err;			// Число ошибок связи при превышении FC_NUM_READ блокировка инвертора
    // Управление по 485
-  int16_t  FC_target;								// Целевая скорость инвертора в 0.01 %
-  int16_t  FC_curr_freq;							// Чтение: текущая частота двигателя в 0.01 Гц
-  uint16_t power;									// Чтение: Текущая мощность двигателя в Вт
-  int8_t   FC_Temp;									// Чтение: Температура радиатора инвертора, градусы
+  int16_t  FC_target;			// Целевая скорость инвертора в 0.01 %
+  int16_t  FC_curr_freq;		// Чтение: текущая частота двигателя в 0.01 Гц
+  uint16_t power;				// Чтение: Текущая мощность двигателя в Вт
+  int8_t   FC_Temp;				// Чтение: Температура радиатора инвертора, градусы
 #ifdef FC_MAX_CURRENT
-  uint16_t current;									// Чтение: Текущий ток двигателя в 0.01 Ампер единицах
+  uint16_t current;				// Чтение: Текущий ток двигателя в 0.01 Ампер единицах
 #endif
 #ifdef FC_VLT
-  uint32_t state;									// Чтение: Состояние ПЧ регистр FC_STATUS
+  uint32_t state;				// Чтение: Состояние ПЧ регистр FC_STATUS
 #else
-  int16_t  state;									// Чтение: Состояние ПЧ регистр FC_STATUS
+  int16_t  state;				// Чтение: Состояние ПЧ регистр FC_STATUS
 #endif
-  int16_t  minFC;									// Минимальная скорость инвертора в 0.01 %
-  int16_t  maxFC;									// Максимальная скорость инвертора в 0.01 %
+  int16_t  minFC;				// Минимальная скорость инвертора в 0.01 %
+  int16_t  maxFC;				// Максимальная скорость инвертора в 0.01 %
 
 #ifdef FC_ANALOG_CONTROL
   // Аналоговое управление
-  int16_t dac;                                     // Текущее значение ЦАП
-  uint8_t pin;                                     // Ножка куда прицеплено FC
+  int16_t dac;					// Текущее значение ЦАП
+  uint8_t pin;					// Ножка куда прицеплено FC
 #endif
   
-  char *note;                                      // Описание
-  char *name;                                      // Имя
+  char *note;					// Описание
+  char *name;					// Имя инвертора
 
  // Структура для сохранения настроек, Uptime всегда первый
   struct {
