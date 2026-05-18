@@ -5182,6 +5182,7 @@ const char *noteTemp[] = {"Температура улицы",
 		#define HEATER_PREHEAT_HYSTERESIS	500 // Прогревать трассу до превышения обратки котла над температурами бойлера или подачи, сотые градуса
 		#define HEATER_BOILER_DONT_USE_PUMP_OUT	// Не использовать насос отопления при нагреве бойлера от котла
 		#define BOILER_R3WAY_BEFORE_HEATER_3WAY	// Трехходовой бойлера стоит ДО трехходового крана Котел-ТН (может греть бойлер Котлом совместно с работой компрессора)
+		#define HEATER_PUMP_OVERRUN_TIME	180	// Время рециркуляции насоса котла после выключении нагрева
 	#endif
 
 	// Конфигурирование Modbus для инвертора и счетчика SDM
@@ -5947,11 +5948,17 @@ const char *noteTemp[] = {"Температура улицы",
 	const Charts_Const_setup ChartsOnFlySetup[] = {
 		{ STATS_OBJ_Overcool, "Переохлаждение" }, // T[PCON] - TCONOUT
 		{ STATS_OBJ_TCOMP_TCON, "Нагнетание - Конденсация" }, // TCOMP - TCON
+#ifdef USE_HEATER
+		{ STATS_OBJ_Delta_GEO, "Дельта температур геоконтура/котла" }, // TEVAING/T_FlowOut - TEVAOUTG/THEATER
+#else
 		{ STATS_OBJ_Delta_GEO, "Дельта температур геоконтура" }, // TEVAING - TEVAOUTG
+#endif
 		{ STATS_OBJ_Delta_OUT, "Дельта температур выхода" }, // TCONOUTG - TCONING
 		{ STATS_OBJ_Power_GEO, "Мощность геоконтура" }, // (TEVAOUTG - TEVAING) * FLOWEVA / kfCapacity
 		{ STATS_OBJ_Power_OUT, "Выходная мощность" } // (TCONOUTG - TCONING) * FLOWCON / kfCapacity
 	};
+	#define HEATER_CHART_TEVAING_STR	"Температура из геоконтура / подача котла"
+	#define HEATER_CHART_TEVAOUTG_STR	"Температура в геоконтур / обратка котла"
 
 	// История ежеминутная (графики) на SD карте
 	#define STATS_TOUT_MIN_OTHER	TSUN	// Датчик минимальной температуры улицы = MIN(TOUT, x)

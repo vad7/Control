@@ -428,7 +428,7 @@ void devHeater::get_info(char* buf)
 void devHeater::DumpJournal(void)
 {
 	if(GETBIT(set.setup_flags, fHeater_Opentherm)) {
-		journal.jprintf(" Heater:%X M:%d%% tF:%d tB:%d ", data.Status, data.Power, get_TFlowOut(), data.T_Boiler / 10);
+		journal.jprintf(" Heater:%X M:%d%% tF:%d tB:%d ", data.Status, data.Power, data.T_FlowOut / 10, data.T_Boiler / 10);
 		journal.jprintf("P:%.1d E:%d,%d\n", data.P_OUT, data.Error, Heater_Error2);
 	}
 }

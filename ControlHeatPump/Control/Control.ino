@@ -1860,7 +1860,7 @@ void vServiceHP(void *)
 #endif
 				if(++task_updstat_chars >= HP.get_tChart()) {
 					task_updstat_chars = 0;
-					if((Charts_when_comp_on && HP.is_comp_or_heater_on()) || (!Charts_when_comp_on && HP.get_State() != pOFF_HP)) { // пришло время
+					if((!Charts_when_comp_on || HP.is_comp_or_heater_on()) && HP.get_State() != pOFF_HP) { // пришло время
 						STORE_DEBUG_INFO(71);
 						HP.updateChart();                                       // Обновить графики
 						STORE_DEBUG_INFO(72);

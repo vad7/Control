@@ -1378,8 +1378,17 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 void HeatPump::get_listChart(char* ret, const char *delimiter)
 {
 	for(uint8_t index = 0; index < sizeof(ChartsModSetup) / sizeof(ChartsModSetup[0]); index++) {
-		if(ChartsModSetup[index].object == STATS_OBJ_Temp) strcat(ret, sTemp[ChartsModSetup[index].number].get_note());
-		else if(ChartsModSetup[index].object == STATS_OBJ_Press) strcat(ret, sADC[ChartsModSetup[index].number].get_note());
+		if(ChartsModSetup[index].object == STATS_OBJ_Temp) {
+			uint8_t n = ChartsModSetup[index].number;
+#ifdef USE_HEATER
+			if(n == TEVAING) { // Вход из геоконтура или Выход котла
+				strcat(ret, (char*)HEATER_CHART_TEVAING_STR);
+			} else if(n == TEVAOUTG) { // Выход в геоконтур или Вход котла
+				strcat(ret, (char*)HEATER_CHART_TEVAOUTG_STR));
+			} else
+#endif
+				strcat(ret, sTemp[n].get_note());
+		} else if(ChartsModSetup[index].object == STATS_OBJ_Press) strcat(ret, sADC[ChartsModSetup[index].number].get_note());
 		else if(ChartsModSetup[index].object == STATS_OBJ_PressTemp) {
 			strcat(ret, sADC[ChartsModSetup[index].number].get_note());
 			strcat(ret, ", °C");
@@ -1434,9 +1443,23 @@ void HeatPump::clearChart()
 // Все значения в графиках целочислены (сотые), выводятся в формате 0.01
 void  HeatPump::updateChart()
 {
+	uit8_t _fl_on = is_compressor_on()
+#ifdef USE_HEATER
+			| ((dHeater.CheckIsHeaterOn() || rtcSAM3X8.unixtime() - HP.stopHeater <= HEATER_PUMP_OVERRUN_TIME)<<1)
+#endif
+					;
 	for(uint8_t i = 0; i < sizeof(ChartsModSetup) / sizeof(ChartsModSetup[0]); i++) {
-		if(ChartsModSetup[i].object == STATS_OBJ_Temp) Charts[i].add_Point(sTemp[ChartsModSetup[i].number].get_Temp());
-		else if(ChartsModSetup[i].object == STATS_OBJ_Press) Charts[i].add_Point(sADC[ChartsModSetup[i].number].get_Value());
+		if(ChartsModSetup[i].object == STATS_OBJ_Temp) {
+			uint8_t n = ChartsModSetup[i].number;
+#ifdef USE_HEATER
+			if(n == TEVAING) { // Вход из геоконтура или Выход котла
+				if(_fl_on & 2) { Charts[i].add_Point(dHeater.data.T_FlowOut * 10); continue; }
+			} else if(n == TEVAOUTG) { // Выход в геоконтур или Вход котла
+				if(_fl_on & 2) n = THEATER;
+			}
+#endif
+			Charts[i].add_Point(sTemp[n].get_Temp());
+		} else if(ChartsModSetup[i].object == STATS_OBJ_Press) Charts[i].add_Point(sADC[ChartsModSetup[i].number].get_Value());
 		else if(ChartsModSetup[i].object == STATS_OBJ_PressTemp) Charts[i].add_Point(PressToTemp(ChartsModSetup[i].number));
 		else if(ChartsModSetup[i].object == STATS_OBJ_Flow) Charts[i].add_Point(sFrequency[ChartsModSetup[i].number].get_Value() / 10);
 #ifdef WATTROUTER
@@ -1449,8 +1472,7 @@ void  HeatPump::updateChart()
 	}
 	for(uint8_t i = 0; i < sizeof(ChartsConstSetup) / sizeof(ChartsConstSetup[0]); i++) {
 		uint8_t j = sizeof(ChartsModSetup) / sizeof(ChartsModSetup[0]) + i;
-		if(is_compressor_on() || !Charts_when_comp_on) {
-
+		if(_fl_on & 1) { // Графики Компрессора
 			if(ChartsConstSetup[i].object == STATS_OBJ_Overheat) Charts[j].add_Point(dEEV.get_Overheat());
 #ifdef EEV_DEF
 #ifdef EEV_PREFER_PERCENT
@@ -1464,11 +1486,13 @@ void  HeatPump::updateChart()
 #ifdef USE_ELECTROMETER_SDM
 			else if(ChartsConstSetup[i].object == STATS_OBJ_COP_Full) Charts[j].add_Point(fullCOP);
 #endif
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
 		}
 #ifdef USE_HEATER
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.CheckIsHeaterOn() ? dHeater.data.Power * 100 : dFC.get_frequency());
-#else
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dFC.get_frequency());
+		else if(_fl_on & 2) { // Графики Котла
+			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.data.Power * 100);
+
+		}
 #endif
 #ifdef USE_ELECTROMETER_SDM
 		else if(ChartsConstSetup[i].object == STATS_OBJ_Voltage) Charts[j].add_Point(dSDM.get_voltage() * 100);

@@ -64,13 +64,13 @@
 
 #define HM_START_DATA					0x0018
 struct type_heater_read {
-	int16_t	 T_FlowOut;							// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
-	uint16_t T_Boiler;							// 0x19, Текущая температура ГВС (0.0 - 100.0), десятые градуса
-	uint16_t P_OUT;								// 0x1A, Текущее Давление в контуре (0.0 - 5.0), десятые бара
-	uint16_t F_Boiler;							// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые л/мин
-	uint16_t Power;								// 0x1C, Модуляция (0 - 100%, 0xFF - неопределено)
-	uint16_t Status;							// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
-	uint16_t Error;								// 0x1E, ошибка котла
+	int16_t	 T_FlowOut;					// 0x18, Текущая температура теплоносителя (-100.0 - 100.0), десятые градуса
+	uint16_t T_Boiler;					// 0x19, Текущая температура ГВС (0.0 - 100.0), десятые градуса
+	uint16_t P_OUT;						// 0x1A, Текущее Давление в контуре (0.0 - 5.0), десятые бара
+	uint16_t F_Boiler;					// 0x1B, Текущий расход ГВС (0.0 - 25.5), десятые л/мин
+	uint16_t Power;						// 0x1C, Модуляция (0 - 100%, 0xFF - неопределено)
+	uint16_t Status;					// 0x1D, биты статуса (b0 - нагрев, b1 - отопление, b2 - ГВС)
+	uint16_t Error;						// 0x1E, ошибка котла
 } __attribute__((packed));
 #define HM_HEATER_ERROR2				0x001F	// 0x1F, ошибка котла дополнительная
 
@@ -149,7 +149,7 @@ public:
 	void	get_info(char* buf);					// Получить информацию
 	void 	DumpJournal(void);
 	inline type_HeaterSettings *get_settings() { return &set; };// Вернуть структуру настроек
-	int16_t get_TFlowOut(void) { return data.T_FlowOut / 10; }// текущая температура подачи котла, градусы
+	int16_t get_TFlowOut(void) { return data.T_FlowOut * 10; }// текущая температура подачи котла, сотые градусы
 
 	void 	Heater_Start();							// Включить котел
 	void 	Heater_Stop(bool rise_error);			// Выключить котел

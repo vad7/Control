@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2026 by Vadim Kulakov vad7@yahoo.com, vad711
-var VER_WEB = "1.217";
+var VER_WEB = "1.218";
 var urlcontrol = ''; //  автоопределение (если адрес сервера совпадает с адресом контроллера)
 // адрес и порт контроллера, если адрес сервера отличен от адреса контроллера (не рекомендуется)
 var urlcontrol = '';
@@ -519,7 +519,7 @@ function loadParam(paramid, noretry, resultdiv) {
 												if((relay = count[j].toLowerCase()) == "") continue;
 												loadsens = loadsens + "get_pinRelay(" + count[j] + "),get_isRelay(" + count[j] + "),get_nRelay(" + count[j] + "),";
 												upsens = upsens + "get_Relay(" + count[j] + "),";
-												content = content + '<tr id="get_isrelay-' + relay + '"><td>' + count[j] + '</td><td id="get_nrelay-' + relay + '"></td><td><span id="get_relay-' + relay + '-ONOFF"></span><input type="checkbox" name="relay" id="get_relay-' + relay + '" onchange="setParam(\'get_Relay(' + count[j] + ')\');"></td><td id="get_pinrelay-' + relay + '"></td>';
+												content = content + '<tr id="get_isrelay-' + relay + '"><td>' + count[j] + '</td><td id="get_nrelay-' + relay + '"></td><td><span id="get_relay-' + relay + '-ONOFF"></span><input type="checkbox" name="tstpage" id="get_relay-' + relay + '" onchange="setParam(\'get_Relay(' + count[j] + ')\');"></td><td id="get_pinrelay-' + relay + '"></td>';
 												content = content + '</tr>';
 											}
 											document.getElementById(valueid).innerHTML = content;
@@ -663,11 +663,12 @@ function loadParam(paramid, noretry, resultdiv) {
 									if(values[1].match(/^E-?\d/)) {
 										if(element2) element2.innerHTML = j[0] + (j.length > 1 ? " (" + j[1] + ")" : "");
 									} else {
+										var _value = j.length > 1 ? j[0] : values[1];
 										if(element2) element2.innerHTML = "OK" + (j.length > 1 ? " (" + j[1] + ")" : "");
 										if((element = document.getElementById(valueid))) {
-											element.value = values[1];
+											element.value = _value;
 											element2 = document.getElementById(valueid.replace("val", "hex"));
-											if(element2) element2.value = "0x" + Number(values[1]).toString(16).toUpperCase();
+											if(element2) element2.value = "0x" + Number(_value).toString(16).toUpperCase();
 										}
 									}
 								} else if(values[0] == "get_WORK") {
@@ -684,13 +685,8 @@ function loadParam(paramid, noretry, resultdiv) {
 									element = document.getElementById('manual_override'); if(element && element.checked) onoff = false;
 									var elements = document.getElementsByName('profile');
 									for(var j = 0; j < elements.length; j++) elements[j].disabled = onoff;
-									var elements = document.getElementsByName('relay');
+									var elements = document.getElementsByName('tstpage');
 									for(var j = 0; j < elements.length; j++) elements[j].disabled = onoff;
-									if((element=document.getElementById('get_peev-pos'))) element.disabled = onoff;
-									if((element=document.getElementById('get_peev-posp'))) element.disabled = onoff;
-									if((element=document.getElementById('set-eev'))) element.disabled = onoff;
-									if((element=document.getElementById('set-eevp'))) element.disabled = onoff;
-									if((element=document.getElementById('get_pfc-on_off'))) element.disabled = onoff;
 								} else if(values[0] == "USR") {
 									if(values[1] != "0") {
 										var elements = document.getElementsByName("USR");
