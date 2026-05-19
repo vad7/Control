@@ -1116,12 +1116,6 @@ void vWeb3(void *)
 // Задача чтения датчиков
 void vReadSensor(void *)
 { //const char *pcTaskName = "ReadSensor\r\n";
-	static unsigned long readFC = 0;
-#ifdef USE_ELECTROMETER_SDM
-#if (SDM_READ_PERIOD > 0)
-	static unsigned long readSDM = 0;
-#endif
-#endif
 	static uint32_t ttime;
 	static uint8_t  prtemp;
 	static uint8_t flags = 0;	// b0 - dFC/dHeater
@@ -1171,29 +1165,6 @@ void vReadSensor(void *)
 		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
 #endif
 		//_delay(1);
-#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
-#if (SDM_READ_PERIOD > 0)
-			if((HP.dSDM.get_present()) && (GetTickCount() - readSDM > SDM_READ_PERIOD)) {
-				readSDM=GetTickCount();
-				HP.dSDM.get_readState(2);     // Последняя группа регистров ТОК
-			}
-#endif
-#endif
-#if defined(WR_PowerMeter_Modbus)
-		if(GETBIT(WR.Flags, WR_fActive) || GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
-			vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD / 2 - (GetTickCount() - ttime));	// через (WEB0_FREQUENT_JOB_PERIOD / 2) после начала очередного цикла чтения
-			if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
-		 	WR_ReadPowerMeter();
-		}
-#else
-#if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
-		WR_Calc_Power_Array_NewMeter(0);
-#endif
-#endif // defined(WR_PowerMeter_Modbus)
-
-#ifdef USE_HEATER
-		if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(0);	// группа 1 - наличие связи
-#endif
 		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
 
 		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
@@ -1248,25 +1219,11 @@ void vReadSensor(void *)
 			} else if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 		}
 
-#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
-		HP.dSDM.get_readState(0); // Основная группа регистров
-#endif
-
 		HP.calculatePower();  // Расчет мощностей и СОР
 		Stats.Update();
-#if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
-		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
-			int32_t tm = GetTickCount() - ttime;
-			if((int32_t)TIME_READ_SENSOR - tm > RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction + RS485.ModbusMinTimeBetweenTransaction / 2) {
-				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
-				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
-			 	WR_ReadPowerMeter();
-			}
-		} else //WR_PowerMeter_New = true;
-#endif
-		{
-			vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
-		}
+
+		vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
+
 		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
 		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
 #ifdef EEV_DEF
@@ -1293,17 +1250,6 @@ void vReadSensor(void *)
 			}
 		}
 #endif
-		if(GetTickCount() - readFC > FC_TIME_READ / 2
-				&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
-			readFC = GetTickCount();
-			if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
-		}
-#ifdef USE_HEATER
-		if(flags & 1) {
-			if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) /*&& !HP.is_compressor_on()*/) HP.dHeater.read_state(1); // группа 2 - данные
-		}
-#endif
-		flags ^= 1;	// dFC / dHeater
 
 #ifdef DRV_EEV_L9333  // Опрос состяния драйвера ЭРВ
 		if (digitalReadDirect(PIN_STEP_DIAG)) // Перечитываем два раза
@@ -1315,9 +1261,9 @@ void vReadSensor(void *)
 
 #ifdef FLOW_CONTROL               // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
-		if(HP.is_comp_or_heater_on()) // Только если компрессор/котел включен
+		if(HP.is_comp_or_heater_on() && HP.get_State() != pOFF) // Только если компрессор/котел включен
 #else
-		if(HP.is_comp_on())           // Только если компрессор включен
+		if(HP.is_comp_on() && HP.get_State() != pOFF)           // Только если компрессор включен
 #endif
 			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
 #ifdef FLOWCON                    // если определен датчик потока конденсатора
@@ -1356,6 +1302,22 @@ void vReadSensor(void *)
 // Вызывается во время задержек в задаче чтения датчиков
 void vReadSensor_delay1ms(int32_t ms)
 {
+	enum {
+		MQ_SDM = 0,
+		MQ_FC,
+		MQ_PWM,
+		MQ_END
+	};
+	static uint8_t modbus_queue = 0;
+#ifdef USE_ELECTROMETER_SDM
+	static uint32_t read_SDM1 = 0;
+	#if (SDM_READ_PERIOD > 0)
+	static uint32_t read_SDM2 = 0;
+	#endif
+#endif
+	static uint32_t read_FC = 0;
+#define MQ_NEXT { if(++modbus_queue == MQ_END) modbus_queue = 0; }
+
 	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) {
 		vTaskDelay(1);
 		return;
@@ -1436,6 +1398,89 @@ void vReadSensor_delay1ms(int32_t ms)
 #ifdef RADIO_SENSORS
 		if(ms - (GetTickCount() - tm) >= 20) check_radio_sensors();
 #endif
+
+		// MODBUS reading
+
+		if(RS485.GetTimeToWait() == 0) { // шина не ожидает паузы между транзакциями
+			if(xModbusSemaphore.xSemaphore)
+
+#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
+		if(modbus_queue == MQ_SDM) {
+			if(HP.dSDM.get_present()) {
+				if(GetTickCount() - read_SDM1 > SDM_READ_PERIOD) {
+					read_SDM1 = GetTickCount();
+					HP.dSDM.get_readState(0);		// Основная группа регистров
+					MQ_NEXT;
+	#if SDM_READ_PERIOD > 0
+				} else if(GetTickCount() - read_SDM2 > SDM_READ_PERIOD) {
+					read_SDM2 = GetTickCount();
+					HP.dSDM.get_readState(2);		// Последняя группа регистров ТОК
+					MQ_NEXT;
+	#endif
+				}
+			} else MQ_NEXT;
+		} else
+#else
+		if(modbus_queue == MQ_SDM) MQ_NEXT;
+#endif
+		if(MQ_FC) {
+
+
+		}
+
+
+		if(GetTickCount() - readFC > FC_TIME_READ / 2
+				&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
+			readFC = GetTickCount();
+			if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
+		}
+
+
+
+#if defined(WR_PowerMeter_Modbus)
+		if(GETBIT(WR.Flags, WR_fActive) || GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
+			if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
+		 	WR_ReadPowerMeter();
+		}
+#else
+#if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
+		WR_Calc_Power_Array_NewMeter(0);
+#endif
+#endif // defined(WR_PowerMeter_Modbus)
+
+#ifdef USE_HEATER
+		if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(0);	// группа 1 - наличие связи
+#endif
+
+
+#if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
+		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
+			int32_t tm = GetTickCount() - ttime;
+			if((int32_t)TIME_READ_SENSOR - tm > RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction + RS485.ModbusMinTimeBetweenTransaction / 2) {
+				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
+				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
+			 	WR_ReadPowerMeter();
+			}
+		} else //WR_PowerMeter_New = true;
+#endif
+
+
+			if(GetTickCount() - readFC > FC_TIME_READ / 2
+					&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
+				readFC = GetTickCount();
+				if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
+			}
+	#ifdef USE_HEATER
+			if(flags & 1) {
+				if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) /*&& !HP.is_compressor_on()*/) HP.dHeater.read_state(1); // группа 2 - данные
+			}
+	#endif
+			flags ^= 1;	// dFC / dHeater
+
+		}
+
+
+		//
 		int32_t tm2 = GetTickCount() - tm;
 		if((tm2 -= ms) >= -10) {
 			if(tm2 < 0) vTaskDelay(-tm2);

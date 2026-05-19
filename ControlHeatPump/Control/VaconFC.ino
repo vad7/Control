@@ -685,7 +685,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_STATE)==0)                 {  _itoa(state,ret);   } else
     if(strcmp(var,fc_FC)==0)                    {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
     if(strcmp(var,fc_INFO1)==0)                 {  _dtoa(ret, FC_target, 2); strcat(ret, "%"); } else
-    if(strcmp(var,fc_cFC)==0)                   {  if(FC_curr_freq == 0) strcat(ret, "Выкл."); else { _dtoa(ret, FC_curr_freq, 2); strcat(ret, " Гц"); } } else // Текущая частота!
+    if(strcmp(var,fc_cFC)==0)                   {  if(FC_curr_freq == 0) strcat(ret, "Выкл"); else { _dtoa(ret, FC_curr_freq, 2); strcat(ret, " Гц"); } } else // Текущая частота!
     if(strcmp(var,fc_cPOWER)==0)                {  _itoa(get_power(), ret); } else
     if(strcmp(var,fc_cCURRENT)==0)              {  _dtoa(ret, get_current(), 2); } else
     if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      {  strcat(ret,(char*)(GETBIT(_data.setup_flags,fAutoResetFault) ? cOne : cZero)); } else

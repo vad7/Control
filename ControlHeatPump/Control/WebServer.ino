@@ -243,7 +243,7 @@ void readFileSD(char *filename, uint8_t thread)
 	WEB_STORE_DEBUG_INFO(11);
 	if((str = strchr(filename, '[')) != NULL) // скобка найдена надо обрабатывать
 	{
-		if(strncmp(str + 1, filename_subst_scheme, sizeof(filename_subst_scheme)-1) == 0) // найден аргумент (схема ТН) надо подменять на значение HP_SHEME
+		if(strncmp(str + 1, filename_subst_scheme, sizeof(filename_subst_scheme)-1) == 0) // найден аргумент (схема ТН) надо подменять на значение HP_SCHEME
 		{
 			if(*(str + 1 + sizeof(filename_subst_scheme)-1) == ']') {
 #ifdef HP_SCHEME_HEATER
@@ -694,6 +694,7 @@ void parserGET(uint8_t thread, int8_t )
 				_itoa(HP.is_heater_active() ? HP_SCHEME_HEATER : HP_SCHEME, strReturn);
 #else
 				_itoa(HP_SCHEME, strReturn);
+				if(!HP.TARGET_COMPRESSOR() && HP.get_State() != pOFF) strcat(strReturn, "-"); // не нужно выводить все датчики по ТН
 #endif
 				ADD_WEBDELIM(strReturn); continue;
 			} else if(str[8] == 'W') {	// get_MODEW - режим работы: Отопление/Охлаждение + ГВС
