@@ -72,10 +72,11 @@ byte defaultMAC[] = { 0xDE, 0xA1, 0x1E, 0x01, 0x02, 0x03 };// не менять
 const uint16_t  defaultPort=80;
 
 // Макросы работы с битами байта, используется для флагов
-#define GETBIT(b,f)   ((b&(1<<(f)))?true:false)              // получить состяние бита
-#define SETBIT1(b,f)  (b|=(1<<(f)))                          // установка бита в 1
-#define SETBIT0(b,f)  (b&=~(1<<(f)))                         // установка бита в 0
-#define ALIGN(a) ((a + 3) & ~3)
+#define GETBIT(b,f)		((b & (1<<(f))) ? true : false)// получить состяние бита
+#define SETBIT1(b,f)	(b |= (1<<(f)))		// установка бита в 1
+#define SETBIT0(b,f)	(b &= ~(1<<(f)))	// установка бита в 0
+#define XBIT(b,f)		(b ^= (1<<(f)))		// инвертировать бит
+#define ALIGN(a)		((a + 3) & ~3)
 
 // ------------------- SPI ----------------------------------
 // Карта памяти
@@ -165,7 +166,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 
 // Глобальные параметры инвертора инвертора на модбасе зависят от компрессора!!!!!!!!!
 #define FC_MODBUS_ADR      1             // Адрес частотного преобразователя на шине не должно совпадать SMD_MODBUS_ADR
-#define FC_TIME_READ       4000UL        // Время опроса инвертора, котла (если оба устройства, через /2 и по-очередно), в мсек
+//#define FC_READ_PERIOD     - ПЕРЕНЕСЕНА в CONFIG.INO
 #define FC_NUM_READ        5             // Число попыток чтения инвертора (подряд) по модбас до его останова ТН по ошибке ПО УМОЛЧАНИЮ
 #define FC_DELAY_REPEAT    10            // мсек Время между ПОВТОРНЫМИ попытками чтения было 100
 #define FC_DELAY_READ      10            // мсек Время между последовательными запросами было 20
@@ -742,7 +743,7 @@ const char *fc_DT_COMP_TEMP      = {"DTC"};   			  // Защита по темп
 const char *fc_DT_TEMP           = {"DT"};           	  // Превышение температуры от уставок (подача) при которой срабатыват защита (уменьшается частота) в сотых градуса
 const char *fc_DT_TEMP_BOILER    = {"DTB"};    			  // Превышение температуры от уставок (подача) при которой срабатыват защита ГВС в сотых градуса
 const char *fc_MB_ERR		     = {"MB_ERR"};			  // Ошибок Modbus
-const char *fc_FC_TIME_READ      = {"TR"};				  // Время опроса
+const char *fc_FC_READ_PERIOD      = {"TR"};				  // Время опроса
 const char *fc_AdjustEEV_k       = {"EEVK"};
 const char *fc_PidMaxStep        = {"PMS"};
 const char *fc_fFC_RetOil	     = {"FRO"};               // Флаг возврат масла

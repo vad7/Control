@@ -58,8 +58,8 @@ int8_t devVaconFC::initFC()
 	_data.PidMaxStep = 500;
 	_data.ReturnOilMinFreq = FC_RETOIL_FREQ;
 	_data.ReturnOilFreq = 3000; // %
-	_data.ReturnOilPeriod = 1800000 / FC_TIME_READ;
-	_data.ReturnOilPerDivHz = 48000 / FC_TIME_READ;
+	_data.ReturnOilPeriod = 1800000 / FC_READ_PERIOD;
+	_data.ReturnOilPerDivHz = 48000 / FC_READ_PERIOD;
 	_data.ReturnOilTime = FC_RETOIL_TIME;
 	_data.MaxPower = FC_MAX_POWER;
 	_data.MaxPowerBoiler = FC_MAX_POWER_BOILER;
@@ -171,7 +171,7 @@ int16_t devVaconFC::CheckLinkStatus(void)
 }
 
 // Прочитать (внутренние переменные обновляются) состояние Инвертора, возвращает или ОК или ошибку
-// Вызывается из задачи чтения датчиков период FC_TIME_READ
+// Вызывается из задачи чтения датчиков период FC_READ_PERIOD
 int8_t devVaconFC::get_readState()
 {
 	if(testMode != NORMAL && testMode != HARD_TEST) {
@@ -691,11 +691,11 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_AUTO_RESET_FAULT)==0)      {  strcat(ret,(char*)(GETBIT(_data.setup_flags,fAutoResetFault) ? cOne : cZero)); } else
     if(strcmp(var,fc_LogWork)==0)      			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fLogWork) ? cOne : cZero)); } else
     if(strcmp(var,fc_fFC_RetOil)==0)   			{  strcat(ret,(char*)(GETBIT(_data.setup_flags,fFC_RetOil) ? cOne : cZero)); } else
-    if(strcmp(var,fc_ReturnOilPeriod)==0)       {  _itoa(_data.ReturnOilPeriod * (FC_TIME_READ/1000), ret); } else
-    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     {  _itoa(_data.ReturnOilPerDivHz * (FC_TIME_READ/1000), ret); } else
+    if(strcmp(var,fc_ReturnOilPeriod)==0)       {  _itoa(_data.ReturnOilPeriod * (FC_READ_PERIOD/1000), ret); } else
+    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     {  _itoa(_data.ReturnOilPerDivHz * (FC_READ_PERIOD/1000), ret); } else
     if(strcmp(var,fc_ReturnOilMinFreq)==0)      {  _dtoa(ret, _data.ReturnOilMinFreq, 2); } else
     if(strcmp(var,fc_ReturnOilFreq)==0)         {  _dtoa(ret, _data.ReturnOilFreq, 2); } else
-    if(strcmp(var,fc_ReturnOilTime)==0)         {  _itoa(_data.ReturnOilTime * (FC_TIME_READ/1000), ret); } else
+    if(strcmp(var,fc_ReturnOilTime)==0)         {  _itoa(_data.ReturnOilTime * (FC_READ_PERIOD/1000), ret); } else
     if(strcmp(var,fc_ANALOG)==0)                { // Флаг аналогового управления
 #ifdef FC_ANALOG_CONTROL
 		                                         strcat(ret,(char*)cOne);
@@ -735,7 +735,7 @@ void devVaconFC::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_DT_TEMP)==0)               {  _dtoa(ret, _data.dtTemp,2); } else // градусы
     if(strcmp(var,fc_DT_TEMP_BOILER)==0)        {  _dtoa(ret, _data.dtTempBoiler,2); } else // градусы
     if(strcmp(var,fc_MB_ERR)==0)        		{  _itoa(numErr, ret); } else
-   	if(strcmp(var, fc_FC_TIME_READ)==0)   		{  _itoa(FC_TIME_READ, ret); } else
+   	if(strcmp(var, fc_FC_READ_PERIOD)==0)   		{  _itoa(FC_READ_PERIOD, ret); } else
    	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
     if(strcmp(var, fc_AdjustEEV_k)==0)			{  _dtoa(ret, _data.AdjustEEV_k, 2); } else
     if(strcmp(var, fc_ReturnOil_AdjustEEV_k)==0){  _dtoa(ret, _data.ReturnOil_AdjustEEV_k, 2); } else
@@ -767,9 +767,9 @@ boolean devVaconFC::set_paramFC(char *var, float f)
                                                 	return true;
                                                 } else  // только чтение
     if(strcmp(var,fc_UPTIME)==0)                { if((x>=1)&&(x<650)){_data.Uptime=x;return true; } else return false; } else   // хранение в сек
-    if(strcmp(var,fc_ReturnOilPeriod)==0)       { _data.ReturnOilPeriod = (int16_t) x / (FC_TIME_READ/1000); return true; } else
-    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_TIME_READ/1000); return true; } else
-    if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_TIME_READ/1000); return true; } else
+    if(strcmp(var,fc_ReturnOilPeriod)==0)       { _data.ReturnOilPeriod = (int16_t) x / (FC_READ_PERIOD/1000); return true; } else
+    if(strcmp(var,fc_ReturnOilPerDivHz)==0)     { _data.ReturnOilPerDivHz = (int16_t) x / (FC_READ_PERIOD/1000); return true; } else
+    if(strcmp(var,fc_ReturnOilTime)==0)         { _data.ReturnOilTime = (int16_t) x / (FC_READ_PERIOD/1000); return true; } else
     if(strcmp(var,fc_PID_STOP)==0)              { if((x>=0)&&(x<=100)){_data.PidStop=x;return true; } else return false;  } else
     if(strcmp(var,fc_MaxPower)==0)  		    { _data.MaxPower = x; return true; } else
     if(strcmp(var,fc_MaxPowerBoiler)==0)	    { _data.MaxPowerBoiler = x; return true; } else

@@ -1116,218 +1116,204 @@ void vWeb3(void *)
 // Задача чтения датчиков
 void vReadSensor(void *)
 { //const char *pcTaskName = "ReadSensor\r\n";
-	static uint32_t ttime;
-	static uint8_t  prtemp;
-	static uint8_t flags = 0;	// b0 - dFC/dHeater
+	static uint32_t read_sensor = 0;
+	static uint32_t read_SDM1 = 0;
+	static uint32_t read_SDM2 = 0;
+	static uint32_t read_FC = 0;
+	static uint32_t read_HEATER = 0;
+	static uint32_t read_WR = 0;
+	static uint32_t read_LAST = GetTickCount();
+	static uint8_t  read_flags = 0;
+	#define MODBUS_SKIP_TIME 70
+	#define R_F_buses_mask 0x3F
+	enum {
+		R_F_buses,	// 0..5
+		R_F_wait_ds18b20 = 6,
+		R_F_heater_group = 7
+	};
 	
 	for(;;) {
 		int8_t i;
 
-		ttime = GetTickCount();
-#ifdef RADIO_SENSORS		
-		radio_timecnt++;
-#endif
-		prtemp = 0;	// Очистка ошибок по шинам
-		if(OW_scan_flags == 0) {
+		vTaskDelay(5);
+		uint32_t t = GetTickCount();
+		if(t - read_sensor >= TIME_READ_SENSOR - cDELAY_DS1820) {
+			if(!GETBIT(read_flags, R_F_wait_ds18b20)) {
+				read_flags &= ~R_F_buses_mask;	// Очистка ошибок по шинам
+				if(OW_scan_flags == 0) {
 #ifndef DEMO  // Если не демо
-			prtemp |= HP.Prepare_Temp(0);
+					read_flags |= HP.Prepare_Temp(0);
 #ifdef ONEWIRE_DS2482_SECOND
-			prtemp |= HP.Prepare_Temp(1);
+					read_flags |= HP.Prepare_Temp(1);
 #endif
 #ifdef ONEWIRE_DS2482_THIRD
-			prtemp |= HP.Prepare_Temp(2);
+					read_flags |= HP.Prepare_Temp(2);
 #endif
 #ifdef ONEWIRE_DS2482_FOURTH
-			prtemp |= HP.Prepare_Temp(3);
+					read_flags |= HP.Prepare_Temp(3);
 #endif
 #endif     // не DEMO
-		}
+				}
+				SETBIT1(read_flags, R_F_wait_ds18b20);
+				continue;
+			} else if(t - read_sensor >= TIME_READ_SENSOR) {
+				read_sensor = t;
+				SETBIT0(read_flags, R_F_wait_ds18b20);
+#ifdef RADIO_SENSORS
+				radio_timecnt++;
+#endif
 #ifndef IWR
-		for(i = 0; i < ANUMBER; i++)
+				for(i = 0; i < ANUMBER; i++)
 #else
-		for(i = 0; i < ANUMBER - 1; i++)
+				for(i = 0; i < ANUMBER - 1; i++)
 #endif
-		{
-			int8_t _err = HP.sADC[i].Read();
-			if(_err != OK && HP.get_State() != pOFF_HP) {      				// Прочитать данные с датчиков давления
-				if(HP.TARGET_COMPRESSOR()
+				{
+					int8_t _err = HP.sADC[i].Read();
+					if(_err != OK && HP.get_State() != pOFF_HP) {      				// Прочитать данные с датчиков давления
+						if(HP.TARGET_COMPRESSOR()
 #ifdef PGEO
-					&& i <= PGEO)
+							&& i <= PGEO)
 #else
-					&& i <= PCON)
+							&& i <= PCON)
 #endif
-				set_Error(_err, HP.sADC[i].get_name());
-			}
-		}
+								set_Error(_err, HP.sADC[i].get_name());
+					}
+				}
 #ifdef SGENERATOR
-		for(i = 0; i < SGENERATOR; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
+				for(i = 0; i < SGENERATOR; i++) HP.sInput[i].Read();			// Прочитать данные сухой контакт
 #else
-		for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();                // Прочитать данные сухой контакт
+				for(i = 0; i < INUMBER; i++) HP.sInput[i].Read();				// Прочитать данные сухой контакт
 #endif
-		//_delay(1);
-		vReadSensor_delay1ms(cDELAY_DS1820 - (int32_t)(GetTickCount() - ttime)); 	// Ожидать время преобразования
+				vTaskDelay(2);
+				for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
 
-		for(i = 0; i < FNUMBER; i++) HP.sFrequency[i].Read();			// Получить значения датчиков потока
-
-		if(OW_scan_flags == 0) {
-			uint8_t flags = 0;
-			for(i = 0; i < TNUMBER; i++) {                                   // Прочитать данные с температурных датчиков
-				if((prtemp & (1<<HP.sTemp[i].get_bus())) == 0) {
-					if(HP.sTemp[i].Read() == OK) flags |= HP.sTemp[i].get_setup_flags();
-				}
-				_delay(1);     												// пауза
-			}
-			// Проверка на предельные температуры
-			for(i = 0; i < TempAlarm_size; i++) {
-				uint8_t num = TempAlarm[i].num;
-				if(HP.sTemp[num].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) continue;
-				int16_t T = HP.sTemp[num].get_Temp();
-				if(T < TempAlarm[i].MinTemp * 100) {
-					set_Error(HP.sTemp[num].set_Err(ERR_MINTEMP), HP.sTemp[num].get_name());
-				}
-				if(T > TempAlarm[i].MaxTemp * 100) {
-					set_Error(HP.sTemp[num].set_Err(ERR_MAXTEMP), HP.sTemp[num].get_name());
-				}
-			}
-
-			int32_t temp;
-			if(GETBIT(flags, fTEMP_as_TIN_average)) { // Расчет средних датчиков для TIN
-				temp = 0;
-				uint8_t cnt = 0;
-				for(i = 0; i < TNUMBER; i++) {
-					if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_average) && HP.sTemp[i].get_Temp() != STARTTEMP) {
-						temp += HP.sTemp[i].get_Temp();
-						cnt++;
+				if(OW_scan_flags == 0) {
+					uint8_t flags = 0;
+					for(i = 0; i < TNUMBER; i++) {								// Прочитать данные с температурных датчиков
+						if((read_flags & (1<<HP.sTemp[i].get_bus())) == 0) {
+							if(HP.sTemp[i].Read() == OK) flags |= HP.sTemp[i].get_setup_flags();
+						}
+						if((i & 1) == 1) vTaskDelay(2);								// пауза
 					}
-				}
-				if(cnt) temp /= cnt; else temp = STARTTEMP;
-			} else temp = STARTTEMP;
-			int16_t temp2 = temp;
-			if(GETBIT(flags, fTEMP_as_TIN_min)) { // Выбор минимальной температуры для TIN
-				if(HP.get_modeHouse() == pCOOL) {
-					if(temp2 == STARTTEMP) temp2 = -STARTTEMP;
-					for(i = 0; i < TNUMBER; i++) {
-						if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 < HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
-					}
-					if(temp2 != -STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
-				} else {
-					for(i = 0; i < TNUMBER; i++) {
-						if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
-					}
-					if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
-				}
-			} else if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
-		}
-
-		HP.calculatePower();  // Расчет мощностей и СОР
-		Stats.Update();
-
-		vReadSensor_delay1ms((int32_t(TIME_READ_SENSOR) - int32_t(GetTickCount() - ttime)) / 2);     // 1. Ожидать время нужное для цикла чтения
-
-		// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
-		// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
-#ifdef EEV_DEF
-		HP.dEEV.set_Overheat(HP.is_HP_Heating()); // нагрев(1) или охлаждение(0)
-#endif
-
-		// Опрос состояния инвертора
-#ifdef USE_UPS
-		if(HP.NO_Power) {
-			if(!HP.sInput[SPOWER].is_alarm()) { // Включаемся
-				if(HP.NO_Power_delay) {
-					if(--HP.NO_Power_delay == 0) HP.sendCommand(pNETWORK);
-				} else {
-					journal.jprintf_date( "POWER RESTORED!\n");
-					if(!HP.Schdlr.IsShedulerOn()) {  // Расписание не активно, иначе включаемся через расписание
-						if(HP.NO_Power == 2 && HP.get_State() == pWAIT_HP) {
-							HP.NO_Power = 0;
-							journal.jprintf("Resuming work...\n");
-							HP.sendCommand(pRESUME);
+					// Проверка на предельные температуры
+					for(i = 0; i < TempAlarm_size; i++) {
+						uint8_t num = TempAlarm[i].num;
+						if(HP.sTemp[num].get_setup_flags() & ((1<<fTEMP_HeatTarget)|(1<<fTEMP_HeatFloor))) continue;
+						int16_t T = HP.sTemp[num].get_Temp();
+						if(T < TempAlarm[i].MinTemp * 100) {
+							set_Error(HP.sTemp[num].set_Err(ERR_MINTEMP), HP.sTemp[num].get_name());
+						}
+						if(T > TempAlarm[i].MaxTemp * 100) {
+							set_Error(HP.sTemp[num].set_Err(ERR_MAXTEMP), HP.sTemp[num].get_name());
 						}
 					}
-					HP.NO_Power = 0;
+
+					int32_t temp;
+					if(GETBIT(flags, fTEMP_as_TIN_average)) { // Расчет средних датчиков для TIN
+						temp = 0;
+						uint8_t cnt = 0;
+						for(i = 0; i < TNUMBER; i++) {
+							if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_average) && HP.sTemp[i].get_Temp() != STARTTEMP) {
+								temp += HP.sTemp[i].get_Temp();
+								cnt++;
+							}
+						}
+						if(cnt) temp /= cnt; else temp = STARTTEMP;
+					} else temp = STARTTEMP;
+					int16_t temp2 = temp;
+					if(GETBIT(flags, fTEMP_as_TIN_min)) { // Выбор минимальной температуры для TIN
+						if(HP.get_modeHouse() == pCOOL) {
+							if(temp2 == STARTTEMP) temp2 = -STARTTEMP;
+							for(i = 0; i < TNUMBER; i++) {
+								if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 < HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+							}
+							if(temp2 != -STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
+						} else {
+							for(i = 0; i < TNUMBER; i++) {
+								if(GETBIT(HP.Prof.SaveON.bTIN, i) && HP.sTemp[i].get_setup_flag(fTEMP_as_TIN_min) && temp2 > HP.sTemp[i].get_Temp()) temp2 = HP.sTemp[i].get_Temp();
+							}
+							if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
+						}
+					} else if(temp2 != STARTTEMP) HP.sTemp[TIN].set_Temp(temp2);
 				}
-			}
-		}
+
+				HP.calculatePower();  // Расчет мощностей и СОР
+				Stats.Update();
+#if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
+				WR_Calc_Power_Array_NewMeter(0);
+#endif
+				// Вычисление перегрева используются РАЗНЫЕ датчики при нагреве и охлаждении
+				// Режим работы определяется по состоянию четырехходового клапана при его отсутвии только нагрев
+#ifdef EEV_DEF
+				HP.dEEV.set_Overheat(HP.is_HP_Heating()); // нагрев(1) или охлаждение(0)
+#endif
+#ifdef USE_UPS
+				if(HP.NO_Power) {
+					if(!HP.sInput[SPOWER].is_alarm()) { // Включаемся
+						if(HP.NO_Power_delay) {
+							if(--HP.NO_Power_delay == 0) HP.sendCommand(pNETWORK);
+						} else {
+							journal.jprintf_date( "POWER RESTORED!\n");
+							if(!HP.Schdlr.IsShedulerOn()) {  // Расписание не активно, иначе включаемся через расписание
+								if(HP.NO_Power == 2 && HP.get_State() == pWAIT_HP) {
+									HP.NO_Power = 0;
+									journal.jprintf("Resuming work...\n");
+									HP.sendCommand(pRESUME);
+								}
+							}
+							HP.NO_Power = 0;
+						}
+					}
+				}
 #endif
 
 #ifdef DRV_EEV_L9333  // Опрос состяния драйвера ЭРВ
-		if (digitalReadDirect(PIN_STEP_DIAG)) // Перечитываем два раза
-		{
-			vReadSensor_delay1ms(5);
-			if (digitalReadDirect(PIN_STEP_DIAG)) set_Error(ERR_DRV_EEV,(char*)__FUNCTION__); // Контроль за работой драйвера ЭРВ
-		}
+				if(digitalReadDirect(PIN_STEP_DIAG)) {// Перечитываем два раза
+					_delay(5);
+					if(digitalReadDirect(PIN_STEP_DIAG)) set_Error(ERR_DRV_EEV,(char*)__FUNCTION__); // Контроль за работой драйвера ЭРВ
+				}
 #endif
-
 #ifdef FLOW_CONTROL               // если надо проверяем потоки (защита от отказа насосов) ERR_MIN_FLOW
-#ifdef FLOWCON                    // если определен датчик потока конденсатора
-		if(HP.is_comp_or_heater_on() && HP.get_State() != pOFF) // Только если компрессор/котел включен
-#else
-		if(HP.is_comp_on() && HP.get_State() != pOFF)           // Только если компрессор включен
-#endif
-			for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
-#ifdef FLOWCON                    // если определен датчик потока конденсатора
-	#ifdef USE_HEATER
-				if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2
-#ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
-	#ifdef R3WAY
+	#ifdef FLOWCON                // если определен датчик потока конденсатора
+				if(HP.is_comp_or_heater_on() && HP.get_State() != pOFF) // Только если компрессор/котел включен
+	#else
+				if(HP.is_comp_on() && HP.get_State() != pOFF)           // Только если компрессор включен
+	#endif
+				{
+					for(uint8_t i = 0; i < FNUMBER; i++){   // Проверка потока по каждому датчику
+	#ifdef FLOWCON                // если определен датчик потока конденсатора
+		#ifdef USE_HEATER
+						if(HP.is_heater_on() && (i != FLOWCON || GETBIT(HP.work_flags, fHP_Heater_Heating_pipes) || rtcSAM3X8.unixtime() - HP.startHeater <= BASE_TIME_READ * 2
+			#ifdef HEATER_BOILER_DONT_USE_PUMP_OUT
+				#ifdef R3WAY
 										|| HP.dRelay[R3WAY].get_Relay()
-	#endif
+				#endif
 										|| HP.get_onBoiler()
-#endif
+			#endif
 										)) continue;
+		#endif
+		#ifdef SUPERBOILER            // Если определен супер бойлер
+						if(HP.is_compressor_on() {
+							if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
+						}
+		#endif
 	#endif
-	#ifdef SUPERBOILER            // Если определен супер бойлер
-				if(HP.is_compressor_on() {
-					if(i == FLOWCON && !HP.dRelay[RPUMPO].get_Relay()) continue; // Для режима супербойлер есть вариант когда не будет протока по контуру отопления
+						if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
+							journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
+							set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
+						}
+					}
 				}
-	#endif
-#endif
-				if(HP.sFrequency[i].get_checkFlow() && HP.sFrequency[i].get_Value() < HP.sFrequency[i].get_minValue()) { // Поток меньше минимального ошибка оставливаем ТН
-					journal.jprintf("%s low flow: %.3d\n",(char*) HP.sFrequency[i].get_name(), HP.sFrequency[i].get_Value());
-					set_Error(ERR_MIN_FLOW, (char*) HP.sFrequency[i].get_name());
-				}
-			}
 #endif
 #ifdef SEVA  //Если определен лепестковый датчик протока - это переливная схема ТН - надо контролировать проток при работе, Только если включен насос геоконтура
-		if(HP.dRelay[RPUMPI].get_Relay() && HP.sInput[SEVA].get_Input() == SEVA_OFF) set_Error(ERR_SEVA_FLOW,(char*)"SEVA");
+				if(HP.dRelay[RPUMPI].get_Relay() && HP.sInput[SEVA].get_Input() == SEVA_OFF) set_Error(ERR_SEVA_FLOW,(char*)"SEVA");
 #endif
-		//
-		vReadSensor_delay1ms(TIME_READ_SENSOR - int32_t(GetTickCount() - ttime));     // Ожидать время нужное для цикла чтения
+				continue;
+			} // Конец TIME_READ_SENSOR
+		}
 
-	} // for
-	vTaskDelete( NULL);
-}
+		// ****************** Раз в 5 ms:
 
-// Вызывается во время задержек в задаче чтения датчиков
-void vReadSensor_delay1ms(int32_t ms)
-{
-	enum {
-		MQ_SDM = 0,
-		MQ_FC,
-		MQ_PWM,
-		MQ_END
-	};
-	static uint8_t modbus_queue = 0;
-#ifdef USE_ELECTROMETER_SDM
-	static uint32_t read_SDM1 = 0;
-	#if (SDM_READ_PERIOD > 0)
-	static uint32_t read_SDM2 = 0;
-	#endif
-#endif
-	static uint32_t read_FC = 0;
-#define MQ_NEXT { if(++modbus_queue == MQ_END) modbus_queue = 0; }
-
-	if(ms <= 0 || ms >= (int32_t)TIME_READ_SENSOR) {
-		vTaskDelay(1);
-		return;
-	}
-	if(ms <= 2) {
-		vTaskDelay(ms);
-		return;
-	}
-	uint32_t tm = GetTickCount();
-	do {
 #ifdef  KEY_ON_OFF // Если надо проверяем кнопку включения ТН
 		static uint8_t key_debounce = 0;                              // кнопка вкл/вкл дребезг подавление
 		if(!digitalReadDirect(PIN_KEY1)) {
@@ -1396,98 +1382,58 @@ void vReadSensor_delay1ms(int32_t ms)
 			}
 		}
 #ifdef RADIO_SENSORS
-		if(ms - (GetTickCount() - tm) >= 20) check_radio_sensors();
+		check_radio_sensors();
 #endif
 
-		// MODBUS reading
-
-		if(RS485.GetTimeToWait() == 0) { // шина не ожидает паузы между транзакциями
-			if(xModbusSemaphore.xSemaphore)
-
-#ifdef USE_ELECTROMETER_SDM   // Опрос состояния счетчика
-		if(modbus_queue == MQ_SDM) {
-			if(HP.dSDM.get_present()) {
-				if(GetTickCount() - read_SDM1 > SDM_READ_PERIOD) {
-					read_SDM1 = GetTickCount();
-					HP.dSDM.get_readState(0);		// Основная группа регистров
-					MQ_NEXT;
-	#if SDM_READ_PERIOD > 0
-				} else if(GetTickCount() - read_SDM2 > SDM_READ_PERIOD) {
-					read_SDM2 = GetTickCount();
-					HP.dSDM.get_readState(2);		// Последняя группа регистров ТОК
-					MQ_NEXT;
-	#endif
+		// *********** ЧТЕНИЕ УСТРОЙСТВ MODBUS *************
+		t = GetTickCount();
+		if(t - read_LAST > WR_READ_PERIOD*2) goto xForceRead;
+		if(t - read_sensor < TIME_READ_SENSOR - cDELAY_DS1820 - MODBUS_SKIP_TIME
+				|| (GETBIT(read_flags, R_F_wait_ds18b20) && t - read_sensor < TIME_READ_SENSOR - MODBUS_SKIP_TIME)) {
+			if(RS485.GetTimeToWait() == 0 && !xModbusSemaphore.xSemaphore) { // шина не ожидает паузы между транзакциями
+xForceRead:
+				if(t - read_WR > WR_READ_PERIOD * 2) goto xReadWR;
+				if(t - read_SDM2 >= SDM_READ_PERIOD2) {
+#ifdef TEST_BOARD
+					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("SDM2[%u]\n", t - read_SDM2);
+#endif
+					HP.dSDM.get_readState(1);		// Последняя группа регистров
+					read_LAST = read_SDM2 = GetTickCount();
+				} else if(t - read_FC >= FC_READ_PERIOD) {
+#ifdef TEST_BOARD
+					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("FC[%u]\n", t - read_FC);
+#endif
+					if(!HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
+					read_LAST = read_FC = GetTickCount();
+				} else if(t - read_SDM1 >= SDM_READ_PERIOD1) {
+#ifdef TEST_BOARD
+					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("SDM1[%u]\n", t - read_SDM1);
+#endif
+					HP.dSDM.get_readState(0);		// Последняя группа регистров
+					read_LAST = read_SDM1 = GetTickCount();
+				} else if(t - read_WR >= (GETBIT(WR.Flags, WR_fPeriod_1sec) ? 1000UL : WR_READ_PERIOD)) {
+xReadWR:				if(GETBIT(WR.Flags, WR_fActive)) {
+						if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR[%u]\n", t - read_WR);
+						WR_ReadPowerMeter();
+						read_LAST = read_WR = GetTickCount();
+					}
 				}
-			} else MQ_NEXT;
-		} else
-#else
-		if(modbus_queue == MQ_SDM) MQ_NEXT;
-#endif
-		if(MQ_FC) {
-
-
-		}
-
-
-		if(GetTickCount() - readFC > FC_TIME_READ / 2
-				&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
-			readFC = GetTickCount();
-			if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
-		}
-
-
-
-#if defined(WR_PowerMeter_Modbus)
-		if(GETBIT(WR.Flags, WR_fActive) || GETBIT(WR_WorkFlags, WR_fWF_Read_MPPT)) {
-			if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR+: %d\n", GetTickCount() - ttime);
-		 	WR_ReadPowerMeter();
-		}
-#else
-#if defined(PWM_CALC_POWER_ARRAY) && defined(WR_CurrentSensor_4_20mA)
-		WR_Calc_Power_Array_NewMeter(0);
-#endif
-#endif // defined(WR_PowerMeter_Modbus)
-
-#ifdef USE_HEATER
-		if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm)) HP.dHeater.read_state(0);	// группа 1 - наличие связи
-#endif
-
-
-#if defined(WR_PowerMeter_Modbus) && TIME_READ_SENSOR >= WEB0_FREQUENT_JOB_PERIOD * 2
-		if((WR.Flags & ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) == ((1<<WR_fActive) | (1<<WR_fPeriod_1sec))) {
-			int32_t tm = GetTickCount() - ttime;
-			if((int32_t)TIME_READ_SENSOR - tm > RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction + RS485.ModbusMinTimeBetweenTransaction / 2) {
-				vReadSensor_delay1ms(WEB0_FREQUENT_JOB_PERIOD + WEB0_FREQUENT_JOB_PERIOD / 2 - tm);	// через (WEB0_FREQUENT_JOB_PERIOD * 1.5) после начала очередного цикла чтения
-				if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR2+: %d(%d)\n", GetTickCount() - ttime, tm);
-			 	WR_ReadPowerMeter();
 			}
-		} else //WR_PowerMeter_New = true;
-#endif
-
-
-			if(GetTickCount() - readFC > FC_TIME_READ / 2
-					&& GetTickCount() - ttime < TIME_READ_SENSOR - (RS485.ModbusResponseTimeout + RS485.ModbusMinTimeBetweenTransaction)) {
-				readFC = GetTickCount();
-				if(!(flags & 1) && !HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
-			}
-	#ifdef USE_HEATER
-			if(flags & 1) {
-				if(GETBIT(HP.dHeater.set.setup_flags, fHeater_Opentherm) /*&& !HP.is_compressor_on()*/) HP.dHeater.read_state(1); // группа 2 - данные
-			}
+#ifdef MODBUS_HEATER_DEDICATED
+			if((t = GetTickCount()) - read_HEATER > HEATER_READ_PERIOD) {
+				if((RS485_2.GetTimeToWait() == 0 && !xModbusSemaphore2.xSemaphore) || t - read_HEATER > HEATER_READ_PERIOD*2) { // шина не ожидает паузы между транзакциями
+	#ifdef TEST_BOARD
+					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("HT%d[%u]\n", read_flags & 1,  t - read_HEATER);
 	#endif
-			flags ^= 1;	// dFC / dHeater
-
+					HP.dHeater.read_state(GETBIT(read_flags, R_F_heater_group));	// группа 0 - наличие связи, группа 1 - данные
+					XBIT(read_flags, R_F_heater_group);
+					read_HEATER = GetTickCount();
+				}
+			}
+#endif
 		}
-
-
-		//
-		int32_t tm2 = GetTickCount() - tm;
-		if((tm2 -= ms) >= -10) {
-			if(tm2 < 0) vTaskDelay(-tm2);
-			break;
-		}
-		vTaskDelay(10);
-	} while(true);
+	} // for
+	vTaskDelete( NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -1384,7 +1384,7 @@ void HeatPump::get_listChart(char* ret, const char *delimiter)
 			if(n == TEVAING) { // Вход из геоконтура или Выход котла
 				strcat(ret, (char*)HEATER_CHART_TEVAING_STR);
 			} else if(n == TEVAOUTG) { // Выход в геоконтур или Вход котла
-				strcat(ret, (char*)HEATER_CHART_TEVAOUTG_STR));
+				strcat(ret, (char*)HEATER_CHART_TEVAOUTG_STR);
 			} else
 #endif
 				strcat(ret, sTemp[n].get_note());
@@ -1443,7 +1443,7 @@ void HeatPump::clearChart()
 // Все значения в графиках целочислены (сотые), выводятся в формате 0.01
 void  HeatPump::updateChart()
 {
-	uit8_t _fl_on = is_compressor_on()
+	uint8_t _fl_on = is_compressor_on()
 #ifdef USE_HEATER
 			| ((dHeater.CheckIsHeaterOn() || rtcSAM3X8.unixtime() - HP.stopHeater <= HEATER_PUMP_OVERRUN_TIME)<<1)
 #endif
@@ -1490,8 +1490,7 @@ void  HeatPump::updateChart()
 		}
 #ifdef USE_HEATER
 		else if(_fl_on & 2) { // Графики Котла
-			else if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.data.Power * 100);
-
+			if(ChartsConstSetup[i].object == STATS_OBJ_Compressor) Charts[j].add_Point(dHeater.data.Power * 100);
 		}
 #endif
 #ifdef USE_ELECTROMETER_SDM
@@ -3852,11 +3851,11 @@ xNextStop:
 		dRelay[RGEN].set_ON(); // Включаем или не даем выключиться
 		if(dFC.get_state() == ERR_LINK_FC) {
 			if(DelaySec(Option.Generator_Start_Time)) goto xNextStop; // Задержка на запуск, в том числе и для прогрева генератора
-			for(uint16_t i = Option.Generator_Start_Time * AUTO_START_GEN_TIMEOUT_MUL / (FC_TIME_READ / 1000); i > 0; i--) {
+			for(uint16_t i = Option.Generator_Start_Time * AUTO_START_GEN_TIMEOUT_MUL / (FC_READ_PERIOD / 1000); i > 0; i--) {
 				if(NO_Power) return;
 				if(is_next_command_stop()) goto xNextStop;
 				if(dFC.get_err() == OK) break;
-				_delay(FC_TIME_READ);
+				_delay(FC_READ_PERIOD);
 			}
 			if(dFC.get_err() != OK) {
 				set_Error(ERR_FC_NO_LINK, (char*) __FUNCTION__);

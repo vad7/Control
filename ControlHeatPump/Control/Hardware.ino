@@ -1660,7 +1660,7 @@ boolean  devSDM::progConnect()
 #endif
 }                           
 
-// Прочитать инфо с счетчика, group: 0 - основная (расчет мощности), 2 - через SDM_READ_PERIOD
+// Прочитать инфо с счетчика, group: 0 - основная (расчет мощности), 1 - через SDM_READ_PERIOD
 int8_t devSDM::get_readState(uint8_t group)
 {
 #ifdef USE_NOT_SDM_METER
@@ -1713,7 +1713,7 @@ int8_t devSDM::get_readState(uint8_t group)
 			}
 */
 		}
-		if(group == 2) {
+		if(group == 1) {
 #if defined(SDM_MAX_VOLTAGE) || defined(SDM_MIN_VOLTAGE) || (SDM_READ_PERIOD > 0)
 #ifdef USE_NOT_SDM_METER
 			_err = devModbus::Process(SDM_MODBUS_ADR, SDM_VOLTAGE, &tmp16[0], READ_INPUT);   // Напряжение

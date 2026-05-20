@@ -311,7 +311,7 @@ void  devOmronMX2::check_blockFC()
 } 
 
 // Прочитать (внутренние переменные обновляются) состояние Инвертора, возвращает или ОК или ошибку
-// Вызывается из задачи чтения датчиков период FC_TIME_READ
+// Вызывается из задачи чтения датчиков период FC_READ_PERIOD
 int8_t devOmronMX2::get_readState()
 {
 uint8_t i;
@@ -556,7 +556,7 @@ void devOmronMX2::get_paramFC(char *var,char *ret)
     if(strcmp(var,fc_MB_ERR)==0)        		{  _itoa(numErr, ret); } else
 //    if(strcmp(var,fc_FC_RETOIL_FREQ)==0)   		{ 	strcat(ret, "-"); } else
    	if(strcmp(var, fc_PidMaxStep)==0)   		{  _dtoa(ret, _data.PidMaxStep, 2); } else
-  	if(strcmp(var,fc_FC_TIME_READ)==0)   		{  _itoa(FC_TIME_READ, ret); } else
+  	if(strcmp(var,fc_FC_READ_PERIOD)==0)   		{  _itoa(FC_READ_PERIOD, ret); } else
    		strcat(ret,(char*)cInvalid);
 }
    

@@ -534,9 +534,9 @@ public:
 	  int16_t  dtTemp;                  // Превышение температуры от уставок (подача) при которой срабатывает защита (уменьшается частота) в сотых градуса
 	  int16_t  dtTempBoiler;            // Превышение температуры от уставок (подача) при которой срабатывает защита ГВС в сотых градуса
 	  uint16_t setup_flags;             // флаги настройки - см. define FC_SAVED_FLAGS
-	  int16_t  ReturnOilPeriod;			// в FC_TIME_READ
-	  int16_t  ReturnOilPerDivHz;		// Уменьшение периода в FC_TIME_READ на каждый Гц
-	  uint16_t ReturnOilTime;			// Время возврата, в периодах опроса инвертора (FC_TIME_READ)
+	  int16_t  ReturnOilPeriod;			// в FC_READ_PERIOD
+	  int16_t  ReturnOilPerDivHz;		// Уменьшение периода в FC_READ_PERIOD на каждый Гц
+	  uint16_t ReturnOilTime;			// Время возврата, в периодах опроса инвертора (FC_READ_PERIOD)
 	  int16_t  maxFreqGen;				// Максимальная скорость инвертора при работе от генератора в 0.01 %
 	  int16_t  AdjustEEV_k;				// Подстройки ЭРВ при изменении оборотов, множитель, сотые шага ЭРВ
 	  uint16_t PidMaxStep;				// Максимальный шаг изменения частоты инвертора у PID регулятора, сотые
