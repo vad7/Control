@@ -16,15 +16,13 @@
 <div id="menu" class="menu"><script src="menu.js"></script></div>
 <div class="content">
 <h1>Настройки инвертора <input style="float:none;" type="submit" value="Назад" onclick='history.back();'> <input type="submit" value="Записать в EEPROM"  onclick='loadParam("set_SAVE")'></h1>
-
   <div class="row1">
+	<input type="submit" value="Время работы:" onclick="loadParam('get_pFC(INFO2)');">
+	<table style="width: 500">
+	<tbody id="get_pfc-info2"></tbody>
+	</table>
    <table border="1" rules="rows">
-   <thead>
-    <tr>
-		<th>Описание</th>
-		<th>Значение</th>
-    </tr>
-   </thead>
+   <thead><tr><th>Описание</th><th>Значение</th></tr></thead>
    <tbody>
     <tr><td>Время опроса инвертора (миллисекунд)</td><td id="get_pfc-tr"></td></tr>
     <tr><td>Авто-сброс не критичного сбоя инвертора</td><td><input type="checkbox" id="get_pfc-arstflt" onchange="setParam('get_pFC(ARSTFLT)');"></td></tr>
