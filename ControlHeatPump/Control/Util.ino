@@ -1126,7 +1126,12 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 		uint32_t chA  = channelToAB[channel];
 		Tc *chTC = channelToTC[channel];
 		uint32_t interfaceID = channelToId[channel];
-		if (!TCChanEnabled[interfaceID]) {
+#ifdef WATTROUTER
+		if(!GETBIT(WR_WorkFlags, WR_fWF_Inited)) {
+			SETBIT1(WR_WorkFlags, WR_fWF_Inited);
+#else
+		if(!TCChanEnabled[interfaceID]) {
+#endif
 			pmc_enable_periph_clk(TC_INTERFACE_ID + interfaceID);
 			TC_Configure(chTC, chNo,
 				TC_CMR_TCCLKS_TIMER_CLOCK1 |
@@ -1144,6 +1149,9 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 			);
 #ifdef WR_ONE_PERIOD_PWM
 			WR_ZERO_CROSS_TC_BMR_SET;
+#ifdef WR_ZERO_CROSS_PULLUP
+			g_APinDescription[PIN_PWM_ZERO_CROSS].pPort->PIO_PUER = g_APinDescription[PIN_PWM_ZERO_CROSS].ulPin; // Pullup
+#endif
 		    PIO_SetPeripheral(g_APinDescription[PIN_PWM_ZERO_CROSS].pPort, WR_ZERO_CROSS_PERIPH, g_APinDescription[PIN_PWM_ZERO_CROSS].ulPin); // Set as input trigger
 #endif
 		    TC_SetRC(chTC, chNo, TC);

@@ -1221,6 +1221,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 #ifdef WR_PNET_AVERAGE
 		else WR_Pnet_avg_init = true;
 #endif
+		SETBIT0(WR_WorkFlags, WR_fWF_Inited);
 		return true;
 	}
 #endif

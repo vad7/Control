@@ -1122,7 +1122,6 @@ void vReadSensor(void *)
 	static uint32_t read_FC = 0;
 	static uint32_t read_HEATER = 0;
 	static uint32_t read_WR = 0;
-	static uint32_t read_LAST = GetTickCount();
 	static uint8_t  read_flags = 0;
 	#define MODBUS_SKIP_TIME 70
 	#define R_F_buses_mask 0x3F
@@ -1387,41 +1386,49 @@ void vReadSensor(void *)
 
 		// *********** ЧТЕНИЕ УСТРОЙСТВ MODBUS *************
 		t = GetTickCount();
-		if(t - read_LAST > WR_READ_PERIOD*2) goto xForceRead;
 		if(t - read_sensor < TIME_READ_SENSOR - cDELAY_DS1820 - MODBUS_SKIP_TIME
 				|| (GETBIT(read_flags, R_F_wait_ds18b20) && t - read_sensor < TIME_READ_SENSOR - MODBUS_SKIP_TIME)) {
 			if(RS485.GetTimeToWait() == 0 && !xModbusSemaphore.xSemaphore) { // шина не ожидает паузы между транзакциями
-xForceRead:
-				if(t - read_WR > WR_READ_PERIOD * 2) goto xReadWR;
 				if(t - read_SDM2 >= SDM_READ_PERIOD2) {
+xForce_SDM2:
 #ifdef TEST_BOARD
 					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("SDM2[%u]\n", t - read_SDM2);
 #endif
-					HP.dSDM.get_readState(1);		// Последняя группа регистров
-					read_LAST = read_SDM2 = GetTickCount();
+					HP.dSDM.get_readState(1);
+					read_SDM2 = GetTickCount();
 				} else if(t - read_FC >= FC_READ_PERIOD) {
+xForce_FC:
 #ifdef TEST_BOARD
 					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("FC[%u]\n", t - read_FC);
 #endif
 					if(!HP.NO_Power && HP.dFC.get_present() && !HP.dFC.get_blockFC()) HP.dFC.get_readState();
-					read_LAST = read_FC = GetTickCount();
+					read_FC = GetTickCount();
 				} else if(t - read_SDM1 >= SDM_READ_PERIOD1) {
+xForce_SDM1:
 #ifdef TEST_BOARD
 					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("SDM1[%u]\n", t - read_SDM1);
 #endif
-					HP.dSDM.get_readState(0);		// Последняя группа регистров
-					read_LAST = read_SDM1 = GetTickCount();
+					HP.dSDM.get_readState(0);
+					read_SDM1 = GetTickCount();
+#ifdef WATTROUTER
 				} else if(t - read_WR >= (GETBIT(WR.Flags, WR_fPeriod_1sec) ? 1000UL : WR_READ_PERIOD)) {
-xReadWR:				if(GETBIT(WR.Flags, WR_fActive)) {
+xForceReadWR:
+					if(GETBIT(WR.Flags, WR_fActive)) {
 						if(GETBIT(WR.Flags, WR_fLogFull) && GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("WR[%u]\n", t - read_WR);
 						WR_ReadPowerMeter();
-						read_LAST = read_WR = GetTickCount();
 					}
+					read_WR = GetTickCount();
+#endif
 				}
-			}
-#ifdef MODBUS_HEATER_DEDICATED
+			} else if(t - read_SDM2 > SDM_READ_PERIOD2 * 2) goto xForce_SDM2;
+			else if(t - read_FC > FC_READ_PERIOD * 2) goto xForce_FC;
+			else if(t - read_SDM1 > SDM_READ_PERIOD1 * 2) goto xForce_SDM1;
+#ifdef WATTROUTER
+			else if(t - read_WR >= (GETBIT(WR.Flags, WR_fPeriod_1sec) ? 1000UL : WR_READ_PERIOD) * 2) goto xForceReadWR;
+#endif
+#ifdef USE_HEATER
 			if((t = GetTickCount()) - read_HEATER > HEATER_READ_PERIOD) {
-				if((RS485_2.GetTimeToWait() == 0 && !xModbusSemaphore2.xSemaphore) || t - read_HEATER > HEATER_READ_PERIOD*2) { // шина не ожидает паузы между транзакциями
+				if((RS485_2.GetTimeToWait() == 0 && !xModbusSemaphore2.xSemaphore) || t - read_HEATER > HEATER_READ_PERIOD * 2) { // шина не ожидает паузы между транзакциями
 	#ifdef TEST_BOARD
 					if(GETBIT(HP.get_NetworkFlags(), fWebFullLog)) journal.jprintf("HT%d[%u]\n", read_flags & 1,  t - read_HEATER);
 	#endif

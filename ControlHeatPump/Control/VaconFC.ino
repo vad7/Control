@@ -849,6 +849,7 @@ void devVaconFC::get_infoFC_status(char *buffer, uint16_t st)
 void devVaconFC::get_infoFC(char* buf)
 {
 	buf += strlen(buf);
+
 	if(testMode == NORMAL || testMode == HARD_TEST) {
 #ifndef FC_ANALOG_CONTROL // НЕ АНАЛОГОВОЕ УПРАВЛЕНИЕ
 		if(state == ERR_LINK_FC) {   // Нет связи
@@ -894,29 +895,30 @@ void devVaconFC::get_infoFC(char* buf)
 			}
 #else //FC_VLT
 			uint32_t i;
-			strcat(buf, "2101|Состояние инвертора: ");
-			get_infoFC_status(buf + strlen(buf), state);
-			buf += m_snprintf(buf += strlen(buf), 256, "|0x%X;", state);
-			if(err == OK) {
-				buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", read_0x03_16(FC_SPEED), power, get_power());
-				buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)read_0x03_16(FC_RPM));
-				buf += m_snprintf(buf, 256, "2107 (V1.5)|Крутящий момент|%.1d%%;", (int16_t)read_0x03_16(FC_TORQUE));
-				i = read_0x03_32(FC_VOLTAGE); // +FC_VOLTATE_DC (low word)
-				buf += m_snprintf(buf, 256, "2109 (V1.7)|Выходное напряжение (В)|%.1d;2110 (V1.8)|Напряжение шины постоянного тока (В)|%d;", i >> 16, i & 0xFFFF);
-				buf += m_snprintf(buf, 256, "0008 (V1.9)|Температура радиатора (°С)|%d;", read_tempFC());
-				i = read_0x03_32(FC_POWER_DAYS); // +FC_POWER_HOURS (low word)
-				buf += m_snprintf(buf, 256, "0828 (V3.3)|Время включения инвертора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
-				i = read_0x03_32(FC_RUN_DAYS); // +FC_RUN_HOURS (low word)
-				buf += m_snprintf(buf, 256, "0840 (V3.5)|Время работы компрессора (дней:часов)|%d:%d;", i >> 16, i & 0xFFFF);
-				buf += m_snprintf(buf, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", read_0x03_16(FC_NUM_FAULTS));
-
-				i = read_0x03_16(FC_ERROR);
+			uint16_t *b = (uint16_t*)(buf + W5200_MAX_LEN); // длина максимум 3*W5200_MAX_LEN
+			// Считываем 11 регистров, чтобы охватить диапазон от 2101 (FC_STATUS) до 2111 (FC_ERROR)
+			if(devModbus::ReadHoldingRegisters(FC_MODBUS_ADR, FC_STATUS - 1, 11, b) == OK) {
+				strcat(buf, "2101|Состояние инвертора: ");
+				get_infoFC_status(buf + strlen(buf), state = b[0]); // FC_STATUS - FC_STATUS = 0
+				buf += m_snprintf(buf += strlen(buf), 256, "|0x%X;", state);
 				if(err == OK) {
-					m_snprintf(buf, 256, "2111|Активная ошибка|%s (%d);", get_fault_str(i), i);
-				} else {
-					m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
+					buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;", b[FC_SPEED - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2104|Выходная частота|%.2d Гц;", (int16_t)b[FC_FREQ - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)b[FC_RPM - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2106|Ток двигателя|%.2d А;", b[FC_CURRENT - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2107 (V1.5)|Крутящий момент|%.1d%%;", (int16_t)b[FC_TORQUE - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", (int16_t)b[FC_POWER - FC_STATUS], get_power());
+					buf += m_snprintf(buf, 256, "2109 (V1.7)|Выходное напряжение (В)|%.1d;2110 (V1.8)|Напряжение шины постоянного тока (В)|%d;", b[FC_VOLTAGE - FC_STATUS], b[FC_VOLTAGE_DC - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "0008 (V1.9)|Температура радиатора (°С)|%d;", read_tempFC());
+					buf += m_snprintf(buf, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", read_0x03_16(FC_NUM_FAULTS));
+					i = b[FC_ERROR - FC_STATUS];
+					if(err == OK) {
+						m_snprintf(buf, 256, "2111|Активная ошибка|%s (%d);", get_fault_str(i), i);
+					} else {
+						m_snprintf(buf, 256, "-|Ошибка Modbus|%d;", err);
+					}
 				}
-			}
+			} else numErr++;
 #endif
 		}
 #endif

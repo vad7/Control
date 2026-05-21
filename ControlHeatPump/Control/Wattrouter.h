@@ -54,6 +54,11 @@ struct {
 	int16_t  LoadPower[WR_NumLoads];	// Мощности нагрузки, Вт
 } WR;
 
+#define WR_fWF_Inited		0			// Инициализированы порты
+#define WR_fWF_Read_MPPT	1			// Прочитать данные с солнечного контроллера MPPT
+#define WR_fWF_Charging_BAT	2			// Идет заряд АКБ
+uint8_t  WR_WorkFlags = 0;
+
 int32_t  WR_Pnet = -32768;
 #ifdef WR_PowerMeter_Modbus
 	#ifdef WR_PowerMeter_DDS238
@@ -82,10 +87,6 @@ uint8_t  WR_TestLoadIndex;
 int32_t  WR_LastSunPowerOut = 0;		// Вт
 uint8_t  WR_LastSunPowerOutCnt = 0;		// Счетчик задержки отсутствия свободной энергии
 uint8_t  WR_LastSunSign = 0;			// 0 - Выключен или ошибка(!), 1 - мало или нет энергии(), 2 - сканирование MPPT(*), 3 - избыток энергии(+)
-
-#define WR_fWF_Read_MPPT	1			// Прочитать данные с солнечного контроллера MPPT
-#define WR_fWF_Charging_BAT	2			// Идет заряд АКБ
-uint8_t  WR_WorkFlags = 0;
 int16_t  WR_MAP_Ubat = 0;
 int16_t  WR_MAP_Ubuf = WR_DEFAULT_MAP_Ubuf;	// Буферное напряжение на АКБ, десятые V
 #ifdef RSOLINV

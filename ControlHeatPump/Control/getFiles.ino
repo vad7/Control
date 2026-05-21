@@ -1184,6 +1184,7 @@ bool get_binModbus(uint8_t thread, char *filename)
 					else err = devModbus::Process(id, addr, &cell_float, READ_INPUT);
 				}
 			}
+			_delay(2);
 			if(err == OK || i-- <= 1) break;
 		}
     	if(HP.get_NetworkFlags() & (1<<fWebFullLog)) {

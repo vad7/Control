@@ -504,6 +504,7 @@ xNOPWR_OtherLoad:					uint32_t t = rtcSAM3X8.unixtime();
 
 void WR_Init(void)
 {
+	WR_WorkFlags = 0;
 	memset(WR_LoadRun, 0, sizeof(WR_LoadRun));
 	memset(WR_SwitchTime, 0, sizeof(WR_SwitchTime));
 	for(uint8_t i = 0; i < WR_NumLoads; i++) {
@@ -555,7 +556,7 @@ void WR_Change_Load_PWM(uint8_t idx, int16_t delta)
 	if(n <= 0) n = 0;
 	else if(n >= MP) n = MP;
 #ifdef PWM_ACCURATE_POWER
-	else {
+	else if(HP.dSDM.get_voltage()){
 		n = n * (220*220L) / (HP.dSDM.get_voltage()*HP.dSDM.get_voltage());
 		if(n > MP) n = MP;
 	}
