@@ -1126,12 +1126,11 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 		uint32_t chA  = channelToAB[channel];
 		Tc *chTC = channelToTC[channel];
 		uint32_t interfaceID = channelToId[channel];
-//#ifdef WATTROUTER
-//		if(!GETBIT(WR_WorkFlags, WR_fWF_Inited)) {
-//			SETBIT1(WR_WorkFlags, WR_fWF_Inited);
-//#else
+#ifdef WATTROUTER
+		if(!GETBIT(WR_WorkFlags, WR_fWF_Inited)) {
+#else
 		if(!TCChanEnabled[interfaceID]) {
-//#endif
+#endif
 			pmc_enable_periph_clk(TC_INTERFACE_ID + interfaceID);
 			TC_Configure(chTC, chNo,
 				TC_CMR_TCCLKS_TIMER_CLOCK1 |
@@ -1198,7 +1197,13 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 					g_APinDescription[ulPin].ulPinConfiguration);
 			g_pinStatus[ulPin] = (g_pinStatus[ulPin] & 0xF0) | PIN_STATUS_PWM;
 		}
+
+#ifdef WATTROUTER
+		if(!GETBIT(WR_WorkFlags, WR_fWF_Inited)) {
+			SETBIT1(WR_WorkFlags, WR_fWF_Inited);
+#else
 		if (!TCChanEnabled[interfaceID]) {
+#endif
 			TC_Start(chTC, chNo);
 			TCChanEnabled[interfaceID] = 1;
 		}

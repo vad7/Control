@@ -1137,6 +1137,7 @@ void vReadSensor(void *)
 		vTaskDelay(5);
 		uint32_t t = GetTickCount();
 		if(t - read_sensor >= TIME_READ_SENSOR - cDELAY_DS1820) {
+			read_sensor = t - (TIME_READ_SENSOR - cDELAY_DS1820);
 			if(!GETBIT(read_flags, R_F_wait_ds18b20)) {
 				read_flags &= ~R_F_buses_mask;	// Очистка ошибок по шинам
 				if(OW_scan_flags == 0) {
