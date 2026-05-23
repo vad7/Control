@@ -8,7 +8,7 @@
 .visualization #get_temp-tconing	{margin-top:335px;margin-left:697px}
 .visualization #get_temp-tconoutg	{margin-top:188px;margin-left:748px}
 .visualization #get_temp-tcomp		{margin-top:150px;margin-left:415px}
-.visualization #get_pfc-fc			{margin-top:283px;margin-left:414px}.visualization #get_pfc-info1:after{content:"";}
+.visualization #get_pfc-fc			{margin-top:283px;margin-left:414px}.visualization #get_pfc-fc:after{content:"";}
 .visualization #get_pfc-cfc			{margin-top:260px;margin-left:414px}.visualization #get_pfc-cfc:after{content:""}
 .visualization #get_temp-tboiler	{margin-top:34px;margin-left:758px}
 .visualization #get_boiler-ct		{margin-top:18px;margin-left:748px;width:65px;text-align:center;white-space:normal}
