@@ -19,7 +19,7 @@ function loadParam_after(paramid) {
 	if(paramid.indexOf("get_MODES")!==-1) {
 		var _load_less = Scheme.charAt(1) === "-";
 		if(SchemeOld !== Scheme || SchemeOld === "") {
-			document.getElementsByClassName("visualization")[0].style ="background:url(\"plan" + Scheme + ".png\")";
+			document.getElementsByClassName("visualization")[0].style ="background:url(\"plan" + Scheme.charAt(0) + ".png\")";
 			if(_load_less) {
 				document.getElementById("_HP").style = "display:none";
 				_load_all = true;
