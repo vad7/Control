@@ -1105,16 +1105,9 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 			PWMC_SetDutyCycle(PWM_INTERFACE, chan, ulValue);
 			PWMC_EnableChannel(PWM_INTERFACE, chan);
 			g_pinStatus[ulPin] = (g_pinStatus[ulPin] & 0xF0) | PIN_STATUS_PWM;
-
-			journal.jprintf("PWM[%d]: %d=%d\n", PWM_WRITE_OUT_FREQUENCY, ulPin, ulValue);
-
-
 		}
 		PWMC_SetDutyCycle(PWM_INTERFACE, chan, ulValue);
 	} else if ((attr & PIN_ATTR_TIMER) == PIN_ATTR_TIMER) {
-
-		journal.jprintf("TMR[%d]: %d=%d\n", PWM_WRITE_OUT_FREQUENCY, ulPin, ulValue);
-
 		// We use MCLK/2 as clock.
 		const uint32_t TC = VARIANT_MCK / 2 / PWM_WRITE_OUT_FREQUENCY;
 		// Map value to Timer ranges 0..RES => 0..TC

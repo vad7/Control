@@ -1137,9 +1137,10 @@ void vReadSensor(void *)
 		vTaskDelay(5);
 		uint32_t t = GetTickCount();
 		if(t - read_sensor >= TIME_READ_SENSOR - cDELAY_DS1820) {
-			read_sensor = t - (TIME_READ_SENSOR - cDELAY_DS1820);
 			if(!GETBIT(read_flags, R_F_wait_ds18b20)) {
 				read_flags &= ~R_F_buses_mask;	// Очистка ошибок по шинам
+				SETBIT1(read_flags, R_F_wait_ds18b20);
+				read_sensor = t - (TIME_READ_SENSOR - cDELAY_DS1820);
 				if(OW_scan_flags == 0) {
 #ifndef DEMO  // Если не демо
 					read_flags |= HP.Prepare_Temp(0);
@@ -1154,7 +1155,6 @@ void vReadSensor(void *)
 #endif
 #endif     // не DEMO
 				}
-				SETBIT1(read_flags, R_F_wait_ds18b20);
 				continue;
 			} else if(t - read_sensor >= TIME_READ_SENSOR) {
 				read_sensor = t;
