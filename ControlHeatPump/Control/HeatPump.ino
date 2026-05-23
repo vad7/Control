@@ -927,9 +927,11 @@ boolean HeatPump::set_network(char *var, char *c)
 			                        case 0: Network.pingTime=0;        return true;  break;
 			                        case 1: Network.pingTime=1*60;     return true;  break;
 			                        case 2: Network.pingTime=5*60;     return true;  break;
-			                        case 3: Network.pingTime=20*60;    return true;  break;
-			                        case 4: Network.pingTime=60*60;    return true;  break;
-			                        case 5: Network.pingTime=120*60;    return true;  break;
+			                        case 3: Network.pingTime=15*60;    return true;  break;
+			                        case 4: Network.pingTime=30*60;    return true;  break;
+			                        case 5: Network.pingTime=45*60;    return true;  break;
+			                        case 6: Network.pingTime=60*60;    return true;  break;
+			                        case 7: Network.pingTime=120*60;   return true;  break;
 			                        default:                           return false; break;   
 			                       }                                          }else   
  if(strcmp(var,net_NO_PING)==0){     if (x == 0) { SETBIT0(Network.flags,fNoPing);      pingW5200(get_NoPing()); return true;}
@@ -974,13 +976,14 @@ char* HeatPump::get_network(char *var,char *ret)
 //    if(strcmp(var,net_DELAY_ACK)==0){ return _itoa(Network.delayAck,ret); }else
     if(strcmp(var,net_PING_ADR)==0){  return strcat(ret,Network.pingAdr);                  }else
     if(strcmp(var,net_PING_TIME)==0){
-    	return web_fill_tag_select(ret, "never:0;1 min:0;5 min:0;20 min:0;60 min:0;120 min:0;",
+    	return web_fill_tag_select(ret, "never:0;1 min:0;5 min:0;15 min:0;30 min:0;45 min:0;60 min:0;120 min:0;",
 					Network.pingTime == 0 ? 0 :
 					Network.pingTime == 1*60 ? 1 :
 					Network.pingTime == 5*60 ? 2 :
-					Network.pingTime == 20*60 ? 3 :
-					Network.pingTime == 60*60 ? 4 :
-					Network.pingTime == 120*60 ? 5 : 6);
+					Network.pingTime == 15*60 ? 3 :
+					Network.pingTime == 30*60 ? 4 :
+					Network.pingTime == 45*60 ? 5 :
+					Network.pingTime == 60*60 ? 6 : 7);
     } else if(strcmp(var,net_NO_PING)==0){if (GETBIT(Network.flags,fNoPing)) return  strcat(ret,(char*)cOne);
                                    else      return  strcat(ret,(char*)cZero);                        }else                                                                                          
 
