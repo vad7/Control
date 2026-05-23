@@ -493,23 +493,20 @@ void devRelay::initRelay(int sensor, bool out)
    name=(char*)nameRelay[sensor];	// присвоить имя реле
    flags = (1<<fPresent) | (out<<fR_StatusMain);
    Relay = out;						// Состояние реле = out
-   uint8_t r;
-#ifdef RELAY_HIGH_LEVEL
-   r = out; 						// Включение реле (Relay=true) соответсвует ВЫСОКИЙ уровень на выходе МК
-#else
-   r = !out;						// Включение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
+#ifndef RELAY_HIGH_LEVEL
+   out = !out;						// Включение реле (Relay=true) соответсвует НИЗКИЙ уровень на выходе МК
 #endif
 #ifdef R4WAY_INVERT              	// Признак инвертирования 4х ходового
-   if(number == R4WAY) r = !r;
+   if(number == R4WAY) out = !out;
 #endif
 #ifdef RPUMPO_INVERT				// Признак инвертирования
-   if(number == RPUMPO) r = !r;
+   if(number == RPUMPO) out = !out;
 #endif
 #ifdef RPUMPI_INVERT				// Признак инвертирования
-   if(number == RPUMPO) r = !r;
+   if(number == RPUMPO) out = !out;
 #endif
-   digitalWrite(pin, r);  			// Установить значение
-   pinMode(pin, OUTPUT);			// Настроить ножку на выход
+   g_pinStatus[pin] = (g_pinStatus[pin] & 0x0F) | (out << 4); // подготавливаем значение пина
+   pinMode(pin, OUTPUT);			// Настроить ножку на выход и установить
 }
 
 

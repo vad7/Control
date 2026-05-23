@@ -1152,6 +1152,7 @@ void PWM_Write(uint32_t ulPin, uint32_t ulValue) {
 #ifdef WR_ZERO_CROSS_PULLUP
 			g_APinDescription[PIN_PWM_ZERO_CROSS].pPort->PIO_PUER = g_APinDescription[PIN_PWM_ZERO_CROSS].ulPin; // Pullup
 #endif
+			g_APinDescription[PIN_PWM_ZERO_CROSS].pPort->PIO_IFER = g_APinDescription[PIN_PWM_ZERO_CROSS].ulPin; // подавление шума
 		    PIO_SetPeripheral(g_APinDescription[PIN_PWM_ZERO_CROSS].pPort, WR_ZERO_CROSS_PERIPH, g_APinDescription[PIN_PWM_ZERO_CROSS].ulPin); // Set as input trigger
 #endif
 		    TC_SetRC(chTC, chNo, TC);
