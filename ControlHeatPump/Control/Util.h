@@ -20,6 +20,7 @@
 #define Util_h
 
 #include <Arduino.h>
+#include "Constant.h"
 
 #define sign(a) (a > 0 ? 1 : a < 0 ? -1 : 0)
 #define signm(a,t) ((a > 0 ? 1 : a < 0 ? -1 : 0) * (abs(a) / t + 1))
