@@ -10,7 +10,7 @@
 	urlupdate = 2000;
 	loadParam("get_tblRelay,get_WORK");
 	loadParam("get_pFC(ON_OFF),get_pFC(NAME),get_pFC(NOTE),get_pFC(FC),get_testMode,get_pEEV(PINS),get_pEEV(POS),get_pEEV(POSp),get_pEEV(POSpp),get_pEEV(NAME),get_pEEV(NOTE),get_SDM(NAME),get_SDM(VOLT),get_SDM(ACPOWER),get_HT(TT)");
-	updateParam("get_pFC(cFC),get_pFC(INFO1),get_remarkTest,get_pEEV(POS),get_pEEV(POSp),get_pEEV(POSpp),get_HT(ON),get_HT(M),get_HT(TF),get_error"); 
+	updateParam("get_pFC(cFC),get_pFC(FC),get_remarkTest,get_pEEV(POS),get_pEEV(POSp),get_pEEV(POSpp),get_HT(ON),get_HT(M),get_HT(TF),get_error"); 
 };
 function loadParam_after(paramid) {
 	if(paramid.indexOf("FC(NAME)") != -1 && document.getElementById("get_pfc-name").innerHTML.substr(0,5) == "Omron") {
@@ -82,7 +82,7 @@ function run_cmd() {
 			<td><input name="tstpage" type="checkbox" id="get_pfc-on_off" onchange="setParam('get_pFC(ON_OFF))');"></td>
 			<td><input id="get_pfc-fc" type="number" step="1" value="0"><input name="tstpage" type="submit" value=">" onclick="setParam('get_pFC(FC)');"></td>
 			<td id="get_pfc-cfc"></td>
-			<td id="get_pfc-info1"></td>
+			<td id="get_pfc-fc"></td>
 		</tr>			
 		</tbody>
 		</table>						
