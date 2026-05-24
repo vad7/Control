@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
  * GNU General Public License for more details.
  */
-#include "Constant.h"
+#include "Util.h"
 // --------------------------------------- функции общего использования -------------------------------------------
 // Быстрый вывод в порт
  __attribute__((always_inline))  inline void digitalWriteDirect(int pin, boolean val)

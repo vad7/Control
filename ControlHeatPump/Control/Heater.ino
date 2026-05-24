@@ -444,6 +444,7 @@ bool devHeater::get_param(char *var, char *ret)
 															} else strcat(ret, "Нет"); } else
 	if(strcmp(var, WHeater_fLinkAdapterOk)==0)			{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkAdapterOk), ret); } else
 	if(strcmp(var, WHeater_is_on)==0) 					{ _itoa(GETBIT(set.setup_flags, fHeater_Opentherm) && GETBIT(fwork, fHeater_LinkHeaterOk) ? GETBIT(data.Status, HM_STATUS_bBURNER) : GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
+	if(strcmp(var, WHeater_is_on_set)==0) 				{ _itoa(GETBIT(HP.work_flags, fHP_HeaterOn), ret); } else
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, WHeater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
 	if(strcmp(var, WHeater_T_FlowOut)==0) 				{ _dtoa(ret, data.T_FlowOut / 10, 0); strcat(ret, " ("); _itoa(target_temp, ret); strcat(ret, ")"); } else
@@ -514,7 +515,7 @@ int8_t devHeater::set_param(char *var, float f)
 	if(strcmp(var, option_ModbusMinTimeBetweenTransaction)==0){ set.ModbusMinTimeBetweenTransaction = RS485_2.ModbusMinTimeBetweenTransaction = x; return OK; } else
 	if(strcmp(var, option_ModbusResponseTimeout)==0)	{ set.ModbusResponseTimeout = RS485_2.ModbusResponseTimeout = x; return OK; } else
 	if(strcmp(var, option_ModbusWriteResponseTimeout)==0){ set.ModbusWriteResponseTimeout = x; return OK; } else
-	if(strcmp(var, WHeater_is_on)==0){ if(x && !GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Start(); else if(!x && GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Stop(true); return OK;} else
+	if(strcmp(var, WHeater_is_on_set)==0){ if(x && !GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Start(); else if(!x && GETBIT(HP.work_flags, fHP_HeaterOn)) Heater_Stop(true); return OK;} else
 	if(strcmp(var, WHeater_fHP_Heater_Heating_pipes)==0){ if(x) SETBIT1(HP.work_flags, fHP_Heater_Heating_pipes); else SETBIT0(HP.work_flags, fHP_Heater_Heating_pipes); return OK; } else
 	if(strcmp(var, WHeater_target_temp)==0)	{ if(x != target_temp) { SemaphoreGive(xWebThreadSemaphore); set_target(x*100); SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT); } return OK; } else
 	if(strcmp(var, W_Modbus_Attempts)==0){ set.Modbus_Attempts = x > 0 ? x : 1; return OK; }

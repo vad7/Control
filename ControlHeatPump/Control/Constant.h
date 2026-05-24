@@ -986,6 +986,7 @@ const char *WHeater_pump_work_time_after_stop	= {"PA"};
 const char *WHeater_LinkHeaterOk 				= {"L"};
 const char *WHeater_fLinkAdapterOk				= {"A"};
 const char *WHeater_is_on 						= {"ON"};
+const char *WHeater_is_on_set					= {"ONS"};
 const char *WHeater_3way 						= {"3W"};
 const char *WHeater_T_FlowOut 					= {"TF"};
 const char *WHeater_Power 						= {"M"};
