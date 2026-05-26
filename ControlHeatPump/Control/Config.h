@@ -5177,8 +5177,8 @@ const char *noteTemp[] = {"Температура улицы",
 		#define HEATER_MODBUS_TIMEOUT				30	// По умолчанию, мсек
 		#define HEATER_ADAPTER_WAIT_WRITE	10	// мсек
 		#define HEATER_ADAPTER_ERRORS_MAX	30	// Через сколько ошибок подряд установить флаг - нет связи
-		#define HEATER_WAIT_CMD_COMPLETION	20	// Ожидать выполнения команды, сек
-		#define HEATER_WAIT_BURNER_TIME_MAX	610	// Максимальное время ожидании включении нагрева котлом, сек
+		#define HEATER_WAIT_CMD_COMPLETION	10	// Ожидать выполнения команды, сек
+		#define HEATER_WAIT_BURNER_TIME_MAX	121	// Максимальное время ожидании включении нагрева котлом, сек
 		#define HEATER_PREHEAT_HYSTERESIS	500 // Прогревать трассу до превышения обратки котла над температурами бойлера или подачи, сотые градуса
 		#define HEATER_BOILER_DONT_USE_PUMP_OUT	// Не использовать насос отопления при нагреве бойлера от котла
 		#define BOILER_R3WAY_BEFORE_HEATER_3WAY	// Трехходовой бойлера стоит ДО трехходового крана Котел-ТН (может греть бойлер Котлом совместно с работой компрессора)
