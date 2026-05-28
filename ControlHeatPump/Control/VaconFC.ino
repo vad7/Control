@@ -232,7 +232,6 @@ int8_t devVaconFC::get_readState()
 		if(err == OK && _data.FC_MaxTemp && FC_Temp > _data.FC_MaxTemp) {
 			write_0x06_16(FC_CONTROL, FC_C_COOLER_FAN);
 			set_Error(err = ERR_MODBUS_VACON_TEMP, name); // генерация ошибки
-			return err;
 		}
 		if(_data.FC_TargetTemp && FC_Temp) {
 #ifdef FC_VLT
@@ -340,12 +339,15 @@ int8_t devVaconFC::get_readState()
 				}
 	#endif
 			}
-		} else if(state & FC_S_RUN) { // Привод работает, а не должен - останавливаем через модбас
-			if(rtcSAM3X8.unixtime() - HP.get_stopCompressor() > FC_DEACCEL_TIME / 100) {
-				journal.jprintf_time("Compressor running - stop via Modbus!\n");
-				err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
-				if(err) return err;
+		} else {
+			if(state & FC_S_RUN) { // Привод работает, а не должен - останавливаем через модбас
+				if(rtcSAM3X8.unixtime() - HP.get_stopCompressor() > FC_DEACCEL_TIME / 100) {
+					journal.jprintf_time("Compressor running - stop via Modbus!\n");
+					err = write_0x06_16(FC_CONTROL, FC_C_STOP); // подать команду ход/стоп через модбас
+					if(err) return err;
+				}
 			}
+			FC_curr_freq = 0;
 		}
 #else // Аналоговое управление
 		err = OK;
@@ -902,14 +904,13 @@ void devVaconFC::get_infoFC(char* buf)
 				buf += m_snprintf(buf += strlen(buf), 256, "|0x%X;", state);
 				if(err == OK) {
 					buf += m_snprintf(buf, 256, "2103|Фактическая скорость|%.2d%%;", b[FC_SPEED - FC_STATUS]);
-					buf += m_snprintf(buf, 256, "2104|Выходная частота|%.2d Гц;", (int16_t)b[FC_FREQ - FC_STATUS]);
+					buf += m_snprintf(buf, 256, "2104|Выходная частота|%.2d Гц;", FC_curr_freq = (int16_t)b[FC_FREQ - FC_STATUS]);
 					buf += m_snprintf(buf, 256, "2105 (V1.3)|Обороты (об/м)|%d;", (int16_t)b[FC_RPM - FC_STATUS]);
 					buf += m_snprintf(buf, 256, "2106|Ток двигателя|%.2d А;", b[FC_CURRENT - FC_STATUS]);
 					buf += m_snprintf(buf, 256, "2107 (V1.5)|Крутящий момент|%.1d%%;", (int16_t)b[FC_TORQUE - FC_STATUS]);
 					buf += m_snprintf(buf, 256, "2108 (V1.1)|Выходная мощность: %.1d%% (кВт)|%.3d;", (int16_t)b[FC_POWER - FC_STATUS], get_power());
 					buf += m_snprintf(buf, 256, "2109 (V1.7)|Выходное напряжение (В)|%.1d;2110 (V1.8)|Напряжение шины постоянного тока (В)|%d;", b[FC_VOLTAGE - FC_STATUS], b[FC_VOLTAGE_DC - FC_STATUS]);
 					buf += m_snprintf(buf, 256, "0008 (V1.9)|Температура радиатора (°С)|%d;", read_tempFC());
-					buf += m_snprintf(buf, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", read_0x03_16(FC_NUM_FAULTS));
 					i = b[FC_ERROR - FC_STATUS];
 					if(err == OK) {
 						m_snprintf(buf, 256, "2111|Активная ошибка|%s (%d);", get_fault_str(i), i);

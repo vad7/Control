@@ -7,7 +7,7 @@
 window.onload = function() {
 	loadParam("get_oHP(HIST),get_isRelay(RHEAT),get_oHP(TEMP_RHEAT),get_oHP(PUMP_WORK),get_oHP(PUMP_PAUSE),get_oHP(NST),get_oHP(NSTP),get_oHP(BEEP),get_oHP(NXT),get_oHP(NXTS),get_oHP(NXTD),get_oHP(NXTW),get_oHP(WSPIF),get_oHP(LOGWS),get_oHP(PAUSE),get_oHP(TIME_CHART),get_oHP(CWCO),get_oHP(BPOW),get_oHP(MAXPOW),get_oHP(MCON),get_oHP(BPA),get_oHP(SW)");
 	loadParam("get_oHP(DLONP),get_oHP(DLOFP),get_oHP(DLSR),get_oHP(DLRS),get_oHP(DLTRV),get_oHP(DLBSW),get_oHP(DLBOFF),get_oHP(SDM_LOGER),get_oHP(SAVE_ON),get_oHP(SGL1W_1),get_oHP(SGL1W_2),get_oHP(SGL1W_3),get_oHP(SGL1W_4),get_oHP(SCG),get_oHP(SCGT),get_oHP(STD),get_oHP(SGD),get_oHP(SCGO),get_oHP(STO),get_oHP(STF),get_oHP(SP),get_oHP(NGF),get_oHP(WMT)");
-	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH),get_oHP(DSH),get_oHP(CP),get_oHP(RM),get_oHP(WSM)");
+	loadParam("get_oHP(WFS),get_oHP(WFT),get_oHP(ML),get_oHP(MP),get_oHP(DFTL),get_oHP(DFSDT),get_oHP(DFTS),get_oHP(DFTE),get_oHP(DLDON),get_oHP(DLDOFF),get_oHP(GST),get_oHP(AG),get_oHP(NL),get_oHP(MWL),get_oHP(WFH),get_oHP(RL),get_oHP(LE),get_oHP(MBA),get_oHP(SH),get_oHP(DSH),get_oHP(CP),get_oHP(RM),get_oHP(WSM),get_oHP(LT)");
 }; 
 function setTM(s) {
 	val = document.getElementById("get_ohp-" + s.toLowerCase()).value;
@@ -170,40 +170,8 @@ function setTM(s) {
 			<td nowrap><input id="get_ohp-maxpow" type="number" min="0" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(MAXPOW)');"></td>
 		</tr>
 		<tr>
-			<td>Логировать не критичные ошибки Modbus</td>
-			<td><input type="checkbox" id="get_ohp-sdm_loger" onchange="setParam('get_oHP(SDM_LOGER)');"></td>
-		</tr>	
-		<tr>
-			<td>Логировать обмен между беспроводными датчиками</td>
-			<td><input type="checkbox" id="get_ohp-logws" onchange="setParam('get_oHP(LOGWS)');"></td>
-		</tr>	
-		<tr>
 			<td>Генерация звукового сигнала</td>
 			<td><input type="checkbox" id="get_ohp-beep" onchange="setParam('get_oHP(BEEP)');"></td>
-		</tr>					
-		<tr>
-			<td>Использование дисплея Nextion</td>
-			<td><input type="checkbox" id="get_ohp-nxt" onchange="setParam('get_oHP(NXT)');"></td>
-		</tr>	
-		<tr>
-			<td>Включать дисплей при пуске компрессора</td>
-			<td><input type="checkbox" id="get_ohp-nxtw" onchange="setParam('get_oHP(NXTW)');"></td>
-		</tr>	
-		<tr>
-			<td>Логировать в журнал обмен с дисплеем</td>
-			<td><input type="checkbox" id="get_ohp-nl" onchange="setParam('get_oHP(NL)');"></td>
-		</tr>	
-		<tr>
-			<td>Моргать дисплеем при работе от резервного питания</td>
-			<td><input type="checkbox" id="get_ohp-ngf" onchange="setParam('get_oHP(NGF)');"></td>
-		</tr>	
-		<tr>
-			<td>Время засыпания дисплея Nextion (мин.) [0..255] <sup>7</sup></td>
-			<td nowrap><input id="get_ohp-nxts" type="number" min="0" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(NXTS)');"></td>
-		</tr>
-		<tr>
-			<td>Яркость дисплея Nextion в % [1..100]</td>
-			<td nowrap><input id="get_ohp-nxtd" type="number" min="1" max="100" step="1" value="100"> <input type="submit" value=">" onclick="setParam('get_oHP(NXTD)');"></td>
 		</tr>
 		<tr>
 			<td>На первой шине 1-Wire только один датчик температуры</td>
@@ -230,20 +198,34 @@ function setTM(s) {
 			<td nowrap><input type="number" id="get_ohp-wmt" step="1"> <input type="submit" value=">" onclick="setParam('get_oHP(WMT)');"></td>
 		</tr>
 		<tr>
-			<td>Логировать modWork</td>
-			<td><input type="checkbox" id="get_ohp-mwl" onchange="setParam('get_oHP(MWL)');"></td>
+			<td><b>Дисплей Nextion</b></td><td></td>
 		</tr>
 		<tr>
-			<td>Логировать доп. инфу по реле</td>
-			<td><input type="checkbox" id="get_ohp-rl" onchange="setParam('get_oHP(RL)');"></td>
+			<td>Использование дисплея Nextion</td>
+			<td><input type="checkbox" id="get_ohp-nxt" onchange="setParam('get_oHP(NXT)');"></td>
+		</tr>	
+		<tr>
+			<td>Включать дисплей при пуске компрессора</td>
+			<td><input type="checkbox" id="get_ohp-nxtw" onchange="setParam('get_oHP(NXTW)');"></td>
+		</tr>	
+		<tr>
+			<td>Логировать в журнал обмен с дисплеем</td>
+			<td><input type="checkbox" id="get_ohp-nl" onchange="setParam('get_oHP(NL)');"></td>
+		</tr>	
+		<tr>
+			<td>Моргать дисплеем при работе от резервного питания</td>
+			<td><input type="checkbox" id="get_ohp-ngf" onchange="setParam('get_oHP(NGF)');"></td>
+		</tr>	
+		<tr>
+			<td>Время засыпания дисплея Nextion (мин.) [0..255] <sup>7</sup></td>
+			<td nowrap><input id="get_ohp-nxts" type="number" min="0" step="1" value="0"> <input type="submit" value=">" onclick="setParam('get_oHP(NXTS)');"></td>
 		</tr>
 		<tr>
-			<td>Логировать потребленную энергию со счетчика при переходах тарифного плана и дня</td>
-			<td><input type="checkbox" id="get_ohp-le" onchange="setParam('get_oHP(LE)');"></td>
+			<td>Яркость дисплея Nextion в % [1..100]</td>
+			<td nowrap><input id="get_ohp-nxtd" type="number" min="1" max="100" step="1" value="100"> <input type="submit" value=">" onclick="setParam('get_oHP(NXTD)');"></td>
 		</tr>
 		<tr>
-			<td><b>Внешние HTTP сервера</b></td>
-			<td></td>
+			<td><b>Внешние HTTP сервера</b></td><td></td>
 		</tr>
 		<tr>
 			<td>Время получения прогноза погоды</td>
@@ -268,6 +250,33 @@ function setTM(s) {
 		<tr>
 			<td>Периодически читать данные солнечного контроллера (при отключенном Ваттроутере)</td>
 			<td><input type="checkbox" id="get_ohp-rm" onchange="setParam('get_oHP(RM)');"></td>
+		</tr>
+		<tr>
+			<td><b>Логирование</b></td><td></td>
+		</tr>
+		<tr>
+			<td>Логировать не критичные ошибки Modbus</td>
+			<td><input type="checkbox" id="get_ohp-sdm_loger" onchange="setParam('get_oHP(SDM_LOGER)');"></td>
+		</tr>	
+		<tr>
+			<td>Логировать ошибки проводных датчиков температуры (еще зависит от их настроек)</td>
+			<td><input type="checkbox" id="get_ohp-lt" onchange="setParam('get_oHP(LT)');"></td>
+		</tr>	
+		<tr>
+			<td>Логировать обмен между беспроводными датчиками</td>
+			<td><input type="checkbox" id="get_ohp-logws" onchange="setParam('get_oHP(LOGWS)');"></td>
+		</tr>	
+		<tr>
+			<td>Логировать доп. инфу по реле</td>
+			<td><input type="checkbox" id="get_ohp-rl" onchange="setParam('get_oHP(RL)');"></td>
+		</tr>
+		<tr>
+			<td>Логировать потребленную энергию со счетчика при переходах тарифного плана и дня</td>
+			<td><input type="checkbox" id="get_ohp-le" onchange="setParam('get_oHP(LE)');"></td>
+		</tr>
+		<tr>
+			<td>Логировать modWork</td>
+			<td><input type="checkbox" id="get_ohp-mwl" onchange="setParam('get_oHP(MWL)');"></td>
 		</tr>
 		<tr>
 			<td><b>Настройки для ТН Воздух-Вода</b></td>

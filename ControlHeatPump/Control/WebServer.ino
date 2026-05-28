@@ -2117,6 +2117,8 @@ xSaveStats:
 						strReturn += m_snprintf(strReturn += strlen(strReturn), 256, "0828 (V3.3)|Время включения инвертора (дней:часов)|%d:%d;", l_i32 >> 16, l_i32 & 0xFFFF);
 						l_i32 = HP.dFC.read_0x03_32(FC_RUN_DAYS); // +FC_RUN_HOURS (low word)
 						strReturn += m_snprintf(strReturn, 256, "0840 (V3.5)|Время работы компрессора (дней:часов)|%d:%d;", l_i32 >> 16, l_i32 & 0xFFFF);
+						l_i32 = HP.dFC.read_0x03_16(FC_NUM_FAULTS);
+						strReturn += m_snprintf(strReturn, 256, "0842 (V3.6)|Счетчик аварийных отключений|%d;", l_i32);
 					} else HP.dFC.get_infoFC(strReturn);
 					_delay(2);
 					if(SemaphoreTake(xWebThreadSemaphore, W5200_TIME_WAIT_MAX / portTICK_PERIOD_MS) == pdFALSE) {  // Захват мютекса веба

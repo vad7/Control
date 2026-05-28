@@ -127,12 +127,14 @@ int8_t sensorTemp::Read()
 				if(err != OK) {
 					sumErrorRead++;
 					if(!(err == ERR_ONEWIRE_CRC && get_setup_flag(fTEMP_ignory_CRC))) {
-						if(!get_setup_flag(fTEMP_dont_log_errors)) {
-							journal.jprintf_time("%s: Error ", name);
-							if(err == ERR_ONEWIRE_CRC || err >= 0x40) { // Ошибка CRC или ошибка чтения, но успели прочитать температуру
-								journal.jprintf("%s (%d). t=%.2d, prev=%.2d\n", err == ERR_ONEWIRE_CRC ? "CRC" : "read", err >= 0x40 ? err - 0x40 : err, ttemp, lastTemp);
-							} else journal.jprintf("%s (%d)\n", err == ERR_ONEWIRE ? "RESET" : "read", err);
-							//err = ERR_READ_TEMP;
+						if(GETBIT(HP.Option.flags2, f2LogTempError)) {
+							if(!get_setup_flag(fTEMP_dont_log_errors)) {
+								journal.jprintf_time("%s: Error ", name);
+								if(err == ERR_ONEWIRE_CRC || err >= 0x40) { // Ошибка CRC или ошибка чтения, но успели прочитать температуру
+									journal.jprintf("%s (%d). t=%.2d, prev=%.2d\n", err == ERR_ONEWIRE_CRC ? "CRC" : "read", err >= 0x40 ? err - 0x40 : err, ttemp, lastTemp);
+								} else journal.jprintf("%s (%d)\n", err == ERR_ONEWIRE ? "RESET" : "read", err);
+								//err = ERR_READ_TEMP;
+							}
 						}
 						if(++numErrorRead == 0) numErrorRead--;
 						if(numErrorRead > NUM_READ_TEMP_ERR && !get_setup_flag(fTEMP_ignory_errors)) set_Error(err, name); // Слишком много ошибок чтения подряд - ошибка!

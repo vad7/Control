@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.218"				// Версия прошивки
+#define VERSION			"1.219"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -809,6 +809,7 @@ const char *option_f2modWorkLog       ={"MWL"};
 const char *option_f2RelayLog         ={"RL"};
 const char *option_f2LogEnergy        ={"LE"};
 const char *option_f2ReadMPPT         ={"RM"};
+const char *option_f2LogTempError     ={"LT"};
 const char *option_WF_ReqServer       = {"WFS"};
 const char *option_WF_ReqText         = {"WFT"};
 const char *option_WF_MinTemp         = {"WMT"};

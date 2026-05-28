@@ -1109,6 +1109,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_LogWirelessSensors)==0){ Option.flags = (Option.flags & ~(1<<fLogWirelessSensors)) | ((n!=0)<<fLogWirelessSensors); return true; } else
 	if(strcmp(var,option_f2LogEnergy)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2LogEnergy)) | ((n!=0)<<f2LogEnergy); return true; } else
 	if(strcmp(var,option_f2ReadMPPT)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2ReadMPPT)) | ((n!=0)<<f2ReadMPPT); return true; } else
+	if(strcmp(var,option_f2LogTempError)==0)	{ Option.flags2 = (Option.flags2 & ~(1<<f2LogTempError)) | ((n!=0)<<f2LogTempError); return true; } else
 	if(strcmp(var,option_SAVE_ON)==0)          {if (n==0) {SETBIT0(Option.flags,fSaveON); return true;} else if (n==1) {SETBIT1(Option.flags,fSaveON); return true;} else return false;    }else             // флаг записи в EEPROM включения ТН (восстановление работы после перезагрузки)
 	if(strncmp(var,option_SGL1W, sizeof(option_SGL1W)-1)==0) {
 	   uint8_t bit = var[sizeof(option_SGL1W)-1] - '0' - 1;
@@ -1263,6 +1264,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_f2RelayLog)==0)       { return strcat(ret, (char*)(GETBIT(Option.flags2, f2RelayLog) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2LogEnergy)==0)      { return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogEnergy) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2ReadMPPT)==0)       { return strcat(ret, (char*)(GETBIT(Option.flags2, f2ReadMPPT) ? cOne : cZero)); } else
+	if(strcmp(var,option_f2LogTempError)==0)   { return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogTempError) ? cOne : cZero)); } else
 	if(strcmp(var,option_History)==0)          {if(GETBIT(Option.flags,fHistory)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else            // Сбрасывать статистику на карту
 	if(strcmp(var,option_SDM_LOG_ERR)==0)      {if(GETBIT(Option.flags,fModbusLogErrors)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { return strcat(ret, (char*)(GETBIT(Option.flags,fWebStoreOnSPIFlash) ? cOne : cZero)); } else
@@ -2512,7 +2514,7 @@ boolean HeatPump::scheduleBoiler()
 	return true;
 }
 
-// Управление температурой в зависимости от режима
+// Управление температурой в зависимости от режима (bit mask)
 #define _COMPR_				1		// Компрессор
 #define _HEATER_			2		// Котел
 #define STR_REDUCED			"Reduced FC"
@@ -2881,9 +2883,7 @@ MODE_COMP HeatPump::UpdateHeat()
 {
 	int16_t target,t1;
 	int16_t newFC;
-
 	if(get_State() == pOFF_HP || get_State() == pSTOPING_HP || get_State() == pWAIT_HP) return pCOMP_OFF;    // Если ТН выключен или выключается ничего не делаем
-
 	target = t1 = STARTTEMP;
 	if(GETBIT(Prof.Heat.flags, fUseAdditionalTargets) && (((Prof.Heat.HeatTargetSchedulerH<<16) | Prof.Heat.HeatTargetSchedulerL) & (1<<rtcSAM3X8.get_hours()))) {// Использовать дополнительные целевые датчики температуры
 		for(uint8_t i = 0; i < TNUMBER; i++) {
@@ -2899,18 +2899,18 @@ MODE_COMP HeatPump::UpdateHeat()
 			}
 		}
 	}
+	uint8_t _is_on = (is_heater_on() << 1) | (is_compressor_on() << 0);		// b1 - Котел, b0 - Компрессор
 	if(t1 == STARTTEMP) {
 		t1 = get_currentTempHeat();  // вычислить температуры для сравнения
 		target = get_targetTempHeat();
 	} else {
 		int16_t t2 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
-		int16_t target2 = get_targetTempHeat() + Prof.Heat.MaxTargetRise * 10;
+		int16_t target2 = get_targetTempHeat() + Prof.Heat.MaxTargetRise * 10 + Prof.Heat.dTemp;
 		if(t2 > target2) {
 			t1 = t2;
 			target = target2;
 		}
 	}
-	uint8_t _is_on = (is_heater_on() << 1) | (is_compressor_on() << 0);		// b1 - Котел, b0 - Компрессор
 
 	if(_is_on && !onBoiler) {
 #ifdef R4WAY
