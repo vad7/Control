@@ -2905,7 +2905,7 @@ MODE_COMP HeatPump::UpdateHeat()
 		target = get_targetTempHeat();
 	} else {
 		int16_t t2 = GETBIT(Prof.Heat.flags,fTarget) ? RET : sTemp[TIN].get_Temp();
-		int16_t target2 = get_targetTempHeat() + Prof.Heat.MaxTargetRise * 10 + Prof.Heat.dTemp;
+		int16_t target2 = get_targetTempHeat() + Prof.Heat.MaxTargetRise * 10 - (_is_on ? 0 : Prof.Heat.dTemp);
 		if(t2 > target2) {
 			t1 = t2;
 			target = target2;
