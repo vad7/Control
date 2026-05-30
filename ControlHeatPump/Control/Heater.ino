@@ -120,10 +120,10 @@ void devHeater::Heater_Stop(bool rise_error)
 		}
 	}
 #endif
-    journal.jprintf(" %s[%s] OFF\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
+	HP.work_flags &= ~((1<<fHP_HeaterOn) | (1<<fHP_CompressorWasOn));
 	HP.stopHeater = rtcSAM3X8.unixtime();
 	if(GETBIT(HP.work_flags, fHP_HeaterOn)) SETBIT1(HP.work_flags, fHP_HeaterWasOn); else SETBIT0(HP.work_flags, fHP_HeaterWasOn);
-	HP.work_flags &= ~((1<<fHP_HeaterOn) | (1<<fHP_CompressorWasOn));
+    journal.jprintf(" %s[%s] OFF\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
 #endif
 }
 
@@ -167,10 +167,10 @@ void devHeater::Heater_Start()
 	if(!_ok) {
 		set_Error(ERR_CONFIG, (char*)"HeaterStart");
 	} else {
-		journal.jprintf(" %s[%s] ON\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
 		HP.startHeater = burner_time_last = rtcSAM3X8.unixtime();
 		SETBIT0(HP.work_flags, fHP_CompressorWasOn);
 		SETBIT1(HP.work_flags, fHP_HeaterOn);
+		journal.jprintf(" %s[%s] ON\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
 	}
 #endif
 }
@@ -448,7 +448,7 @@ bool devHeater::get_param(char *var, char *ret)
 	if(strcmp(var, option_Control_Period)==0) 			{ _itoa(set.Control_Period, ret); } else
 	if(strcmp(var, WHeater_3way)==0) 					{ strcat(ret, HP.is_heater_active() ? "Котел" : "ТН"); } else
 	if(strcmp(var, WHeater_T_FlowOut)==0) 				{ _dtoa(ret, data.T_FlowOut / 10, 0); strcat(ret, " ("); _itoa(target_temp, ret); strcat(ret, ")"); } else
-	if(strcmp(var, WHeater_Power)==0) 					{ if(!GETBIT(fwork, fHeater_LinkHeaterOk)) strcat(ret, "-"); else if(data.Power==0) strcat(ret, "Выкл"); else { _itoa(data.Power, ret); strcat(ret, "%"); } } else
+	if(strcmp(var, WHeater_Power)==0) 					{ if(!GETBIT(fwork, fHeater_LinkHeaterOk)) strcat(ret, "-"); else { _itoa(data.Power, ret); strcat(ret, "%"); } } else
 	if(strcmp(var, WHeater_err_num_total)==0)			{ _itoa(err_num_total, ret); } else
 	if(strcmp(var, WHeater_fHeater_Opentherm)==0)		{ if(GETBIT(set.setup_flags, fHeater_Opentherm)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
 	if(strcmp(var, WHeater_fHeater_USE_Relay_RHEATER)==0){ if(GETBIT(set.setup_flags, fHeater_USE_Relay_RHEATER)) strcat(ret,(char*)cOne); else strcat(ret,(char*)cZero);} else
