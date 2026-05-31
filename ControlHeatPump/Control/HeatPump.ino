@@ -5072,7 +5072,7 @@ void HeatPump::calculatePower()
 	_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
 			#endif
 		#endif
-	if(Option.flags2, f2LogExtendedInfo) { journal.jprintf("PWR: %dW %dV, ", _power220, dSDM.get_voltage()); }
+	if(GETBIT(Option.flags2, f2LogExtendedInfo)) { journal.jprintf("PWR: %dW %dV, ", _power220, dSDM.get_voltage()); }
 		#ifdef PWM_ACCURATE_POWER
 	_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
 		#endif
@@ -5087,13 +5087,15 @@ void HeatPump::calculatePower()
 	if(dSDM.get_link()) {  // Если счетчик работает (связь не утеряна)
 #ifdef ADD_FC_POWER_WHEN_GENERATOR
 		if(GETBIT(Option.flags, fBackupPower)) { // добавить текущую мощность компрессора
-			if(_power220 && dSDM.get_power() + dFC.get_power() - _power220 < (int32_t)dFC.get_power() - _power220 * 2 / 10) _power220 = dSDM.get_power() + dFC.get_power(); // 20%
-			else _power220 = dSDM.get_power() + dFC.get_power() - _power220;
+			//if(_power220 && dSDM.get_power() + dFC.get_power() - _power220 < (int32_t)dFC.get_power() - _power220 * 2 / 10) _power220 = dSDM.get_power() + dFC.get_power(); // 20%
+			//else
+			_power220 = dSDM.get_power() + dFC.get_power() - _power220;
 		} else
 #endif
-			if(_power220 && dSDM.get_power() - _power220 < (int32_t)dFC.get_power() - _power220 * 2 / 10) _power220 = dSDM.get_power(); // 20%
-			else _power220 = dSDM.get_power() - _power220;
-		if(Option.flags2, f2LogExtendedInfo) { journal.jprintf("= %dW (%dW)\n", _power220, dSDM.get_power()); }
+			//if(_power220 && dSDM.get_power() - _power220 < (int32_t)dFC.get_power() - _power220 * 2 / 10) _power220 = dSDM.get_power(); // 20%
+			//else
+			_power220 = dSDM.get_power() - _power220;
+		if(GETBIT(Option.flags2, f2LogExtendedInfo)) { journal.jprintf("= %dW (%dW)\n", _power220, dSDM.get_power()); }
 	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;
