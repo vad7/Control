@@ -5472,7 +5472,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define NOLINK_SUM_POWER_PUMP 200  		// Мощность потребления насосов, для добавления к мощности компрессора, если нет связи со электро-счетчиком, Вт
 	#define CORRECT_POWER220				// Корректировка (добавка) потребляемой мощности из электросети (и для расчета COP), если включены указанные реле, Вт при 220V
 	#ifdef CORRECT_POWER220
-		CORRECT_POWER220_STRUCT correct_power220[] = { {RPUMPFL, 25} }; // Обороты Grundfos Alpha2 L 25-60: III = 45 Вт, II = 22 Вт, ТП-4(CP2) = 25
+		CORRECT_POWER220_STRUCT correct_power220[] = { {RPUMPFL, 25} }; // Настройки Grundfos Alpha2 L 25-60, Вт: III = 45, II = 22, ТП-3(CP1) = 25, ТП-4(CP2) = 36
 		//#define CORRECT_POWER220_EXCL_RBOILER	2200 // Вычитание мощности бойлера, включая данные ваттроутера, Вт при 220V. Если заремарено, то вычитается только ваттроутер.
 	#endif
 	//#define STATS_SKIP_COP_WHEN_RELAY_ON 	RBOILER	// Пропускать логирование COP при включенном реле
