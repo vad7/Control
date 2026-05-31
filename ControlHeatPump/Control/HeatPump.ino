@@ -1110,6 +1110,7 @@ boolean HeatPump::set_optionHP(char *var, float x)
 	if(strcmp(var,option_f2LogEnergy)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2LogEnergy)) | ((n!=0)<<f2LogEnergy); return true; } else
 	if(strcmp(var,option_f2ReadMPPT)==0)		{ Option.flags2 = (Option.flags2 & ~(1<<f2ReadMPPT)) | ((n!=0)<<f2ReadMPPT); return true; } else
 	if(strcmp(var,option_f2LogTempError)==0)	{ Option.flags2 = (Option.flags2 & ~(1<<f2LogTempError)) | ((n!=0)<<f2LogTempError); return true; } else
+	if(strcmp(var,option_f2LogExtendedInfo)==0)	{ Option.flags2 = (Option.flags2 & ~(1<<f2LogExtendedInfo)) | ((n!=0)<<f2LogExtendedInfo); return true; } else
 	if(strcmp(var,option_SAVE_ON)==0)          {if (n==0) {SETBIT0(Option.flags,fSaveON); return true;} else if (n==1) {SETBIT1(Option.flags,fSaveON); return true;} else return false;    }else             // флаг записи в EEPROM включения ТН (восстановление работы после перезагрузки)
 	if(strncmp(var,option_SGL1W, sizeof(option_SGL1W)-1)==0) {
 	   uint8_t bit = var[sizeof(option_SGL1W)-1] - '0' - 1;
@@ -1265,6 +1266,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 	if(strcmp(var,option_f2LogEnergy)==0)      { return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogEnergy) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2ReadMPPT)==0)       { return strcat(ret, (char*)(GETBIT(Option.flags2, f2ReadMPPT) ? cOne : cZero)); } else
 	if(strcmp(var,option_f2LogTempError)==0)   { return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogTempError) ? cOne : cZero)); } else
+	if(strcmp(var,option_f2LogExtendedInfo)==0){ return strcat(ret, (char*)(GETBIT(Option.flags2, f2LogExtendedInfo) ? cOne : cZero)); } else
 	if(strcmp(var,option_History)==0)          {if(GETBIT(Option.flags,fHistory)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else            // Сбрасывать статистику на карту
 	if(strcmp(var,option_SDM_LOG_ERR)==0)      {if(GETBIT(Option.flags,fModbusLogErrors)) return strcat(ret,(char*)cOne); else return strcat(ret,(char*)cZero);   }else
 	if(strcmp(var,option_WebOnSPIFlash)==0)    { return strcat(ret, (char*)(GETBIT(Option.flags,fWebStoreOnSPIFlash) ? cOne : cZero)); } else
@@ -5070,6 +5072,7 @@ void HeatPump::calculatePower()
 	_power220 = WR_LoadRun[WR_Load_pins_Boiler_INDEX];
 			#endif
 		#endif
+	if(Option.flags2, f2LogExtendedInfo) { journal.jprintf("PWR: %dW %dV, ", _power220, dSDM.get_voltage()); }
 		#ifdef PWM_ACCURATE_POWER
 	_power220 = _power220 * dSDM.get_voltage()*dSDM.get_voltage() / (220*220L);
 		#endif
@@ -5090,6 +5093,7 @@ void HeatPump::calculatePower()
 #endif
 			if(_power220 && dSDM.get_power() - _power220 < (int32_t)dFC.get_power() - _power220 * 2 / 10) _power220 = dSDM.get_power(); // 20%
 			else _power220 = dSDM.get_power() - _power220;
+		if(Option.flags2, f2LogExtendedInfo) { journal.jprintf("= %dW (%dW)\n", _power220, dSDM.get_power()); }
 	} else _power220 = 0;
 #endif
 	if(_power220 < 0) _power220 = 0;

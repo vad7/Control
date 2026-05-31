@@ -5439,7 +5439,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define RPUMPI             1			// Реле включения насоса входного контура  (геоконтур), Обычное реле LOW LEVEL TRG через R_1k + PC817
 	#define RPUMPO             2			// Реле включения насоса выходного контура  (отопление и/или ГВС), Обычное реле LOW LEVEL TRG через R_1k + PC817
 //	#define RPUMPO_INVERT					// Инвертировать
-	#define RPUMPFL            3			// Реле насоса Теплого Пола
+	#define RPUMPFL            3			// Реле насоса Теплого Пола (Grundfos Alpha2 L 25-60)
 //	#define RPUMPBH            4			// Реле насоса НАГРЕВА бойлера (ГВС) - не путать с циркуляцией
 	#define R3WAY              4			// Трех ходовой кран Отопление - ГВС (Включение ГВС)
 	#define R3WAYOFF           5			// Трех ходовой кран Отопление - ГВС (Выключение ГВС)
@@ -5472,7 +5472,7 @@ const char *noteTemp[] = {"Температура улицы",
 	#define NOLINK_SUM_POWER_PUMP 200  		// Мощность потребления насосов, для добавления к мощности компрессора, если нет связи со электро-счетчиком, Вт
 	#define CORRECT_POWER220				// Корректировка (добавка) потребляемой мощности из электросети (и для расчета COP), если включены указанные реле, Вт при 220V
 	#ifdef CORRECT_POWER220
-		CORRECT_POWER220_STRUCT correct_power220[] = { {RPUMPFL, 25} }; // Обороты: III = 45 Вт, II = 22 Вт, ТП-4 = 25
+		CORRECT_POWER220_STRUCT correct_power220[] = { {RPUMPFL, 25} }; // Обороты Grundfos Alpha2 L 25-60: III = 45 Вт, II = 22 Вт, ТП-4(CP2) = 25
 		//#define CORRECT_POWER220_EXCL_RBOILER	2200 // Вычитание мощности бойлера, включая данные ваттроутера, Вт при 220V. Если заремарено, то вычитается только ваттроутер.
 	#endif
 	//#define STATS_SKIP_COP_WHEN_RELAY_ON 	RBOILER	// Пропускать логирование COP при включенном реле
