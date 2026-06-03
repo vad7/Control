@@ -589,7 +589,7 @@ void Statistics::HistoryFileHeader(char *ret, uint8_t flag)
 				strcat(ret, "C");		// ось COP
 				break;
 			case STATS_OBJ_Compressor:
-				strcat(ret, "R1");		// ось %
+				strcat(ret, "H");		// ось Гц
 				break;
 			case STATS_OBJ_Heater:
 				strcat(ret, "R0");		// ось %
@@ -1155,7 +1155,7 @@ void Statistics::History()
 			break;
 #endif
 		case STATS_OBJ_Compressor:
-			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // R
+			int_to_dec_str(HP.dFC.get_frequency(), 10, &buf, 0); // H
 			break;
 		case STATS_OBJ_Power:
 			int_to_dec_str(HP.power220, 1, &buf, 0);  // W
