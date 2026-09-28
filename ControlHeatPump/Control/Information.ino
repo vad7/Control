@@ -1205,7 +1205,7 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		return true;
 	} else if(strcmp(var, prof_DATE_PROFILE) == 0) { return true;
 	} else if(strcmp(var, prof_fAutoSwitchProf_mode) == 0) { if(x == 1) SETBIT1(SaveON.flags, fAutoSwitchProf_mode); else SETBIT0(SaveON.flags, fAutoSwitchProf_mode); return true;
-	} else if(strcmp(var, prof_fHP_ProfilesSwitchingByTime) == 0) { if(x == 1) SETBIT1(HP.work_flags, fHP_ProfilesSwitchingByTime); else SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTime); return true;
+	} else if(strcmp(var, prof_fHP_ProfilesSwitchingByTT) == 0) { if(x == 1) SETBIT1(HP.work_flags, fHP_ProfilesSwitchingByTT); else SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTT); return true;
 	} else if(strncmp(var, prof_DailySwitch, sizeof(prof_DailySwitch)-1) == 0) {
 		var += sizeof(prof_DailySwitch)-1;
 		uint32_t i = *(var + 1) - '0';
@@ -1261,6 +1261,7 @@ boolean Profile::set_paramProfile(char *var, char *c)
 		return true;
 	} else if(strcmp(var, prof_fSwitchProfileNext_OnError) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_OnError); else SETBIT0(dataProfile.flags, fSwitchProfileNext_OnError); return true;
 	} else if(strcmp(var, prof_fSwitchProfileNext_ByTime) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_ByTime); else SETBIT0(dataProfile.flags, fSwitchProfileNext_ByTime); return true;
+	} else if(strcmp(var, prof_fSwitchProfileNext_ByTemp) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_ByTemp); else SETBIT0(dataProfile.flags, fSwitchProfileNext_ByTemp); return true;
 	} else if(strcmp(var, prof_fSwitchProfileNext_OnBackupPower) == 0) { if(x == 1) SETBIT1(dataProfile.flags, fSwitchProfileNext_OnBackupPower); else SETBIT0(dataProfile.flags, fSwitchProfileNext_OnBackupPower); return true;
 	// параметры только чтение
 	} else if(strcmp(var, prof_NUM_PROFILE) == 0) {
@@ -1279,14 +1280,16 @@ char*   Profile::get_paramProfile(char *var, char *ret)
 	if(strcmp(var,prof_DATE_PROFILE)==0)   { return DecodeTimeDate(dataProfile.saveTime,ret);                 }else// параметры только чтение
 	if(strcmp(var,prof_NUM_PROFILE)==0)    { return _itoa(I2C_PROFIL_NUM,ret);                                }else
 	if(strcmp(var, prof_fAutoSwitchProf_mode)==0) { return _itoa(GETBIT(SaveON.flags, fAutoSwitchProf_mode), ret); }else
-	if(strcmp(var, prof_fHP_ProfilesSwitchingByTime)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfilesSwitchingByTime), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_OnError)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_OnError), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_ByTime)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_ByTime), ret); }else
+	if(strcmp(var, prof_fSwitchProfileNext_ByTemp)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_ByTemp), ret); }else
 	if(strcmp(var, prof_fSwitchProfileNext_OnBackupPower)==0) { return _itoa(GETBIT(dataProfile.flags, fSwitchProfileNext_OnBackupPower), ret); }else
 	if(strcmp(var, prof_TimeStart)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeStart / 10, dataProfile.TimeStart % 10); return ret; }else
 	if(strcmp(var, prof_TimeEnd)==0) { m_snprintf(ret + m_strlen(ret), 32, "%02d:%d0", dataProfile.TimeEnd / 10, dataProfile.TimeEnd % 10); return ret; }else
 	if(strcmp(var, prof_ProfileNext)==0) { if(dataProfile.ProfileNext) _itoa(dataProfile.ProfileNext, ret); else strcat(ret, "-"); return ret; }else
 	if(strcmp(var, prof_SwitchError)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfileSwitch_Error), ret); }else
+	if(strcmp(var, prof_fHP_ProfilesSwitchingByTT)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfilesSwitchingByTT), ret); }else
+	if(strcmp(var, prof_fHP_ProfileSetByTemp)==0) { return _itoa(GETBIT(HP.work_flags, fHP_ProfileSetByTemp), ret); }else
 	if(strncmp(var, prof_DailySwitch, sizeof(prof_DailySwitch)-1) == 0) { // Дубль в WebServer.ino -> Функция get_tblPDS
 		var += sizeof(prof_DailySwitch)-1;
 		uint8_t i = *(var + 1) - '0';
@@ -1489,12 +1492,25 @@ int8_t Profile::update_list(int8_t num)
 }
 
 // проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
-uint8_t Profile::check_switch_to_ProfileNext_byTime(type_dataProfile *dp) // только поля: flags, ProfileNext, TimeStart, TimeEnd
+uint8_t Profile::check_autoswitch_to_ProfileNext(type_dataProfile *dp) // только поля: flags, ProfileNext, TimeStart, TimeEnd
 {
-	if(GETBIT(HP.work_flags, fHP_ProfileSetByError) || !GETBIT(HP.work_flags, fHP_ProfilesSwitchingByTime)) return 0;	// Профиль установлен по переключению из-за ошибки, для дальнейшей автосмены нужно ручное вмешательство
-	uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
-	uint32_t st = dp->TimeStart * 10;
-	uint32_t end = dp->TimeEnd * 10;
-	return GETBIT(dp->flags, fSwitchProfileNext_ByTime) && dp->ProfileNext
-			&& !((end >= st && hhmm >= st && hhmm < end) || (end < st && (hhmm >= st || hhmm < end))) ? dp->ProfileNext : 0; 	// время профиля вышло
+	if(GETBIT(HP.work_flags, fHP_ProfileSetByError) || !GETBIT(HP.work_flags, fHP_ProfilesSwitchingByTT))
+		return 0;	// Профиль установлен по переключению из-за ошибки, для дальнейшей автосмены нужно ручное вмешательство
+	if(dp->ProfileNext) {
+		if(GETBIT(dp->flags, fSwitchProfileNext_ByTime)) {
+			uint32_t hhmm = rtcSAM3X8.get_hours() * 100 + rtcSAM3X8.get_minutes();
+			uint32_t st = dp->TimeStart * 10;
+			uint32_t end = dp->TimeEnd * 10;
+			bool sw = !((end >= st && hhmm >= st && hhmm < end) || (end < st && (hhmm >= st || hhmm < end)));
+			if(GETBIT(HP.work_flags, fHP_ProfileSetByTemp)) {
+				if(sw) sw = false;
+				else SETBIT0(HP.work_flags, fHP_ProfileSetByTemp); // время текущего профиля, сбрасываем флаг переключения по температуре
+			}
+			if(sw) return dp->ProfileNext | SWITCH_PROF_BY_SCHEDULER;
+		}
+		if(GETBIT(dp->flags, fSwitchProfileNext_ByTemp)) {
+			if(HP.sTemp[TOUT].get_Temp() < HP.Option.NextProfile_Temp * 100) return dp->ProfileNext | SWITCH_PROF_ON_TEMP;
+		}
+	}
+	return 0;
 }

@@ -84,6 +84,7 @@ xSetupExit:
 						if(LCD_setup & 0xFF) HP.sendCommand(pSTART);
 						else {
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+							SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 							HP.sendCommand(pSTOP);
 						}
 					}

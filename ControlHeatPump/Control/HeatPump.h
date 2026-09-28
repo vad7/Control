@@ -192,7 +192,8 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define SWITCH_PROF_BY_ERROR		0x80	// переключить профиль по ошибке
 #define SWITCH_PROF_BY_SCHEDULER	0x40	// переключить профиль через календарь
 #define SWITCH_PROF_ON_BACKUP		0xC0	// на резервном источнике, вернуться обратно после восстановления питания
-#define SWITCH_PROF_BY_MASK			0xC0
+#define SWITCH_PROF_ON_TEMP			0x20	// переключить профиль по температуре
+#define SWITCH_PROF_BY_MASK			0xE0
 
 // Рабочие флаги ТН (work_flags)
 #define fHP_BoilerTogetherHeat	0			// Идет нагрев бойлера вместе с отоплением
@@ -209,9 +210,10 @@ type_WebSecurity WebSec_Microart;			// хеш паролей
 #define fHP_NewCommand			11			// Новая команда(ы) для отработки
 #define fHP_Heater_Heating_pipes 12			// Идет разогрев труб Котлом (нужно доконфигурить насосы, краны после)
 #define fHP_Heater_HeatFloorDelayed 13		// Отложенный пуск теплого пола работает
-#define fHP_ProfilesSwitchingByTime 14		// Профили меняются по расписанию
+#define fHP_ProfilesSwitchingByTT 14		// Профили меняются по расписанию по времени или температуре
 #define fHP_ProfileSwitch_Error 15			// Ошибка переключения профиля (Не логировать повторные ошибки)
 #define fHP_Web_RS485_2_Active	16			// активна шина RS485_2 (Process2) на вебе
+#define fHP_ProfileSetByTemp	17			// Текущий профиль установлен по переключению по температуре
 
 // Флаги journal_log
 #define fHP_Log_Web_NotFound	0			// Через время ping-а или раз в день
@@ -295,6 +297,7 @@ struct type_optionHP {
 	uint8_t nStartNextProf;				// Число попыток начала/продолжения работы на новом профиле
 	uint8_t Control_Period;				// Период управления тепловым насосом (в режиме Гистерезис и Паузе), сек
 	int8_t WF_AddCloudByMonth[12];		// + к облачности по месяцам, %
+	int8_t NextProfile_Temp;			// Температура переключения на ProfileNext, если разрешено, градусы
 };
 // __attribute__((packed));
 

@@ -24,7 +24,7 @@
 #include "Util.h"
 
 // ОПЦИИ КОМПИЛЯЦИИ ПРОЕКТА -------------------------------------------------------
-#define VERSION			"1.220"				// Версия прошивки
+#define VERSION			"1.221"				// Версия прошивки
 #define VER_SAVE		159					// Версия формата данных в I2C памяти, при изменении добавить размеры структур в HP.Prof.convert_to_new_version() !!!
 #ifndef UART_SPEED
 #define UART_SPEED		115200				// Скорость отладочного порта
@@ -833,6 +833,7 @@ const char *option_SwitchHeaterHPTime = {"SH"};
 const char *option_ModbusMinTimeBetweenTransaction ={"MBT"};
 const char *option_ModbusResponseTimeout ={"MRT"};
 const char *option_ModbusWriteResponseTimeout ={"MWT"};
+const char *option_NextProfile_Temp   = {"NPT"};
 
 const char option_WR_Loads[]			= "WL";					// WLn, Биты активирования нагрузки
 const char option_WR_Loads_PWM[]		= "WP";					// WPn, Нагрузка PWM
@@ -872,8 +873,10 @@ const char *prof_TimeEnd        = {"TE"};
 const char *prof_fSwitchProfileNext_OnError= {"F2"};
 const char *prof_fSwitchProfileNext_ByTime= {"F3"};
 const char *prof_fSwitchProfileNext_OnBackupPower= {"F4"};
+const char *prof_fSwitchProfileNext_ByTemp= {"F5"};
 const char *prof_fAutoSwitchProf_mode={"ASM"};
-const char *prof_fHP_ProfilesSwitchingByTime={"TM"};
+const char *prof_fHP_ProfilesSwitchingByTT={"TM"};
+const char *prof_fHP_ProfileSetByTemp ={"ST"};
 const char *prof_SwitchError	={"SE"};
 const char prof_DailySwitch[] 	= "DS";
 const char prof_DailySwitchDevice = 'D';		// DSD

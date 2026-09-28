@@ -285,6 +285,7 @@ void Nextion::readCommand()
 							if(HP.get_State() == pOFF_HP) HP.sendCommand(pSTART);
 							else {
 								SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+								SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 								HP.sendCommand(pSTOP);
 							}
 							input_delay = NEXTION_INPUT_DELAY * 2;
@@ -354,12 +355,14 @@ void Nextion::readCommand()
 					} else if(cmd2 == NXTID_SCHEDULER_ON) {
 						HP.Schdlr.web_set_param((char*)WEB_SCH_On, (char*)"1");
 					} else if(cmd2 < I2C_PROFIL_NUM) {
+						SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 						HP.Prof.set_list(cmd2);
 					} else if(cmd2 == NXTID_PROFILE_ONOFF) {  // событие нажатие кнопки вкл/выкл ТН
 						if(HP.get_State() != pSTARTING_HP || HP.get_State() != pSTOPING_HP) {
 							if(HP.get_State() == pOFF_HP) HP.sendCommand(pSTART);
 							else {
 								SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+								SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 								HP.sendCommand(pSTOP);
 							}
 							input_delay = NEXTION_INPUT_DELAY * 2;

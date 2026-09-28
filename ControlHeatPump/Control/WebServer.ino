@@ -840,6 +840,7 @@ xSaveStats:
 		if(strncmp(str, "set_O", 5) == 0) {
 			str += 5;
 			if(strcmp(str, "FF") == 0) {		// Функция set_OFF
+				SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 				SETBIT0(HP.work_flags, fHP_ProfileSetByError);
 				HP.sendCommand(pSTOP);			// Послать команду на останов ТН
 				if(HP.get_State() == pWORK_HP) strcat(strReturn, cOne);	else strcat(strReturn, cZero);
@@ -1903,7 +1904,7 @@ xSaveStats:
 						HP.Option.numProf = i;
 						if(HP.Prof.id != HP.Option.numProf) {
 							SETBIT0(HP.work_flags, fHP_ProfileSetByError);
-							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTime);
+							//SETBIT0(HP.work_flags, fHP_ProfilesSwitchingByTT);
 							HP.profile_prev = 0;
 							HP.profile_cmd = i + 1; HP.sendCommand(pCHANGE_PROFILE);
 						}

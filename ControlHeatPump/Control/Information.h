@@ -250,10 +250,11 @@ struct type_setting_cool {
 #define fSwitchProfileNext_OnError	2	// Переключать на ProfileNext при ошибке
 #define fSwitchProfileNext_ByTime	3	// Переключать на ProfileNext по времени (когда не рабочее время профиля)
 #define fSwitchProfileNext_OnBackupPower 4	// Переключать на ProfileNext при резервном питании
+#define fSwitchProfileNext_ByTemp	5	// Переключать на ProfileNext по температуре HP.Option.NextProfile_Temp
 
 struct type_dataProfile               // Хранение общих данных
 {
-	uint8_t 	flags;                  // Флаги профайла (2 элемент структуры!)
+	uint8_t 	flags;                  // Флаги профайла
 	uint8_t 	ProfileNext;			// Профиль+1 на который будет переключение при ошибке или по времени: 0 - нет, [1..I2C_PROFIL_NUM]
 	uint8_t 	TimeStart;             	// Время начала работы профиля, с hh:m0
 	uint8_t 	TimeEnd;             	// Время окончания работы профиляm, до hh:m0
@@ -291,7 +292,7 @@ class Profile                         // Класс профиль
     char*   get_paramProfile(char *var,char *ver);          // профиль Получить параметр
     inline  int8_t get_idProfile(){return id;}             // получить номер текущего профиля
     int8_t  check_DailySwitch(uint8_t i, uint32_t hhmm);
-    uint8_t	check_switch_to_ProfileNext_byTime(type_dataProfile *dp);// проверка нужно ли переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
+    uint8_t	check_autoswitch_to_ProfileNext(type_dataProfile *dp);// проверка нужно ли авто-переключиться на ProfileNext, возвращает номер профиля+1 или 0, если нет
 
     // Установка параметров
     boolean set_paramCoolHP(char *var, float x);            // Охлаждение Установить параметры ТН из числа (float)

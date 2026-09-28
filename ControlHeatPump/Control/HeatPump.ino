@@ -123,7 +123,7 @@ void HeatPump::initHeatPump()
 	R3WAY_Off_timer = 0;
 	profile_prev = 0;
 	profile_cmd = 0;
-	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchingByTime);
+	work_flags = (1<<fHP_SunNotInited) | (1<<fHP_ProfilesSwitchingByTT);
 #ifdef TEST_BOARD
 	testMode = SAFE_TEST;
 #else
@@ -1165,6 +1165,8 @@ boolean HeatPump::set_optionHP(char *var, float x)
 #endif
 	else if(strcmp(var,option_Modbus_Attempts)==0){ Option.Modbus_Attempts = x; return true; }
 	else if(strcmp(var,option_SwitchHeaterHPTime)==0){ Option.SwitchHeaterHPTime = x; return true; }
+	else if(strcmp(var,option_NextProfile_Temp)==0){ Option.NextProfile_Temp = x; return true; }
+
 #ifdef WATTROUTER
 	else if(strncmp(var, option_WR_Loads, sizeof(option_WR_Loads)-1) == 0) {
 	   uint8_t bit = var[sizeof(option_WR_Loads)-1] - '0';
@@ -1338,6 +1340,7 @@ char* HeatPump::get_optionHP(char *var, char *ret)
 #endif
 	else if(strcmp(var,option_Modbus_Attempts)==0)  { return _itoa(Option.Modbus_Attempts, ret); }
 	else if(strcmp(var,option_SwitchHeaterHPTime)==0)  { return _itoa(Option.SwitchHeaterHPTime, ret); }
+	else if(strcmp(var,option_NextProfile_Temp)==0)  { return _itoa(Option.NextProfile_Temp, ret); }
 #ifdef WATTROUTER
 	else if(strncmp(var, option_WR_Loads, sizeof(option_WR_Loads)-1)==0) {
 	   uint8_t bit = var[sizeof(option_WR_Loads)-1] - '0';
@@ -2373,6 +2376,7 @@ void HeatPump::StopWait(bool stop)
 		//journal.jprintf(" statChart stop\n");
 		setState(pOFF_HP);
 		SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+		SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 		HP.profile_prev = 0;
 		compressor_in_pause = false;
 		journal.jprintf_time("%s OFF . . .\n", (char*) nameHeatPump);
@@ -4604,7 +4608,8 @@ xWait:
 						if(prof_Temp1 != Prof.Heat.Temp1) prof_Temp1 = Prof.Heat.Temp1; else prof_Temp1 = STARTTEMP;
 xContinue:
 						if(Prof.load(_profile) > 0 && _profile == Prof.id) {
-							if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) SETBIT1(HP.work_flags, fHP_ProfileSetByError);
+							if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) SETBIT1(work_flags, fHP_ProfileSetByError);
+							if((_set_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_ON_TEMP) SETBIT1(work_flags, fHP_ProfileSetByTemp); else SETBIT0(work_flags, fHP_ProfileSetByTemp);
 							SETBIT0(work_flags, fHP_ProfileSwitch_Error);
 							num_repeat_prof = 0;
 							if(prof_Temp1 != STARTTEMP) {
@@ -4648,9 +4653,10 @@ bool HeatPump::Check_Switch_Profile_On_Backup(void)
 	return false;
 }
 
-// Переключиться на другой профиль (0..I2C_PROFIL_NUM), возвращает: 0 - нет или номер профиля+1 + 0x80(нужен рестарт)
+// Подготовка к переключению на другой профиль (0..I2C_PROFIL_NUM), возвращает: 0 - нет или номер профиля+1 + 0x80(нужен рестарт)
 // Переключение по ошибке - если +SWITCH_PROF_BY_ERROR, проверка наличия такого же режима работы отопления или ГВС, как текущий
 // +SWITCH_PROF_BY_SCHEDULER - переключение по календарю/времени
+// +SWITCH_PROF_BY_TEMP - переключение по температуре
 // Вызывается только из runCommand()
 uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 {
@@ -4668,12 +4674,10 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 			uint8_t TimeEnd;
 		} _tmp2;
 	};
-	bool _by_error_check_mode;
-	bool _by_scheduler;
+	uint8_t switch_prof_flags;
 
 	if(_profile == 0) return 0;
-	if((_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_ERROR) _by_error_check_mode = true; else _by_error_check_mode = false;
-	if((_profile & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_SCHEDULER) _by_scheduler = true; else _by_scheduler = false;
+	switch_prof_flags = _profile & SWITCH_PROF_BY_MASK;
 	_profile = (_profile & ~SWITCH_PROF_BY_MASK) - 1;
 	if(Prof.id == _profile) return 0;
 	uint8_t _cnt = 0, p = 0;
@@ -4689,16 +4693,17 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 			return 0;
 		}
 		SemaphoreGive(xI2CSemaphore);
-		if(_by_scheduler) {
-			p = Prof.check_switch_to_ProfileNext_byTime((type_dataProfile *)&_tmp2);
+		if(switch_prof_flags == SWITCH_PROF_BY_SCHEDULER) {
+			p = Prof.check_autoswitch_to_ProfileNext((type_dataProfile *)&_tmp2);
 			if(p) {
-				_profile = p - 1;
+				_profile = (p & ~SWITCH_PROF_BY_MASK) - 1;
 				if(Prof.id == _profile) {
-					if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Skip change profile by time - the same\n");
+					if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Skip change profile by time - the same (0x%X)\n", p);
 					SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 					return 0;
 				}
-				if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Next profile by time: %d\n", p + 1);
+				if(!GETBIT(work_flags, fHP_ProfileSwitch_Error))
+					journal.jprintf("Next profile by %s: %d\n", (p & SWITCH_PROF_BY_MASK) == SWITCH_PROF_BY_SCHEDULER ? "time" : "Temp", p + 1);
 			} else if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Switch profile by time: %d\n", _profile + 1);
 		}
 		if(++_cnt > I2C_PROFIL_NUM) {
@@ -4727,7 +4732,7 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 		if(GETBIT(_tmp.flags, fBoilerON)) {
 			if(GETBIT(_tmp.flags, fBoiler_UseHeater) != GETBIT(Prof.SaveON.flags, fBoiler_UseHeater)) frestart = true;
 		} else {
-			if(_by_error_check_mode) { // режим не такой же - выходим
+			if(switch_prof_flags == SWITCH_PROF_BY_ERROR) { // режим не такой же - выходим
 				if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Can't change profile to %d - Boiler off\n", _profile + 1);
 				SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 				return 0;
@@ -4736,7 +4741,7 @@ uint8_t HeatPump::PrepareSwitchToProfile(uint8_t _profile)
 		}
 	} else {
 		if(GETBIT(_tmp.flags, fAutoSwitchProf_mode)) _tmp.mode = currmode;
-		if(_by_error_check_mode && _tmp.mode != currmode) {  // режим не такой же - выходим
+		if(switch_prof_flags == SWITCH_PROF_BY_ERROR && _tmp.mode != currmode) {  // режим не такой же - выходим
 			if(!GETBIT(work_flags, fHP_ProfileSwitch_Error)) journal.jprintf("Can't change profile to %d - Mode %d <> %d\n", _profile + 1, currmode, _tmp.mode);
 			SETBIT1(work_flags, fHP_ProfileSwitch_Error);
 			return 0;

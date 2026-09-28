@@ -1325,6 +1325,7 @@ void vReadSensor(void *)
 					HP.sendCommand(pSTART);
 				} else if(HP.get_State() == pWORK_HP || HP.get_State() == pWAIT_HP) {
 					SETBIT0(HP.work_flags, fHP_ProfileSetByError);
+					SETBIT0(HP.work_flags, fHP_ProfileSetByTemp);
 					HP.sendCommand(pSTOP);
 				}
 			}
@@ -1515,10 +1516,10 @@ xForceReadWR:
 				HP.Check_Switch_Profile_On_Backup();
 			} else if(HP.profile_prev == 0) { // идет работа на резерве, пропускаем переключения профилей до конца итерации
 				// 3. Расписание проверка всегда
-				uint8_t d = HP.Prof.check_switch_to_ProfileNext_byTime(&HP.Prof.dataProfile);
+				uint8_t d = HP.Prof.check_autoswitch_to_ProfileNext(&HP.Prof.dataProfile);
 				if(d) {
 					// время профиля вышло, переключаемся на связанный
-					HP.profile_cmd = d | SWITCH_PROF_BY_SCHEDULER; HP.sendCommand(pCHANGE_PROFILE);
+					HP.profile_cmd = d; HP.sendCommand(pCHANGE_PROFILE);
 				} else {  // error: jump to label [-fpermissive] GCC
 					// Переключение расписания, когда текущий месяц и десятидневка совпадают; если пропустили из-за выключенного НК или работы,
 					// то пропустили. Расписание выбирается один раз, если вручную перевыбрать, то еще раз автоматически выбираться не будет до следующего года
