@@ -3627,6 +3627,9 @@ bool HeatPump::configHP()
 				// skip STATS_WHEN_WORKD fields
 				if(is_compressor_on() && Stats.compressor_on_timer > STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER) Stats.compressor_on_timer = STATS_WORKD_TIME - STATS_WORKD_SKIP_TIME_HEAT_BOILER;
 				switchBoiler(false);                                          // выключить бойлер
+#ifdef USE_HEATER
+				if(_is_on & _HEATER_) dHeater.HeaterValve_On();
+#endif
 			} else {
 				// Если сменилось устройство - останавливаемся
 				if(_is_on & _COMPR_) compressorOFF();
