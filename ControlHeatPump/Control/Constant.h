@@ -204,7 +204,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_EEV_BEFORE_PID 		(4*1000)        // мсек.
 #define TIME_CMD_WAIT_SEMAPHORE		(15*60*1000)	// мсек.
 #ifndef TIME_I2C_UPDATE
-#define TIME_I2C_UPDATE   			(60*60)*1000    // мсек. Время обновления внутренних часов по I2С часам (если конечно нужно)
+#define TIME_I2C_UPDATE   			(6*60*60)       // сек. Время обновления внутренних часов по I2С часам (если конечно нужно)
 #endif
 #define MESSAGE_SEND_SERVER_WAIT	2000UL			// мсек. Ожидать ответа от сервера
 #define TIME_MESSAGE_TEMP 			30			    // секунд, Проверка граничных температур для уведомлений

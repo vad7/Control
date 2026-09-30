@@ -5099,7 +5099,7 @@ const char *noteTemp[] = {"Температура улицы",
 		#undef ONEWIRE_DS2482_THIRD
 		#undef ONEWIRE_DS2482_FOURTH
 		#undef ONEWIRE_DS2482_2WAY
-		#define TIME_I2C_UPDATE    (5*60)*1000
+		#define TIME_I2C_UPDATE    (5*60)
 		#define PIN_ONE_WIRE_BUS   69   // нога с интерфейсом программный 1-Wire - ВСЕ температурные датчики
 		#undef RADIO_SENSORS
 
