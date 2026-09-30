@@ -367,6 +367,7 @@ int8_t devHeater::set_target(int16_t temp)
 				set_Error(err, (char*)"HeaterTarget");
 				break;
 			}
+			if(reg1 == HM_SET_T_FlowOut) target_temp = temp; else target_boiler_temp = temp;
 //			int16_t status;
 //			_delay(HEATER_ADAPTER_WAIT_WRITE); // ожидание
 //			REPEAT_N(set.Modbus_Attempts, err = devModbus::Process2(HEATER_MODBUS_ADDR, 0x30 + reg1, (uint16_t*)&status, READ_HOLDING);	// Получить регистр состояния записи

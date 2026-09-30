@@ -164,7 +164,7 @@ public:
 	uint16_t err_num_total;							// число ошибок чтение по модбасу
 	uint16_t err_flags;								// флаги ошибок Котла (Opentherm)
 	uint16_t Heater_Error2;							// ошибка котла дополнительная
-	uint8_t  target_temp;							// текущая установка, градусы
+	uint8_t  target_temp;							// текущая установка отопления, градусы
 	uint8_t  target_boiler_temp;					// текущая установка бойлера, градусы
 
 private:

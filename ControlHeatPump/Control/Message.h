@@ -46,9 +46,11 @@
 #define fMessageWarning  9                  // флаг уведомления "Прочие уведомления"
 #define fMessageExternalWarning 10          // флаг уведомления "Внешние уведомления"
 #define fMessageExternalWarningLog 11       // флаг логировать "Внешние уведомления"
-// Рабочие флаги
+
+// Рабочие флаги (WorkFlags)
 #define fWF_MessageSendError 	0			// ошибка отправки email
 #define fWF_SMSSendError 		1			// ошибка отправки SMS
+#define fWF_SMSSendOk			2			// SMS отправлено
 
 // Настройки уведомлений
 struct type_messageHP

@@ -212,6 +212,7 @@ const char LCD_Str_PrepareUpdate[] = "OK - Prepare update";
 #define TIME_LED_ERR      			200             // Период мигания светодиода при ошибке (мсек).
 #define TIME_BEEP_ERR     			1000            // Период звукового сигнала при ошибке, мсек
 #define cDELAY_START_MESSAGE 		60              // Задержка (сек) после старта на отправку сообщений
+#define cDELAY_REPEAT_MESSAGE 		300             // Повтораня попытка отправки email через сек
 #define NO_POWER_ON_DELAY_CNT 		15				// Задержка включения после появления питани, *TIME_READ_SENSOR
 #define RETURN_FROM_GENERATOR_DELAY	60000			// Задержка переключения с резерва на основное питание, ms
 #define GENERATOR_OFF_DELAY			45				// Задержка выключения генератора, sec
