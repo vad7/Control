@@ -35,6 +35,7 @@ char *HeatPump::get_warning_text(void){
 	if(HP.get_errcode()) return HP.get_lastErr();
 	else if(GETBIT(HP.work_flags, fHP_ProfileSetByError)) return (char*)"Профиль переключен из-за ошибки!";
 	else if(GETBIT(HP.work_flags, fHP_ProfileSwitch_Error)) return (char*)"Ошибка переключения профиля!";
+	else if(GETBIT(HP.message.WorkFlags, fWF_MessageSendError)) return (char*)"Ошибка отправки почты!";
 	else return (char*)"";
 }
 

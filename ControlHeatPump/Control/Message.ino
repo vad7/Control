@@ -598,6 +598,10 @@ boolean Message::sendMail()
 	} else {
 		if(!GETBIT(WorkFlags, fWF_MessageSendError)) journal.jprintf("Connect failed: %s port: %d\n", messageSetting.smtp_server, messageSetting.smtp_port);
 		strncpy(retMail, "No connect", LEN_RETMAIL);
+		SETBIT1(WorkFlags, fWF_MessageSendError);
+		SemaphoreGive(xWebThreadSemaphore);
+		dnsUpdateSMTP = true;
+		return false;
 	}
 	int8_t _err;
 	// 2. Общение с сервером, получаем приветствие при соединении
