@@ -1832,6 +1832,7 @@ void vServiceHP(void *)
 #ifdef NEXTION
 	static uint32_t NextionTick = 0;
 #endif
+	static uint32_t _old_time = rtcSAM3X8.unixtime();
 	static uint8_t  task_updstat_countm = rtcSAM3X8.get_minutes();
 	static uint8_t  task_dailyswitch_countm = task_updstat_countm;
 	static TickType_t timer_sec = xTaskGetTickCount(), timer_idle = 0, timer_total = 0;
@@ -1991,14 +1992,13 @@ void vServiceHP(void *)
 			if(HP.R3WAY_Off_timer > 1) HP.R3WAY_Off_timer--;
 
 			//  Синхронизация часов с I2C часами если стоит соответсвующий флаг
-			static uint32_t _old_time = GetTickCount();
 			if(HP.get_updateI2C())  // если надо обновить часы из I2c
 			{
-				if(GetTickCount() - _old_time > (uint32_t)TIME_I2C_UPDATE) // время пришло обновляться надо Период синхронизации внутренних часов с I2C часами (сек)
+				if(rtcSAM3X8.unixtime() - _old_time > (uint32_t)TIME_I2C_UPDATE) // время пришло обновляться надо Период синхронизации внутренних часов с I2C часами (сек)
 				{
 					_old_time = rtcSAM3X8.unixtime();
 					uint32_t t = TimeToUnixTime(getTime_RtcI2C());       // Прочитать время из часов i2c
-					if(t > SEC_1970_TO_2000 + 366*24*60*60 && (t > _old_time ? t - _old_time : _old_time - t) < 10 * 60) {
+					if(t > SEC_1970_TO_2000 + 366*24*60*60 && (t > _old_time ? t - _old_time : _old_time - t) < 30 * 60) {
 						journal.jprintf_time("RTC Sync: ");
 						rtcSAM3X8.set_clock(t);                		 // Установить внутренние часы по i2c
 						HP.updateDateTime(t > _old_time ? t - _old_time : -(_old_time - t));  // Обновить переменные времени с новым значением часов
@@ -2006,7 +2006,6 @@ void vServiceHP(void *)
 					} else {
 						journal.jprintf_time("Error read I2C RTC: %u\n", t);
 					}
-					_old_time = GetTickCount();
 				}
 			}
 			// Проверки граничных температур для уведомлений, если разрешено!
