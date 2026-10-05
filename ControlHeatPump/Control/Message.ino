@@ -514,11 +514,13 @@ boolean Message::sendMessage()  // запуск из 0 потока
     if (sendMail()) // Формирование ответа
     {
       // Отправка удачна
+      SETBIT0(WorkFlags, fWF_MessageSendError);
       for (i = 0; i < strlen(retMail); i++) if (retMail[i] == '=') retMail[i] = ':'; // замена знака = на : т.к. это запрещенный знак в запросах
       strcpy(retTest, "Письмо отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
       strcat(retTest, "\nОтвет: "); strcat(retTest, retMail);
     } else {
       // Отправка неудачна
+  	  sendTime = rtcSAM3X8.unixtime();
       for (i = 0; i < strlen(retMail); i++) if (retMail[i] == '=') retMail[i] = ':'; // замена знака = на : т.к. это запрещенный знак в запросах
       strcpy(retTest, "Письмо НЕ отправлено на "); get_messageSetting((char*)mess_SMTP_RCPTTO, retTest); //strcat(retTest,HP.message.get_messageSetting(pSMTP_RCPTTO));
       strcat(retTest, "\nОтвет: "); strcat(retTest, retMail);
@@ -571,7 +573,7 @@ boolean Message::sendMessage()  // запуск из 0 потока
         break;
     }
   }
-  if(!GETBIT(messageSetting.flags, fMail)) waitSend = false;        // Сбросить флаг необходимости отправки уведомления
+  if(!GETBIT(WorkFlags, fWF_MessageSendError)) waitSend = false;        // Сбросить флаг необходимости отправки уведомления
   return true;             // Была попытка послать
 }
 
