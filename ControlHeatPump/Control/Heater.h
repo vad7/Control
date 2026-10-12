@@ -134,6 +134,7 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
+#define fHeater_WasSelfReset			5		// Котел был перезагружен, пришла ошибка HEATER_SELF_RESET_ERROR
 
 class devHeater
 {
