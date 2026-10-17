@@ -271,7 +271,10 @@ int8_t devHeater::read_state(uint8_t group)
 		if(GETBIT(fwork, fHeater_ReadErrorFlags)) {
 			err = devModbus::Process2(HEATER_MODBUS_ADDR, HM_HEATER_fERRORS, &err_flags, READ_HOLDING);
 			if(err == OK) err = devModbus::Process2(HEATER_MODBUS_ADDR, HM_HEATER_ERROR2, &Heater_Error2, READ_HOLDING);
-			if(err == OK) SETBIT0(fwork, fHeater_ReadErrorFlags);
+			if(err == OK) {
+				SETBIT0(fwork, fHeater_ReadErrorFlags);
+				journal.jprintf_time("HEATER ERROR E%d (%d), F:%X!\n", data.Error, Heater_Error2, err_flags);
+			}
 		} else if(GETBIT(fwork, fHeater_WasSelfReset)) {
 			Heater_Start();
 			SETBIT0(fwork, fHeater_WasSelfReset);
@@ -309,7 +312,7 @@ int8_t devHeater::read_state(uint8_t group)
 						if(data.Error == HEATER_SELF_RESET_ERROR && !GETBIT(fwork, fHeater_WasSelfReset)) {
 							SETBIT1(fwork, fHeater_WasSelfReset);
 							SETBIT1(fwork, fHeater_ReadErrorFlags);
-							journal.jprintf_time("Heater was reset, E%d!\n", HEATER_SELF_RESET_ERROR);
+							journal.jprintf_time("HEATER WAS RESET!\n");
 						} else {
 							set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
 							return ERR_HEATER_STOP;
