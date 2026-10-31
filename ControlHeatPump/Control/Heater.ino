@@ -171,7 +171,6 @@ void devHeater::Heater_Start()
 		HP.startHeater = burner_time_last = rtcSAM3X8.unixtime();
 		SETBIT0(HP.work_flags, fHP_CompressorWasOn);
 		SETBIT1(HP.work_flags, fHP_HeaterOn);
-		SETBIT0(fwork, fHeater_WasSelfReset);
 		journal.jprintf(" %s[%s] ON\n", HEATER_NAME, (char *)codeRet[HP.get_ret()]);
 	}
 #endif
@@ -277,7 +276,6 @@ int8_t devHeater::read_state(uint8_t group)
 			}
 		} else if(GETBIT(fwork, fHeater_WasSelfReset)) {
 			Heater_Start();
-			SETBIT0(fwork, fHeater_WasSelfReset);
 		} else {
 			REPEAT_N(set.Modbus_Attempts, err = devModbus::Process2(HEATER_MODBUS_ADDR, HM_ADAPTER_FLAGS, &r, READ_HOLDING));
 			if(err == OK) {
@@ -309,10 +307,10 @@ int8_t devHeater::read_state(uint8_t group)
 				uint32_t t = rtcSAM3X8.unixtime();
 				if(!_status) {
 					if(t - HP.startHeater > HEATER_WAIT_CMD_COMPLETION) {
-						if(data.Error == HEATER_SELF_RESET_ERROR && !GETBIT(fwork, fHeater_WasSelfReset)) {
+						if(!GETBIT(fwork, fHeater_WasSelfReset)) {
 							SETBIT1(fwork, fHeater_WasSelfReset);
 							SETBIT1(fwork, fHeater_ReadErrorFlags);
-							journal.jprintf_time("HEATER WAS RESET!\n");
+							journal.jprintf_time("Heater stopped!\n");
 						} else {
 							set_Error(ERR_HEATER_STOP, (char*)__FUNCTION__);
 							return ERR_HEATER_STOP;
@@ -322,7 +320,6 @@ int8_t devHeater::read_state(uint8_t group)
 					burner_time_last = t;
 					SETBIT0(fwork, fHeater_WasSelfReset);
 				} else if(t - burner_time_last > HEATER_WAIT_BURNER_TIME_MAX){ // проверить включился ли нагрев
-					SETBIT0(fwork, fHeater_WasSelfReset);
 					set_Error(ERR_HEATER_NOT_BURN, (char*)__FUNCTION__);
 				}
 			} else if(_status && rtcSAM3X8.unixtime() - HP.stopHeater > HEATER_WAIT_CMD_COMPLETION) { // Работает, а не должен
