@@ -853,12 +853,13 @@ xSaveStats:
 		WEB_STORE_DEBUG_INFO(22);
 
 		if(strncmp(str, "get_err", 7)==0) {
-			str += 7;
-			if(strcmp(str, "code")==0) _itoa(HP.get_errcode(),strReturn);// Функция get_errcode
-			else if(strcmp(str, "or")==0) {  							// Функция get_error
+			if(strcmp(str + 7, "code")==0) {
+				_itoa(HP.get_errcode(),strReturn);		// Функция get_errcode
+				ADD_WEBDELIM(strReturn); continue;
+			} else if(strcmp(str + 7, "or")==0) {  		// Функция get_error
 				strcat(strReturn, HP.get_warning_text());
+				ADD_WEBDELIM(strReturn); continue;
 			}
-			ADD_WEBDELIM(strReturn); continue;
 		}
 //		if (strcmp(str,"get_tempSAM3x")==0)  // Функция get_tempSAM3x  - получение температуры чипа sam3x
 //		{
