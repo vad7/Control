@@ -134,7 +134,8 @@ struct type_HeaterSettings {					// Структура для сохранени
 #define fHeater_CmdNotResponse			2		// нет ответа от котла на последнюю команду
 #define fHeater_ReadErrorFlags			3		// прочитали флаги ошибок
 #define fHeater_fNotAnswerOnCmd			4		// =GETBIT(HM_ADAPTER_FLAGS, HM_ADAPTER_FLAGS_bLINK)
-#define fHeater_WasSelfReset			5		// Котел был перезагружен, пришла ошибка HEATER_SELF_RESET_ERROR
+#define fHeater_ReRunHeater				5		// Повторный запуск, при сбросе статуса работы котла
+#define fHeater_HeaterRestarting		6		// Повторный запуск, ожидание
 
 class devHeater
 {
@@ -171,6 +172,7 @@ public:
 private:
 	uint8_t  fwork;									// рабочие флаги
 	uint32_t burner_time_last;						// контроль нагрева, UNIXTIME
+	uint16_t ErrorLast;									// 0x1E, последняя ошибка котла
  };
 
 #endif
