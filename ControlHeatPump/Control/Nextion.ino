@@ -43,7 +43,7 @@ const char comm_end[3] = { COMM_END_B, COMM_END_B, COMM_END_B };
 // Page Main
 #define NXTID_MAIN_ONOFF	2
 #define NXTID_BOILER_URGENT	16
-#define NXTID_GENERATOR	    19
+#define NXTID_GENERATOR	    18
 // Page Heat
 #define NXTID_TEMP_PLUS		18
 #define NXTID_TEMP_MINUS	19
@@ -705,12 +705,11 @@ void Nextion::Update()
 			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NAME, sizeof(buffer)-1);
 			setComponentText("t1", buffer);
 			NEXTION_PORT.write("t2.txt=\"");
-			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE, sizeof(buffer)-1);
-			NEXTION_PORT.write(buffer);
-			if(sizeof(CONFIG_NOTE) > sizeof(buffer)) {
-				Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NOTE + sizeof(buffer)-1, sizeof(CONFIG_NOTE) - sizeof(buffer));
+			const char *p = CONFIG_NOTE;
+			do {
+				p = Encode_UTF8_to_ISO8859_5(buffer, p, sizeof(buffer)-1);
 				NEXTION_PORT.write(buffer);
-			}
+			} while(*p);
 			NEXTION_PORT.write("\"");
 			NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);
 		}
@@ -816,11 +815,11 @@ void Nextion::StatusLine()
 }
 
 // UTF8, 1 байт или 2 байта русские, остальные символы пропускаются
-void Nextion::Encode_UTF8_to_ISO8859_5(char* outstr, const char* instr, uint16_t outstrsize)
+const char* Nextion::Encode_UTF8_to_ISO8859_5(char* outstr, const char* instr, uint16_t outstrsize)
 {
 	uint8_t c;
-	//if(--outsize <= 0) return;
-	while((c = *instr++)) {
+	while((c = *instr)) {
+		instr++;
 		if(c > 0x7F) {
 			uint16_t c2 = c * 256 + *instr++;
 			if(c2 >= 0xD090 && c2 <= 0xD0BF) c = c2 - 0xD090 + 0xB0;
@@ -838,4 +837,5 @@ void Nextion::Encode_UTF8_to_ISO8859_5(char* outstr, const char* instr, uint16_t
 		if(--outstrsize == 0) break;
 	}
 	*outstr = '\0';
+	return instr;
 }

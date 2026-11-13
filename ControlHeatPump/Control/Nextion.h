@@ -36,7 +36,7 @@ public:
   boolean setComponentPic(const char* component, char* txt);
   boolean sendCommandToComponentIdx(const char* component, const char* cmd, uint8_t idx, int8_t val);
   void    set_dim(uint8_t dim);					// Установить яркость экрана
-  void    Encode_UTF8_to_ISO8859_5(char* outstr, const char* instr, uint16_t outstrsize);
+  const char*Encode_UTF8_to_ISO8859_5(char* outstr, const char* instr, uint16_t outstrsize);
 private:
   int8_t   PageID;								// Текущая страница
   uint8_t  fUpdate;								// Признак обновления: 0 - нет, 1 - штатно, 2 - обновить срочно
