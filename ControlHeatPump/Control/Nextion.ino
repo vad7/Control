@@ -26,6 +26,11 @@ const char NEXTION_HP_MODE_Heat[] = "\xBE\xE2\xDE\xDF\xDB\xD5\xDD\xD8\xD5"; 				
 const char NEXTION_HP_MODE_Cool[] = "\xBE\xE5\xDB\xD0\xD6\xD4\xD5\xDD\xD8\xD5"; 			// Охлаждение
 const char NEXTION_HP_MODE_Auto[] = "\xC0\xD5\xD6\xD8\xDC\x20\xB0\xD2\xE2\xDE"; 			// Режим Авто
 const char NEXTION_HP_MODE_Only[] = "\xC0\xD5\xD6\xD8\xDC\x20\xE2\xDE\xDB\xEC\xDA\xDE\x3A"; // Режим только:
+// Строка статуса ok: текст центрируется по всей полосе, 3 пробела в конце сдвигают его в середину части левее галочки
+const char NEXTION_STATUS_HP[] = "\xC2\xBD\x20\x20\x20";									// "ТН   " - работает компрессор
+#ifdef USE_HEATER
+const char NEXTION_STATUS_HEATER[] = "\xBA\xDE\xE2\xD5\xDB\x20\x20\x20";					// "Котел   " - работает котел
+#endif
 const char NEXTION_HP_TEST[] = "\xB2\xDA\xDB\xEE\xE7\xD5\xDD\x20\xE0\xD5\xD6\xD8\xDC\x20\xE2\xD5\xE1\xE2\xD8\xE0\xDE\xD2\xD0\xDD\xD8\xEF\x3A\x20"; // "Включен режим тестирования: "
 const char NEXTION_xB0[] = "\xB0"; // °
 #define COMM_END_B 0xFF
@@ -750,6 +755,12 @@ void Nextion::StatusLine()
 	newcrc = _crc16(newcrc, HP.get_errcode());
 	newcrc = _crc16(newcrc, HP.get_modeHouse() + (GETBIT(HP.Prof.SaveON.flags, fAutoSwitchProf_mode)<<3));
 	newcrc = _crc16(newcrc, (HP.IsWorkingNow() << 1) | HP.get_BoilerON());
+	uint8_t heat_src = HP.is_compressor_on()	// Источник тепла для ok: бит 0 - компрессор (ТН), бит 1 - котел
+#ifdef USE_HEATER
+					| (HP.is_heater_on() << 1)
+#endif
+					;
+	newcrc = _crc16(newcrc, heat_src);
 	char *ss = HP.StateToStr();
 	newcrc = calc_crc16((uint8_t*)ss, strlen(ss), newcrc);
 	if(newcrc != StatusCrc || fUpdate > 1) { // поменялся
@@ -759,6 +770,12 @@ void Nextion::StatusLine()
 		setComponentText("m", tm);  // Обновить время
 		// Ошибки
 		if(HP.get_errcode() == OK) {
+			// Источник тепла в ok (на всех страницах): Котел, иначе ТН, иначе пусто
+#ifdef USE_HEATER
+			if(heat_src & 2) strcpy(ntemp, NEXTION_STATUS_HEATER); else
+#endif
+			if(heat_src & 1) strcpy(ntemp, NEXTION_STATUS_HP); else ntemp[0] = '\0';
+			setComponentText("ok", ntemp);
 			sendCommand("vis ok,1");
 			sendCommand("vis er,0");
 			if(PageID == NXTID_PAGE_MAIN) {
