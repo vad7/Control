@@ -63,6 +63,8 @@ private:
   uint8_t  Page1flags;
   uint8_t  flags;
   uint8_t  input_delay;							// Delay for * NEXTION_READ ms
+  uint8_t  sleep_cnt;							// вызовов Update() во сне после последнего опроса get sleep
+  uint8_t  time_cnt;							// вызовов Update() после последней отправки времени
   void    getTargetTemp(char *rstr);			// Получить целевую температуру
   void    StatusLine();
 #ifdef NEXTION_PROTECTED

@@ -97,6 +97,14 @@ static uint16_t nxp_crc_part(const char *p, uint16_t crc, uint8_t *len)
 
 #define fSleep 1
 #define NEXTION_INPUT_DELAY	10		// * NEXTION_READ ms
+// Тишина на линии = конец кадра: больше времени 1 байта (9600: 1.04 мс), vTaskDelay(n) ждёт от n-1 до n мс
+#define NEXTION_RX_GAP		(2 + 10000 / NEXTION_PORT_SPEED)	// мс
+#ifndef NEXTION_SLEEP_CHECK
+#define NEXTION_SLEEP_CHECK	60000	// мс, пока экран спит - опрос get sleep (0x87 о пробуждении касанием могло потеряться)
+#endif
+#ifndef NEXTION_TIME_REPEAT
+#define NEXTION_TIME_REPEAT	10000	// мс, повтор времени в строке статуса (команда могла потеряться)
+#endif
 
 char buffer[64];
 #define ntemp buffer
@@ -109,6 +117,8 @@ boolean Nextion::init()
 	StatusCrc = 0;
 	fUpdate = 0;
 	input_delay = 0;
+	sleep_cnt = 0;
+	time_cnt = 0;
 	PageID = NXTID_PAGE_MAIN;
 #ifdef NEXTION_PROTECTED
 	tx_seq = 0;
@@ -199,7 +209,7 @@ boolean Nextion::check_incoming(void)
 	while(DataAvaliable != NEXTION_PORT.available()) {
 		DataAvaliable = NEXTION_PORT.available();
 		ret = true;
-		_delay(1); // для скорости 9600
+		_delay(NEXTION_RX_GAP);	// дольше 1 байта: при _delay(1) (0..1 мс) кадр читался недопринятым и терялся
 	}
 	return ret;
 }
@@ -449,6 +459,7 @@ void Nextion::readCommand()
 #endif
 		switch(buffer[0]) {
 		case 0x65:   //   	Touch Event
+			if(fUpdate == 0) fUpdate = 2;	// нажатие - экран не спит (0x87 о пробуждении могло потеряться)
 			if(input_delay) break;
 			if((len == 4 && buffer[3] == 0) || len == 3) { // event: release
 				uint8_t cmd1 = buffer[1];
@@ -554,6 +565,13 @@ void Nextion::readCommand()
 			fUpdate = 2;
 			PageID = buffer[1];
 			break;
+		case 0x71:	// число - ответ на get sleep: 1 - экран спит
+			if(len == 5) {
+				if(buffer[1]) {
+					if(GETBIT(flags, fSleep)) flags &= ~(1<<fSleep);	// должен гореть, а спит (sleep=0 потерялось) - Update() повторит
+				} else if(fUpdate == 0) fUpdate = 2;					// проснулся, а 0x87 не дошло - обновить
+			}
+			break;
 		case 0x86:	// Auto Entered Sleep Mode
 			if(GETBIT(HP.Option.flags, fNextionOnWhileWork)) flags &= ~((HP.is_comp_or_heater_on() || HP.get_errcode() || HP.get_BackupPower())<<fSleep);
 			fUpdate = 0;
@@ -579,9 +597,7 @@ void Nextion::readCommand()
 			fUpdate = 2;
 			break;
 		default: // 0x00 - 	Invalid Instruction, 0x03 - Invalid Page ID, 0x1A,0x1B - Invalid Variable, 0x1E - Invalid Quantity of Parameters, 0x1F - IO Operation failed
-			_delay(100);
-			while(NEXTION_PORT.available()) NEXTION_PORT.read();
-			input_delay = 20; // *NEXTION_READ;
+			_delay(100);						// испорченный кадр уже пропущен (прочитан до FF FF FF), следующие в буфере - не трогать
 			fUpdate = 2;
 		}
 	}
@@ -603,6 +619,9 @@ void Nextion::Update()
 			sendCommand("sleep=0");
 			_delay(NEXTION_BOOT_TIME);
 			sendCommand("thsp=0");
+#ifndef NEXTION_PROTECTED
+			sendCommand("get sleep");			// проснулся ли (sleep=0 могло потеряться): ответ 0x71 - в readCommand()
+#endif
 			flags |= (1<<fSleep);
 			fUpdate = 2;
 		}
@@ -616,7 +635,14 @@ void Nextion::Update()
 		}
 	}
 
-	if(fUpdate == 0) return;
+	if(fUpdate == 0) {							// экран спит: изредка спросить, не разбудили ли его касанием
+		if(++sleep_cnt >= NEXTION_SLEEP_CHECK / NEXTION_UPDATE) {
+			sleep_cnt = 0;
+			sendCommand("get sleep");
+		}
+		return;
+	}
+	sleep_cnt = 0;
 #ifdef NEXTION_DEBUG3
 	journal.printf("#: %u\n", GetTickCount());
 #endif
@@ -954,6 +980,7 @@ void Nextion::StatusLine()
 	newcrc = calc_crc16((uint8_t*)ss, strlen(ss), newcrc);
 	if(newcrc != StatusCrc || fUpdate > 1) { // поменялся
 		StatusCrc = newcrc;
+		time_cnt = 0;
 
 		tm[5] = '\0';
 		setComponentText("m", tm);  // Обновить время
@@ -1017,6 +1044,10 @@ void Nextion::StatusLine()
 			setComponentPic("y", (char*)"9");
 			setComponentText("y", (char*)"");
 		}
+	} else if(++time_cnt >= NEXTION_TIME_REPEAT / NEXTION_UPDATE) {	// повтор времени: команда могла потеряться
+		time_cnt = 0;
+		tm[5] = '\0';
+		setComponentText("m", tm);
 	}
 }
 
