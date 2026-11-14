@@ -35,6 +35,36 @@ const char NEXTION_HP_TEST[] = "\xB2\xDA\xDB\xEE\xE7\xD5\xDD\x20\xE0\xD5\xD6\xD8
 const char NEXTION_xB0[] = "\xB0"; // °
 #define COMM_END_B 0xFF
 const char comm_end[3] = { COMM_END_B, COMM_END_B, COMM_END_B };
+#ifdef NEXTION_PROTECTED
+// Значение n hex-цифр (0-9, A-F), -1 - не hex
+static int32_t nxp_get_hex(const char *s, uint8_t n)
+{
+	int32_t v = 0;
+	while(n--) {
+		char c = *s++;
+		if(c >= '0' && c <= '9') c -= '0'; else if(c >= 'A' && c <= 'F') c -= 'A' - 10; else return -1;
+		v = (v << 4) | c;
+	}
+	return v;
+}
+
+// Передача v n hex-цифрами (прописные)
+static void nxp_write_hex(uint16_t v, uint8_t n)
+{
+	while(n--) NEXTION_PORT.write((uint8_t)"0123456789ABCDEF"[(v >> (n * 4)) & 0xF]);
+}
+
+// CRC16 и длина части команды (NULL - части нет)
+static uint16_t nxp_crc_part(const char *p, uint16_t crc, uint8_t *len)
+{
+	if(p) {
+		uint8_t n = strlen(p);
+		*len += n;
+		crc = calc_crc16((uint8_t*)p, n, crc);
+	}
+	return crc;
+}
+#endif // NEXTION_PROTECTED
 
 #define NXTID_PAGE_MAIN		0
 #define NXTID_PAGE_MENU		1
@@ -80,11 +110,31 @@ boolean Nextion::init()
 	fUpdate = 0;
 	input_delay = 0;
 	PageID = NXTID_PAGE_MAIN;
+#ifdef NEXTION_PROTECTED
+	tx_seq = 0;
+	link_down = false;
+	rx_last_seq = 0xFFFF;
+	rx_last_crc = 0;
+#endif
 	NEXTION_PORT.begin(NEXTION_PORT_SPEED);
 //	sendCommand("rest");
 //	sendCommand("cls 0");
     sendCommand("sleep=0");
     _delay(NEXTION_BOOT_TIME);
+#ifdef NEXTION_PROTECTED
+	boolean ok = false;
+	for(uint8_t i = 0; i < NXP_BOOT_TRIES && !ok; i++) {
+		link_down = false;
+		ok = sendCommand("sendme");
+	}
+	if(ok) {
+		fUpdate = 1;
+		journal.jprintf("OK\n");
+	} else {
+		journal.jprintf("No response!\n");
+		return false;
+	}
+#else
 	sendCommand("sendme");
 	uint16_t timeout = NEXTION_BOOT_TIME * 2; // ~ms
 	while(--timeout) {
@@ -100,6 +150,7 @@ boolean Nextion::init()
 		journal.jprintf("No response!\n");
 		return false;
 	}
+#endif
 	init_display();
 	return true;
 }
@@ -156,6 +207,9 @@ boolean Nextion::check_incoming(void)
 // Возвращает false, если данные начали поступать из дисплея
 boolean Nextion::sendCommand(const char* cmd)
 {
+#ifdef NEXTION_PROTECTED
+	return send_parts(cmd);
+#else
 	check_incoming();
 	NEXTION_PORT.write(cmd);
 	NEXTION_PORT.write(COMM_END_B);
@@ -166,10 +220,109 @@ boolean Nextion::sendCommand(const char* cmd)
 #endif
 	if(check_incoming()) return false;
 	return true;
+#endif
 }
+
+#ifdef NEXTION_PROTECTED
+// Защищённая передача команды из частей p0..p4 (NULL - части нет). Кадр в памяти не собирается: CRC и длина
+// считаются по частям, части передаются подряд; при повторе - те же части (ожидание подтверждения их не трогает).
+// false - экран не подтвердил за NXP_RETRIES попыток, до следующего Update() команды не передаются.
+boolean Nextion::send_parts(const char *p0, const char *p1, const char *p2, const char *p3, const char *p4)
+{
+	if(link_down) return false;
+	uint8_t seq = tx_seq++;
+	uint8_t len = 0;
+	uint16_t crc = calc_crc16(&seq, 1);
+	crc = nxp_crc_part(p0, crc, &len);
+	crc = nxp_crc_part(p1, crc, &len);
+	crc = nxp_crc_part(p2, crc, &len);
+	crc = nxp_crc_part(p3, crc, &len);
+	crc = nxp_crc_part(p4, crc, &len);
+	// передача кадра (заголовок, команда, FF FF FF) и подтверждения (6 байт) по 10 бит + запас, мс
+	uint32_t timeout = (uint32_t)(NXP_HDR + len + 3 + 6) * 10000 / NEXTION_PORT_SPEED + NXP_ACK_MARGIN;
+	for(uint8_t i = 0; i < NXP_RETRIES; i++) {
+		check_incoming();
+		NEXTION_PORT.write((uint8_t)NXP_CMD_START);
+		nxp_write_hex(seq, 2);
+		nxp_write_hex(crc, 4);
+		if(p0) NEXTION_PORT.write(p0);
+		if(p1) NEXTION_PORT.write(p1);
+		if(p2) NEXTION_PORT.write(p2);
+		if(p3) NEXTION_PORT.write(p3);
+		if(p4) NEXTION_PORT.write(p4);
+		NEXTION_PORT.write((const uint8_t*)comm_end, sizeof(comm_end));
+		if(wait_ack(seq, timeout)) {
+#ifdef NEXTION_DEBUG
+			journal.jprintf("NXTTX: %s%s%s%s%s\n", p0, p1 ? p1 : "", p2 ? p2 : "", p3 ? p3 : "", p4 ? p4 : "");
+#endif
+			return true;
+		}
+	}
+	link_down = true;
+#ifdef NEXTION_DEBUG
+	journal.jprintf("NXTTX fail: %s\n", p0);
+#endif
+	return false;
+}
+
+// Ожидание подтверждения F0 SS FF FF FF - разбор по байтам, без буфера. Прочие кадры (сообщения экрана)
+// пропускаются без подтверждения - экран повторит их, когда на линии будет тишина.
+boolean Nextion::wait_ack(uint8_t seq, uint32_t timeout)
+{
+	uint8_t n = 0, ff = 0;
+	uint8_t a[3];											// первые байты кадра
+	uint32_t t = GetTickCount();
+	while(GetTickCount() - t < timeout) {
+		if(!NEXTION_PORT.available()) {
+			_delay(1);
+			continue;
+		}
+		uint8_t b = NEXTION_PORT.read();
+		if(b == COMM_END_B) {
+			if(++ff < 3) continue;
+			if(n == 3 && a[0] == NXP_ACK && nxp_get_hex((char*)a + 1, 2) == seq) return true;
+			n = ff = 0;										// конец другого кадра
+			continue;
+		}
+		ff = 0;
+		if(n < sizeof(a)) a[n] = b;
+		if(n < 255) n++;
+	}
+	return false;
+}
+
+// Проверка сообщения экрана в buffer (len байт без FF FF FF): подтвердить и отсеять повтор.
+// Возвращает длину сообщения без SS CCCC, 0 - не обрабатывать (подтверждение, искажение, повтор).
+uint8_t Nextion::rx_check(uint8_t len)
+{
+	if(len == 1 && (uint8_t)buffer[0] == 0x88) return len;	// включение экрана - без защиты (экран о ней ещё не знает)
+	if(len <= NXP_TRAILER) return 0;
+	len -= NXP_TRAILER;
+	int32_t seq = nxp_get_hex(buffer + len, 2);
+	int32_t crc = nxp_get_hex(buffer + len + 2, 4);
+	if(seq < 0 || crc < 0) return 0;
+	uint8_t s = seq;
+	if(calc_crc16((uint8_t*)buffer, len, calc_crc16(&s, 1)) != crc) return 0;	// искажено - экран повторит
+	NEXTION_PORT.write((uint8_t)NXP_HOST_ACK);
+	NEXTION_PORT.write((const uint8_t*)buffer + len, 2);
+	NEXTION_PORT.write((const uint8_t*)comm_end, sizeof(comm_end));
+	// повтор уже принятого (потерялось подтверждение); 0x88 - всегда: после сброса экрана оно первое с номером 00,
+	// как и в прошлый раз, и иначе было бы принято за повтор (лишняя переинициализация безвредна)
+	if(seq == rx_last_seq && crc == rx_last_crc && !(len == 1 && (uint8_t)buffer[0] == 0x88)) return 0;
+	rx_last_seq = seq;
+	rx_last_crc = crc;
+	return len;
+}
+#endif // NEXTION_PROTECTED
 
 boolean Nextion::setComponentValIdx(const char* component, uint8_t idx, int8_t val)
 {
+#ifdef NEXTION_PROTECTED
+	tx_num[0][0] = tx_num[1][0] = '\0';
+	_itoa(idx, tx_num[0]);
+	_itoa(val, tx_num[1]);
+	return send_parts(component, tx_num[0], ".val=", tx_num[1]);
+#endif
 	check_incoming();
 	NEXTION_PORT.write(component);
 	NEXTION_PORT.print(idx);
@@ -187,6 +340,12 @@ boolean Nextion::setComponentValIdx(const char* component, uint8_t idx, int8_t v
 // cmd with space
 boolean Nextion::sendCommandToComponentIdx(const char* component, const char* cmd, uint8_t idx, int8_t val)
 {
+#ifdef NEXTION_PROTECTED
+	tx_num[0][0] = tx_num[1][0] = '\0';
+	_itoa(idx, tx_num[0]);
+	_itoa(val, tx_num[1]);
+	return send_parts(cmd, component, tx_num[0], ",", tx_num[1]);
+#endif
 	check_incoming();
 	NEXTION_PORT.write(cmd);
 	NEXTION_PORT.write(component);
@@ -204,6 +363,9 @@ boolean Nextion::sendCommandToComponentIdx(const char* component, const char* cm
 
 boolean Nextion::setComponentText(const char* component, char* txt)
 {
+#ifdef NEXTION_PROTECTED
+	return send_parts(component, ".txt=\"", txt, "\"");
+#endif
 	check_incoming();
 	NEXTION_PORT.write(component);
 	NEXTION_PORT.write(".txt=\"");
@@ -220,6 +382,11 @@ boolean Nextion::setComponentText(const char* component, char* txt)
 
 boolean Nextion::setComponentIdxText(const char* component, uint8_t idx, char* txt)
 {
+#ifdef NEXTION_PROTECTED
+	tx_num[0][0] = '\0';
+	_itoa(idx, tx_num[0]);
+	return send_parts(component, tx_num[0], ".txt=\"", txt, "\"");
+#endif
 	check_incoming();
 	NEXTION_PORT.write(component);
 	NEXTION_PORT.print(idx);
@@ -237,6 +404,9 @@ boolean Nextion::setComponentIdxText(const char* component, uint8_t idx, char* t
 
 boolean Nextion::setComponentPic(const char* component, char* txt)
 {
+#ifdef NEXTION_PROTECTED
+	return send_parts(component, ".pic=", txt);
+#endif
 	check_incoming();
 	NEXTION_PORT.write(component);
 	NEXTION_PORT.write(".pic=");
@@ -267,6 +437,9 @@ void Nextion::readCommand()
 		DataAvaliable = NEXTION_PORT.available();
 		if(p == NULL) break;
 		uint8_t len = p - buffer;
+#ifdef NEXTION_PROTECTED
+		if((len = rx_check(len)) == 0) continue;			// подтверждение, искажение, повтор - не обрабатывать
+#endif
 #ifdef NEXTION_DEBUG_RX
 		if(GETBIT(HP.Option.flags2, f2NextionLog)) {
 			journal.jprintf("NRX%d: ", fUpdate);
@@ -419,6 +592,12 @@ void Nextion::readCommand()
 void Nextion::Update()
 {
 	if(!GETBIT(HP.Option.flags, fNextion)) return;
+#ifdef NEXTION_PROTECTED
+	if(link_down) {										// была неподтверждённая команда - снова на связь, обновить всё
+		link_down = false;
+		fUpdate = 2;
+	}
+#endif
 	if((GETBIT(HP.Option.flags, fNextionOnWhileWork) && HP.is_comp_or_heater_on()) || HP.get_errcode() || HP.get_BackupPower()) {  // При ошибке дисплей включен
 		if(!GETBIT(flags, fSleep)) {
 			sendCommand("sleep=0");
@@ -709,6 +888,15 @@ void Nextion::Update()
 		if(fUpdate == 2) {
 			Encode_UTF8_to_ISO8859_5(buffer, CONFIG_NAME, sizeof(buffer)-1);
 			setComponentText("t1", buffer);
+#ifdef NEXTION_PROTECTED
+			const char *p = CONFIG_NOTE;
+			const char *op = "t2.txt=\"";
+			do {											// кусками: t2.txt="...", затем t2.txt+="..."
+				p = Encode_UTF8_to_ISO8859_5(buffer, p, sizeof(buffer)-1);
+				send_parts(op, buffer, "\"");
+				op = "t2.txt+=\"";
+			} while(*p);
+#else
 			NEXTION_PORT.write("t2.txt=\"");
 			const char *p = CONFIG_NOTE;
 			do {
@@ -717,6 +905,7 @@ void Nextion::Update()
 			} while(*p);
 			NEXTION_PORT.write("\"");
 			NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);	NEXTION_PORT.write(COMM_END_B);
+#endif
 		}
 	} else if(PageID == NXTID_PAGE_PROFILE) { // Обновление данных страницы 8 "Профили"
 		if(HP.Schdlr.IsShedulerOn()) sendCommand("s.val=1"); else sendCommand("s.val=0");
